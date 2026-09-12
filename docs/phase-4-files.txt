@@ -1,0 +1,166 @@
+SYSFOREST · Archivos de Fase 4
+Rama: codex/phase-4
+HEAD: 28e7c4b feat: complete phase 3 multitenancy foundation
+
+Comando: git status --short --untracked-files=all
+
+ M .dockerignore
+ M .env.example
+ M .gitignore
+ M AGENTS.md
+ M CLAUDE.md
+ M README.md
+ D app/Console/Commands/LocalAccessCommand.php
+ D app/Http/Controllers/LocalAccessController.php
+ M app/Http/Controllers/OrganizationController.php
+ M app/Http/Controllers/OrganizationMembershipController.php
+ M app/Http/Controllers/TerritoryController.php
+ D app/Http/Middleware/LoadLocalAccessGrant.php
+ M app/Models/OrganizationMembership.php
+ M app/Models/User.php
+ M app/Policies/OrganizationMembershipPolicy.php
+ M app/Policies/OrganizationPolicy.php
+ M app/Providers/AppServiceProvider.php
+ M app/Repositories/CountryRepository.php
+ M app/Repositories/DepartmentRepository.php
+ M app/Repositories/OrganizationMembershipRepository.php
+ M app/Repositories/OrganizationRepository.php
+ M app/Repositories/UserRepository.php
+ D app/Services/LocalAccessService.php
+ M app/Services/OrganizationMembershipService.php
+ M app/Services/OrganizationService.php
+ M app/Services/TenantContextService.php
+ M app/Services/TerritoryService.php
+ D app/Tenancy/LocalAccessContext.php
+ M app/Tenancy/TenantContext.php
+ M bin/setup-env
+ M bootstrap/app.php
+ M composer.json
+ M composer.lock
+ M config/auth.php
+ M config/mail.php
+ M config/session.php
+ M database/seeders/DatabaseSeeder.php
+ M docker-compose.yml
+ M docker/nginx/default.conf
+ M docs/multitenancy.md
+ M public/css/institutional.css
+ M resources/views/layouts/institutional.blade.php
+ M resources/views/organizations/edit.blade.php
+ M resources/views/organizations/index.blade.php
+ M resources/views/partials/institutional-navigation.blade.php
+ D resources/views/phase3/access.blade.php
+ M resources/views/system-status.blade.php
+ M routes/web.php
+ M tests/Feature/LocalAccessTest.php
+ M tests/Feature/OrganizationHttpTest.php
+ M tests/Feature/TenantIsolationTest.php
+ M tests/Feature/TerritorialFoundationTest.php
+ M tests/Feature/TerritorySpatialTest.php
+ M tests/PostgresTestCase.php
+?? app/Auth/AuthCookies.php
+?? app/Auth/TokenPair.php
+?? app/Http/Controllers/EmailVerificationController.php
+?? app/Http/Controllers/InvitationController.php
+?? app/Http/Controllers/LoginController.php
+?? app/Http/Controllers/LogoutController.php
+?? app/Http/Controllers/OrganizationAdministrationController.php
+?? app/Http/Controllers/PasswordResetController.php
+?? app/Http/Controllers/ProfileController.php
+?? app/Http/Controllers/RefreshController.php
+?? app/Http/Controllers/UserController.php
+?? app/Http/Middleware/AuthenticateJwtCookie.php
+?? app/Http/Middleware/BindAuthenticatedSession.php
+?? app/Http/Middleware/IdentityResponseHeaders.php
+?? app/Http/Middleware/OptionalJwtCookie.php
+?? app/Http/Middleware/RequireVerifiedEmail.php
+?? app/Http/Middleware/ShareTenantContext.php
+?? app/Http/Requests/AccountTokenRequest.php
+?? app/Http/Requests/AdministrativeOrganizationRequest.php
+?? app/Http/Requests/IdentityRequest.php
+?? app/Http/Requests/InvitationAcceptRequest.php
+?? app/Http/Requests/InvitationCreateRequest.php
+?? app/Http/Requests/LoginRequest.php
+?? app/Http/Requests/MembershipEditRequest.php
+?? app/Http/Requests/PasswordChangeRequest.php
+?? app/Http/Requests/PasswordEmailRequest.php
+?? app/Http/Requests/PasswordResetRequest.php
+?? app/Http/Requests/ProfileUpdateRequest.php
+?? app/Http/Requests/RefreshRequest.php
+?? app/Http/Requests/RoleAssignmentRequest.php
+?? app/Http/Requests/UserStateRequest.php
+?? app/Jobs/SendSecurityMail.php
+?? app/Mail/SecurityNotification.php
+?? app/Models/AccountActionToken.php
+?? app/Models/AuthSession.php
+?? app/Models/DepartmentRoleAssignment.php
+?? app/Models/Invitation.php
+?? app/Models/NationalRoleAssignment.php
+?? app/Models/OrganizationRoleAssignment.php
+?? app/Models/Permission.php
+?? app/Models/RefreshToken.php
+?? app/Models/Role.php
+?? app/Models/SecurityEvent.php
+?? app/Repositories/AccountActionTokenRepository.php
+?? app/Repositories/AuthSessionRepository.php
+?? app/Repositories/InvitationRepository.php
+?? app/Repositories/PermissionRepository.php
+?? app/Repositories/RefreshTokenRepository.php
+?? app/Repositories/RoleAssignmentRepository.php
+?? app/Repositories/RoleRepository.php
+?? app/Repositories/SecurityEventRepository.php
+?? app/Services/AuthService.php
+?? app/Services/EmailVerificationService.php
+?? app/Services/IdentityPageService.php
+?? app/Services/InvitationService.php
+?? app/Services/LogoutService.php
+?? app/Services/MembershipPageService.php
+?? app/Services/PasswordService.php
+?? app/Services/PermissionService.php
+?? app/Services/RefreshTokenService.php
+?? app/Services/RoleAssignmentService.php
+?? app/Services/SecurityMailService.php
+?? app/Services/SessionService.php
+?? app/Services/TokenService.php
+?? app/Services/UserService.php
+?? app/Services/WebSessionService.php
+?? config/development.php
+?? config/jwt.php
+?? config/security.php
+?? database/migrations/2026_09_12_000002_extend_users_for_identity.php
+?? database/migrations/2026_09_12_000003_create_authorization_tables.php
+?? database/migrations/2026_09_12_000004_create_authentication_tables.php
+?? database/migrations/2026_09_12_000005_create_account_action_tables.php
+?? database/seeders/AuthorizationSeeder.php
+?? database/seeders/DevelopmentIdentitySeeder.php
+?? docs/account-recovery.md
+?? docs/authentication.md
+?? docs/authorization.md
+?? docs/development-accounts.md
+?? docs/phase-4-files.txt
+?? docs/phase-4.md
+?? public/css/auth.css
+?? resources/views/auth/forgot-password.blade.php
+?? resources/views/auth/link-invalid.blade.php
+?? resources/views/auth/login.blade.php
+?? resources/views/auth/renew.blade.php
+?? resources/views/auth/reset-password.blade.php
+?? resources/views/auth/verify-email.blade.php
+?? resources/views/invitations/accept.blade.php
+?? resources/views/invitations/create.blade.php
+?? resources/views/layouts/auth.blade.php
+?? resources/views/mail/security.blade.php
+?? resources/views/memberships/index.blade.php
+?? resources/views/profile/show.blade.php
+?? resources/views/users/index.blade.php
+?? resources/views/users/show.blade.php
+?? tests/Feature/AuthenticationTest.php
+?? tests/Feature/AuthorizationTest.php
+?? tests/Feature/DevelopmentIdentitySeederTest.php
+?? tests/Feature/EmailVerificationTest.php
+?? tests/Feature/IdentityAdministrationHttpTest.php
+?? tests/Feature/IdentityHttpTest.php
+?? tests/Feature/IdentityLinkHttpTest.php
+?? tests/Feature/InvitationTest.php
+?? tests/Feature/PasswordSecurityTest.php
+?? tests/Feature/RefreshTokenTest.php

@@ -14,7 +14,9 @@ use App\Services\TenantContextService;
 use App\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Gate;
+use App\Repositories\RoleAssignmentRepository;
+use App\Repositories\RoleRepository;
+use App\Services\PermissionService;
 use RuntimeException;
 use Tests\PostgresTestCase;
 
@@ -106,6 +108,7 @@ class TenantIsolationTest extends PostgresTestCase
 
     public function test_missing_context_fails_closed(): void
     {
+        $this->member($this->actorA, $this->organizationB);
         $this->actingAs($this->actorA)->get('/organizations/'.$this->organizationA->id)->assertForbidden();
     }
 
@@ -170,13 +173,21 @@ class TenantIsolationTest extends PostgresTestCase
         } catch (AuthorizationException) {
             $this->assertTrue(true);
         }
-        Gate::define('organizations.view-national', fn (User $actor): bool => $actor->id === $this->actorA->id);
-        $ids = $service->nationalRead($this->actorA)->getCollection()->modelKeys();
+        $reader = User::factory()->create();
+        $this->allowNationalManagement($reader);
+        $role = app(RoleRepository::class)->findByName('SUPER_ADMIN');
+        // Se reduce el permiso real del fixture, sin sustituir Gates ni alterar producción.
+        app(RoleRepository::class)->syncPermissions($role, [
+            $role->permissions->firstWhere('code', 'organizations.view')->id,
+        ]);
+        $ids = $service->nationalRead($reader)->getCollection()->modelKeys();
         $this->assertContains($this->organizationA->id, $ids);
         $this->assertContains($this->organizationB->id, $ids);
-        app(TenantContextService::class)->activate($this->actorA, $this->organizationA->id);
-        $this->expectException(ModelNotFoundException::class);
-        $service->update($this->actorA, $this->organizationB->id, $this->organizationInput($this->organizationA));
+        $this->assertFalse(app(PermissionService::class)->allowsOrganization($reader, 'organizations.manage', $this->organizationA->id));
+        $this->assertSame(0, $reader->memberships()->count());
+        app(TenantContextService::class)->activate($reader, $this->organizationA->id);
+        $this->expectException(AuthorizationException::class);
+        $service->update($reader, $this->organizationA->id, $this->organizationInput($this->organizationA));
     }
 
     public function test_department_reads_are_explicit_and_restricted_to_the_requested_department(): void
@@ -194,10 +205,15 @@ class TenantIsolationTest extends PostgresTestCase
         } catch (AuthorizationException) {
             $this->assertTrue(true);
         }
-        Gate::define('organizations.view-department', fn (User $actor, string $id): bool => $actor->id === $this->actorA->id && $id === $department->id);
-        $ids = $service->departmentRead($this->actorA, $department->id)->getCollection()->modelKeys();
+        $reader = User::factory()->create();
+        app(RoleAssignmentRepository::class)->grantDepartment((int) $reader->id, $department->id);
+        $ids = $service->departmentRead($reader, $department->id)->getCollection()->modelKeys();
         $this->assertContains($this->organizationA->id, $ids);
         $this->assertNotContains($other->id, $ids);
+        $this->assertFalse(app(PermissionService::class)->allowsOrganization($reader, 'organizations.manage', $this->organizationA->id));
+        $this->assertSame(0, $reader->memberships()->count());
+        $this->expectException(AuthorizationException::class);
+        $service->departmentRead($reader, $otherDepartment->id);
     }
 
     public function test_multi_organization_user_must_switch_context_explicitly(): void

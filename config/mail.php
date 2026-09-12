@@ -2,8 +2,8 @@
 
 return [
 
-    // MAIL_MAILER=log permite validar correos locales sin enviarlos a destinatarios reales.
-    'default' => env('MAIL_MAILER', 'log'),
+    // Los mensajes con enlaces secretos se capturan en SMTP local; nunca se escriben en logs.
+    'default' => env('MAIL_MAILER', 'smtp'),
 
     'mailers' => [
 

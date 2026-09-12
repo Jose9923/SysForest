@@ -143,7 +143,7 @@ class TerritorialFoundationTest extends PostgresTestCase
         $this->assertFalse($a->refresh()->active);
         $this->assertNotNull($a->left_at);
         $this->assertTrue($b->refresh()->active);
-        $this->assertDatabaseHas('users', ['id' => $user->id]);
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'active' => true]);
         $this->assertSame($second->id, app(TenantContextService::class)->activate($user, $second->id)->id);
     }
 

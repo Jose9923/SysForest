@@ -14,3 +14,4 @@ bootstrap/cache/*.php
 .phpunit.result.cache
 docs
 phase2-staging
+.phase*-work

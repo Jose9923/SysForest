@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Repositories\MunicipalityRepository;
 use App\Services\TerritoryService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
 use Tests\PostgresTestCase;
 
 class TerritorySpatialTest extends PostgresTestCase
@@ -17,7 +16,7 @@ class TerritorySpatialTest extends PostgresTestCase
     {
         $pilot = $this->pilot();
         $actor = User::factory()->create();
-        Gate::define('territories.manage', fn (User $user): bool => $user->id === $actor->id);
+        $this->allowNationalManagement($actor);
         // Polígono sintético exclusivo de la transacción de pruebas; no es un límite oficial.
         $wkt = 'MULTIPOLYGON(((-73.7 4.1,-73.6 4.1,-73.6 4.2,-73.7 4.2,-73.7 4.1)))';
         $service = app(TerritoryService::class);

@@ -83,6 +83,25 @@ services:
     networks:
       - backend
 
+  mailpit:
+    image: axllent/mailpit:v1.31.1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_DATABASE: /data/mailpit.db
+      MP_DISABLE_VERSION_CHECK: "true"
+    volumes:
+      - mailpit_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8025/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
   db-init:
     image: postgis/postgis:17-3.5
     restart: "no"
@@ -189,6 +208,7 @@ volumes:
   postgres_data:
   redis_data:
   storage_data:
+  mailpit_data:
 
 networks:
   backend:

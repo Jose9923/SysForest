@@ -1,293 +1,242 @@
-# SYSFOREST — Fase 3
+# SYSFOREST — Fase 4
 
-SYSFOREST es un sistema de inventario y gestión forestal institucional. La Fase 3 incorpora territorios, organizaciones, membresías múltiples y contexto tenant explícito sobre la infraestructura aprobada de Fase 2. El proyecto definitivo está exclusivamente en `/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL.
+**Inventario y gestión forestal inteligente.**
 
-La interfaz utiliza Blade y Select2 para seleccionar municipios. El piloto corresponde a la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia. El login definitivo, JWT, roles y módulos forestales corresponden a fases posteriores. El acceso actual es una herramienta técnica temporal de consola local.
+SYSFOREST incorpora autenticación, usuarios globales, roles por ámbito, membresías institucionales, invitaciones y correos sobre la base territorial de Fase 3. La interfaz se renderiza con Blade. El piloto es la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia.
 
-El [reporte A–T de Fase 3](docs/phase-3.md) documenta los resultados ejecutados. La [estrategia multi-tenant](docs/multitenancy.md) define los contratos de aislamiento para los módulos posteriores.
+El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Los módulos de inventarios, árboles e inspecciones corresponden a fases posteriores y aún no están implementados.
+
+El [reporte de Fase 4](docs/phase-4.md) concentra la validación y sus resultados finales. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
 
 ## Entorno local
 
-El proyecto se ejecuta desde **Ubuntu 24.04 en WSL**, en `/home/josev/SYSFOREST`. Ejecuta los comandos de este documento en la terminal Ubuntu, no en PowerShell.
+Ejecuta estos comandos en la terminal **Ubuntu**, desde el proyecto:
 
-El entorno previsto utiliza Docker Engine 29.2.1 y Docker Compose 5.0.2. Docker debe estar disponible para el usuario de Ubuntu. No hace falta instalar PHP, Composer, PostgreSQL ni Redis en Windows: se ejecutan dentro de los contenedores. El script de configuración requiere Bash y OpenSSL.
+~~~bash
+cd /home/josev/SYSFOREST
+~~~
+
+Docker y Docker Compose deben estar disponibles para el usuario de Ubuntu. PHP, Composer, PostgreSQL y Redis se ejecutan en contenedores; el script de preparación necesita Bash y OpenSSL.
 
 | Componente | Configuración |
 | --- | --- |
 | Backend | Laravel 13 y PHP 8.4 FPM |
 | Web | Nginx 1.28 |
 | Base de datos | PostgreSQL 17 con PostGIS 3.5 |
-| Caché y colas | Redis 7.4 con persistencia AOF |
+| Caché, navegación y colas | Redis 7.4 con persistencia AOF |
+| Identidad | JWT de acceso y sesiones revocables en PostgreSQL |
+| Correo local | SMTP interno y buzón de desarrollo Mailpit |
 | Interfaz | Blade, renderizado en servidor |
 
-## Revisar la Fase 3
+## Preparación y arranque
 
-Con el entorno existente iniciado, aplica las migraciones incrementales mediante el rol migrador:
+Comprueba el entorno y prepara la configuración:
 
-```bash
-docker compose run --rm init
-```
-
-Carga o actualiza el piloto sin duplicarlo:
-
-```bash
-docker compose exec app php artisan db:seed --force
-```
-
-Para la primera revisión local, la creación de la cuenta técnica y su membresía se solicitan explícitamente:
-
-```bash
-docker compose exec app php artisan sysforest:local-access phase3.local@sysforest.test --organization=INEM-VVC --create-user --join
-```
-
-En este equipo esa cuenta técnica ya existe. Para emitir nuevos enlaces basta:
-
-```bash
-docker compose exec app php artisan sysforest:local-access phase3.local@sysforest.test --organization=INEM-VVC
-```
-
-Abre en el navegador la URL que devuelve Artisan. Solo funciona en `APP_ENV=local`, es de un solo uso, caduca en 10 minutos y habilita una sesión de revisión de 30 minutos. No se imprime ni comparte una contraseña. El enlace concede capacidad técnica de creación y gestión sobre organizaciones con membresía verificada; no concede acceso nacional/departamental. En producción este mecanismo está deshabilitado.
-
-Desde [gestión institucional](http://localhost:8080/organizations) puedes consultar el piloto, abrir su detalle, crear/editar organizaciones y consultar territorios. La página [de acceso](http://localhost:8080/phase-3/access) explica el acceso temporal. Las consultas administrativas permanecen denegadas hasta la Fase 4.
-
-Los seeders no crean usuarios automáticamente, no inventan polígonos y no crean árboles. El estado de infraestructura continúa disponible en [la página inicial](http://localhost:8080/).
-
-## Instalación inicial
-
-Entra en el directorio del proyecto:
-
-```bash
-cd /home/josev/SYSFOREST
-```
-
-Comprueba que Docker y Compose estén disponibles:
-
-```bash
+~~~bash
 docker version
-```
-
-```bash
 docker compose version
-```
-
-Prepara la configuración local y sus secretos:
-
-```bash
 bash bin/setup-env
-```
-
-El script prepara `.env` a partir de `.env.example`, genera las claves locales necesarias y conserva una configuración existente. `.env` es la fuente de las credenciales. Si hay archivos de secretos de una preparación anterior, el script conserva sus valores al migrarlos; los archivos anteriores quedan únicamente como respaldo local.
-
-Valida Compose sin imprimir la configuración resuelta ni las credenciales:
-
-```bash
 docker compose config --quiet
-```
+~~~
 
-Construye la imagen de aplicación:
+`setup-env` crea `.env` desde `.env.example` cuando no existe, completa secretos locales ausentes y conserva los valores ya configurados. En `APP_ENV=local` genera también `JWT_SECRET` y las contraseñas de las cuatro cuentas de desarrollo, sin mostrarlas. La configuración real permanece fuera de Git y del contexto de construcción.
 
-```bash
+Construye la imagen e inicia los servicios:
+
+~~~bash
 docker compose build
-```
-
-Si este equipo devuelve `docker-credential-desktop.exe: exec format error`, usa una configuración temporal solo para imágenes públicas. El helper de Windows no se modifica; la incidencia y el procedimiento están registrados en [el cierre de Fase 2](docs/phase-2.md#r-problemas-y-resoluciones). Con las imágenes ya construidas, `docker compose up -d` funciona sin esta configuración temporal.
-
-La construcción instala las versiones fijadas en `composer.lock`. Este archivo pertenece al proyecto y debe existir en una instalación normal. El target `base` del Dockerfile se utiliza una sola vez durante la preparación inicial del proyecto para obtener ese lock; no se repite ese procedimiento al instalar ni al arrancar SYSFOREST.
-
-Inicia todos los servicios:
-
-```bash
 docker compose up -d
-```
-
-Abre [SYSFOREST local](http://localhost:8080). El primer arranque requiere que finalicen la preparación de PostgreSQL y las migraciones. Comprueba su estado con:
-
-```bash
 docker compose ps -a
-```
+~~~
 
-Los servicios `db-init` e `init` deben terminar con código `0`; permanecen detenidos después de completar su trabajo. Los otros seis servicios deben continuar en ejecución. No confundas una finalización correcta de los inicializadores con una caída del sistema.
+La imagen instala las dependencias fijadas en `composer.lock`. El primer arranque prepara los roles de PostgreSQL, las bases operativa/de pruebas, PostGIS y las migraciones. **Siete servicios continúan en ejecución; `db-init` e `init` deben terminar con código 0.**
 
-## Servicios y orden de inicio
+Si Docker devuelve `docker-credential-desktop.exe: exec format error`, el procedimiento para usar una configuración temporal destinada a imágenes públicas está en [el cierre de Fase 2](docs/phase-2.md#r-problemas-y-resoluciones).
 
-| Servicio | Función |
+Carga el piloto territorial/institucional y el catálogo de autorización:
+
+~~~bash
+docker compose exec app php artisan db:seed --class=DatabaseSeeder
+~~~
+
+`DatabaseSeeder` es idempotente: conserva las identidades del piloto y sincroniza el catálogo de cuatro roles y 18 permisos. No crea cuentas de usuario ni geometrías.
+
+Para habilitar las cuatro cuentas de revisión local, ejecuta explícitamente:
+
+~~~bash
+docker compose exec app php artisan db:seed --class=DevelopmentIdentitySeeder
+~~~
+
+Este seeder acepta únicamente `local` o `testing`, exige las cuatro parejas de credenciales válidas y no restablece contraseñas de cuentas existentes. Las variables, los alcances y las condiciones de ejecución están en [cuentas de desarrollo](docs/development-accounts.md).
+
+Abre [iniciar sesión](http://localhost:8080/login), utiliza las credenciales de tu configuración local y entra a [organizaciones](http://localhost:8080/organizations). La creación de cuentas nuevas se realiza mediante invitaciones; no hay registro público abierto.
+
+## Identidad y permisos
+
+La identidad HTTP se valida mediante una cookie JWT **HttpOnly**. El token de acceso dura 10 minutos por defecto. La renovación utiliza un token opaco rotatorio, cuyo hash se persiste en PostgreSQL; la sesión autenticada tiene un vencimiento absoluto de 7 días por defecto. Renovar no prolonga ese vencimiento. Cerrar sesión, revocar una sesión, desactivar una cuenta o restablecer su contraseña afectan a las sesiones según las reglas documentadas en [autenticación](docs/authentication.md) y [recuperación](docs/account-recovery.md).
+
+Hay dos estados distintos:
+
+- La sesión de navegación de Laravel se guarda en **Redis**: mantiene CSRF y la selección `active_organization_id`. No acredita por sí sola la identidad del usuario.
+- La tabla **`auth_sessions` de PostgreSQL** mantiene la sesión autenticada, su propietario, expiración y revocación. Cada petición protegida comprueba el JWT y el estado actual de esa sesión y de la cuenta.
+
+El acceso institucional exige además correo verificado y permisos vigentes. Una membresía sin rol no habilita el contexto de trabajo.
+
+| Rol | Ámbito | Capacidades iniciales |
+| --- | --- | --- |
+| `SUPER_ADMIN` | Nacional | Permisos explícitos del catálogo; no requiere membresías artificiales. |
+| `DEPARTMENT_ADMIN` | Departamento asignado | Consulta de organizaciones y territorios de su ámbito. |
+| `ORGANIZATION_ADMIN` | Organización de su membresía | Gestión institucional, miembros, invitaciones y roles organizacionales autorizados. |
+| `OFFICIAL` | Organización de su membresía | Consulta institucional y territorial; sin administración de miembros. |
+
+La [matriz completa de 18 permisos](docs/authorization.md#roles-y-permisos) es la referencia de cada operación. El perfil y las sesiones propias se protegen por identidad y propiedad. La administración global de usuarios exige autorización nacional.
+
+Al seleccionar una organización, `TenantContextService` determina el modo `organization`, `national` o `department_read`. Reconsulta cuenta, concesión, organización y membresía cuando corresponde. Un administrador nacional puede seleccionar una organización sin pertenecer a ella, y un administrador departamental conserva únicamente lectura. Las operaciones sobre recursos concretos también exigen que su organización coincida con la seleccionada.
+
+## Servicios
+
+| Servicio | Función y estado esperado |
 | --- | --- |
-| `postgres` | Base persistente; utiliza una cuenta administrativa para preparación controlada. |
-| `redis` | Caché, sesiones y cola, sin puerto publicado en el equipo. |
-| `db-init` | Prepara roles, bases operativa/de pruebas, PostGIS y permisos después de que PostgreSQL esté disponible. |
-| `init` | Ejecuta migraciones en ambas bases con el rol migrador; espera a `db-init` y Redis. |
-| `app` | Ejecuta PHP-FPM con el rol de aplicación después de las migraciones. |
-| `queue` | Procesa trabajos Redis con `queue:work`. |
-| `scheduler` | Ejecuta las tareas programadas mediante `schedule:work`. |
-| `nginx` | Sirve exclusivamente `public` y envía las peticiones PHP a FPM. |
+| `postgres` | PostgreSQL/PostGIS persistente; continuo. |
+| `redis` | Caché, navegación y cola; continuo. |
+| `mailpit` | Recibe correos locales y permite revisarlos; continuo. |
+| `db-init` | Prepara roles, bases, PostGIS y permisos; termina en 0. |
+| `init` | Migra ambas bases con el rol migrador; termina en 0. |
+| `app` | PHP-FPM con el rol de aplicación; continuo. |
+| `queue` | Procesa trabajos Redis con `queue:work`; continuo. |
+| `scheduler` | Ejecuta `schedule:work`; continuo. |
+| `nginx` | Sirve `public` y envía PHP a FPM; continuo. |
 
-Los contenedores PHP incorporan un proceso init para gestionar señales y procesos hijos. Es diferente del servicio llamado `init`, cuya función es ejecutar migraciones.
+Los contenedores PHP incorporan un proceso init para gestionar señales. Es independiente del servicio `init` que ejecuta migraciones.
 
-Solo Nginx publica un puerto: **`127.0.0.1:8080`** por defecto. PostgreSQL, Redis y FPM se comunican dentro de la red de Compose y no publican puertos. Esta configuración está destinada al trabajo local; el despliegue en Hostinger se abordará posteriormente.
+Los puertos publicados quedan limitados al equipo local:
 
-## Configuración y credenciales
+| Acceso | Dirección |
+| --- | --- |
+| Aplicación e infraestructura | [localhost:8080](http://localhost:8080) |
+| Buzón Mailpit | [localhost:8025](http://localhost:8025) |
 
-Los ejemplos y comentarios de las variables están en `.env.example`. Edita `.env` para ajustar la instalación local.
+PostgreSQL, Redis y PHP-FPM no publican puertos. El correo usa `mailpit:1025` dentro de Compose; SMTP no está publicado en el equipo. Mailpit captura los mensajes de revisión local. La configuración de entrega de correo y HTTPS de producción se resolverá antes del despliegue.
+
+## Configuración y secretos
+
+`.env.example` contiene nombres de variables y valores públicos de referencia. Configura los valores privados exclusivamente en `.env`.
 
 | Variables | Uso |
 | --- | --- |
-| `APP_URL`, `APP_PORT` | URL y puerto local. Si cambias el puerto, actualiza ambos y las URL usadas en tus comprobaciones. |
-| `APP_UID`, `APP_GID` | Identidad Linux del usuario que construye/ejecuta la aplicación; `setup-env` utiliza el usuario actual. |
-| `APP_KEY` | Clave de Laravel, generada durante la preparación local. |
-| `DB_DATABASE`, `DB_TEST_DATABASE` | Bases separadas; valores iniciales `sysforest` y `sysforest_testing`. |
+| `APP_URL`, `APP_PORT` | URL y puerto local; deben coincidir. `APP_URL` también interviene en los enlaces y el emisor JWT. |
+| `APP_UID`, `APP_GID` | Identidad Linux del usuario; se prepara con el usuario actual. |
+| `APP_KEY`, `JWT_SECRET` | Claves privadas de Laravel y firma JWT; no se publican ni se reutilizan como contraseñas. |
+| `JWT_TTL`, `AUTH_SESSION_TTL_MINUTES`, `JWT_AUDIENCE` | Vigencia de acceso, sesión autenticada y audiencia esperada. |
+| `SESSION_DRIVER`, `SESSION_LIFETIME` | Almacenamiento y duración de la navegación Laravel; distintos de la vigencia de `auth_sessions`. |
+| `SESSION_SECURE_COOKIE`, `SESSION_SAME_SITE` | Política de cookies. El HTTP local usa `false` y `lax`; HTTPS requiere cookies seguras. |
+| `DB_DATABASE`, `DB_TEST_DATABASE` | Bases separadas: `sysforest` y `sysforest_testing` inicialmente. |
 | `DB_USERNAME`, `DB_PASSWORD` | Cuenta de ejecución de Laravel, inicialmente `sysforest_app`. |
-| `DB_MIGRATOR_USERNAME`, `DB_MIGRATOR_PASSWORD` | Cuenta para cambios de esquema, inicialmente `sysforest_migrator`. |
+| `DB_MIGRATOR_USERNAME`, `DB_MIGRATOR_PASSWORD` | Cuenta de cambios de esquema, inicialmente `sysforest_migrator`. |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD` | Cuenta administrativa de preparación, inicialmente `sysforest_admin`. |
-| `MAIL_MAILER` | `log` en esta fase; no se envían correos reales. |
+| `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT` | `smtp`, `mailpit` y `1025` en el entorno local. |
+| `DEV_*_EMAIL`, `DEV_*_PASSWORD` | Cuatro cuentas opcionales, creadas solo al ejecutar el seeder de desarrollo. |
+| `AUTH_*_RATE_LIMIT` | Límites de intentos de inicio, renovación, recuperación e invitaciones. |
 
-Las cuentas administrativa, migradora y de ejecución tienen funciones separadas. Laravel, el worker y el scheduler usan la cuenta de ejecución, sin permisos para crear bases, roles ni cambiar el esquema. El inicializador de migraciones recibe la cuenta migradora. La preparación de PostGIS y roles corresponde a `db-init`.
+Los valores de las contraseñas y claves se representan como campos vacíos o marcadores en los ejemplos; nunca como credenciales de acceso compartidas. No imprimas `docker compose config` sin `--quiet` en registros destinados a revisión.
 
-Compose toma los secretos privilegiados desde variables de `.env` y los monta como archivos de Docker secrets únicamente en los servicios que los necesitan. Las variables privilegiadas quedan vacías en los procesos habituales de aplicación, cola y scheduler. No se incluyen secretos reales en Git ni en la imagen de aplicación. `.env` y cualquier respaldo local anterior de secretos deben conservarse junto con los datos persistentes y mantenerse privados.
+Laravel, el worker y el scheduler utilizan la cuenta de ejecución sin permisos de cambios de esquema. Compose monta los secretos privilegiados solo en los inicializadores que los necesitan; sus variables quedan vacías en los servicios PHP habituales.
 
-`setup-env` no es un procedimiento de rotación de contraseñas: ejecutarlo nuevamente conserva la configuración. Cambiar el contenido de `.env` no equivale por sí solo a cambiar las credenciales de una base ya inicializada.
+`setup-env` no rota valores existentes. Cambiar una contraseña en `.env` no modifica automáticamente la credencial de una base ya inicializada ni la de una cuenta ya creada.
 
-## Comprobaciones
+## Comprobaciones y pruebas
 
-Estos comandos describen el procedimiento de verificación; no constituyen un registro de resultados ejecutados.
+Comprueba la disponibilidad de Laravel, PostgreSQL/PostGIS y Redis:
 
-Los resultados de infraestructura inicial están en [el reporte de Fase 2](docs/phase-2.md); la verificación actual y el fundamento institucional están en [el reporte de Fase 3](docs/phase-3.md).
-
-Comprueba la disponibilidad HTTP de Laravel, PostgreSQL/PostGIS y Redis:
-
-```bash
+~~~bash
 curl --fail --silent --show-error http://localhost:8080/health/ready
-```
+~~~
 
-La respuesta esperada con las dependencias disponibles es `{"status":"ok"}` y HTTP 200. Si falla alguna dependencia, el endpoint devuelve HTTP 503 sin publicar detalles internos de la conexión.
+La respuesta esperada es HTTP 200 con `{"status":"ok"}`; una dependencia no disponible produce HTTP 503 con un cuerpo genérico. `/up` mantiene la comprobación de vida de Laravel. La [página inicial](http://localhost:8080/) muestra el estado de infraestructura sin requerir inicio de sesión.
 
-Despacha un trabajo real para el worker:
+Despacha una tarea real de cola y consulta la programación:
 
-```bash
+~~~bash
 docker compose exec app php artisan sysforest:probe-queue
-```
-
-Consulta la página inicial para comprobar que cambió la fecha de procesamiento de la cola. El scheduler ejecuta una comprobación cada minuto; su fecha debe actualizarse por ejecución programada. La presencia de un proceso activo no sustituye la comprobación de que procesó una tarea.
-
-Consulta la programación:
-
-```bash
 docker compose exec app php artisan schedule:list
-```
+~~~
 
-## Pruebas y estilo
+La página inicial permite revisar la fecha de procesamiento de cola. El scheduler actualiza su comprobación cada minuto. Ver un proceso activo no demuestra que haya completado una tarea.
 
-Ejecuta la suite completa, incluidas las pruebas de PostgreSQL/PostGIS y Redis:
+Ejecuta la suite completa de forma serial sobre la base de pruebas:
 
-```bash
-docker compose exec app php artisan test
-```
-
-Para fallar también ante advertencias:
-
-```bash
+~~~bash
 docker compose exec app php artisan test --fail-on-warning
-```
+~~~
 
-`phpunit.xml` fija `APP_ENV=testing` y `DB_DATABASE=sysforest_testing` tanto en `env` como en `server`, con `force=true`, para evitar que las variables heredadas de Docker prevalezcan. Activa además `SYSFOREST_RUN_INTEGRATION=1`. No se utiliza SQLite.
+`phpunit.xml` fija `APP_ENV=testing`, `DB_DATABASE=sysforest_testing` y activa `SYSFOREST_RUN_INTEGRATION=1`. Se utiliza PostgreSQL/PostGIS real. `PostgresTestCase` verifica entorno, driver y nombre de base antes de abrir transacciones y revierte los fixtures. No ejecutes suites concurrentes contra la misma base de pruebas.
 
-`tests/PostgresTestCase.php` verifica entorno, driver y nombre de base antes de iniciar transacciones. Los fixtures se revierten al terminar cada prueba. Si cambias `DB_TEST_DATABASE`, actualiza también las dos entradas `DB_DATABASE` de `phpunit.xml` para que coincidan con esa base separada. No sustituyas la base de pruebas por la operativa. `composer test` sigue disponible y limpia previamente la caché de configuración.
+Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 4](docs/phase-4.md); estos comandos describen el procedimiento, no un resultado ejecutado.
 
-Comprueba el formato PSR-12 sin modificar los archivos:
+Revisa el formato:
 
-```bash
+~~~bash
 docker compose exec app composer lint
-```
+~~~
 
-Para aplicar el formato desde la imagen local con un montaje escribible:
+Para aplicar PSR-12 con un montaje escribible desde la raíz del proyecto:
 
-```bash
+~~~bash
 docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/var/www/html" --workdir /var/www/html --entrypoint composer sysforest-app:local format
-```
+~~~
 
-Los PHPDoc del proyecto se redactan en español. El código montado en los servicios es de solo lectura; las modificaciones se realizan en los archivos del proyecto, desde el editor del host.
+## Operación y persistencia
 
-## Operaciones frecuentes
+Consulta estado, inicialización, procesos y migraciones:
 
-Ver los últimos mensajes de inicialización:
-
-```bash
+~~~bash
+docker compose ps -a
 docker compose logs --tail=100 db-init init
-```
-
-Ver los últimos mensajes de aplicación y procesos:
-
-```bash
-docker compose logs --tail=100 app queue scheduler nginx
-```
-
-Consultar las migraciones:
-
-```bash
+docker compose logs --tail=100 app queue scheduler nginx mailpit
 docker compose exec app php artisan migrate:status
-```
+~~~
 
-Ejecutar las migraciones con el rol autorizado, por ejemplo tras añadir una migración en una fase posterior:
+Aplica migraciones incrementales con el rol autorizado:
 
-```bash
+~~~bash
 docker compose run --rm init
-```
+~~~
 
-No ejecutes las migraciones desde `app`: ese servicio utiliza intencionalmente el rol sin permisos de cambio de esquema.
+El servicio `app` no tiene permisos para modificar el esquema. Cuando cambien el Dockerfile, las dependencias o la configuración de Compose, reconstruye y aplica los servicios:
 
-Cuando cambien el Dockerfile o las dependencias bloqueadas, reconstruye la imagen:
-
-```bash
+~~~bash
 docker compose build
-```
-
-Aplica la imagen y configuración de servicios:
-
-```bash
 docker compose up -d
-```
+~~~
 
-Después de modificar clases utilizadas por el worker, solicita su reinicio ordenado:
+Tras cambios en clases que utiliza el worker:
 
-```bash
+~~~bash
 docker compose exec app php artisan queue:restart
-```
+~~~
 
-Detén los servicios conservando los contenedores y datos:
-
-```bash
-docker compose stop
-```
-
-También puedes retirar los contenedores y la red conservando los volúmenes:
-
-```bash
-docker compose down
-```
-
-Para volver a iniciar, basta con `docker compose up -d`.
-
-## Persistencia y ubicación de archivos
+Para detener conservando datos, utiliza `docker compose stop`. `docker compose down` retira contenedores y red, manteniendo los volúmenes. Vuelve a arrancar con `docker compose up -d`. No uses `down -v` para una detención normal: elimina los volúmenes.
 
 | Volumen | Contenido |
 | --- | --- |
-| `postgres_data` | Datos y configuración persistente de PostgreSQL. |
+| `postgres_data` | Datos persistentes de PostgreSQL. |
 | `redis_data` | Persistencia AOF de Redis. |
-| `storage_data` | Archivos de Laravel y almacenamiento local de la aplicación. |
+| `storage_data` | Almacenamiento de Laravel y archivos locales de la aplicación. |
+| `mailpit_data` | Buzón local de revisión. |
 
-No añadas `-v` a `docker compose down` para una detención normal: esa opción elimina los volúmenes del proyecto. Los volúmenes persistentes no sustituyen una copia de seguridad. La estrategia de respaldo y restauración para un entorno de producción se definirá antes del despliegue.
+Los volúmenes no sustituyen las copias de seguridad. Los enlaces de los correos locales son credenciales de acción: conserva el buzón de revisión privado. Las carpetas de código se montan como solo lectura en los servicios PHP; se editan en el proyecto WSL. Nginx expone únicamente `public`, no la raíz ni `.env`.
 
-Las carpetas de código y configuración se montan en los contenedores PHP como solo lectura. Las dependencias Composer se instalan dentro de la imagen. Nginx no expone la raíz del proyecto ni `.env`; su raíz pública es `/var/www/html/public`.
+## Documentación
 
-## Estructura y documentación
-
-| Ruta | Contenido |
+| Documento | Contenido |
 | --- | --- |
-| `app/` | Controladores, servicios, repositorios y componentes PHP de la fase. |
-| `resources/views/` | Vistas Blade. |
-| `routes/` | Rutas web y programación de tareas. |
-| `database/` | Migraciones y estructura de datos disponible en cada fase. |
-| `tests/` | Pruebas unitarias, de funcionalidad y de infraestructura. |
-| `docker/` | Nginx, PHP, inicialización PostgreSQL y scripts de contenedores. |
-| `bin/setup-env` | Preparación idempotente de variables y secretos locales. |
+| [Fase 4](docs/phase-4.md) | Implementación, comprobaciones y cierre de la fase actual. |
+| [Autenticación](docs/authentication.md) | JWT, cookies, renovación y sesiones autenticadas. |
+| [Autorización](docs/authorization.md) | Cuatro roles, 18 permisos, scopes y restricciones SQL. |
+| [Recuperación e invitaciones](docs/account-recovery.md) | Verificación de correo, contraseñas, invitaciones y entrega local. |
+| [Cuentas de desarrollo](docs/development-accounts.md) | Variables y seeder explícito de revisión local. |
+| [Multi-tenancy](docs/multitenancy.md) | Selección, revalidación, consultas y aislamiento entre organizaciones. |
+| [Arquitectura](docs/architecture.md) y [modelo de datos](docs/database.md) | Diseño conceptual aprobado y módulos previstos. |
+| [Fase 2](docs/phase-2.md) y [Fase 3](docs/phase-3.md) | Evidencia histórica de infraestructura y fundamento institucional. |
 
-La [arquitectura](docs/architecture.md) documenta MVC, el flujo Controller → Service → Repository → Model y los reportes mediante Blade. El [modelo de datos](docs/database.md) contiene el ERD conceptual y las relaciones previstas. Ambos documentos conservan el diseño conceptual aprobado. Las capacidades implementadas actualmente se describen en [Fase 3](docs/phase-3.md) y [multi-tenancy](docs/multitenancy.md).
+El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales son las de Fase 4; los diagramas conceptuales de módulos posteriores no implican que estén implementados.

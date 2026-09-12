@@ -9,8 +9,8 @@ use Illuminate\View\View;
 
 class TerritoryController extends Controller
 {
-    public function __invoke(TerritoryService $service): View
+    public function __invoke(\Illuminate\Http\Request $request, TerritoryService $service): View
     {
-        return view('territories.index', ['countries' => $service->overview()]);
+        return view('territories.index', ['countries' => $service->overviewForActor($request->user())]);
     }
 }

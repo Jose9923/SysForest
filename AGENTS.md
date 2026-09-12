@@ -1,7 +1,7 @@
 # SYSFOREST: acuerdos de implementación
 
-La Fase 2 fue aprobada. El alcance actual es la Fase 3: territorios, organizaciones y fundamento multi-tenant.
-No implementar JWT final ni módulos forestales; no comenzar la Fase 4 sin aprobación.
+La Fase 3 fue aprobada. El alcance actual es la Fase 4: autenticación, JWT, usuarios, RBAC por alcance, invitaciones y correos.
+No implementar módulos forestales ni comenzar la Fase 5 sin aprobación.
 La única fuente de verdad es /home/josev/SYSFOREST. No depender de phase2-staging.
 
 - Laravel 13 y PHP 8.4 en Docker dentro de Ubuntu-24.04 WSL.
@@ -11,7 +11,7 @@ La única fuente de verdad es /home/josev/SYSFOREST. No depender de phase2-stagi
 - Toda interfaz y los reportes/PDF utilizan Blade. CSV, Excel y GeoJSON reutilizarán Services, Repositories y filtros.
 - PostgreSQL/PostGIS, Redis, Nginx, PHP-FPM, queue y scheduler en servicios separados.
 - Una base multi-tenant con organization_id; Tree separado de TreeInspection e inventory_trees.
-- JWT y los módulos de negocio pertenecen a fases posteriores; no simularlos ahora.
+- Autenticación JWT con cookies HttpOnly, refresh opaco con hash, rotación y revocación. Los módulos forestales pertenecen a fases posteriores.
 - PHPDoc, comentarios útiles y documentación en español; identificadores técnicos en inglés.
 - Formato PSR-12. No comentar cada línea ni repetir lo evidente.
 - No consultar desde Blade ni poner reglas de negocio en Controllers o JavaScript.

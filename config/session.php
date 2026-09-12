@@ -6,7 +6,7 @@ use Illuminate\Support\Str;
 
 return [
 
-    // Las sesiones técnicas usan Redis; esta configuración no implementa autenticación JWT.
+    // Redis conserva CSRF y selección institucional; la identidad se valida mediante JWT y auth_sessions.
     'driver' => env('SESSION_DRIVER', 'redis'),
 
     'lifetime' => (int) env('SESSION_LIFETIME', 120),
@@ -36,7 +36,7 @@ return [
     'domain' => env('SESSION_DOMAIN'),
 
     // HTTP local admite false; al servir mediante HTTPS debe configurarse true.
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => env('APP_ENV') !== 'local' || str_starts_with((string) env('APP_URL'), 'https://'),
 
     'http_only' => env('SESSION_HTTP_ONLY', true),
 

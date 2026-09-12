@@ -42,5 +42,21 @@ for secret_spec in POSTGRES_PASSWORD:postgres_password DB_MIGRATOR_PASSWORD:migr
         printf '\n%s=%s\n' "$secret_variable" "$secret_value" >> .env
     fi
 done
+
+# Las claves de identidad se generan para desarrollo sin rotar valores ya configurados.
+if grep -q '^APP_ENV=local$' .env; then
+    for identity_variable in JWT_SECRET DEV_SUPER_ADMIN_PASSWORD DEV_DEPARTMENT_ADMIN_PASSWORD DEV_ORGANIZATION_ADMIN_PASSWORD DEV_OFFICIAL_PASSWORD; do
+        if grep -qE "^${identity_variable}=.+" .env; then
+            continue
+        fi
+        identity_value="S9!$(openssl rand -hex 32)"
+        if grep -qE "^${identity_variable}=" .env; then
+            sed -i "s|^${identity_variable}=.*|${identity_variable}=${identity_value}|" .env
+        else
+            printf '\n%s=%s\n' "$identity_variable" "$identity_value" >> .env
+        fi
+    done
+fi
+
 chmod 600 .env
 printf '%s\n' 'Configuración local preparada. Los secretos están excluidos de Git y del contexto de build.'

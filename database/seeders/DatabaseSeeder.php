@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([TerritorySeeder::class, PilotOrganizationSeeder::class]);
+        $this->call([TerritorySeeder::class, PilotOrganizationSeeder::class, AuthorizationSeeder::class]);
+        // Las cuentas de desarrollo siempre requieren ejecutar su seeder de forma explícita.
     }
 }

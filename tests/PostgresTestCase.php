@@ -5,12 +5,18 @@ declare(strict_types=1);
 namespace Tests;
 
 use App\Models\Organization;
+use App\Models\OrganizationMembership;
 use App\Models\User;
+use App\Repositories\AuthSessionRepository;
 use App\Repositories\OrganizationMembershipRepository;
 use App\Repositories\OrganizationRepository;
+use App\Repositories\RoleAssignmentRepository;
 use App\Services\PilotSeedService;
+use App\Services\TokenService;
+use Database\Seeders\AuthorizationSeeder;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use LogicException;
 
@@ -20,15 +26,44 @@ abstract class PostgresTestCase extends TestCase
         beginDatabaseTransaction as private startDatabaseTransaction;
     }
 
+    private bool $authorizationCatalogReady = false;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['jwt.secret' => str_repeat('sysforest-phpunit-key-', 4)]);
+    }
+
     /** Nunca se permite ejecutar fixtures mutables sobre la base operativa. */
     public function beginDatabaseTransaction(): void
     {
-        if (!app()->environment('testing') || config('database.default') !== 'pgsql'
+        if (! app()->environment('testing') || config('database.default') !== 'pgsql'
             || config('database.connections.pgsql.database') !== env('DB_TEST_DATABASE', 'sysforest_testing')) {
             throw new LogicException(sprintf('Base de pruebas rechazada: entorno=%s, driver=%s, base=%s, esperada=%s.', app()->environment(), config('database.default'), config('database.connections.pgsql.database'), env('DB_TEST_DATABASE', 'sysforest_testing')));
         }
 
         $this->startDatabaseTransaction();
+    }
+
+    /** Credencial real de fixture: HTTP debe verificar firma, sesión, cuenta y permisos. */
+    public function actingAs(Authenticatable $user, $guard = null): static
+    {
+        if (! $user instanceof User || ! $user->exists || ($guard !== null && $guard !== 'web')) {
+            throw new LogicException('El fixture HTTP requiere una cuenta SYSFOREST persistida y el guard web.');
+        }
+
+        $current = $user->fresh();
+        $session = app(AuthSessionRepository::class)->create([
+            'user_id' => $current->id,
+            'expires_at' => now()->addMinutes((int) config('security.session_ttl_minutes')),
+            'last_used_at' => now(),
+        ]);
+        $token = app(TokenService::class)->issue($current, $session);
+        Auth::guard('web')->forgetUser();
+        $this->withCookie((string) config('security.access_cookie'), $token)->withCredentials();
+        $this->withSession(['auth_session_id' => $session->id, 'active_organization_id' => null]);
+
+        return $this;
     }
 
     protected function pilot(): Organization
@@ -48,21 +83,47 @@ abstract class PostgresTestCase extends TestCase
         ]);
     }
 
-    protected function member(User $user, Organization $organization): \App\Models\OrganizationMembership
+    protected function member(User $user, Organization $organization): OrganizationMembership
     {
-        return app(OrganizationMembershipRepository::class)->upsert(
+        $this->ensureAuthorizationCatalog();
+        $membership = app(OrganizationMembershipRepository::class)->upsert(
             (int) $user->id,
             $organization->id,
-            ['active' => true, 'joined_at' => now(), 'left_at' => null]
+            ['active' => true, 'joined_at' => now(), 'left_at' => null],
         );
+        $assignments = app(RoleAssignmentRepository::class);
+        if ($assignments->organizationRole($membership) === null) {
+            $assignments->grantOrganization($membership, 'OFFICIAL');
+        }
+
+        return $membership;
     }
 
+    /** Solo administra las membresías institucionales existentes de este fixture. */
     protected function allowManagement(User $actor): void
     {
-        // Concesión explícita exclusiva del test; no convierte pertenencia en permiso en producción.
-        Gate::define('organizations.create', fn (User $user): bool => $user->id === $actor->id);
-        Gate::define('organizations.manage', fn (User $user, Organization $organization): bool => $user->id === $actor->id);
-        Gate::define('memberships.manage', fn (User $user): bool => $user->id === $actor->id);
+        $this->ensureAuthorizationCatalog();
+
+        foreach (app(OrganizationMembershipRepository::class)->forUser((int) $actor->id) as $membership) {
+            if ($membership->active && $membership->left_at === null) {
+                app(RoleAssignmentRepository::class)->grantOrganization($membership, 'ORGANIZATION_ADMIN');
+            }
+        }
+    }
+
+    /** La administración nacional se concede explícitamente, sin fabricar membresías. */
+    protected function allowNationalManagement(User $actor): void
+    {
+        $this->ensureAuthorizationCatalog();
+        app(RoleAssignmentRepository::class)->grantNational((int) $actor->id);
+    }
+
+    protected function ensureAuthorizationCatalog(): void
+    {
+        if (! $this->authorizationCatalogReady) {
+            $this->seed(AuthorizationSeeder::class);
+            $this->authorizationCatalogReady = true;
+        }
     }
 
     protected function actingTenant(User $actor, Organization $organization): static

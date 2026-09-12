@@ -79,7 +79,7 @@
         </section>
 
         <nav class="links" aria-label="Comprobaciones de infraestructura">
-            <a href="{{ route('phase3.access') }}">Gestión institucional · Fase 3</a>
+            <a href="{{ route('login') }}">Iniciar sesión en SYSFOREST</a>
             <a href="{{ route('system.readiness') }}">Consultar disponibilidad</a>
             <a href="{{ url('/up') }}">Comprobar respuesta de Laravel</a>
         </nav>

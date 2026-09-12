@@ -6,7 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\Organization;
 use App\Models\User;
-use App\Repositories\OrganizationMembershipRepository;
+use App\Repositories\OrganizationRepository;
 use App\Services\OrganizationService;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -17,7 +17,7 @@ class OrganizationHttpTest extends PostgresTestCase
 {
     public function test_guests_cannot_list_or_write_organizations(): void
     {
-        $this->get('/organizations')->assertRedirect(route('phase3.access'));
+        $this->get('/organizations')->assertRedirect(route('login'));
         $this->postJson('/organizations', [])->assertUnauthorized();
     }
 
@@ -26,9 +26,10 @@ class OrganizationHttpTest extends PostgresTestCase
         $pilot = $this->pilot();
         $actor = User::factory()->create();
         $this->member($actor, $pilot);
-        $this->allowManagement($actor);
+        $this->allowNationalManagement($actor);
         $this->actingTenant($actor, $pilot);
         \Illuminate\Database\Eloquent\Model::preventLazyLoading();
+
         try {
             $this->get('/organizations')->assertOk()->assertSee($pilot->name)->assertSee('Crear organización');
             $this->get('/organizations/'.$pilot->id)->assertOk()->assertSee('Villavicencio, Meta, Colombia.');
@@ -40,17 +41,21 @@ class OrganizationHttpTest extends PostgresTestCase
         }
     }
 
-    public function test_creation_adds_organization_and_membership_in_one_transaction(): void
+    public function test_national_creation_does_not_fabricate_an_organization_membership(): void
     {
         $pilot = $this->pilot();
         $actor = User::factory()->create();
-        $this->member($actor, $pilot);
-        $this->allowManagement($actor);
+        $this->allowNationalManagement($actor);
         $input = $this->organizationInput($pilot);
-        $this->actingTenant($actor, $pilot)->post('/organizations', $input)->assertRedirect();
+        $response = $this->actingAs($actor)->post('/organizations', $input)->assertRedirect();
         $created = Organization::where('code', $input['code'])->firstOrFail();
-        $this->assertDatabaseHas('organization_memberships', ['user_id' => $actor->id, 'organization_id' => $created->id, 'active' => true]);
+        $response->assertRedirect(route('organizations.show', $created->id))
+            ->assertSessionHas('active_organization_id', $created->id);
+
+        $this->assertDatabaseMissing('organization_memberships', ['user_id' => $actor->id]);
+        $this->assertSame(0, $created->memberships()->count());
         $this->assertSame($pilot->municipality_id, $created->municipality_id);
+        $this->get('/organizations/'.$created->id)->assertOk();
     }
 
     public function test_inactive_creation_returns_to_listing_without_replacing_active_context(): void
@@ -58,29 +63,35 @@ class OrganizationHttpTest extends PostgresTestCase
         $pilot = $this->pilot();
         $actor = User::factory()->create();
         $this->member($actor, $pilot);
-        $this->allowManagement($actor);
+        $this->allowNationalManagement($actor);
         $input = $this->organizationInput($pilot);
         $input['active'] = false;
+
         $this->actingTenant($actor, $pilot)->post('/organizations', $input)
             ->assertRedirect(route('organizations.index'))->assertSessionHas('active_organization_id', $pilot->id);
         $this->assertDatabaseHas('organizations', ['code' => $input['code'], 'active' => false]);
-        $this->get('/organizations')->assertOk()->assertDontSee($input['code']);
+        $this->get('/organizations')->assertOk()->assertSee($input['code']);
     }
 
-    public function test_failed_membership_creation_rolls_back_the_organization(): void
+    public function test_failure_after_inserting_organization_rolls_back_the_transaction(): void
     {
         $pilot = $this->pilot();
         $actor = User::factory()->create();
-        $this->allowManagement($actor);
+        $this->allowNationalManagement($actor);
         $input = $this->organizationInput($pilot);
-        $this->mock(OrganizationMembershipRepository::class, function (MockInterface $mock): void {
-            $mock->shouldReceive('upsert')->once()->andThrow(new RuntimeException('Fallo simulado de persistencia.'));
+        $this->partialMock(OrganizationRepository::class, function (MockInterface $mock): void {
+            $mock->shouldReceive('create')->once()->andReturnUsing(function (array $attributes): never {
+                Organization::query()->create($attributes);
+                throw new RuntimeException('Fallo simulado después de persistir la organización.');
+            });
         });
+
         try {
             app(OrganizationService::class)->create($actor, $input);
             $this->fail('La operación debía fallar.');
         } catch (RuntimeException) {
             $this->assertDatabaseMissing('organizations', ['code' => $input['code']]);
+            $this->assertDatabaseMissing('organization_memberships', ['user_id' => $actor->id]);
         }
     }
 
@@ -101,11 +112,10 @@ class OrganizationHttpTest extends PostgresTestCase
     {
         $pilot = $this->pilot();
         $actor = User::factory()->create();
-        $this->member($actor, $pilot);
-        $this->allowManagement($actor);
+        $this->allowNationalManagement($actor);
         $input = $this->organizationInput($pilot);
         $input[$field] = $value;
-        $this->actingTenant($actor, $pilot)->postJson('/organizations', $input)
+        $this->actingAs($actor)->postJson('/organizations', $input)
             ->assertUnprocessable()->assertJsonValidationErrors($field);
     }
 
@@ -130,10 +140,9 @@ class OrganizationHttpTest extends PostgresTestCase
     {
         $pilot = $this->pilot();
         $actor = User::factory()->create();
-        $this->member($actor, $pilot);
-        $this->allowManagement($actor);
+        $this->allowNationalManagement($actor);
         $pilot->municipality->department->update(['active' => false]);
-        $this->actingTenant($actor, $pilot)->postJson('/organizations', $this->organizationInput($pilot))
+        $this->actingAs($actor)->postJson('/organizations', $this->organizationInput($pilot))
             ->assertUnprocessable()->assertJsonValidationErrors('municipality_id');
     }
 
@@ -141,7 +150,7 @@ class OrganizationHttpTest extends PostgresTestCase
     {
         $pilot = $this->pilot();
         $actor = User::factory()->create();
-        $this->allowManagement($actor);
+        $this->allowNationalManagement($actor);
         $input = $this->organizationInput($pilot);
         $input['code'] = $pilot->code;
         $input['tree_code_prefix'] = $pilot->tree_code_prefix;

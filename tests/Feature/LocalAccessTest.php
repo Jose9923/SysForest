@@ -5,105 +5,98 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Repositories\AuthSessionRepository;
 use App\Repositories\OrganizationMembershipRepository;
-use App\Services\LocalAccessService;
-use App\Tenancy\LocalAccessContext;
+use App\Services\SessionService;
 use App\Tenancy\TenantContext;
-use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\SessionGuard;
+use Illuminate\Support\Facades\Artisan;
 use Tests\PostgresTestCase;
 
 class LocalAccessTest extends PostgresTestCase
 {
-    public function test_local_access_is_disabled_outside_local_environment(): void
+    public function test_legacy_access_routes_are_removed_in_local_and_production(): void
     {
-        $this->expectException(AuthorizationException::class);
-        app(LocalAccessService::class)->issue('local@sysforest.test', 'INEM-VVC', true, true);
-    }
-
-    public function test_issuance_does_not_create_accounts_or_memberships_implicitly(): void
-    {
-        $organization = $this->pilot();
-        $actor = User::factory()->create();
-        $this->app->instance('env', 'local');
+        $environment = app()->environment();
 
         try {
-            app(LocalAccessService::class)->issue($actor->email, $organization->code);
-            $this->fail('Una cuenta sin membresía no puede emitir un enlace.');
-        } catch (AuthorizationException) {
-            $this->assertDatabaseMissing('organization_memberships', ['user_id' => $actor->id]);
-        }
-
-        try {
-            app(LocalAccessService::class)->issue('missing@sysforest.test', $organization->code);
-            $this->fail('La emisión no debe crear una cuenta implícitamente.');
-        } catch (AuthorizationException) {
-            $this->assertDatabaseMissing('users', ['email' => 'missing@sysforest.test']);
+            foreach (['local', 'production'] as $value) {
+                app()->instance('env', $value);
+                $this->get('/phase-3/access')->assertNotFound();
+                $this->get('/phase-3/local-access/'.str_repeat('a', 64))->assertNotFound();
+            }
+        } finally {
+            app()->instance('env', $environment);
         }
     }
 
-    public function test_explicit_console_flags_create_only_one_account_and_membership(): void
+    public function test_legacy_console_command_is_no_longer_registered(): void
     {
-        $organization = $this->pilot();
-        $this->app->instance('env', 'local');
-        $service = app(LocalAccessService::class);
-        $service->issue('explicit@sysforest.test', $organization->code, true, true);
-        $service->issue('explicit@sysforest.test', $organization->code, true, true);
-        $this->assertSame(1, User::query()->where('email', 'explicit@sysforest.test')->count());
-        $actor = User::query()->where('email', 'explicit@sysforest.test')->firstOrFail();
-        $this->assertSame(1, $actor->memberships()->count());
+        $this->assertArrayNotHasKey('sysforest:local-access', Artisan::all());
     }
 
-    public function test_signed_link_is_single_use_and_cleans_request_context(): void
+    public function test_legacy_links_cannot_create_accounts_or_memberships(): void
     {
-        $organization = $this->pilot();
-        $actor = User::factory()->create();
-        $this->member($actor, $organization);
-        $this->app->instance('env', 'local');
-        $url = app(LocalAccessService::class)->issue($actor->email, $organization->code);
-
-        $this->get($url)->assertRedirect(route('organizations.index'));
-        $this->assertAuthenticatedAs($actor);
-        $this->get(route('organizations.create'))->assertOk();
-        $this->get(route('organizations.show', $organization->id))->assertOk();
-        $this->assertFalse(app(TenantContext::class)->isActive());
-        $this->assertFalse(app(LocalAccessContext::class)->isGrantedTo($actor));
-        $this->get($url)->assertForbidden();
-    }
-
-    public function test_tampered_signature_is_rejected_without_consuming_valid_link(): void
-    {
-        $organization = $this->pilot();
-        $actor = User::factory()->create();
-        $this->member($actor, $organization);
-        $this->app->instance('env', 'local');
-        $url = app(LocalAccessService::class)->issue($actor->email, $organization->code);
-        $this->get($url.'&tampered=1')->assertForbidden();
+        $this->pilot();
+        $beforeUsers = User::query()->count();
+        $beforeMemberships = \App\Models\OrganizationMembership::query()->count();
+        $this->get('/phase-3/local-access/'.str_repeat('b', 64).'?expires='.(time() + 600).'&signature='.str_repeat('c', 64))
+            ->assertNotFound();
+        $this->assertSame($beforeUsers, User::query()->count());
+        $this->assertSame($beforeMemberships, \App\Models\OrganizationMembership::query()->count());
         $this->assertGuest();
-        $this->get($url)->assertRedirect(route('organizations.index'));
     }
 
-    public function test_revoked_membership_invalidates_previously_issued_link(): void
+    public function test_a_forged_local_grant_cannot_elevate_an_official(): void
+    {
+        $organization = $this->pilot();
+        $actor = User::factory()->create();
+        $this->member($actor, $organization);
+        $this->actingTenant($actor, $organization)->withSession([
+            'phase3_local_access' => ['actor_id' => $actor->id, 'expires_at' => time() + 1800],
+        ])->get('/organizations/'.$organization->id.'/edit')->assertForbidden();
+        $this->get('/organizations/create')->assertForbidden();
+        $this->assertFalse(app(TenantContext::class)->isActive());
+    }
+
+    public function test_a_legacy_session_identifier_does_not_replace_the_jwt_cookie(): void
+    {
+        $organization = $this->pilot();
+        $actor = User::factory()->create();
+        $this->member($actor, $organization);
+        $this->allowManagement($actor);
+        $this->withSession([
+            'login_web_'.sha1(SessionGuard::class) => $actor->id,
+            'active_organization_id' => $organization->id,
+            'phase3_local_access' => ['actor_id' => $actor->id, 'expires_at' => time() + 1800],
+        ])->getJson('/organizations')->assertUnauthorized();
+        $this->assertGuest();
+    }
+
+    public function test_a_legacy_grant_cannot_restore_a_revoked_jwt_session(): void
+    {
+        $organization = $this->pilot();
+        $actor = User::factory()->create();
+        $this->member($actor, $organization);
+        $this->actingTenant($actor, $organization);
+        $session = app(AuthSessionRepository::class)->find(session('auth_session_id'));
+        app(SessionService::class)->revoke($session, 'logout');
+        $this->withSession([
+            'phase3_local_access' => ['actor_id' => $actor->id, 'expires_at' => time() + 1800],
+        ])->getJson('/organizations')->assertUnauthorized();
+        $this->assertFalse(app(TenantContext::class)->isActive());
+    }
+
+    public function test_a_legacy_grant_cannot_restore_a_revoked_membership(): void
     {
         $organization = $this->pilot();
         $actor = User::factory()->create();
         $membership = $this->member($actor, $organization);
-        $this->app->instance('env', 'local');
-        $url = app(LocalAccessService::class)->issue($actor->email, $organization->code);
+        $this->actingTenant($actor, $organization);
         app(OrganizationMembershipRepository::class)->update($membership, ['active' => false, 'left_at' => now()]);
-        $this->get($url)->assertForbidden();
-        $this->assertGuest();
-    }
-
-    public function test_expired_local_grant_logs_out_and_clears_context(): void
-    {
-        $organization = $this->pilot();
-        $actor = User::factory()->create();
-        $this->member($actor, $organization);
-        $this->app->instance('env', 'local');
-        $this->actingTenant($actor, $organization)->withSession([
-            'phase3_local_access' => ['actor_id' => $actor->id, 'expires_at' => time() - 1],
-        ])->get(route('organizations.create'))->assertRedirect(route('phase3.access'));
-        $this->assertGuest();
+        $this->withSession([
+            'phase3_local_access' => ['actor_id' => $actor->id, 'expires_at' => time() + 1800],
+        ])->getJson('/organizations/'.$organization->id)->assertForbidden();
         $this->assertFalse(app(TenantContext::class)->isActive());
     }
 }

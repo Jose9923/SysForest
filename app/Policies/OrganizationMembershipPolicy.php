@@ -6,35 +6,45 @@ namespace App\Policies;
 
 use App\Models\OrganizationMembership;
 use App\Models\User;
+use App\Services\PermissionService;
 use App\Tenancy\TenantContext;
-use Illuminate\Support\Facades\Gate;
 
 class OrganizationMembershipPolicy
 {
-    public function __construct(private TenantContext $context)
+    public function __construct(private TenantContext $context, private PermissionService $permissions)
     {
     }
 
     public function view(User $actor, OrganizationMembership $membership): bool
     {
-        return $this->sameContext($actor, $membership)
-            && ((int) $membership->user_id === (int) $actor->id || Gate::forUser($actor)->allows('memberships.manage'));
+        return $this->allows($actor, 'memberships.view', $membership);
     }
 
     public function create(User $actor): bool
     {
-        return $this->context->isActive() && $this->context->actorId() === (int) $actor->id
-            && Gate::forUser($actor)->allows('memberships.manage');
+        return $this->allows($actor, 'memberships.create');
     }
 
     public function update(User $actor, OrganizationMembership $membership): bool
     {
-        return $this->sameContext($actor, $membership) && Gate::forUser($actor)->allows('memberships.manage');
+        return $this->allows($actor, 'memberships.update', $membership);
     }
 
-    private function sameContext(User $actor, OrganizationMembership $membership): bool
+    public function activate(User $actor, OrganizationMembership $membership): bool
+    {
+        return $this->allows($actor, 'memberships.activate', $membership);
+    }
+
+    public function deactivate(User $actor, OrganizationMembership $membership): bool
+    {
+        return $this->allows($actor, 'memberships.deactivate', $membership);
+    }
+
+    private function allows(User $actor, string $permission, ?OrganizationMembership $membership = null): bool
     {
         return $this->context->isActive() && $this->context->actorId() === (int) $actor->id
-            && $this->context->organizationId() === $membership->organization_id;
+            && $this->context->accessMode() !== 'department_read'
+            && ($membership === null || $this->context->organizationId() === $membership->organization_id)
+            && $this->permissions->allowsOrganization($actor, $permission, $this->context->organizationId());
     }
 }

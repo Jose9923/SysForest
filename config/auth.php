@@ -12,7 +12,7 @@ return [
 
     'guards' => [
         'web' => [
-            'driver' => 'session',
+            'driver' => 'jwt-context',
             'provider' => 'users',
         ],
     ],

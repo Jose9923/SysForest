@@ -38,10 +38,10 @@ class OrganizationController extends Controller
         if ($organization->active) {
             $request->session()->put('active_organization_id', $organization->id);
 
-            return redirect()->route('organizations.show', $organization->id)->with('status', 'Organización creada y vinculada a tu cuenta.');
+            return redirect()->route('organizations.show', $organization->id)->with('status', 'Organización creada.');
         }
 
-        return redirect()->route('organizations.index')->with('status', 'Organización creada como inactiva. No aparece entre las organizaciones disponibles.');
+        return redirect()->route('organizations.index')->with('status', 'Organización creada como inactiva.');
     }
 
     public function show(Request $request, string $organization): View
@@ -61,6 +61,6 @@ class OrganizationController extends Controller
     {
         $this->organizations->update($request->user(), $organization, $request->validated());
 
-        return redirect()->route('organizations.index')->with('status', 'Organización actualizada. Solo se muestran tus organizaciones activas.');
+        return redirect()->route('organizations.index')->with('status', 'Organización actualizada.');
     }
 }

@@ -1,161 +1,159 @@
 # Aislamiento multi-tenant de SYSFOREST
 
-## Alcance
+## Alcance de Fase 4
 
-SYSFOREST utiliza una aplicación y una base PostgreSQL/PostGIS compartidas. La organización es propietaria de sus datos; la cuenta que los registra no sustituye esa propiedad. La jerarquía territorial es `Country → Department → Municipality → Organization`. Toda organización tiene un municipio obligatorio, incluido un organismo departamental o nacional.
+SYSFOREST comparte una aplicación y una base PostgreSQL/PostGIS entre organizaciones. La organización conserva la propiedad de sus datos; la cuenta que los registra no reemplaza esa propiedad. La jerarquía es `Country → Department → Municipality → Organization`, y toda organización tiene un municipio obligatorio.
 
-Esta documentación describe el fundamento implementado en Fase 3. Las entidades territoriales, organizaciones y membresías tienen UUID. Se conserva el identificador BIGINT de `users` para mantener las cuentas existentes. El tipo de organización describe una institución; no concede permisos.
+Las entidades territoriales, organizaciones, membresías y asignaciones de roles usan UUID. `users` conserva su identificador BIGINT y representa una identidad global. El tipo de organización describe a la institución y no concede permisos.
 
-## Membresía, selección y autorización
+Fase 4 añade autenticación JWT, sesiones revocables y autorización mediante **cuatro roles y 18 permisos**. Consulta [autenticación](authentication.md), [matriz de autorización](authorization.md#roles-y-permisos), [recuperación e invitaciones](account-recovery.md) y [cuentas de desarrollo](development-accounts.md). Los módulos forestales aún no están implementados.
 
-Son comprobaciones distintas:
+## Identidad, pertenencia, selección y permiso
 
-- **Membresía:** relaciona una cuenta con una organización. Una cuenta puede tener varias pertenencias independientes.
-- **Selección activa:** indica en cuál de sus organizaciones desea operar el usuario durante la petición.
-- **Autorización:** determina si puede realizar la acción solicitada sobre el recurso de esa organización.
+La aplicación comprueba cuatro elementos diferentes:
 
-El valor `active_organization_id` de la sesión representa una selección. Se valida nuevamente en PostgreSQL antes de convertirlo en contexto confiable. Cambiar un UUID en una URL, un formulario o la sesión no acredita pertenencia.
+- **Identidad:** el JWT identifica al actor y a una `auth_session` vigente de PostgreSQL. La cuenta debe seguir activa.
+- **Pertenencia:** `organization_memberships` relaciona una cuenta con una organización; cada pertenencia es independiente.
+- **Selección:** `active_organization_id` en la sesión de navegación de Redis expresa qué organización quiere utilizar el actor.
+- **Permiso:** una concesión vigente, consultada en PostgreSQL, autoriza una acción en el ámbito exacto.
 
-Una membresía habilitada requiere `active = true`, `left_at IS NULL` y una organización activa que no esté anulada mediante soft delete. Desactivar una membresía no modifica la cuenta ni sus pertenencias a otras organizaciones.
+La navegación en Redis mantiene CSRF y selección; no reemplaza la autenticación JWT ni la sesión revocable de `auth_sessions`. `BindAuthenticatedSession` vincula esa navegación con el ID de sesión autenticada y borra la selección cuando cambia la sesión de identidad.
 
-La pertenencia por sí sola permite consultar la organización seleccionada; no concede edición institucional ni administración de membresías. Un usuario con membresías A y B debe cambiar explícitamente la selección antes de operar en B.
+Una membresía válida exige `active = true`, `left_at IS NULL` y organización activa/no eliminada. Para activar el ámbito organizacional necesita además un rol organizacional vigente y el permiso de consulta. La sola pertenencia no habilita el espacio de trabajo ni la administración de miembros.
+
+Los permisos también admiten concesiones nacionales y departamentales. **`SUPER_ADMIN` no necesita ni recibe membresías artificiales para acceder por su concesión nacional.** `DEPARTMENT_ADMIN` consulta exclusivamente el departamento asignado y no obtiene escritura institucional. `ORGANIZATION_ADMIN` y `OFFICIAL` operan mediante membresías reales con permisos distintos.
 
 ## Contrato de TenantContext
 
-`App\Tenancy\TenantContext` está registrado mediante un binding `scoped` en `AppServiceProvider`. Contiene únicamente el identificador del actor y el UUID de la organización verificados para la ejecución actual. No es una variable estática y no persiste el tenant entre peticiones o trabajos.
+`App\Tenancy\TenantContext` está registrado como `scoped`. Guarda únicamente `actorId`, `organizationId` y `accessMode` para la ejecución actual. No almacena una instantánea de permisos y no persiste entre peticiones o trabajos.
 
-| Método | Contrato |
+| `accessMode` | Autoridad que lo habilita | Límite |
+| --- | --- | --- |
+| `organization` | Membresía y rol organizacional vigentes, con permiso `organizations.view`. | Acciones expresamente permitidas dentro de la organización seleccionada. |
+| `national` | Concesión nacional explícita de `organizations.view`. | Cada acción requiere su permiso y coincidencia con la organización seleccionada. No crea membresías. |
+| `department_read` | Concesión de lectura para el departamento de la organización. | Solo consulta; las escrituras institucionales se rechazan. |
+
+| Método del contexto | Contrato |
 | --- | --- |
-| `activate(int $actorId, string $organizationId): void` | Método interno: solo debe llamarlo el servicio después de comprobar la membresía. |
-| `actorId(): int` | Devuelve el actor verificado; sin contexto lanza `AuthorizationException`. |
-| `organizationId(): string` | Devuelve el tenant verificado; sin contexto lanza `AuthorizationException`. |
-| `isActive(): bool` | Indica si ambos identificadores están establecidos. |
-| `clear(): void` | Elimina ambos identificadores. |
+| `activate(int $actorId, string $organizationId, string $accessMode = 'organization'): void` | Uso interno del servicio tras validar la autoridad. Rechaza modos desconocidos. |
+| `actorId(): int` | Actor verificado; lanza `AuthorizationException` si no hay contexto. |
+| `organizationId(): string` | Organización verificada; lanza excepción si no hay contexto. |
+| `accessMode(): string` | Procedencia del acceso verificado; lanza excepción si no hay contexto. |
+| `isActive(): bool` | Los tres valores están establecidos. |
+| `clear(): void` | Elimina actor, organización y modo. |
 
-El contexto no realiza consultas ni decide permisos. El método interno de activación no es una API para datos recibidos del cliente.
+Activar directamente este objeto no acredita permisos. Controllers y jobs deben utilizar `TenantContextService`.
 
-`TenantContextService` resuelve y revalida la pertenencia:
-
-| Método | Responsabilidad |
+| Método del servicio | Responsabilidad |
 | --- | --- |
-| `activate(User $actor, string $organizationId): Organization` | Limpia el contexto anterior, valida el UUID y consulta `activeFor`; solo entonces activa el contexto. |
-| `assertCurrentMembership(User $actor, bool $lock = false): OrganizationMembership` | Comprueba que el actor coincida y reconsulta su pertenencia; si fue revocada, limpia el contexto y deniega la operación. |
-| `currentOrganization(User $actor): Organization` | Devuelve la organización tras revalidar la membresía. |
-| `run(User $actor, string $organizationId, Closure $callback): mixed` | Activa el contexto, ejecuta el callback y limpia siempre mediante `finally`. |
+| `activate(User $actor, string $organizationId): Organization` | Limpia el estado anterior, consulta la cuenta vigente, valida el UUID y la organización y determina un modo permitido. |
+| `assertCurrentAccess(User $actor, bool $lock = false): Organization` | Revalida actor, organización y origen de la concesión. En modo organizacional revalida también la membresía. |
+| `assertCurrentMembership(User $actor, bool $lock = false): OrganizationMembership` | Exige modo `organization` y una membresía real con rol vigente. No admite sustitutos para administradores nacionales. |
+| `currentOrganization(User $actor): Organization` | Delega en `assertCurrentAccess`; permite los tres modos válidos. |
+| `run(User $actor, string $organizationId, Closure $callback): mixed` | Activa el ámbito, ejecuta el callback y limpia siempre mediante `finally`. |
 
-## Ciclo HTTP y trabajos de cola
+La cuenta debe existir, estar activa y tener correo verificado. La organización debe seguir activa y no eliminada. Si la revalidación falla, el servicio limpia el contexto y deniega el acceso. `lock = true` permite a las operaciones transaccionales bloquear las filas de organización y membresía que correspondan.
 
-Las rutas institucionales pasan primero por autenticación y por `LoadLocalAccessGrant`. Las rutas que operan sobre una organización o una membresía concreta incorporan además `ResolveTenantContext`.
+Una cuenta con autoridad sobre A y B debe seleccionar B antes de usar una ruta contextual de B. La concesión nacional no desactiva esta coincidencia. Una modificación nacional de una organización inactiva utiliza el flujo administrativo específico y su permiso nacional; no intenta activar un contexto operativo inválido.
 
-`ResolveTenantContext` obtiene al actor de `Request::user()`, toma la selección de la sesión y llama al servicio de contexto. Limpia el estado antes de resolverlo y en un bloque `finally`, tanto si la petición finaliza correctamente como si lanza una excepción. `LoadLocalAccessGrant` también limpia los contextos tenant y de acceso técnico al terminar.
+## Petición HTTP y navegación
 
-El listado de organizaciones propias y el cambio de selección no requieren tener previamente un tenant activo. El listado consulta solo las organizaciones activas con pertenencia activa del actor; el cambio de selección verifica la nueva pertenencia antes de guardarla en sesión.
+Las rutas internas resuelven la identidad con `AuthenticateJwtCookie`: comprueban el token y consultan `SessionService` para validar la sesión autenticada, su vigencia, revocación, propietario y estado actual de la cuenta. `RequireVerifiedEmail` protege el área institucional.
 
-Para jobs, `App\Jobs\Middleware\UseTenantContext` recibe el ID del actor y el UUID de la organización. Al ejecutar:
+`ShareTenantContext` revisa la selección guardada si existe. Activa el contexto para la navegación, comparte la organización y el modo con Blade y elimina selecciones que han dejado de estar autorizadas. Limpia el contexto y las variables compartidas en `finally`.
 
-1. Limpia cualquier contexto previo.
-2. Recupera la cuenta mediante `UserRepository`.
-3. Revalida la pertenencia mediante `TenantContextService::run`.
-4. Ejecuta el trabajo con ese contexto.
-5. Limpia en `finally`, incluso si la cuenta no existe o el trabajo falla.
+Las rutas de recursos de una organización incorporan además `ResolveTenantContext`. Obtiene el actor de `Request::user()`, lee la selección del servidor y llama al servicio. Limpia antes de resolver y al terminar, incluso ante excepciones.
 
-Los jobs futuros deben transportar identificadores y reconstruir el contexto al ejecutar; no serializar un contexto previamente autorizado. La limpieza scoped del worker complementa los bloques `finally`; no los reemplaza.
+El listado de organizaciones y el cambio de selección no necesitan un contexto previo. Los listados se limitan por concesión nacional, departamento asignado o membresías con rol, según el caso. El cambio de selección verifica la organización elegida antes de persistirla. Un UUID en una URL o un campo de formulario no concede autoridad.
 
-## Capas y consultas explícitas
+La renovación JWT y la navegación se describen en [autenticación](authentication.md). Las credenciales JWT y refresh no se exponen a Blade ni se usan como parámetros de selección institucional.
 
-El flujo es `Controller → Service → Repository → Model`. Los Form Requests validan entrada y autorización HTTP. Los Services repiten las comprobaciones relevantes para proteger también las llamadas fuera de HTTP. Blade recibe datos preparados y no consulta la base.
+## Autorización y consultas
 
-- `OrganizationService::show` revalida la pertenencia, exige que el ID solicitado coincida con el tenant y aplica la Policy.
-- `OrganizationMembershipRepository::findForTenant` combina `organization_id` e ID de membresía en la misma consulta. Un recurso ajeno produce `ModelNotFoundException`, representada como HTTP 404.
-- `OrganizationMembershipService` revalida actor y pertenencia antes de leer o modificar. Las mutaciones usan transacciones, bloquean las filas pertinentes y aplican la Policy.
-- El repositorio de membresías limita las actualizaciones a `active`, `joined_at` y `left_at`. No permite cambiar la cuenta ni la organización de una membresía existente.
-- Los identificadores tenant de las mutaciones se derivan del contexto. Los Requests prohíben campos que intenten reasignar organización, cuenta o identidad del registro.
+El flujo obligatorio es `Controller → Service → Repository → Model`. Los Form Requests validan entrada y autorización HTTP; los Services repiten las comprobaciones necesarias para proteger también llamadas desde consola o jobs. Blade recibe resultados preparados.
 
-No existe un global scope de tenant que altere implícitamente todas las consultas. Los repositorios contienen métodos explícitos para cada ámbito, y los Services autorizan su utilización. Un método general de repositorio no debe exponerse directamente desde un Controller como atajo a las comprobaciones del servicio.
+`PermissionService` concentra las concesiones:
 
-### Lecturas administrativas
+| Método | Resolución |
+| --- | --- |
+| `allowsNational(User, permission)` | Permiso explícito de una asignación nacional vigente. |
+| `allowsDepartment(User, permission, departmentId)` | Concesión nacional explícita o concesión del departamento exacto. |
+| `allowsOrganization(User, permission, organizationId)` | Concesión nacional explícita o membresía/rol de la organización exacta. No consulta asignaciones departamentales. |
 
-`OrganizationService::nationalRead` exige el Gate `organizations.view-national`. `departmentRead` exige `organizations.view-department` para el departamento solicitado y utiliza una consulta restringida a los municipios de ese departamento.
+No existe un comodín de `SUPER_ADMIN` ni un bypass universal de Policies. Su rol contiene los códigos enumerados en el catálogo, y las operaciones mantienen sus restricciones de contexto.
 
-Ambos Gates están denegados por defecto en la aplicación. Las pruebas conceden permisos concretos para verificar sus límites. Una concesión de lectura administrativa no altera el contexto tenant ni autoriza escrituras en otra organización.
+Las lecturas de `department_read` aplican el permiso departamental mediante su flujo explícito. Su filtro utiliza `organization → municipality → department`. No interpreta esa adscripción como una prueba geométrica de contención; el piloto no inventa polígonos oficiales.
 
-El filtro departamental utiliza la adscripción administrativa `organization → municipality → department`. No afirma que una geometría esté contenida en un límite territorial. No se han inventado polígonos oficiales.
+Las comprobaciones del ámbito acompañan siempre a las del recurso:
 
-## Policies y revocación
+- `OrganizationService::show` revalida el contexto, compara la organización solicitada y aplica la Policy.
+- `OrganizationMembershipRepository::findForTenant` combina el ID de organización con el de membresía; un recurso ajeno produce 404.
+- Los Services de membresías revalidan acceso y permisos específicos, utilizan transacciones para mutaciones y recuperan los registros desde el ámbito autorizado.
+- La actualización de una membresía no reasigna su cuenta ni su organización. Los campos de identidad no se toman de un formulario para cambiar de propietario.
+- `RoleAssignmentService` revalida el contexto y la membresía objetivo antes de conceder un rol organizacional; rechaza el modo departamental y los roles de otro scope.
 
-`OrganizationPolicy::view` comprueba actor y organización del contexto. `update` exige además `organizations.manage`; `create` exige `organizations.create`.
+No se aplica un global scope de tenant que cambie implícitamente todas las consultas. Los repositorios exponen operaciones por ámbito y los Services autorizan su uso. Una consulta general del repositorio no debe convertirse en un atajo desde un Controller.
 
-`OrganizationMembershipPolicy` exige siempre coincidencia con el contexto. La consulta de una membresía ajena a la propia cuenta requiere `memberships.manage`, y crear o actualizar membresías también requiere esa capacidad.
+## Revocación y propiedad
 
-Las Policies consumen un contexto previamente verificado; los Services son responsables de reconsultar la membresía. Así, una revocación posterior a la activación del contexto se detecta antes de la operación siguiente. Las escrituras solicitan bloqueo de la membresía del actor dentro de su transacción y, cuando corresponde, de la membresía que modifican.
+La autenticación reconsulta sesión y cuenta. La autorización reconsulta cuenta, asignación de rol y permiso. El contexto reconsulta organización y membresía cuando corresponde. Un objeto cargado antes de una revocación no conserva derechos.
 
-La anulación o desactivación de una organización también impide activarla como contexto. No se infieren permisos a partir de quién creó un registro ni del tipo institucional.
+Desactivar una membresía afecta únicamente a esa organización. Desactivar la cuenta global afecta a todos sus ámbitos. Revocar una asignación elimina sus permisos efectivos aunque la membresía siga activa. Desactivar o eliminar lógicamente una organización impide usarla como contexto operativo.
+
+`OrganizationPolicy` exige coincidencia de actor y organización; sus mutaciones requieren el permiso específico y rechazan `department_read`. `OrganizationMembershipPolicy` aplica el permiso de la operación y la pertenencia del recurso al contexto. `OFFICIAL` no recibe administración de miembros por consultar su propio perfil.
+
+Los listados del perfil pueden mostrar las pertenencias del propio usuario sin abrir la administración de otros miembros. La administración global de cuentas y sesiones exige permisos nacionales; la gestión organizacional no modifica el estado global de una cuenta.
 
 ## Integridad en PostgreSQL
 
-Las restricciones actuales incluyen:
+Las restricciones complementan a la autorización de aplicación:
 
-- FK obligatoria `organizations.municipality_id → municipalities.id`.
-- FK `organization_memberships.user_id → users.id` y FK `organization_id → organizations.id`, con eliminación restringida.
-- `UNIQUE(user_id, organization_id)`: una sola relación por cuenta y organización; reactivar no crea otra membresía.
-- `UNIQUE(organization_id, id)`, llamada `memberships_tenant_id_unique`: prepara referencias compuestas a una membresía.
-- `memberships_dates_check`: una membresía activa no puede tener fecha de salida, y una salida no puede preceder al ingreso cuando ambas fechas están presentes.
+- `organizations.municipality_id` es obligatorio y referencia un municipio existente.
+- `organization_memberships` referencia usuario y organización con eliminación restringida.
+- `UNIQUE(user_id, organization_id)` conserva una relación por cuenta e institución.
+- `UNIQUE(organization_id, id)` expone una identidad compuesta para las referencias tenant.
+- Las fechas de membresía impiden que una relación activa tenga salida y que la salida preceda al ingreso.
+- `roles` fija nombre y scope mediante CHECK. Cada tabla de asignación fija su scope y referencia `roles(id, scope)` mediante FK compuesta.
+- `organization_role_assignments(organization_id, membership_id)` referencia `organization_memberships(organization_id, id)`; PostgreSQL rechaza vincular una membresía de B con una asignación de A.
+- `UNIQUE(membership_id)` permite un rol organizacional actual por membresía. Las asignaciones nacionales y departamentales tienen unicidades por usuario, rol y ámbito.
+- Las asignaciones activas no pueden tener `revoked_at`; una revocación no precede a `assigned_at`.
 
-### Patrón para recursos operativos futuros
+Las restricciones no otorgan lectura ni escritura: evitan asociaciones incompatibles aunque un flujo defectuoso intentara persistirlas. La matriz e interfaces completas se documentan en [autorización](authorization.md).
 
-Cada recurso operativo deberá incluir `organization_id NOT NULL`. Su tabla padre expondrá una clave única `(organization_id, id)`, y el hijo referenciará ambos valores juntos.
+## Jobs y módulos posteriores
 
-Ejemplo conceptual, todavía sin tablas forestales implementadas:
+`App\Jobs\Middleware\UseTenantContext` recibe el ID de actor y el UUID de organización. Limpia el estado anterior, recupera la cuenta mediante `UserRepository`, reconstruye el contexto mediante `TenantContextService::run` y lo limpia al terminar, incluso ante fallos.
 
-```sql
--- Tabla padre:
+Los jobs futuros transportarán identificadores y volverán a consultar permisos al ejecutar. Un contexto válido no reemplaza el permiso de la operación del job. No se serializa una concesión previa como autoridad permanente, y el ciclo `scoped` no reemplaza el `finally`.
+
+Cada recurso operativo futuro incluirá `organization_id NOT NULL`. Los padres expondrán `UNIQUE(organization_id, id)`; las referencias a otro recurso del mismo tenant usarán ambas columnas.
+
+Ejemplo conceptual; estas tablas forestales aún no existen:
+
+~~~sql
 UNIQUE (organization_id, id)
 
--- Tabla hija:
 FOREIGN KEY (organization_id, tree_id)
     REFERENCES trees (organization_id, id)
-```
+~~~
 
-Una FK aislada sobre `tree_id` únicamente prueba que el árbol existe. La FK compuesta también exige que pertenezca a la organización del hijo. Las constraints protegen asociaciones; la lectura autorizada sigue dependiendo del contexto, los Services, las Policies y las consultas restringidas.
+La FK compuesta exige que padre e hijo pertenezcan a la misma organización. Las lecturas seguirán necesitando contexto revalidado, permisos y consultas restringidas.
 
-## Acceso técnico local temporal
+## Verificación
 
-La revisión de Fase 3 dispone de un acceso técnico explícito mediante `sysforest:local-access`. Su emisión está limitada a Artisan y al entorno `local`. Se requiere una cuenta existente con membresía activa; crear una cuenta o vincularla exige los flags explícitos `--create-user` y `--join`.
+Las pruebas cubren falta de contexto, cambio de actor, selección manipulada, lectura o modificación de B desde A, relaciones cruzadas, revocación, organización inactiva, limpieza al fallar jobs y cambio explícito de organización.
 
-El enlace está firmado, caduca a los 10 minutos y contiene un token aleatorio de un solo uso. La caché lo identifica mediante hash; el consumo está protegido por un bloqueo y vuelve a verificar la membresía. La ruta también valida firma y aplica limitación de solicitudes.
+La cobertura de autorización añade ámbito nacional sin membresías artificiales, lectura departamental limitada, rol organizacional por pertenencia, rechazo de escaladas, restricciones SQL compuestas y diferencia entre permiso global y contextual. Las pruebas HTTP utilizan autenticación real de la fase y verifican que una sesión de navegación por sí sola no habilite el área protegida.
 
-Al consumirlo se invalida la sesión anterior, se establece la identidad del actor y se regenera el token CSRF. La capacidad técnica dura 30 minutos. `LocalAccessContext` es scoped y exige coincidencia de actor, entorno local y vigencia. Al caducar, el middleware cierra la sesión e invalida su contenido.
+Ejecuta las suites de forma serial, desde el proyecto WSL:
 
-La capacidad permite crear organizaciones y administrar únicamente recursos del tenant activo autorizado. No concede lecturas nacionales ni departamentales. No sustituye la pertenencia y no introduce roles definitivos. Una cuenta con varias membresías conserva la obligación de seleccionar y validar cada organización.
-
-No incluir enlaces técnicos emitidos, cookies o contenidos de sesión en documentación, capturas compartidas o registros de prueba.
-
-## Amenazas cubiertas por pruebas
-
-Las pruebas actuales verifican:
-
-- Acceso sin contexto y ausencia de estado compartido entre instancias.
-- Selección de un tenant sin membresía, incluida una sesión manipulada.
-- Lectura o actualización por HTTP de organización B desde contexto A.
-- Lectura y desactivación de membresía B desde contexto A, comprobando que B permanezca intacta incluso si A tiene capacidad administrativa.
-- Rechazo de `organization_id` inyectado en una actualización.
-- Revalidación después de revocar membresías y rechazo de organizaciones inactivas o anuladas.
-- Rechazo de un actor distinto al verificado en el contexto.
-- Limpieza del contexto cuando un job falla o su actor no existe.
-- Cambio explícito de tenant para una misma cuenta con varias membresías.
-- Ausencia de permisos administrativos por la sola pertenencia.
-- Denegación administrativa por defecto, límite departamental y separación entre lectura nacional y escritura tenant.
-- Enlace local de un solo uso, firma manipulada, membresía revocada, caducidad de la capacidad y prohibición de emitir acceso fuera del entorno local.
-- Creación de cuentas y membresías únicamente cuando los flags de consola lo solicitan.
-
-Las pruebas de integración de Fase 3 utilizan PostgreSQL/PostGIS real. Las geometrías artificiales pertenecen exclusivamente a pruebas. Las pruebas de contexto no reemplazan las comprobaciones HTTP ni las restricciones de base de datos.
-
-Desde el proyecto definitivo se pueden ejecutar por separado:
-
-```bash
+~~~bash
 docker compose exec app php artisan test --filter=TenantContextTest
 docker compose exec app php artisan test --filter=TenantIsolationTest
-docker compose exec app php artisan test --filter=LocalAccessTest
-```
+docker compose exec app php artisan test --filter=AuthorizationTest
+docker compose exec app php artisan test --filter=AuthenticationTest
+~~~
 
-Consultar `tests/Feature/TerritorialFoundationTest.php` para las restricciones territoriales y de membresías, y `tests/Feature/TerritorySpatialTest.php` para geometrías y consultas PostGIS. El alcance y los comandos generales de la fase se describen en `docs/phase-3.md` y `README.md`.
+`TerritorialFoundationTest` verifica integridad territorial y membresías; `TerritorySpatialTest` verifica PostGIS. Los fixtures espaciales artificiales se limitan a pruebas. `PostgresTestCase` protege la base separada `sysforest_testing` y revierte sus transacciones. No se deben ejecutar varias suites simultáneamente sobre esa base.
+
+Consulta el [README](../README.md) para la operación local y el [reporte de Fase 4](phase-4.md) para el cierre y los resultados consolidados. Los comandos anteriores son procedimientos; no expresan un total de pruebas ejecutadas.

@@ -15,3 +15,4 @@
 /.vscode/
 /npm-debug.log
 /yarn-error.log
+/.phase*-work/

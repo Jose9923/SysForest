@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class OrganizationMembership extends Model
 {
@@ -22,6 +23,11 @@ class OrganizationMembership extends Model
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
+    }
+
+    public function roleAssignment(): HasOne
+    {
+        return $this->hasOne(OrganizationRoleAssignment::class, 'membership_id');
     }
 
     public function user(): BelongsTo
