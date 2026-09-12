@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Genera secretos locales una sola vez; nunca reemplaza una configuración existente.
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$project_dir"
+umask 077
+
+if [[ ! -f .env ]]; then
+    cp .env.example .env
+    app_key="$(openssl rand -base64 32)"
+    app_password="$(openssl rand -hex 32)"
+    sed -i "s|^APP_KEY=.*|APP_KEY=base64:${app_key}|" .env
+    sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${app_password}|" .env
+    sed -i "s|^APP_UID=.*|APP_UID=$(id -u)|" .env
+    sed -i "s|^APP_GID=.*|APP_GID=$(id -g)|" .env
+    printf '%s\n' '.env creado con claves aleatorias. Los valores no se muestran.'
+else
+    printf '%s\n' '.env ya existe; se conserva sin cambios.'
+fi
+
+# Conserva las credenciales anteriores al trasladar su origen a .env.
+# No se ejecuta .env como código de shell ni se imprimen sus valores.
+for secret_spec in POSTGRES_PASSWORD:postgres_password DB_MIGRATOR_PASSWORD:migrator_password; do
+    secret_variable="${secret_spec%%:*}"
+    secret_file="docker/secrets/${secret_spec#*:}"
+    if grep -qE "^${secret_variable}=.+" .env; then
+        continue
+    fi
+    if [[ -s "$secret_file" ]]; then
+        secret_value="$(cat "$secret_file")"
+    else
+        secret_value="$(openssl rand -hex 32)"
+    fi
+    if [[ ! "$secret_value" =~ ^[a-fA-F0-9]{64}$ ]]; then
+        printf '%s\n' 'El secreto previo no tiene el formato generado por setup-env; se conserva para revisión.' >&2
+        exit 1
+    fi
+    if grep -qE "^${secret_variable}=" .env; then
+        sed -i "s|^${secret_variable}=.*|${secret_variable}=${secret_value}|" .env
+    else
+        printf '\n%s=%s\n' "$secret_variable" "$secret_value" >> .env
+    fi
+done
+chmod 600 .env
+printf '%s\n' 'Configuración local preparada. Los secretos están excluidos de Git y del contexto de build.'

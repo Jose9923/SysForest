@@ -1,0 +1,178 @@
+SYSFOREST — Evidencias de Fase 2
+Fecha: 2026-09-12. Entorno: Ubuntu-24.04 WSL /home/josev/SYSFOREST.
+Las marcas horarias de los contenedores están en UTC.
+
+=== php (exit 0) ===
+PHP 8.4.25 (cli) (built: Aug 27 2026 20:22:17) (NTS)
+Copyright (c) The PHP Group
+Built by https://github.com/docker-library/php
+Zend Engine v4.4.25, Copyright (c) Zend Technologies
+    with Zend OPcache v8.4.25, Copyright (c), by Zend Technologies
+
+
+=== laravel (exit 0) ===
+Laravel Framework 13.31.0
+
+
+=== postgres (exit 0) ===
+                                                           version                                                           
+-----------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 17.5 (Debian 17.5-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
+(1 row)
+
+            postgis_version            
+---------------------------------------
+ 3.5 USE_GEOS=1 USE_PROJ=1 USE_STATS=1
+(1 row)
+
+ extname 
+---------
+ postgis
+(1 row)
+
+
+
+=== redis (exit 0) ===
+PONG
+
+
+=== redis_version (exit 0) ===
+Redis server v=7.4.11 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=fbf7a7d03c2e9219
+
+
+=== migrations (exit 0) ===
+
+  Migration name .............................................. Batch / Status  
+  0001_01_01_000000_create_users_table ............................... [1] Ran  
+  0001_01_01_000001_create_cache_table ............................... [1] Ran  
+  0001_01_01_000002_create_jobs_table ................................ [1] Ran  
+
+
+
+=== roles (exit 0) ===
+      rolname       | rolsuper | rolcreatedb | rolcreaterole | rolbypassrls 
+--------------------+----------+-------------+---------------+--------------
+ sysforest_admin    | t        | t           | t             | t
+ sysforest_migrator | f        | f           | f             | f
+ sysforest_app      | f        | f           | f             | f
+(3 rows)
+
+ app_can_create | app_has_crud 
+----------------+--------------
+ f              | t
+(1 row)
+
+
+
+=== tests (exit 0) ===
+
+   PASS  Tests\Unit\ExampleTest
+  ✓ that true is true
+
+   PASS  Tests\Unit\SystemStatusServiceTest
+  ✓ all dependencies must be available for readiness                     0.01s  
+  ✓ a failed dependency does not hide the other results
+  ✓ a redis failure also degrades optional probe reads
+
+   PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                        0.13s  
+
+   PASS  Tests\Feature\InfrastructureIntegrationTest
+  ✓ configured database supports real postgis queries                    0.03s  
+  ✓ redis supports a real write read and delete cycle                    0.01s  
+
+   PASS  Tests\Feature\InfrastructureProbeCommandTest
+  ✓ queue probe command dispatches a job for the worker                  0.08s  
+  ✓ scheduler probe command records execution via the service            0.02s  
+  ✓ processing the probe job records execution via the service           0.01s  
+
+   PASS  Tests\Feature\SystemStatusTest
+  ✓ home renders the infrastructure view with real status contract       0.01s  
+  ✓ readiness returns only a generic success body                        0.03s  
+  ✓ readiness returns 503 without connection details on failure          0.02s  
+
+  Tests:    13 passed (55 assertions)
+  Duration: 0.47s
+
+
+
+=== lint (exit 0) ===
+
+  ......................................
+
+  ───────────────────────────────────────────────────────────────────── PSR 12  
+    PASS   .......................................................... 38 files  
+
+
+
+=== composer (exit 0) ===
+./composer.json is valid
+
+
+=== ps (exit 0) ===
+NAME                    IMAGE                    COMMAND                  SERVICE     CREATED         STATUS                    PORTS
+sysforest-app-1         sysforest-app:local      "sysforest-entrypoin…"   app         3 minutes ago   Up 3 minutes (healthy)    9000/tcp
+sysforest-nginx-1       nginx:1.28-alpine        "/docker-entrypoint.…"   nginx       26 hours ago    Up 6 minutes (healthy)    127.0.0.1:8080->80/tcp
+sysforest-postgres-1    postgis/postgis:17-3.5   "docker-entrypoint.s…"   postgres    26 hours ago    Up 11 minutes (healthy)   5432/tcp
+sysforest-queue-1       sysforest-app:local      "sysforest-entrypoin…"   queue       3 minutes ago   Up 3 minutes (healthy)    9000/tcp
+sysforest-redis-1       redis:7.4-alpine         "docker-entrypoint.s…"   redis       26 hours ago    Up 11 minutes (healthy)   6379/tcp
+sysforest-scheduler-1   sysforest-app:local      "sysforest-entrypoin…"   scheduler   3 minutes ago   Up 3 minutes (healthy)    9000/tcp
+
+
+=== ps_all (exit 0) ===
+NAME                    IMAGE                    COMMAND                  SERVICE     CREATED         STATUS                     PORTS
+sysforest-app-1         sysforest-app:local      "sysforest-entrypoin…"   app         3 minutes ago   Up 3 minutes (healthy)     9000/tcp
+sysforest-db-init-1     postgis/postgis:17-3.5   "/bin/bash /opt/sysf…"   db-init     26 hours ago    Exited (0) 3 minutes ago   
+sysforest-init-1        sysforest-app:local      "sysforest-entrypoin…"   init        3 minutes ago   Exited (0) 3 minutes ago   
+sysforest-nginx-1       nginx:1.28-alpine        "/docker-entrypoint.…"   nginx       26 hours ago    Up 6 minutes (healthy)     127.0.0.1:8080->80/tcp
+sysforest-postgres-1    postgis/postgis:17-3.5   "docker-entrypoint.s…"   postgres    26 hours ago    Up 11 minutes (healthy)    5432/tcp
+sysforest-queue-1       sysforest-app:local      "sysforest-entrypoin…"   queue       3 minutes ago   Up 3 minutes (healthy)     9000/tcp
+sysforest-redis-1       redis:7.4-alpine         "docker-entrypoint.s…"   redis       26 hours ago    Up 11 minutes (healthy)    6379/tcp
+sysforest-scheduler-1   sysforest-app:local      "sysforest-entrypoin…"   scheduler   3 minutes ago   Up 3 minutes (healthy)     9000/tcp
+
+
+=== processes (exit 0) ===
+SERVICE    #   UID   PID    PPID   C   STIME  TTY  TIME      CMD
+app        1   1000  10803  10754  0   14:06  ?    00:00:00  /sbin/docker-init -- sysforest-entrypoint php-fpm -F
+app        1   1000  10871  10803  0   14:06  ?    00:00:00  php-fpm: master process (/usr/local/etc/php-fpm.conf)
+app        1   1000  10881  10871  0   14:06  ?    00:00:00  php-fpm: pool www
+app        1   1000  10882  10871  0   14:06  ?    00:00:00  php-fpm: pool www
+queue      1   1000  10802  10717  0   14:06  ?    00:00:00  /sbin/docker-init -- sysforest-entrypoint php artisan queue:work redis --sleep=2 --tries=3 --timeout=60 --max-time=3600
+queue      1   1000  10879  10802  0   14:06  ?    00:00:00  php artisan queue:work redis --sleep=2 --tries=3 --timeout=60 --max-time=3600
+scheduler  1   1000  10804  10740  0   14:06  ?    00:00:00  /sbin/docker-init -- sysforest-entrypoint php artisan schedule:work
+scheduler  1   1000  10863  10804  0   14:06  ?    00:00:00  php artisan schedule:work
+
+
+=== scheduler (exit 0) ===
+
+  * * * * *  php artisan sysforest:probe-scheduler .. Next Due: en 59 segundos
+
+
+
+=== probe_logs (exit 0) ===
+scheduler-1  |   2026-09-12 14:07:00 Running ['artisan' sysforest:probe-scheduler]  154.14ms DONE
+scheduler-1  |   ⇂ '/usr/local/bin/php' 'artisan' sysforest:probe-scheduler > '/dev/null' 2>&1  
+scheduler-1  | 
+scheduler-1  |   2026-09-12 14:08:00 Running ['artisan' sysforest:probe-scheduler]  155.32ms DONE
+scheduler-1  |   ⇂ '/usr/local/bin/php' 'artisan' sysforest:probe-scheduler > '/dev/null' 2>&1  
+scheduler-1  | 
+scheduler-1  |   2026-09-12 14:09:00 Running ['artisan' sysforest:probe-scheduler]  179.32ms DONE
+scheduler-1  |   ⇂ '/usr/local/bin/php' 'artisan' sysforest:probe-scheduler > '/dev/null' 2>&1  
+scheduler-1  | 
+scheduler-1  |   2026-09-12 14:10:00 Running ['artisan' sysforest:probe-scheduler]  180.00ms DONE
+scheduler-1  |   ⇂ '/usr/local/bin/php' 'artisan' sysforest:probe-scheduler > '/dev/null' 2>&1  
+scheduler-1  | 
+queue-1      |   2026-09-12 14:08:51 App\Jobs\InfrastructureProbeJob ................ RUNNING
+queue-1      |   2026-09-12 14:08:51 App\Jobs\InfrastructureProbeJob ............ 3.46ms DONE
+
+
+=== probe_values (exit 0) ===
+2026-09-12T14:08:51+00:00
+2026-09-12T14:10:00+00:00
+
+
+=== nginx_check (exit 0) ===
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+

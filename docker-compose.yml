@@ -1,0 +1,201 @@
+name: sysforest
+
+x-php-environment: &php-environment
+  # env_file carga .env; estas anulaciones impiden heredar credenciales privilegiadas.
+  POSTGRES_PASSWORD: ""
+  DB_MIGRATOR_PASSWORD: ""
+  DB_CONNECTION: pgsql
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_DATABASE: ${DB_DATABASE:-sysforest}
+  DB_TEST_DATABASE: ${DB_TEST_DATABASE:-sysforest_testing}
+  DB_USERNAME: ${DB_USERNAME:-sysforest_app}
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_CLIENT: phpredis
+  CACHE_STORE: redis
+  QUEUE_CONNECTION: redis
+  SESSION_DRIVER: redis
+
+x-php-service: &php-service
+  image: sysforest-app:local
+  build:
+    context: .
+    target: runtime
+    args:
+      APP_UID: ${APP_UID:-1000}
+      APP_GID: ${APP_GID:-1000}
+  env_file: .env
+  environment: *php-environment
+  working_dir: /var/www/html
+  init: true
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  volumes:
+    - ./app:/var/www/html/app:ro
+    - ./config:/var/www/html/config:ro
+    - ./database:/var/www/html/database:ro
+    - ./resources:/var/www/html/resources:ro
+    - ./routes:/var/www/html/routes:ro
+    - ./public:/var/www/html/public:ro
+    - ./tests:/var/www/html/tests:ro
+    - ./bootstrap/app.php:/var/www/html/bootstrap/app.php:ro
+    - ./bootstrap/providers.php:/var/www/html/bootstrap/providers.php:ro
+    - ./phpunit.xml:/var/www/html/phpunit.xml:ro
+    - storage_data:/var/www/html/storage
+  networks:
+    - backend
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sysforest_admin}
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - backend
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - backend
+
+  db-init:
+    image: postgis/postgis:17-3.5
+    restart: "no"
+    entrypoint: ["/bin/bash", "/opt/sysforest/bootstrap.sh"]
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-sysforest_admin}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      DB_MIGRATOR_PASSWORD_FILE: /run/secrets/migrator_password
+      DB_DATABASE: ${DB_DATABASE:-sysforest}
+      DB_TEST_DATABASE: ${DB_TEST_DATABASE:-sysforest_testing}
+      DB_USERNAME: ${DB_USERNAME:-sysforest_app}
+      DB_MIGRATOR_USERNAME: ${DB_MIGRATOR_USERNAME:-sysforest_migrator}
+      DB_PASSWORD: ${DB_PASSWORD:?Ejecuta bash bin/setup-env para generar las credenciales locales}
+    secrets:
+      - postgres_password
+      - migrator_password
+    volumes:
+      - ./docker/postgres:/opt/sysforest:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+  init:
+    <<: *php-service
+    restart: "no"
+    command: ["sysforest-migrate"]
+    environment:
+      <<: *php-environment
+      DB_USERNAME: ${DB_MIGRATOR_USERNAME:-sysforest_migrator}
+      DB_PASSWORD_FILE: /run/secrets/migrator_password
+    secrets:
+      - migrator_password
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  app:
+    <<: *php-service
+    healthcheck:
+      test: ["CMD", "sysforest-fpm-healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  queue:
+    <<: *php-service
+    command: ["php", "artisan", "queue:work", "redis", "--sleep=2", "--tries=3", "--timeout=60", "--max-time=3600"]
+    stop_grace_period: 75s
+    healthcheck:
+      test: ["CMD", "php", "/usr/local/bin/sysforest-process-healthcheck", "queue:work"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  scheduler:
+    <<: *php-service
+    command: ["php", "artisan", "schedule:work"]
+    stop_grace_period: 75s
+    healthcheck:
+      test: ["CMD", "php", "/usr/local/bin/sysforest-process-healthcheck", "schedule:work"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  nginx:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:80"
+    volumes:
+      - ./public:/var/www/html/public:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  storage_data:
+
+networks:
+  backend:
+    driver: bridge
+
+secrets:
+  postgres_password:
+    environment: POSTGRES_PASSWORD
+  migrator_password:
+    environment: DB_MIGRATOR_PASSWORD

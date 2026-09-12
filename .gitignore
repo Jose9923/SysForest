@@ -1,0 +1,17 @@
+/.env
+/.env.*
+!/.env.example
+/docker/secrets/
+/vendor/
+/node_modules/
+/public/build/
+/public/hot
+/public/storage
+/storage/*.key
+/.phpunit.cache/
+/.phpunit.result.cache
+/auth.json
+/.idea/
+/.vscode/
+/npm-debug.log
+/yarn-error.log
