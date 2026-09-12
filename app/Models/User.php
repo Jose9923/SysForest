@@ -17,6 +17,17 @@ class User extends Authenticatable
     use HasFactory;
     use Notifiable;
 
+    public function memberships(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(OrganizationMembership::class);
+    }
+
+    public function organizations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Organization::class, 'organization_memberships')
+            ->withPivot(['id', 'active', 'joined_at', 'left_at'])->withTimestamps();
+    }
+
     /**
      * @return array<string, string>
      */

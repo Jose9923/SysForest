@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'tenant.context' => \App\Http\Middleware\ResolveTenantContext::class,
+            'local.access' => \App\Http\Middleware\LoadLocalAccessGrant::class,
+        ]);
+        $middleware->redirectGuestsTo(fn () => route('phase3.access'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

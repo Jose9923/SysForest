@@ -1,8 +1,10 @@
-# SYSFOREST — Fase 2
+# SYSFOREST — Fase 3
 
-Base local de SYSFOREST, un sistema de inventario y gestión forestal. Esta fase prepara Laravel, PostgreSQL/PostGIS, Redis, Nginx, PHP-FPM, colas y scheduler. La página inicial muestra comprobaciones técnicas de la infraestructura.
+SYSFOREST es un sistema de inventario y gestión forestal institucional. La Fase 3 incorpora territorios, organizaciones, membresías múltiples y contexto tenant explícito sobre la infraestructura aprobada de Fase 2. El proyecto definitivo está exclusivamente en `/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL.
 
-Los módulos forestales, organizaciones, multi-tenancy, JWT, usuarios, reportes e importaciones se implementarán en fases posteriores. En esta fase no hay cuentas de acceso ni contraseñas de demostración.
+La interfaz utiliza Blade y Select2 para seleccionar municipios. El piloto corresponde a la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia. El login definitivo, JWT, roles y módulos forestales corresponden a fases posteriores. El acceso actual es una herramienta técnica temporal de consola local.
+
+El [reporte A–T de Fase 3](docs/phase-3.md) documenta los resultados ejecutados. La [estrategia multi-tenant](docs/multitenancy.md) define los contratos de aislamiento para los módulos posteriores.
 
 ## Entorno local
 
@@ -17,6 +19,38 @@ El entorno previsto utiliza Docker Engine 29.2.1 y Docker Compose 5.0.2. Docker 
 | Base de datos | PostgreSQL 17 con PostGIS 3.5 |
 | Caché y colas | Redis 7.4 con persistencia AOF |
 | Interfaz | Blade, renderizado en servidor |
+
+## Revisar la Fase 3
+
+Con el entorno existente iniciado, aplica las migraciones incrementales mediante el rol migrador:
+
+```bash
+docker compose run --rm init
+```
+
+Carga o actualiza el piloto sin duplicarlo:
+
+```bash
+docker compose exec app php artisan db:seed --force
+```
+
+Para la primera revisión local, la creación de la cuenta técnica y su membresía se solicitan explícitamente:
+
+```bash
+docker compose exec app php artisan sysforest:local-access phase3.local@sysforest.test --organization=INEM-VVC --create-user --join
+```
+
+En este equipo esa cuenta técnica ya existe. Para emitir nuevos enlaces basta:
+
+```bash
+docker compose exec app php artisan sysforest:local-access phase3.local@sysforest.test --organization=INEM-VVC
+```
+
+Abre en el navegador la URL que devuelve Artisan. Solo funciona en `APP_ENV=local`, es de un solo uso, caduca en 10 minutos y habilita una sesión de revisión de 30 minutos. No se imprime ni comparte una contraseña. El enlace concede capacidad técnica de creación y gestión sobre organizaciones con membresía verificada; no concede acceso nacional/departamental. En producción este mecanismo está deshabilitado.
+
+Desde [gestión institucional](http://localhost:8080/organizations) puedes consultar el piloto, abrir su detalle, crear/editar organizaciones y consultar territorios. La página [de acceso](http://localhost:8080/phase-3/access) explica el acceso temporal. Las consultas administrativas permanecen denegadas hasta la Fase 4.
+
+Los seeders no crean usuarios automáticamente, no inventan polígonos y no crean árboles. El estado de infraestructura continúa disponible en [la página inicial](http://localhost:8080/).
 
 ## Instalación inicial
 
@@ -116,7 +150,7 @@ Compose toma los secretos privilegiados desde variables de `.env` y los monta co
 
 Estos comandos describen el procedimiento de verificación; no constituyen un registro de resultados ejecutados.
 
-Los resultados reales, versiones, puertos y limitaciones están en [el reporte de Fase 2](docs/phase-2.md).
+Los resultados de infraestructura inicial están en [el reporte de Fase 2](docs/phase-2.md); la verificación actual y el fundamento institucional están en [el reporte de Fase 3](docs/phase-3.md).
 
 Comprueba la disponibilidad HTTP de Laravel, PostgreSQL/PostGIS y Redis:
 
@@ -142,19 +176,21 @@ docker compose exec app php artisan schedule:list
 
 ## Pruebas y estilo
 
-Ejecuta las pruebas unitarias y de funcionalidad:
+Ejecuta la suite completa, incluidas las pruebas de PostgreSQL/PostGIS y Redis:
 
 ```bash
-docker compose exec -e DB_DATABASE=sysforest_testing app composer test
+docker compose exec app php artisan test
 ```
 
-Las pruebas de integración con servicios reales se omiten salvo activación explícita. Para ejecutar la suite incluyendo PostgreSQL/PostGIS y Redis:
+Para fallar también ante advertencias:
 
 ```bash
-docker compose exec -e SYSFOREST_RUN_INTEGRATION=1 -e DB_DATABASE=sysforest_testing app composer test
+docker compose exec app php artisan test --fail-on-warning
 ```
 
-La base de pruebas debe ser distinta de la base operativa. Si cambiaste `DB_TEST_DATABASE`, sustituye `sysforest_testing` en ambos comandos.
+`phpunit.xml` fija `APP_ENV=testing` y `DB_DATABASE=sysforest_testing` tanto en `env` como en `server`, con `force=true`, para evitar que las variables heredadas de Docker prevalezcan. Activa además `SYSFOREST_RUN_INTEGRATION=1`. No se utiliza SQLite.
+
+`tests/PostgresTestCase.php` verifica entorno, driver y nombre de base antes de iniciar transacciones. Los fixtures se revierten al terminar cada prueba. Si cambias `DB_TEST_DATABASE`, actualiza también las dos entradas `DB_DATABASE` de `phpunit.xml` para que coincidan con esa base separada. No sustituyas la base de pruebas por la operativa. `composer test` sigue disponible y limpia previamente la caché de configuración.
 
 Comprueba el formato PSR-12 sin modificar los archivos:
 
@@ -254,4 +290,4 @@ Las carpetas de código y configuración se montan en los contenedores PHP como 
 | `docker/` | Nginx, PHP, inicialización PostgreSQL y scripts de contenedores. |
 | `bin/setup-env` | Preparación idempotente de variables y secretos locales. |
 
-La [arquitectura](docs/architecture.md) documenta MVC, el flujo Controller → Service → Repository → Model y los reportes mediante Blade. El [modelo de datos](docs/database.md) contiene el ERD conceptual y las relaciones previstas. Ambos documentos distinguen las decisiones objetivo de las capacidades implementadas en la Fase 2.
+La [arquitectura](docs/architecture.md) documenta MVC, el flujo Controller → Service → Repository → Model y los reportes mediante Blade. El [modelo de datos](docs/database.md) contiene el ERD conceptual y las relaciones previstas. Ambos documentos conservan el diseño conceptual aprobado. Las capacidades implementadas actualmente se describen en [Fase 3](docs/phase-3.md) y [multi-tenancy](docs/multitenancy.md).

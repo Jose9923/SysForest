@@ -1,7 +1,8 @@
 # SYSFOREST: acuerdos de implementación
 
-El alcance actual es únicamente la Fase 2: infraestructura local verificable.
-No implementar módulos forestales ni comenzar la Fase 3 sin revisión del usuario.
+La Fase 2 fue aprobada. El alcance actual es la Fase 3: territorios, organizaciones y fundamento multi-tenant.
+No implementar JWT final ni módulos forestales; no comenzar la Fase 4 sin aprobación.
+La única fuente de verdad es /home/josev/SYSFOREST. No depender de phase2-staging.
 
 - Laravel 13 y PHP 8.4 en Docker dentro de Ubuntu-24.04 WSL.
 - MVC y flujo obligatorio Controller → Service → Repository → Model.

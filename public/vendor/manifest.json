@@ -1,0 +1,32 @@
+[
+  {
+    "path": "public/vendor/jquery/jquery.min.js",
+    "source": "https://code.jquery.com/jquery-3.7.1.min.js",
+    "sha256": "fc9a93dd241f6b045cbff0481cf4e1901becd0e12fb45166a8f17f95823f0b1a"
+  },
+  {
+    "path": "public/vendor/jquery/LICENSE.txt",
+    "source": "https://raw.githubusercontent.com/jquery/jquery/3.7.1/LICENSE.txt",
+    "sha256": "d4db9ebe6f29f5168eac45ad713f055623ac5d0dcd5ba92da23d650ae012020d"
+  },
+  {
+    "path": "public/vendor/select2/select2.min.js",
+    "source": "https://raw.githubusercontent.com/select2/select2/4.0.13/dist/js/select2.min.js",
+    "sha256": "c8467b98f112bb1b06a33cde66a70de85c05d22a455f91f592554c804a50a729"
+  },
+  {
+    "path": "public/vendor/select2/select2.min.css",
+    "source": "https://raw.githubusercontent.com/select2/select2/4.0.13/dist/css/select2.min.css",
+    "sha256": "15d6ad4dfdb43d0affad683e70029f97a8f8fc8637a28845009ee0542dccdf81"
+  },
+  {
+    "path": "public/vendor/select2/es.js",
+    "source": "https://raw.githubusercontent.com/select2/select2/4.0.13/dist/js/i18n/es.js",
+    "sha256": "22165a232f2e7d376e3b6faf06b8afb303028e53e4eefae4e0ff35a43e81d123"
+  },
+  {
+    "path": "public/vendor/select2/LICENSE.md",
+    "source": "https://raw.githubusercontent.com/select2/select2/4.0.13/LICENSE.md",
+    "sha256": "4ee0cbc51370afde358652a0f977972053729ed578b6a42f5e2a037d114f0b39"
+  }
+]
