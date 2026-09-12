@@ -31,8 +31,9 @@ class AppServiceProvider extends ServiceProvider
         Auth::viaRequest('jwt-context', fn (Request $request) => null);
         Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(\App\Models\Tree::class, \App\Policies\TreePolicy::class);
+        Gate::policy(\App\Models\TreeInspection::class, \App\Policies\TreeInspectionPolicy::class);
         Gate::policy(\App\Models\Inventory::class, \App\Policies\InventoryPolicy::class);
-        foreach (['inventories.view', 'inventories.create', 'inventories.update', 'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore'] as $permission) {
+        foreach (['inventories.view', 'inventories.create', 'inventories.update', 'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore', 'inspections.view', 'inspections.create', 'inspections.update'] as $permission) {
             Gate::define($permission, fn (User $actor) => app(\App\Services\ForestryAccessService::class)->allows($actor, $permission));
         }
         Gate::policy(OrganizationMembership::class, OrganizationMembershipPolicy::class);

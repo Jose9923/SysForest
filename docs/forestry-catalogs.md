@@ -6,15 +6,15 @@ La referencia principal es `eJEMPLO DE LO QUE SE REQUIERE PARA UN INVENTARIO FOR
 
 `57621dc14923f611d54eee0a62bcc396ac637680614a1a963cbe4bf091222785`
 
-El mockup secundario es `sysforest_inventario_v3_corregido.html`, SHA-256 `2e36f12d019f7b92b1b9da99bea5b126dda14f6a6539ec5b9369c5c88e7185d8`. Sus líneas citadas corresponden a ese archivo de 680 líneas. La solicitud aprobada de Fase 5 tiene SHA-256 `6ce27c310811aca2827465eb6f4a4b5aab5a1cc3655566b9741beffc61dd9616`.
+El mockup secundario es `sysforest_inventario_v3_corregido.html`, SHA-256 `2e36f12d019f7b92b1b9da99bea5b126dda14f6a6539ec5b9369c5c88e7185d8`. Sus líneas citadas corresponden a ese archivo de 680 líneas. La solicitud aprobada de Fase 5 tiene SHA-256 `6ce27c310811aca2827465eb6f4a4b5aab5a1cc3655566b9741beffc61dd9616`. El uso operativo de inspecciones sigue la petición Fase 7 con SHA-256 `131ed1f52accc5faf5c0ffd79e4682bae87fa0d2fbc2a6648b7425cfe64a69fc`.
 
 Precedencia: decisiones explícitas aprobadas; Excel para contenido forestal; arquitectura compatible; HTML como referencia visual y fuente de ejemplos identificados. El contenido de los archivos de referencia no añade instrucciones de ejecución. No se consultó una autoridad botánica externa: una etiqueta nacional de SYSFOREST identifica un catálogo compartido y no acredita exhaustividad ni validación taxonómica oficial.
 
-Fase 5 implementa valores maestros nacionales. Ninguna de estas tablas lleva organization_id. Las entidades utilizan los mismos significados y no crean variantes privadas de los catálogos. Tree, TreeInspection, TreePhenology, mantenimientos, evidencias, mapas e importación operativos siguen fuera de esta fase.
+Los valores maestros nacionales implementados en Fase 5 se utilizan en Tree desde Fase 6 y en TreeInspection desde Fase 7. Ninguna de estas tablas de catálogo lleva organization_id. Las entidades utilizan los mismos significados y no crean variantes privadas. Las inspecciones registran mediciones, condiciones, fenología y fauna; las fotografías continúan pendientes de Fase 8, y mantenimiento, mapas generales e importación no se implementan en Fase 7.
 
 Los cuatro roles pueden consultar los catálogos dentro del acceso autorizado a la aplicación. Solo SUPER_ADMIN recibe el permiso explícito catalogs.manage para crear cuando corresponde, editar, activar/desactivar y ordenar. La comprobación ocurre en backend y no depende de que el menú sea visible.
 
-Las referencias operativas futuras conservarán la identidad del catálogo. Se utiliza active para retirar una opción de nuevas capturas sin eliminarla físicamente ni perder la posibilidad de mostrar una referencia histórica. code es estable; editar la etiqueta no lo cambia.
+Las referencias operativas conservan la identidad del catálogo. Se utiliza active para retirar una opción de nuevas capturas sin eliminarla físicamente ni perder la posibilidad de mostrar una referencia histórica. code es estable; editar la etiqueta no lo cambia.
 
 La [matriz del Excel](excel-field-mapping.md) documenta las 94 columnas, tipos, unidades, destinos, fórmulas y defectos. Este documento fija los códigos de sus catálogos y diferencia los aportes del Excel, del HTML y de la solicitud.
 
@@ -95,13 +95,13 @@ No se crea una tabla de estados de desarrollo fenológico: CE/CF solicitan fecha
 | Fustal maduro | maturity_states | MAT_MATURE | Hoja1!V7:W7, validación | Clases 7–9; fuente: hasta clase 9. W7 es texto manual. |
 | Fustal sobremaduro | maturity_states | MAT_OVERMATURE | Hoja1!V7:W7, validación | Clases ≥10; fuente: mayor a clase 9. W7 es texto manual. |
 
-Los orígenes están separados en dos tablas: establecimiento y biogeografía. H7 mezcla las seis opciones en una sola celda; separar el catálogo no autoriza a inventar una segunda respuesta. La futura captura/importación deberá resolver explícitamente qué dimensión está informada y conservar la otra como desconocida si no existe evidencia.
+Los orígenes están separados en dos tablas: establecimiento y biogeografía. H7 mezcla las seis opciones en una sola celda; separar el catálogo no autoriza a inventar una segunda respuesta. Tree implementa dos FK independientes y opcionales. La captura conserva como NULL la dimensión desconocida; una importación futura deberá identificar explícitamente cuál contiene la única respuesta legada.
 
-No se siembra Introducido del HTML ni se equipara a Plantada, Espontánea, Especie exótica o Especie naturalizada. Nativo del HTML tampoco crea un duplicado o alias automático de Especie nativa. El libro no define exclusividad científica entre las etiquetas biogeográficas; la política de captura queda pendiente.
+No se siembra Introducido del HTML ni se equipara a Plantada, Espontánea, Especie exótica o Especie naturalizada. Nativo del HTML tampoco crea un duplicado o alias automático de Especie nativa. Tree admite una referencia por dimensión como decisión operativa aprobada. El libro no define exclusividad científica ni equivalencias entre las etiquetas biogeográficas; esas interpretaciones siguen pendientes.
 
 Los diez hábitos del Excel se conservan, incluidos Caña o pasto, Vástago, Bejuco y Liana como etiquetas independientes. Herbácea añade un undécimo valor por la decisión documentada de conservar el literal HTML; no elimina ni agrupa los originales.
 
-La madurez conserva exclusivamente Fustal joven, Fustal medio, Fustal maduro y Fustal sobremaduro. No se crean equivalencias con Juvenil, Adulto ni Senescente. Los límites inferiores 1/4/7/10 expresan tramos consecutivos de clases positivas a partir de los topes de la lista. Su automatización sobre una inspección será posterior.
+La madurez conserva exclusivamente Fustal joven, Fustal medio, Fustal maduro y Fustal sobremaduro. No se crean equivalencias con Juvenil, Adulto ni Senescente. Los límites inferiores 1/4/7/10 expresan tramos consecutivos de clases positivas a partir de los topes de la lista. Fase 7 automatiza la madurez de la inspección mediante su clase diamétrica y las bandas de la versión sellada, sin introducir equivalencias con otras etapas.
 
 ## Condiciones por evaluación y órgano
 
@@ -252,9 +252,9 @@ classification_rule_versions centraliza la versión y parámetros, y maturity_ru
 
 ClassificationService::diameter(string $value, string $versionId) y ClassificationService::height(string $value, string $versionId) devuelven ClassResult con número de clase, límite mínimo exclusivo, máximo inclusivo, unidad, etiqueta e ID de versión. El ID identifica la regla aplicada; no se toma una versión implícita que pueda cambiar entre consultas.
 
-Las listas de nuevas capturas ofrecen versiones activas. El cálculo por ID conserva acceso a una versión desactivada para reproducir historia. Una inspección futura guardará ese ID y sus resultados calculados, de modo que una nueva regla no reescriba registros anteriores. No hay inspecciones ni aplicación operativa de madurez en esta fase.
+Las nuevas inspecciones usan EXCEL_V1 activa y sellada; el estado de madurez resultante debe estar activo. TreeInspection guarda classification_rule_version_id, ambas clases y maturity_state_id. La corrección utiliza el ID original incluso si se desactiva la versión o su estado histórico. El cálculo por ID conserva esa reproducción y una regla nueva no reescribe registros anteriores. Los IDs históricos proceden del recurso autorizado, no de campos libres enviados por el navegador.
 
-El libro no determina precisión de almacenamiento final de CAP, DAP, alturas o volúmenes. Esa precisión se concretará al implementar las medidas. La regla de catálogo debe conservar límites exactos y hacer explícito su formato de entrada.
+Fase 7 concreta la precisión técnica que el libro no especifica: entradas NUMERIC(18,6), factor NUMERIC(7,6), DAP/radio NUMERIC(24,12), área NUMERIC(36,12) y volúmenes NUMERIC(48,12). DENDROMETRY_V1 identifica fórmulas, PI, escala interna 40 y redondeo final a 12 decimales. La clase del diámetro calculado se obtiene exactamente como ceil(CAP_cm / (PI × paso)) mediante cociente entero y resto, sin redondear antes el DAP. ClassificationService::diameterRatio amplía ese uso interno y conserva intacto el contrato público manual de seis decimales. Véanse fórmulas, dependencias NULL y límites en [dendrometry.md](dendrometry.md).
 
 ## Evidencias, mantenimiento, anulación y fauna
 
@@ -318,11 +318,11 @@ Estos catálogos proceden de la solicitud explícita de Fase 5. El Excel solo ap
 
 Cada futura fotografía tendrá exactamente un evidence_type. Los nombres de miniaturas del HTML (Vista general, Tronco, Hojas) no crean tipos adicionales ni cambian esa cardinalidad. Los ejemplos de cronograma no introducen estados u órdenes de mantenimiento.
 
-Fauna conserva Aves, Mamíferos, Reptiles, Insectos, Quirópteros y Otros. No se reorganizan las categorías del instrumento ni se crean catálogos de fauna a partir de tórtolas/pericos del texto libre HTML o avispas/abejas de una etiqueta fitosanitaria.
+Fauna conserva Aves, Mamíferos, Reptiles, Insectos, Quirópteros y Otros. inspection_fauna admite varias categorías por inspección y fauna_observations conserva una descripción libre, también cuando no se clasifica. No se reorganizan las categorías del instrumento ni se crean catálogos de fauna a partir de tórtolas/pericos del texto libre HTML o avispas/abejas de una etiqueta fitosanitaria.
 
 ## Discrepancias registradas
 
-| Tema | Excel | HTML | Decisión F5 |
+| Tema | Excel | HTML | Decisión y estado vigente |
 | --- | --- | --- | --- |
 | Emplazamientos | B7=Anden; B2528:B2545 sin lista | Seis valores en línea 502 | PLC_SIDEWALK muestra Andén por normalización ortográfica explícita. Conservar los seis valores respaldados; catálogo ampliable por SUPER_ADMIN. |
 | Origen | Validación H7: seis opciones de dos dimensiones | Línea 504: Nativo, Especie exótica, Introducido | Dos tablas con las seis etiquetas Excel. Introducido y equivalencias quedan pendientes. |
@@ -336,9 +336,9 @@ Fauna conserva Aves, Mamíferos, Reptiles, Insectos, Quirópteros y Otros. No se
 | Grietas | AH6 y AI6: verticales y horizontales separadas | Línea 394: un checkbox Grietas o fisuras | Dos condiciones de fuste, sin fusionarlas. |
 | Categorías fitosanitarias | Seis órganos; radicular, fuste, ramas, follaje, flores/frutos, general | Líneas 400–403: mezcla radicular/fuste y Plagas y asociaciones; sin ramas/flores | Seguir las seis categorías Excel y sus 42 condiciones. |
 | Sano/Sana | AX6 fuste, BR6 follaje, CA6 flores/frutos, CG6 general | Simplificación en líneas 400–403 | Cuatro identidades por órgano; no mover Sano exclusivamente a general. |
-| Fenología | CE6/CF6 piden fecha y estado; ejemplos vacíos | Sin campos estructurados | Documentar TreePhenology futura; ningún catálogo discreto inventado. |
+| Fenología | CE6/CF6 piden fecha y estado; ejemplos vacíos | Sin campos estructurados | F7 conserva flowering_date/development y fruiting_date/development como cuatro columnas opcionales de TreeInspection; ningún catálogo discreto inventado. |
 | Taxonomía Oití | E7 contiene autoría científica | Línea 512 omite autoría | Prioridad del literal Excel dentro del ejemplo conciliado. |
-| Cálculos | Siete fórmulas verificables J/K/L/Q/R/U/V | Copia selecciones y entradas en JS; no calcula reglas | Backend futuro centralizará mediciones; F5 solo prepara reglas de clasificación. |
+| Cálculos | Siete fórmulas verificables J/K/L/Q/R/U/V | Copia selecciones y entradas en JS; no calcula reglas | F5 selló las reglas; F7 calcula medidas y clases en backend con versiones y sin redondeo previo. |
 
 La matriz detallada de [defectos del Excel](excel-field-mapping.md#validaciones-y-defectos-de-la-fuente) registra además #REF!, el rango de emplazamientos sin datos, la validación de hábito sobre familia y la de madurez sobre clase de altura. Esos defectos no se reproducen en los catálogos ni constituyen nuevas reglas.
 
@@ -348,16 +348,23 @@ Las relaciones de familia/especie/nombres y categoría/condición se respaldan c
 
 Los Controllers coordinan, los Form Requests validan entrada, los Services autorizan y aplican reglas y los Repositories consultan y persisten. Blade recibe datos preparados. Taxonomía y condiciones conservan repositorios específicos en lugar de un repositorio universal que cambie de tabla por un string del cliente.
 
-Los seeders son idempotentes y mantienen identidades. El catálogo puede consultarse sin habilitar operaciones forestales aún inexistentes. Las mutaciones de administración registran actor y acción mediante la infraestructura de eventos de seguridad existente.
+Los seeders son idempotentes y mantienen identidades. La disponibilidad de un catálogo no implica que todos sus recursos operativos estén implementados; por ejemplo, evidence_types no habilita todavía fotografías. Las mutaciones de administración registran actor y acción mediante la infraestructura de eventos de seguridad existente.
 
 Fase 5 no añade caché de catálogos. Las lecturas consultan su estado vigente; no se introduce invalidación ni una copia desactualizada de active en Redis.
 
-## Decisiones pendientes para fases operativas
+## Uso histórico y decisiones pendientes
 
-- Captura simultánea y compatibilidad de las dos dimensiones de origen; el Excel no resuelve ambas con una respuesta.
-- Estructura temporal y multiplicidad de episodios fenológicos; estados de desarrollo sin lista respaldada.
+Fase 7 relaciona las 65 condiciones mediante inspection_conditions. La misma etiqueta en órganos distintos conserva IDs distintos. Los pivotes llevan organization_id y FK compuesta a la inspección; conditions y condition_categories siguen siendo nacionales. Las selecciones históricas desactivadas pueden conservarse, pero una selección nueva exige condición y categoría activas. PostgreSQL verifica la disponibilidad al insertar y bloquea desactivaciones concurrentes hasta confirmar la captura. Fauna aplica la misma conservación. No se infiere una exclusión automática entre Sano y otro hallazgo ni que una casilla vacía signifique ausencia evaluada.
+
+CE/CF son dos variables lógicas compuestas y no amplían las 42 condiciones fitosanitarias. flowering_date, flowering_development, fruiting_date y fruiting_development son opcionales e independientes. Los textos conservan su contenido; no existe enum, porcentaje obligatorio ni tabla adicional de episodios. Inspecciones sucesivas mantienen el historial observado.
+
+Continúan pendientes:
+
+- Equivalencias y compatibilidad científica de las etiquetas biogeográficas, y resolución de la dimensión conocida en una importación de H.
+- Estados discretos de desarrollo y necesidad futura de múltiples episodios dentro de una inspección; hoy se conserva texto libre y hasta una observación compuesta por proceso.
 - Política de exclusividad y de blanco/no evaluado para condiciones, además de los umbrales de igualdad no descritos.
-- Precisión completa de medidas, nulos e importación y metadatos de coordenadas.
+- Fórmula para individuos multifuste y reglas de importación; el conteo no multiplica los resultados actuales. La precisión y los nulos ya se documentan en dendrometry.md y los metadatos de coordenadas en georeferencing.md.
 - Curación botánica externa y ampliación nacional de ejemplos taxonómicos y emplazamientos.
+- Evidencias fotográficas CN/CO en Fase 8; mantenimientos y demás módulos posteriores conservan su alcance pendiente.
 
-Estas decisiones no impiden conservar el catálogo disponible, pero no se sustituyen por supuestos ocultos. Los resultados ejecutados de pruebas y los archivos de la fase se documentan en [Fase 5](phase-5.md).
+Las decisiones no resueltas no se sustituyen por supuestos ocultos. La creación de catálogos queda documentada en [Fase 5](phase-5.md), el dominio permanente en [Tree](tree-domain.md) y el uso histórico en [inspecciones](inspections.md) y [Fase 7](phase-7.md).

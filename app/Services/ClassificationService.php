@@ -28,6 +28,21 @@ class ClassificationService
         return $this->classify($value, $version->diameter_step, $version->diameter_unit, $version);
     }
 
+    /** Los operandos proceden del calculador; la entrada pública diameter conserva escala 6. */
+    public function diameterRatio(string $numerator, string $denominator, string $versionId): ClassResult
+    {
+        $version = $this->rules->findSealed($versionId);
+        if ($version->algorithm !== 'positive_ceiling_v1' || $version->diameter_unit !== 'cm') {
+            throw new LogicException('La versión no admite la clasificación de diámetro en centímetros.');
+        }
+
+        try {
+            return $this->decimals->classifyRatio($numerator, $denominator, $version->diameter_step, $version->diameter_unit, $version->id);
+        } catch (InvalidArgumentException $exception) {
+            throw ValidationException::withMessages(['cap_cm' => $exception->getMessage()]);
+        }
+    }
+
     public function height(string $value, string $versionId): ClassResult
     {
         $version = $this->rules->findSealed($versionId);
@@ -35,7 +50,7 @@ class ClassificationService
         return $this->classify($value, $version->height_step, $version->height_unit, $version);
     }
 
-    /** Consulta de la regla; no crea inspecciones ni automatiza registros forestales. */
+    /** Resuelve la banda de una versión; no modifica ni crea inspecciones. */
     public function maturity(int $classNumber, string $versionId): MaturityState
     {
         if ($classNumber < 1) {

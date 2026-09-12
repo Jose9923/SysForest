@@ -81,6 +81,11 @@ class Tree extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(TreeInspection::class)->orderByDesc('inspection_date')->orderByDesc('created_at')->orderByDesc('id');
+    }
+
     public function statusHistories(): HasMany
     {
         return $this->hasMany(TreeStatusHistory::class)->orderByDesc('changed_at')->orderByDesc('id');

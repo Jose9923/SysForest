@@ -6,6 +6,13 @@ use App\Http\Controllers as C;
 use Illuminate\Support\Facades\Route;
 
 // Las rutas reciben UUID como texto: el Service resuelve primero por tenant y luego aplica Policy.
+Route::get('/inspections', [C\TreeInspectionController::class, 'index'])->name('inspections.index');
+Route::get('/trees/{tree}/inspections/create', [C\TreeInspectionController::class, 'create'])->whereUuid('tree')->name('trees.inspections.create');
+Route::post('/trees/{tree}/inspections', [C\TreeInspectionController::class, 'store'])->whereUuid('tree')->name('trees.inspections.store');
+Route::get('/inspections/{inspection}', [C\TreeInspectionController::class, 'show'])->whereUuid('inspection')->name('inspections.show');
+Route::get('/inspections/{inspection}/edit', [C\TreeInspectionController::class, 'edit'])->whereUuid('inspection')->name('inspections.edit');
+Route::put('/inspections/{inspection}', [C\TreeInspectionController::class, 'update'])->whereUuid('inspection')->name('inspections.update');
+Route::post('/dendrometry/preview', C\DendrometryPreviewController::class)->middleware('throttle:60,1')->name('dendrometry.preview');
 Route::get('/trees', [C\TreeController::class, 'index'])->name('trees.index');
 Route::get('/trees/create', [C\TreeController::class, 'create'])->name('trees.create');
 Route::post('/trees', [C\TreeController::class, 'store'])->name('trees.store');

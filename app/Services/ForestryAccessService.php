@@ -14,6 +14,7 @@ class ForestryAccessService
     private const PERMISSIONS = [
         'inventories.view', 'inventories.create', 'inventories.update',
         'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore',
+        'inspections.view', 'inspections.create', 'inspections.update',
     ];
 
     public function __construct(
@@ -41,7 +42,7 @@ class ForestryAccessService
         }
 
         if ($this->context->accessMode() === 'department_read') {
-            return in_array($permission, ['inventories.view', 'trees.view'], true)
+            return in_array($permission, ['inventories.view', 'trees.view', 'inspections.view'], true)
                 && $this->permissions->allowsDepartment($actor, $permission, $organization->municipality->department_id);
         }
 

@@ -1,10 +1,10 @@
-# Tree e Inventory en Fase 6
+# Tree e Inventory
 
 ## Alcance y fuentes
 
 La Fase 6 implementa la identidad permanente del individuo, inventarios, ubicación actual e histórica, estado, colaboración institucional, anulación y restauración. La petición aprobada tiene SHA-256 `9a27d539dbc7847509489ec8bbbdd4c30624f17f25c065f371e5f268d87c6b16`.
 
-El Excel conserva sus 94 variables en la [matriz de trazabilidad](excel-field-mapping.md). En esta fase se materializan A:H mediante Tree y sus relaciones nacionales. TreeInspection, medidas, cálculos dasométricos, condiciones, fenología, fauna, fotos, mantenimiento e importación siguen pendientes. El catálogo existente de una condición o una regla no equivale a una inspección implementada.
+El Excel conserva sus 94 variables en la [matriz de trazabilidad](excel-field-mapping.md). A:H se materializan desde Fase 6 mediante Tree y sus relaciones nacionales. Fase 7 añade TreeInspection con mediciones, cálculos dasométricos, condiciones, fenología, fauna y observaciones históricas, separados de Tree. Fotos CN/CO continúan pendientes de Fase 8; mantenimiento e importación tampoco se implementan en Fase 7.
 
 Las decisiones de catálogos de Fase 5 se mantienen: [catálogos y reglas](forestry-catalogs.md). La pertenencia a una organización se resuelve con el modelo vigente de [multitenancy](multitenancy.md), sin trasladar catálogos nacionales a cada tenant.
 
@@ -56,6 +56,18 @@ Tree no tiene inventory_id. inventory_trees registra la relación muchos a mucho
 
 PilotInventorySeeder crea de forma idempotente el inventario `PILOT-SYSFOREST`, nombre `Inventario Forestal Institucional - Piloto SysForest`, en INEM-VVC. El seed conserva ajustes existentes y no inventa fechas ni un funcionario: sus autores son nullable para este registro institucional. No crea árboles de demostración.
 
+## Inspecciones históricas desde Fase 7
+
+TreeInspection pertenece al mismo Tree y organización durante toda su vida. Conserva fecha de visita, mediciones, cálculos, condiciones por órgano, fenología, fauna y observaciones. Esas variables no se agregan ni se duplican en Tree. La madurez calculada y los hallazgos no modifican automáticamente current_status.
+
+Una inspección puede carecer de contexto de campaña. Si se informa inventory_tree_id, la FK compuesta verifica organización, Tree y participación, no solo la pertenencia institucional del inventario. Se permite registrar una visita histórica con una participación de campaña cerrada; crear nuevas participaciones mantiene las reglas Fase 6 descritas arriba.
+
+La creación de Tree ofrece continuar a «Nueva inspección» mediante una operación separada. Official puede registrar o corregir visitas de otros funcionarios de la misma institución sin exigir una campaña activa para la inspección. El requisito de inventario activo para modificar Tree no cambia. Tree anulado no admite nuevas visitas ni correcciones; la lectura histórica exige autorización sobre el Tree anulado.
+
+La última inspección se determina por inspection_date, created_at e id, todos en orden descendente, con UUID como último desempate. Actualizar una visita antigua no altera created_at ni la convierte en la última. Los filtros de condición y las combinaciones ANY/ALL de la última visita se aplican a esa misma inspección, no a hallazgos de fechas distintas.
+
+TreeInspectionService conserva transacciones, concurrencia y revisión estructurada por versión. El detalle de pertenencia, permisos inspections.view/create/update, pivotes, auditoría y filtros está en [inspections.md](inspections.md); las fórmulas y referencias históricas en [dendrometry.md](dendrometry.md).
+
 ## Código humano y concurrencia
 
 TreeCodeService obtiene el siguiente valor mediante OrganizationSequenceRepository. La fila de organization_sequences se identifica por organization_id y name=tree; un UPSERT con RETURNING incrementa el contador bajo bloqueo dentro de la misma transacción que crea Tree.
@@ -88,7 +100,7 @@ Restaurar conserva identidad, taxonomía, estado, ubicación e inclusiones. Se r
 
 ## Permisos y límites institucionales
 
-Se añaden ocho permisos forestales al catálogo RBAC existente. Los permisos nacionales son concesiones explícitas del seeder; no hay acceso implícito basado en un nombre de rol.
+Fase 6 añadió estos ocho permisos forestales al catálogo RBAC. Fase 7 conserva sus reglas y agrega los tres permisos de inspección documentados en inspections.md. Los permisos nacionales son concesiones explícitas del seeder; no hay acceso implícito basado en un nombre de rol.
 
 | Permiso | SUPER_ADMIN | DEPARTMENT_ADMIN | ORGANIZATION_ADMIN | OFFICIAL |
 | --- | --- | --- | --- | --- |
@@ -127,4 +139,4 @@ Las reglas principales se distribuyen así:
 
 Los Controllers coordinan Requests y Services. Blade recibe las relaciones y permisos preparados; no ejecuta consultas. El navegador permite previsualizar una ubicación, pero guardar siempre vuelve a validarla en el servidor.
 
-Los resultados de pruebas, migraciones, rollback y revisión de interfaz de la fase se registran en [phase-6.md](phase-6.md). El detalle técnico espacial y sus pruebas propias están en [georeferencing.md](georeferencing.md).
+Los resultados de pruebas, migraciones, rollback y revisión de interfaz de la base Tree/Inventory se registran en [phase-6.md](phase-6.md). La ampliación histórica se documenta en [phase-7.md](phase-7.md). El detalle técnico espacial y sus pruebas propias permanecen en [georeferencing.md](georeferencing.md).

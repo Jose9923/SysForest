@@ -36,6 +36,11 @@ class InventoryTree extends Model
         return $this->belongsTo(Tree::class);
     }
 
+    public function inspections(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TreeInspection::class);
+    }
+
     public function includedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'included_by');

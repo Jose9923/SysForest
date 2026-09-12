@@ -1,6 +1,7 @@
 @extends('layouts.institutional')
 @section('title', $tree->code)
 @include('forestry.assets', ['withMap' => true])
+@include('inspections.assets', ['stylesOnly' => true])
 @section('content')
     @php
         $statusValue = $tree->current_status instanceof \BackedEnum ? $tree->current_status->value : $tree->current_status;
@@ -12,6 +13,9 @@
     </div>
     @if ($tree->trashed())<div class="record-warning"><strong>Este registro está anulado</strong><p>{{ $tree->deletionReason?->name ?? 'Motivo no disponible' }} · {{ $tree->deleted_at?->format('d/m/Y H:i') }}</p>@if ($tree->deletion_notes)<p class="preserve-lines">{{ $tree->deletion_notes }}</p>@endif</div>@endif
     @if (!$canUpdate && !$tree->trashed())<p class="forestry-readonly">La ficha está disponible para consulta. La edición requiere permisos vigentes y, para funcionarios, una campaña activa vinculada.</p>@endif
+    <div class="forestry-stack" style="margin-bottom:22px">
+        @include('inspections.tree-summary')
+    </div>
     <div class="forestry-layout">
         <div class="forestry-stack">
             <section class="panel forestry-panel"><span class="section-kicker">IDENTIDAD DEL ÁRBOL</span><h2>Identificación y taxonomía</h2><dl class="details forestry-details">
@@ -42,6 +46,7 @@
         </aside>
     </div>
     <div class="forestry-stack" style="margin-top:22px">
+        @include('inspections.tree-timeline')
         @if ($canUpdate && !$tree->trashed())
             <details id="status-change" class="panel forestry-panel forestry-disclosure" @if ($errors->has('current_status') || $errors->has('reason')) open @endif><summary>Cambiar estado del árbol</summary>
                 <form method="POST" action="{{ route('trees.status', $tree->id) }}">@csrf @method('PATCH')<input type="hidden" name="lock_version" value="{{ old('lock_version', $tree->lock_version) }}">

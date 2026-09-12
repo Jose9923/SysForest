@@ -1,12 +1,12 @@
-# SYSFOREST — Fase 6
+# SYSFOREST — Fase 7
 
 **Inventario y gestión forestal inteligente.**
 
-SYSFOREST incorpora inventarios institucionales, individuos forestales permanentes y ubicación PostGIS, sobre los catálogos, la autenticación y el territorio aprobados. La interfaz se renderiza con Blade. El piloto es la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia.
+SYSFOREST incorpora inventarios institucionales, individuos forestales permanentes, ubicación PostGIS e inspecciones históricas con dasonomía, condiciones, fenología y fauna, sobre los catálogos, la autenticación y el territorio aprobados. La interfaz se renderiza con Blade. El piloto es la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia.
 
-El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Inventory y Tree están implementados; TreeInspection, mediciones, evidencias y operaciones posteriores esperan la aprobación de Fase 7.
+El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Inventory, Tree y TreeInspection están implementados. Las fotografías/evidencias corresponden a Fase 8, que requiere una nueva aprobación.
 
-El [reporte A–AJ de Fase 6](docs/phase-6.md) documenta la entrega actual y sus resultados verificados. El checkpoint de Fase 5 es **28c2bf7**, validado con 352 pruebas y 1.438 aserciones. La [matriz de 94 campos del Excel](docs/excel-field-mapping.md) y la [trazabilidad de catálogos](docs/forestry-catalogs.md) conservan las fuentes. El [reporte de Fase 4](docs/phase-4.md) mantiene su evidencia histórica. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
+El [reporte A–AN de Fase 7](docs/phase-7.md) documenta la entrega actual y sus verificaciones. Consulta [inspecciones](docs/inspections.md) y [dasonomía](docs/dendrometry.md) para sus contratos. El checkpoint de Fase 6 es **89911d8**, validado con 546 pruebas y 2.484 aserciones; su [reporte histórico](docs/phase-6.md) permanece disponible. Los cambios actuales se conservan sin commit final en `codex/phase-7`. La [matriz de 94 campos del Excel](docs/excel-field-mapping.md) y la [trazabilidad de catálogos](docs/forestry-catalogs.md) conservan las fuentes. El [reporte de Fase 4](docs/phase-4.md) mantiene su evidencia histórica. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
 
 ## Entorno local
 
@@ -99,7 +99,7 @@ Abre [Catálogos forestales](http://localhost:8080/admin/catalogs) después de i
 
 Hay 16 tablas nacionales: emplazamientos, dos dimensiones de origen, hábitos, madurez, familias/especies/nombres comunes, categorías/condiciones, evidencia, mantenimiento, motivos de anulación, fauna y reglas versionadas con bandas. Se sembraron 23 condiciones físico-mecánicas y 42 fitosanitarias; las dos columnas de fenología del mismo bloque se documentan para una fase posterior.
 
-La regla `EXCEL_V1` conserva intervalos exactos de 5 cm para DAP y 10 m para altura total, con cuatro estados Fustal. Sus parámetros y bandas están sellados: modificar una fórmula requiere otra versión, sin reescribir resultados históricos. BCMath trabaja con cadenas decimales y precisión de seis decimales; no redondea entradas antes de clasificar. La interfaz ofrece una consulta de ejemplo sin crear inspecciones.
+La regla `EXCEL_V1` conserva intervalos exactos de 5 cm para DAP y 10 m para altura total, con cuatro estados Fustal. Sus parámetros y bandas están sellados: modificar una fórmula requiere otra versión, sin reescribir resultados históricos. BCMath trabaja con cadenas decimales y precisión de seis decimales; no redondea entradas antes de clasificar. La consulta de reglas de catálogo permanece disponible. Las inspecciones usan CAP/π con precisión interna ampliada, sin clasificar a partir del DAP redondeado; consulta el contrato de dasonomía.
 
 No hay rutas de borrado de catálogos. Los selectores de nuevos registros excluyen valores inactivos y las referencias anteriores se conservan. Los cambios se auditan con actor y sin tenant. Familias, especies y categorías tienen selectores Select2 locales; el servidor valida todas las relaciones.
 
@@ -109,7 +109,7 @@ Después de iniciar sesión, selecciona una organización y abre [Inventarios](h
 
 El mismo árbol participa en varias campañas mediante `inventory_trees`. El código se genera en backend usando una secuencia por organización. La ficha permite identidad/taxonomía, descripción de ubicación, coordenadas decimales o DMS, GPS opcional, estados e historiales. Leaflet previsualiza la validación del servidor; Select2 busca especies por nombres científicos y comunes. Un guardado obsoleto devuelve 409, conservando la edición anterior.
 
-«Anular» identifica un registro erróneo y conserva UUID/código; muerto, talado o retirado siguen siendo estados de individuos reales. La restauración conserva identidad y vínculos. No hay mediciones ni inspecciones en estos formularios.
+«Anular» identifica un registro erróneo y conserva UUID/código; muerto, talado o retirado siguen siendo estados de individuos reales. La restauración conserva identidad y vínculos. Los formularios de identidad conservan esta separación; desde la ficha se inicia una inspección con sus mediciones y observaciones históricas.
 
 Consulta [dominio del árbol](docs/tree-domain.md), [georreferenciación](docs/georeferencing.md) y [Fase 6](docs/phase-6.md). Si el datum no fue informado, se conserva NULL y se declara la referencia de trabajo del mapa; no se infiere el datum del GPS. Esta fase no transforma coordenadas de otros datums.
 
@@ -191,7 +191,7 @@ docker compose exec app php artisan test --fail-on-warning
 
 `phpunit.xml` fija `APP_ENV=testing`, `DB_DATABASE=sysforest_testing` y activa `SYSFOREST_RUN_INTEGRATION=1`. Se utiliza PostgreSQL/PostGIS real. `PostgresTestCase` verifica entorno, driver y nombre de base antes de abrir transacciones y revierte los fixtures. No ejecutes suites concurrentes contra la misma base de pruebas.
 
-Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 6](docs/phase-6.md); estos comandos describen el procedimiento, no un resultado ejecutado.
+Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 7](docs/phase-7.md); estos comandos describen el procedimiento, no un resultado ejecutado.
 
 Revisa el formato:
 
@@ -250,7 +250,10 @@ Los volúmenes no sustituyen las copias de seguridad. Los enlaces de los correos
 
 | Documento | Contenido |
 | --- | --- |
-| [Fase 6](docs/phase-6.md) | Reporte A–AJ, pruebas, rollback y estado de servicios. |
+| [Fase 6](docs/phase-6.md) | Reporte histórico A–AJ, pruebas, rollback y estado de servicios. |
+| [Fase 7](docs/phase-7.md) | Reporte A–AN de inspecciones, verificaciones y alcance actual. |
+| [Inspecciones](docs/inspections.md) | Historia, condiciones, fenología, fauna, filtros, auditoría y permisos. |
+| [Dasonomía](docs/dendrometry.md) | Fórmulas, unidades, precisiones y versiones de clasificación. |
 | [Dominio forestal](docs/tree-domain.md) | Identidad, campañas, estados, códigos y anulación. |
 | [Georreferenciación](docs/georeferencing.md) | PostGIS, Garmin, DMS y metadatos. |
 | [Fase 5](docs/phase-5.md) | Evidencia histórica de catálogos aprobados. |
@@ -265,4 +268,4 @@ Los volúmenes no sustituyen las copias de seguridad. Los enlaces de los correos
 | [Arquitectura](docs/architecture.md) y [modelo de datos](docs/database.md) | Diseño conceptual aprobado y módulos previstos. |
 | [Fase 2](docs/phase-2.md) y [Fase 3](docs/phase-3.md) | Evidencia histórica de infraestructura y fundamento institucional. |
 
-El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales llegan hasta Fase 6; los diagramas conceptuales de módulos posteriores no implican que estén implementados.
+El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales llegan hasta Fase 7; los diagramas conceptuales de módulos posteriores no implican que estén implementados.

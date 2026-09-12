@@ -1,0 +1,79 @@
+Fase 7 — estado sin commit final
+Rama: codex/phase-7
+HEAD: 89911d8
+
+ M AGENTS.md
+ M CLAUDE.md
+ M README.md
+ M app/Domain/Forestry/DecimalClassification.php
+?? app/Domain/Forestry/DendrometryArithmetic.php
+?? app/Exceptions/StaleInspectionException.php
+?? app/Http/Controllers/DendrometryPreviewController.php
+?? app/Http/Controllers/TreeInspectionController.php
+?? app/Http/Requests/DendrometryPreviewRequest.php
+?? app/Http/Requests/StoreTreeInspectionRequest.php
+?? app/Http/Requests/TreeInspectionFilterRequest.php
+?? app/Http/Requests/UpdateTreeInspectionRequest.php
+?? app/Models/InspectionCondition.php
+?? app/Models/InspectionFauna.php
+?? app/Models/InspectionRevision.php
+ M app/Models/InventoryTree.php
+ M app/Models/Tree.php
+?? app/Models/TreeInspection.php
+?? app/Policies/TreeInspectionPolicy.php
+ M app/Providers/AppServiceProvider.php
+?? app/Repositories/InspectionConditionRepository.php
+?? app/Repositories/InspectionFaunaRepository.php
+?? app/Repositories/InspectionReferenceRepository.php
+?? app/Repositories/InspectionRevisionRepository.php
+?? app/Repositories/TreeInspectionRepository.php
+ M app/Services/ClassificationService.php
+?? app/Services/DendrometryCalculationService.php
+?? app/Services/DendrometryPreviewService.php
+ M app/Services/ForestryAccessService.php
+?? app/Services/InspectionAuditService.php
+?? app/Services/InspectionConditionService.php
+?? app/Services/InspectionFaunaService.php
+?? app/Services/PhenologyService.php
+?? app/Services/TreeInspectionReadService.php
+?? app/Services/TreeInspectionService.php
+ M app/Services/TreeReadService.php
+?? app/Validation/DendrometryInput.php
+?? app/Validation/TreeInspectionInput.php
+ M bootstrap/app.php
+?? database/migrations/2026_09_12_000012_create_tree_inspection_tables.php
+?? database/migrations/2026_09_12_000013_guard_inspection_catalog_selections.php
+ M database/seeders/AuthorizationSeeder.php
+?? docs/dendrometry.md
+ M docs/excel-field-mapping.md
+ M docs/forestry-catalogs.md
+?? docs/inspections.md
+?? docs/phase-7-files.txt
+?? docs/phase-7.md
+ M docs/tree-domain.md
+?? public/css/inspections.css
+?? public/js/inspections.js
+ M resources/views/errors/409.blade.php
+?? resources/views/inspections/assets.blade.php
+?? resources/views/inspections/calculated.blade.php
+?? resources/views/inspections/condition-fields.blade.php
+?? resources/views/inspections/conditions-read.blade.php
+?? resources/views/inspections/form.blade.php
+?? resources/views/inspections/index.blade.php
+?? resources/views/inspections/show.blade.php
+?? resources/views/inspections/tree-summary.blade.php
+?? resources/views/inspections/tree-timeline.blade.php
+ M resources/views/partials/institutional-navigation.blade.php
+ M resources/views/trees/show.blade.php
+ M routes/forestry.php
+?? tests/Feature/DendrometryCalculationTest.php
+?? tests/Feature/InspectionAuthorizationTest.php
+?? tests/Feature/InspectionPresentationTest.php
+?? tests/Feature/TreeInspectionDomainTest.php
+?? tests/Feature/TreeInspectionHttpSecurityTest.php
+?? tests/Feature/TreeInspectionRepositoryTest.php
+?? tests/InspectionTestCase.php
+?? tests/Unit/DecimalRatioClassificationTest.php
+?? tests/Unit/DendrometryArithmeticTest.php
+?? tests/Unit/DendrometryCalculationServiceTest.php
+?? tests/Unit/DendrometryInputTest.php

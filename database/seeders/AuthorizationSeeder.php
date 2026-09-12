@@ -46,6 +46,9 @@ class AuthorizationSeeder extends Seeder
                 'trees.update' => 'Editar individuos forestales de la organización seleccionada.',
                 'trees.void' => 'Anular registros forestales creados por error.',
                 'trees.restore' => 'Restaurar registros forestales anulados.',
+                'inspections.view' => 'Consultar inspecciones en el alcance institucional autorizado.',
+                'inspections.create' => 'Registrar inspecciones históricas de la organización seleccionada.',
+                'inspections.update' => 'Corregir inspecciones institucionales con auditoría y control de versión.',
             ];
             $ids = [];
 
@@ -56,15 +59,16 @@ class AuthorizationSeeder extends Seeder
             // Catálogo explícito: ningún rol obtiene automáticamente permisos añadidos en otras fases.
             $matrix = [
                 'SUPER_ADMIN' => ['national', array_keys($catalog)],
-                'DEPARTMENT_ADMIN' => ['department', ['organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view']],
+                'DEPARTMENT_ADMIN' => ['department', ['organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'inspections.view']],
                 'ORGANIZATION_ADMIN' => ['organization', [
                     'organizations.view', 'organizations.manage', 'memberships.view', 'memberships.create',
                     'memberships.update', 'memberships.activate', 'memberships.deactivate', 'users.view',
                     'users.invite', 'territories.view', 'roles.assign-organization', 'catalogs.view',
                     'inventories.view', 'inventories.create', 'inventories.update',
                     'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore',
+                    'inspections.view', 'inspections.create', 'inspections.update',
                 ]],
-                'OFFICIAL' => ['organization', ['organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'trees.create', 'trees.update']],
+                'OFFICIAL' => ['organization', ['organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'trees.create', 'trees.update', 'inspections.view', 'inspections.create', 'inspections.update']],
             ];
 
             foreach ($matrix as $name => [$scope, $codes]) {
