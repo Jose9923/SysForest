@@ -1,0 +1,110 @@
+SYSFOREST · Fase 5
+Rama: codex/phase-5
+HEAD: 652070e (checkpoint aprobado de Fase 4)
+87 archivos nuevos, 16 modificados; 103 en total. Sin commit de Fase 5.
+Comando: git status --short --branch --untracked-files=all
+
+## codex/phase-5
+ M AGENTS.md
+ M CLAUDE.md
+ M README.md
+ M app/Providers/AppServiceProvider.php
+ M app/Repositories/RoleAssignmentRepository.php
+ M app/Repositories/SecurityEventRepository.php
+ M app/Services/PermissionService.php
+ M composer.json
+ M composer.lock
+ M database/seeders/AuthorizationSeeder.php
+ M database/seeders/DatabaseSeeder.php
+ M docs/architecture.md
+ M docs/authorization.md
+ M docs/database.md
+ M resources/views/partials/institutional-navigation.blade.php
+ M routes/web.php
+?? app/Catalogs/CatalogDefinition.php
+?? app/Catalogs/CatalogInput.php
+?? app/Catalogs/CatalogRegistry.php
+?? app/Catalogs/ClassificationMetadataInput.php
+?? app/DTOs/ClassResult.php
+?? app/Domain/Forestry/DecimalClassification.php
+?? app/Enums/ConditionCatalogKind.php
+?? app/Enums/TaxonomyCatalog.php
+?? app/Http/Controllers/CatalogController.php
+?? app/Http/Controllers/ClassificationCatalogController.php
+?? app/Http/Controllers/ConditionCatalogController.php
+?? app/Http/Controllers/TaxonomyController.php
+?? app/Http/Requests/CatalogEntryRequest.php
+?? app/Http/Requests/CatalogFilterRequest.php
+?? app/Http/Requests/ClassificationMetadataRequest.php
+?? app/Http/Requests/ClassificationPreviewRequest.php
+?? app/Http/Requests/ConditionCatalogStoreRequest.php
+?? app/Http/Requests/ConditionCatalogUpdateRequest.php
+?? app/Http/Requests/TaxonomyStoreRequest.php
+?? app/Http/Requests/TaxonomyUpdateRequest.php
+?? app/Models/BiogeographicOrigin.php
+?? app/Models/CatalogEntry.php
+?? app/Models/ClassificationRuleVersion.php
+?? app/Models/Condition.php
+?? app/Models/ConditionCategory.php
+?? app/Models/DeletionReason.php
+?? app/Models/EstablishmentOrigin.php
+?? app/Models/EvidenceType.php
+?? app/Models/Family.php
+?? app/Models/FaunaCategory.php
+?? app/Models/GrowthHabit.php
+?? app/Models/MaintenanceType.php
+?? app/Models/MaturityRuleBand.php
+?? app/Models/MaturityState.php
+?? app/Models/Placement.php
+?? app/Models/Species.php
+?? app/Models/SpeciesCommonName.php
+?? app/Repositories/CatalogRepository.php
+?? app/Repositories/ClassificationRuleRepository.php
+?? app/Repositories/ConditionCatalogRepository.php
+?? app/Repositories/TaxonomyRepository.php
+?? app/Services/CatalogAccessService.php
+?? app/Services/CatalogService.php
+?? app/Services/ClassificationCatalogService.php
+?? app/Services/ClassificationService.php
+?? app/Services/ConditionCatalogService.php
+?? app/Services/TaxonomyService.php
+?? app/Validation/ConditionCatalogRules.php
+?? app/Validation/TaxonomyRules.php
+?? database/migrations/2026_09_12_000006_create_national_forestry_catalogs.php
+?? database/migrations/2026_09_12_000007_create_taxonomy_tables.php
+?? database/migrations/2026_09_12_000008_create_condition_catalog_tables.php
+?? database/migrations/2026_09_12_000009_create_classification_rule_tables.php
+?? database/seeders/ClassificationRuleSeeder.php
+?? database/seeders/ConditionCatalogSeeder.php
+?? database/seeders/EvidenceTypeSeeder.php
+?? database/seeders/ForestryCatalogSeeder.php
+?? database/seeders/MaintenanceCatalogSeeder.php
+?? database/seeders/TaxonomySeeder.php
+?? database/seeders/data/condition-catalogs.json
+?? database/seeders/data/taxonomy.json
+?? docs/excel-field-mapping.md
+?? docs/forestry-catalogs.md
+?? docs/phase-5-files.txt
+?? docs/phase-5.md
+?? public/css/catalogs.css
+?? public/css/domain-catalogs.css
+?? public/js/catalog-select.js
+?? resources/views/catalogs/dashboard.blade.php
+?? resources/views/catalogs/form.blade.php
+?? resources/views/catalogs/index.blade.php
+?? resources/views/catalogs/partials/pagination.blade.php
+?? resources/views/catalogs/rules/edit.blade.php
+?? resources/views/catalogs/rules/index.blade.php
+?? resources/views/catalogs/rules/show.blade.php
+?? resources/views/conditions/form.blade.php
+?? resources/views/conditions/index.blade.php
+?? resources/views/partials/catalog-select.blade.php
+?? resources/views/taxonomy/form.blade.php
+?? resources/views/taxonomy/index.blade.php
+?? routes/catalogs.php
+?? tests/Feature/ClassificationCatalogHttpTest.php
+?? tests/Feature/ClassificationRuleTest.php
+?? tests/Feature/ConditionCatalogTest.php
+?? tests/Feature/NationalCatalogTest.php
+?? tests/Feature/TaxonomyCatalogTest.php
+?? tests/Unit/DecimalClassificationTest.php

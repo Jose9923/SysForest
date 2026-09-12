@@ -4,6 +4,8 @@
 
 Este documento describe la arquitectura objetivo acordada para SYSFOREST. La Fase 2 se limita a preparar Laravel, Docker, Nginx, PHP-FPM, PostgreSQL/PostGIS, Redis, el worker de colas y el scheduler. Las entidades y capacidades descritas para fases posteriores no deben interpretarse como módulos ya implementados.
 
+La Fase 5 concreta los catálogos forestales nacionales, la taxonomía, las condiciones y las reglas versionadas de clasificación. El diseño de Tree, TreeInspection, fenología, evidencias, mantenimiento y demás módulos operativos sigue siendo una referencia para fases posteriores. La trazabilidad implementada se detalla en [catálogos forestales](forestry-catalogs.md) y en la [matriz de las 94 variables](excel-field-mapping.md).
+
 SYSFOREST será una aplicación web para inventario y gestión del arbolado urbano, con un piloto en la Institucion Educativa INEM Luis Lopez de Mesa, municipio de Villavicencio, departamento del Meta, Colombia. El piloto no cambia la arquitectura territorial y municipal del producto.
 
 ## Referencias y decisiones
@@ -86,13 +88,21 @@ El usuario puede ser miembro de varias organizaciones. El tenant activo se deriv
 
 `created_by` conserva al autor original. La propiedad del registro pertenece a la organización. Cualquier bypass de alcance para operaciones globales debe ser explícito y autorizado.
 
+Los catálogos forestales son nacionales y **no llevan `organization_id`**. Las organizaciones utilizan sus valores sin redefinirlos. Solo SUPER_ADMIN recibe `catalogs.manage`; los otros tres roles pueden consultar los valores autorizados. Se conservan códigos estables, orden y estado `active`; desactivar no borra el valor ni sus referencias históricas.
+
 ## Identidad del árbol y seguimiento
 
 `Tree` representa un individuo permanente. Mantiene identidad, organización, código, ubicación, taxonomía y clasificación patrimonial/protegida. El código humano es independiente del UUID interno.
 
 `TreeInspection` representa la observación en una fecha: mediciones, madurez, condiciones físico-mecánicas, condiciones fitosanitarias, fauna y observaciones. Su campaña puede registrarse como contexto. Una nueva campaña o inspección no duplica automáticamente el árbol ni sobrescribe su historia.
 
-Las condiciones se normalizan por categoría y órgano; una misma palabra, como «Hongos», no sustituye la identidad de condiciones de órganos diferentes. Cada imagen tiene exactamente un tipo de evidencia. Las órdenes de mantenimiento se crean manualmente.
+Las condiciones se normalizan por categoría y órgano; una misma palabra, como «Hongos», no sustituye la identidad de condiciones de órganos diferentes. Fase 5 conserva **23 condiciones físico-mecánicas y 42 fitosanitarias**. El bloque fitosanitario de 44 columnas del Excel incluye además **dos campos compuestos de fenología**, CE/CF, que solicitan fecha y estimación de desarrollo. Esos campos no se convierten en condiciones ni originan un catálogo de etapas sin respaldo. Cada imagen tendrá exactamente un tipo de evidencia. Las órdenes de mantenimiento se crearán manualmente.
+
+El origen se divide en `establishment_origins` (Espontánea y Plantada) y `biogeographic_origins` (Especie nativa, Especie exótica, Especie naturalizada y Especie invasora). La única columna de origen del Excel no permite inferir ambas respuestas. Introducido del HTML no se siembra ni se transforma automáticamente en uno de esos valores.
+
+La clasificación nacional adopta las reglas del Excel para entradas positivas: `ceil(DAP_cm / 5)` y `ceil(altura_total_m / 10)`, con límite inferior exclusivo y superior incluido. La madurez conserva Fustal joven (clases 1–3), Fustal medio (4–6), Fustal maduro (7–9) y Fustal sobremaduro (≥10). No se usan las bandas manuales del HTML ni se inventan equivalencias con Juvenil, Adulto o Senescente.
+
+`classification_rule_versions` y `maturity_rule_bands` centralizan los parámetros de `EXCEL_V1`. La versión sellada mantiene sus parámetros y bandas inmutables; cambiar una fórmula requiere otra versión. Los límites utilizan `DECIMAL(18,6)` y cálculo exacto con BCMath. Las futuras inspecciones conservarán la versión aplicada y sus resultados; la automatización de madurez sobre inspecciones no se implementa en Fase 5.
 
 Los estados del individuo y sus transiciones se conservan en un historial. La muerte, tala, traslado o retiro no eliminan el árbol. Soft delete se reserva para registros erróneos e incluye autor, motivo y notas. Los cambios críticos utilizan auditoría y concurrencia optimista mediante una versión.
 

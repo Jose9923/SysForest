@@ -35,6 +35,7 @@ Route::middleware('identity.headers')->group(function (): void {
         Route::delete('/profile/sessions/{session}', [C\ProfileController::class, 'destroySession'])->whereUuid('session')->name('sessions.destroy');
 
         Route::middleware(['identity.verified', 'tenant.share'])->group(function (): void {
+            require __DIR__.'/catalogs.php';
             Route::get('/territories', C\TerritoryController::class)->name('territories.index');
             Route::post('/active-organization', C\TenantSelectionController::class)->name('tenant.select');
             Route::get('/organizations', [C\OrganizationController::class, 'index'])->name('organizations.index');

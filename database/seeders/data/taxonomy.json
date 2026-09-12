@@ -1,0 +1,174 @@
+{
+  "families": [
+    {
+      "code": "FAMILY_CHRYSOBALANACEAE",
+      "scientific_name": "CHRYSOBALANACEAE",
+      "sort_order": 10,
+      "description": "Fuente: mockup HTML, línea 505. Valor inicial respaldado; no es una lista nacional exhaustiva."
+    },
+    {
+      "code": "FAMILY_FABACEAE",
+      "scientific_name": "FABACEAE",
+      "sort_order": 20,
+      "description": "Fuente: mockup HTML, línea 505. Valor inicial respaldado; no es una lista nacional exhaustiva."
+    },
+    {
+      "code": "FAMILY_ANACARDIACEAE",
+      "scientific_name": "ANACARDIACEAE",
+      "sort_order": 30,
+      "description": "Fuente: mockup HTML, línea 505. Valor inicial respaldado; no es una lista nacional exhaustiva."
+    },
+    {
+      "code": "FAMILY_BIGNONIACEAE",
+      "scientific_name": "BIGNONIACEAE",
+      "sort_order": 40,
+      "description": "Fuente: mockup HTML, línea 505. Valor inicial respaldado; no es una lista nacional exhaustiva."
+    },
+    {
+      "code": "FAMILY_MALVACEAE",
+      "scientific_name": "MALVACEAE",
+      "sort_order": 50,
+      "description": "Fuente: mockup HTML, línea 505. Valor inicial respaldado; no es una lista nacional exhaustiva."
+    },
+    {
+      "code": "FAMILY_MORACEAE",
+      "scientific_name": "MORACEAE",
+      "sort_order": 60,
+      "description": "Fuente: mockup HTML, línea 505. Valor inicial respaldado; no es una lista nacional exhaustiva."
+    },
+    {
+      "code": "FAMILY_ARECACEAE",
+      "scientific_name": "ARECACEAE",
+      "sort_order": 70,
+      "description": "Fuente: mockup HTML, línea 505. Valor inicial respaldado; no es una lista nacional exhaustiva."
+    },
+    {
+      "code": "FAMILY_COMBRETACEAE",
+      "scientific_name": "COMBRETACEAE",
+      "sort_order": 80,
+      "description": "Fuente: mockup HTML, línea 505. Valor inicial respaldado; no es una lista nacional exhaustiva."
+    }
+  ],
+  "species": [
+    {
+      "code": "SPECIES_LICANIA_TOMENTOSA",
+      "family_code": "FAMILY_CHRYSOBALANACEAE",
+      "scientific_name": "Licania tomentosa (Benth.) Fritsch.",
+      "sort_order": 10,
+      "description": "Fuente: árbol de ejemplo ARB-001 del HTML, línea 512. Nombre científico completo prioritario del Excel Hoja1!E7; forma abreviada HTML: Licania tomentosa.",
+      "common_name": {
+        "code": "COMMON_LICANIA_TOMENTOSA_PRIMARY",
+        "name": "Oití",
+        "is_primary": true
+      }
+    },
+    {
+      "code": "SPECIES_SAMANEA_SAMAN",
+      "family_code": "FAMILY_FABACEAE",
+      "scientific_name": "Samanea saman",
+      "sort_order": 20,
+      "description": "Fuente: árbol de ejemplo ARB-002 del HTML, línea 513. Taxonomía inicial de desarrollo respaldada por el mockup.",
+      "common_name": {
+        "code": "COMMON_SAMANEA_SAMAN_PRIMARY",
+        "name": "Samán",
+        "is_primary": true
+      }
+    },
+    {
+      "code": "SPECIES_MANGIFERA_INDICA",
+      "family_code": "FAMILY_ANACARDIACEAE",
+      "scientific_name": "Mangifera indica",
+      "sort_order": 30,
+      "description": "Fuente: árbol de ejemplo ARB-003 del HTML, línea 514. Taxonomía inicial de desarrollo respaldada por el mockup.",
+      "common_name": {
+        "code": "COMMON_MANGIFERA_INDICA_PRIMARY",
+        "name": "Mango",
+        "is_primary": true
+      }
+    },
+    {
+      "code": "SPECIES_ROYSTONEA_REGIA",
+      "family_code": "FAMILY_ARECACEAE",
+      "scientific_name": "Roystonea regia",
+      "sort_order": 40,
+      "description": "Fuente: árbol de ejemplo ARB-004 del HTML, línea 515. Taxonomía inicial de desarrollo respaldada por el mockup.",
+      "common_name": {
+        "code": "COMMON_ROYSTONEA_REGIA_PRIMARY",
+        "name": "Palma",
+        "is_primary": true
+      }
+    },
+    {
+      "code": "SPECIES_HANDROANTHUS_CHRYSANTHUS",
+      "family_code": "FAMILY_BIGNONIACEAE",
+      "scientific_name": "Handroanthus chrysanthus",
+      "sort_order": 50,
+      "description": "Fuente: árbol de ejemplo ARB-005 del HTML, línea 516. Taxonomía inicial de desarrollo respaldada por el mockup.",
+      "common_name": {
+        "code": "COMMON_HANDROANTHUS_CHRYSANTHUS_PRIMARY",
+        "name": "Guayacán",
+        "is_primary": true
+      }
+    },
+    {
+      "code": "SPECIES_CEIBA_PENTANDRA",
+      "family_code": "FAMILY_MALVACEAE",
+      "scientific_name": "Ceiba pentandra",
+      "sort_order": 60,
+      "description": "Fuente: árbol de ejemplo ARB-006 del HTML, línea 517. Taxonomía inicial de desarrollo respaldada por el mockup.",
+      "common_name": {
+        "code": "COMMON_CEIBA_PENTANDRA_PRIMARY",
+        "name": "Ceiba",
+        "is_primary": true
+      }
+    },
+    {
+      "code": "SPECIES_TERMINALIA_CATAPPA",
+      "family_code": "FAMILY_COMBRETACEAE",
+      "scientific_name": "Terminalia catappa",
+      "sort_order": 70,
+      "description": "Fuente: árbol de ejemplo ARB-007 del HTML, línea 518. Taxonomía inicial de desarrollo respaldada por el mockup.",
+      "common_name": {
+        "code": "COMMON_TERMINALIA_CATAPPA_PRIMARY",
+        "name": "Almendro",
+        "is_primary": true
+      }
+    },
+    {
+      "code": "SPECIES_FICUS_BENJAMINA",
+      "family_code": "FAMILY_MORACEAE",
+      "scientific_name": "Ficus benjamina",
+      "sort_order": 80,
+      "description": "Fuente: árbol de ejemplo ARB-008 del HTML, línea 519. Taxonomía inicial de desarrollo respaldada por el mockup.",
+      "common_name": {
+        "code": "COMMON_FICUS_BENJAMINA_PRIMARY",
+        "name": "Ficus",
+        "is_primary": true
+      }
+    },
+    {
+      "code": "SPECIES_VACHELLIA_FARNESIANA",
+      "family_code": "FAMILY_FABACEAE",
+      "scientific_name": "Vachellia farnesiana",
+      "sort_order": 90,
+      "description": "Fuente: árbol de ejemplo ARB-009 del HTML, línea 520. Taxonomía inicial de desarrollo respaldada por el mockup.",
+      "common_name": {
+        "code": "COMMON_VACHELLIA_FARNESIANA_PRIMARY",
+        "name": "Acacia",
+        "is_primary": true
+      }
+    },
+    {
+      "code": "SPECIES_GLIRICIDIA_SEPIUM",
+      "family_code": "FAMILY_FABACEAE",
+      "scientific_name": "Gliricidia sepium",
+      "sort_order": 100,
+      "description": "Fuente: árbol de ejemplo ARB-010 del HTML, línea 521. Taxonomía inicial de desarrollo respaldada por el mockup.",
+      "common_name": {
+        "code": "COMMON_GLIRICIDIA_SEPIUM_PRIMARY",
+        "name": "Matarratón",
+        "is_primary": true
+      }
+    }
+  ]
+}

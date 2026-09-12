@@ -2,10 +2,11 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "sysforest/sysforest",
     "type": "project",
-    "description": "Inventario y gestión forestal institucional. Infraestructura local de la Fase 2.",
+    "description": "Inventario y gestión forestal institucional. Catálogos nacionales de la Fase 5.",
     "license": "proprietary",
     "require": {
         "php": "~8.4.0",
+        "ext-bcmath": "*",
         "ext-pdo_pgsql": "*",
         "ext-redis": "*",
         "laravel/framework": "^13.17",

@@ -18,6 +18,7 @@ class SecurityEventRepository
         }
         $safe = array_intersect_key($metadata, array_flip([
             'session_id', 'reason', 'membership_id', 'invitation_id', 'target_user_id', 'role_name', 'department_id',
+            'catalog_key', 'resource_id', 'resource_code', 'rule_version',
         ]));
         foreach ($safe as $key => $value) {
             if (!is_string($value) && !is_int($value) && !is_bool($value) && $value !== null) {

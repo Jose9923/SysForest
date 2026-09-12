@@ -6,6 +6,7 @@
         <a class="{{ request()->is('territories*') ? 'selected' : '' }}" href="{{ route('territories.index') }}"><span aria-hidden="true">◎</span> Territorios</a>
         @can('memberships.view')<a class="{{ request()->is('memberships*', 'invitations*') ? 'selected' : '' }}" href="{{ route('memberships.index') }}"><span aria-hidden="true">♧</span> Usuarios de organización</a>@endcan
         @can('users.view')<a class="{{ request()->is('users*') ? 'selected' : '' }}" href="{{ route('users.index') }}"><span aria-hidden="true">▤</span> Usuarios globales</a>@endcan
+        @can('catalogs.view')<a class="{{ request()->is('admin/catalogs*') ? 'selected' : '' }}" href="{{ route('catalogs.dashboard') }}"><span aria-hidden="true">❧</span> Catálogos forestales</a>@endcan
         <a class="{{ request()->is('profile*') ? 'selected' : '' }}" href="{{ route('profile.show') }}"><span aria-hidden="true">○</span> Mi perfil</a>
         <a href="/"><span aria-hidden="true">◉</span> Estado del sistema</a>
     </nav>

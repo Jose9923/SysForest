@@ -50,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
             });
         }
         Gate::define('memberships.manage', fn (User $actor) => Gate::forUser($actor)->allows('memberships.update'));
+        Gate::define('catalogs.view', fn (User $actor) => $permissions()->allowsCatalogView($actor));
+        Gate::define('catalogs.manage', fn (User $actor) => $permissions()->allowsNational($actor, 'catalogs.manage'));
 
         foreach (['login' => 10, 'refresh' => 30, 'password' => 5, 'invitation' => 20] as $name => $default) {
             RateLimiter::for('identity.'.$name, function (Request $request) use ($name, $default): array {

@@ -36,6 +36,8 @@ class AuthorizationSeeder extends Seeder
                 'roles.assign-organization' => 'Conceder roles organizacionales a una membresía.',
                 'sessions.view' => 'Consultar sesiones desde la administración global.',
                 'sessions.revoke' => 'Revocar sesiones desde la administración global.',
+                'catalogs.view' => 'Consultar los catálogos forestales nacionales desde un rol vigente.',
+                'catalogs.manage' => 'Administrar exclusivamente los catálogos forestales nacionales.',
             ];
             $ids = [];
 
@@ -46,13 +48,13 @@ class AuthorizationSeeder extends Seeder
             // Catálogo explícito: ningún rol obtiene automáticamente permisos añadidos en otras fases.
             $matrix = [
                 'SUPER_ADMIN' => ['national', array_keys($catalog)],
-                'DEPARTMENT_ADMIN' => ['department', ['organizations.view', 'territories.view']],
+                'DEPARTMENT_ADMIN' => ['department', ['organizations.view', 'territories.view', 'catalogs.view']],
                 'ORGANIZATION_ADMIN' => ['organization', [
                     'organizations.view', 'organizations.manage', 'memberships.view', 'memberships.create',
                     'memberships.update', 'memberships.activate', 'memberships.deactivate', 'users.view',
-                    'users.invite', 'territories.view', 'roles.assign-organization',
+                    'users.invite', 'territories.view', 'roles.assign-organization', 'catalogs.view',
                 ]],
-                'OFFICIAL' => ['organization', ['organizations.view', 'territories.view']],
+                'OFFICIAL' => ['organization', ['organizations.view', 'territories.view', 'catalogs.view']],
             ];
 
             foreach ($matrix as $name => [$scope, $codes]) {

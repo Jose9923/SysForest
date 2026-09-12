@@ -1,0 +1,596 @@
+{
+  "categories": [
+    {
+      "code": "PHY_ROOT",
+      "name": "Sistema radicular",
+      "assessment_type": "physical_mechanical",
+      "sort_order": 10,
+      "description": "Fuente: Excel Hoja1!X5, columnas X6:AA6."
+    },
+    {
+      "code": "PHY_STEM",
+      "name": "Fuste o estípite",
+      "assessment_type": "physical_mechanical",
+      "sort_order": 20,
+      "description": "Fuente: Excel Hoja1!AB5, columnas AB6:AL6."
+    },
+    {
+      "code": "PHY_BRANCH",
+      "name": "Ramas",
+      "assessment_type": "physical_mechanical",
+      "sort_order": 30,
+      "description": "Fuente: Excel Hoja1!AM5, columnas AM6:AQ6."
+    },
+    {
+      "code": "PHY_CROWN",
+      "name": "Copa",
+      "assessment_type": "physical_mechanical",
+      "sort_order": 40,
+      "description": "Fuente: Excel Hoja1!AR5, columnas AR6:AT6."
+    },
+    {
+      "code": "PHT_ROOT",
+      "name": "Sistema radicular",
+      "assessment_type": "phytosanitary",
+      "sort_order": 50,
+      "description": "Fuente: Excel Hoja1!AU5, columnas AU6:AW6."
+    },
+    {
+      "code": "PHT_STEM",
+      "name": "Fuste o estípite",
+      "assessment_type": "phytosanitary",
+      "sort_order": 60,
+      "description": "Fuente: Excel Hoja1!AX5, columnas AX6:BK6."
+    },
+    {
+      "code": "PHT_BRANCH",
+      "name": "Ramas",
+      "assessment_type": "phytosanitary",
+      "sort_order": 70,
+      "description": "Fuente: Excel Hoja1!BL5, columnas BL6:BO6."
+    },
+    {
+      "code": "PHT_FOLIAGE",
+      "name": "Follaje",
+      "assessment_type": "phytosanitary",
+      "sort_order": 80,
+      "description": "Fuente: Excel Hoja1!BP5, columnas BP6:BX6."
+    },
+    {
+      "code": "PHT_FLOWER_FRUIT",
+      "name": "Flores y frutos",
+      "assessment_type": "phytosanitary",
+      "sort_order": 90,
+      "description": "Fuente: Excel Hoja1!BY5, columnas BY6:CF6."
+    },
+    {
+      "code": "PHT_GENERAL",
+      "name": "Estado fitosanitario general del árbol",
+      "assessment_type": "phytosanitary",
+      "sort_order": 100,
+      "description": "Fuente: Excel Hoja1!CG5, columnas CG6:CL6."
+    }
+  ],
+  "conditions": [
+    {
+      "code": "PHY_ROOT_BAD_ANCHORAGE",
+      "name": "Anclaje malo",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_ROOT",
+      "sort_order": 10,
+      "description": "Fuente: Excel Hoja1!X6. Encabezado original: Anclaje malo."
+    },
+    {
+      "code": "PHY_ROOT_GOOD_ANCHORAGE",
+      "name": "Anclaje bueno",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_ROOT",
+      "sort_order": 20,
+      "description": "Fuente: Excel Hoja1!Y6. Encabezado original: Anclaje bueno."
+    },
+    {
+      "code": "PHY_ROOT_BUTTRESSES",
+      "name": "Aletones",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_ROOT",
+      "sort_order": 30,
+      "description": "Fuente: Excel Hoja1!Z6. Encabezado original: Aletones."
+    },
+    {
+      "code": "PHY_ROOT_INSUFFICIENT_CONFINEMENT",
+      "name": "Confinamiento insuficiente",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_ROOT",
+      "sort_order": 40,
+      "description": "Fuente: Excel Hoja1!AA6. Encabezado original: Confinamiento insuficiente."
+    },
+    {
+      "code": "PHY_STEM_STRAIGHT",
+      "name": "Recto",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 50,
+      "description": "Fuente: Excel Hoja1!AB6. Encabezado original: Recto."
+    },
+    {
+      "code": "PHY_STEM_CROOKED",
+      "name": "Torcido",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 60,
+      "description": "Fuente: Excel Hoja1!AC6. Encabezado original: Torcido."
+    },
+    {
+      "code": "PHY_STEM_TWISTED",
+      "name": "Retorcido",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 70,
+      "description": "Fuente: Excel Hoja1!AD6. Encabezado original: Retorcido."
+    },
+    {
+      "code": "PHY_STEM_LOW_BRANCHING",
+      "name": "Ramificación abajo",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 80,
+      "description": "Fuente: Excel Hoja1!AE6. Encabezado original: Ramificación abajo."
+    },
+    {
+      "code": "PHY_STEM_LEAN_UNDER_30",
+      "name": "Inclinado < de 30 grados",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 90,
+      "description": "Fuente: Excel Hoja1!AF6. Encabezado original: Inclinado < de 30 grados ."
+    },
+    {
+      "code": "PHY_STEM_LEAN_OVER_30",
+      "name": "Inclinado > de 30 grados",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 100,
+      "description": "Fuente: Excel Hoja1!AG6. Encabezado original: Inclinado > de 30 grados ."
+    },
+    {
+      "code": "PHY_STEM_VERTICAL_CRACKS",
+      "name": "Grietas o fisuras  verticales",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 110,
+      "description": "Fuente: Excel Hoja1!AH6. Encabezado original: Grietas o fisuras  verticales."
+    },
+    {
+      "code": "PHY_STEM_HORIZONTAL_CRACKS",
+      "name": "Grietas o fisuras horizontales",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 120,
+      "description": "Fuente: Excel Hoja1!AI6. Encabezado original: Grietas o fisuras horizontales."
+    },
+    {
+      "code": "PHY_STEM_PRICKLES",
+      "name": "Aguijones",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 130,
+      "description": "Fuente: Excel Hoja1!AJ6. Encabezado original: Aguijones."
+    },
+    {
+      "code": "PHY_STEM_THORNS",
+      "name": "Espinas",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 140,
+      "description": "Fuente: Excel Hoja1!AK6. Encabezado original: Espinas."
+    },
+    {
+      "code": "PHY_STEM_IMPACT_MARKS",
+      "name": "Marcas por impacto",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_STEM",
+      "sort_order": 150,
+      "description": "Fuente: Excel Hoja1!AL6. Encabezado original: Marcas por impacto."
+    },
+    {
+      "code": "PHY_BRANCH_MORE_THAN_ONE_PER_NODE",
+      "name": "Mas de una por nudo",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_BRANCH",
+      "sort_order": 160,
+      "description": "Fuente: Excel Hoja1!AM6. Encabezado original: Mas de una por nudo."
+    },
+    {
+      "code": "PHY_BRANCH_HANGING",
+      "name": "Colgantes",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_BRANCH",
+      "sort_order": 170,
+      "description": "Fuente: Excel Hoja1!AN6. Encabezado original: Colgantes."
+    },
+    {
+      "code": "PHY_BRANCH_DEAD",
+      "name": "Muertas",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_BRANCH",
+      "sort_order": 180,
+      "description": "Fuente: Excel Hoja1!AO6. Encabezado original: Muertas."
+    },
+    {
+      "code": "PHY_BRANCH_SUCKER_SHOOTS",
+      "name": "Chupones",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_BRANCH",
+      "sort_order": 190,
+      "description": "Fuente: Excel Hoja1!AP6. Encabezado original: Chupones."
+    },
+    {
+      "code": "PHY_BRANCH_POORLY_PRUNED",
+      "name": "Mal podadas",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_BRANCH",
+      "sort_order": 200,
+      "description": "Fuente: Excel Hoja1!AQ6. Encabezado original: Mal podadas."
+    },
+    {
+      "code": "PHY_CROWN_ALTERED",
+      "name": "Alterada",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_CROWN",
+      "sort_order": 210,
+      "description": "Fuente: Excel Hoja1!AR6. Encabezado original: Alterada."
+    },
+    {
+      "code": "PHY_CROWN_UNALTERED",
+      "name": "Sin alteración",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_CROWN",
+      "sort_order": 220,
+      "description": "Fuente: Excel Hoja1!AS6. Encabezado original: Sin alteración."
+    },
+    {
+      "code": "PHY_CROWN_UNBALANCED_BY_PRUNING",
+      "name": "Desestabilizada por malas podas",
+      "assessment_type": "physical_mechanical",
+      "category_code": "PHY_CROWN",
+      "sort_order": 230,
+      "description": "Fuente: Excel Hoja1!AT6. Encabezado original: Desestabilizada por malas podas."
+    },
+    {
+      "code": "PHT_ROOT_VISIBLE_ROOTS",
+      "name": "Raices visibles",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_ROOT",
+      "sort_order": 240,
+      "description": "Fuente: Excel Hoja1!AU6. Encabezado original: Raices visibles."
+    },
+    {
+      "code": "PHT_ROOT_TWISTED_ROOTS",
+      "name": "Raices retorcidas",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_ROOT",
+      "sort_order": 250,
+      "description": "Fuente: Excel Hoja1!AV6. Encabezado original: Raices retorcidas."
+    },
+    {
+      "code": "PHT_ROOT_PRUNED_BY_WORKS",
+      "name": "Podas por acción de obras",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_ROOT",
+      "sort_order": 260,
+      "description": "Fuente: Excel Hoja1!AW6. Encabezado original: Podas por acción de obras."
+    },
+    {
+      "code": "PHT_STEM_HEALTHY",
+      "name": "Sano",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 270,
+      "description": "Fuente: Excel Hoja1!AX6. Encabezado original: Sano."
+    },
+    {
+      "code": "PHT_STEM_GALLS_OR_TUMORS",
+      "name": "Agallas o tumores",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 280,
+      "description": "Fuente: Excel Hoja1!AY6. Encabezado original: Agallas o tumores."
+    },
+    {
+      "code": "PHT_STEM_FUNGI",
+      "name": "Hongos",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 290,
+      "description": "Fuente: Excel Hoja1!AZ6. Encabezado original: Hongos."
+    },
+    {
+      "code": "PHT_STEM_ROT",
+      "name": "Pudrición",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 300,
+      "description": "Fuente: Excel Hoja1!BA6. Encabezado original: Pudrición."
+    },
+    {
+      "code": "PHT_STEM_NECROSIS",
+      "name": "Necrosis",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 310,
+      "description": "Fuente: Excel Hoja1!BB6. Encabezado original: Necrosis."
+    },
+    {
+      "code": "PHT_STEM_CAVITY_UNDER_30",
+      "name": "Oquedad media < 30%",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 320,
+      "description": "Fuente: Excel Hoja1!BC6. Encabezado original: Oquedad media < 30%."
+    },
+    {
+      "code": "PHT_STEM_CAVITY_OVER_30",
+      "name": "Oquedad grande > 30%",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 330,
+      "description": "Fuente: Excel Hoja1!BD6. Encabezado original: Oquedad grande > 30%."
+    },
+    {
+      "code": "PHT_STEM_GIRDLING",
+      "name": "Anillamiento",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 340,
+      "description": "Fuente: Excel Hoja1!BE6. Encabezado original: Anillamiento."
+    },
+    {
+      "code": "PHT_STEM_CONSTRICTING_ELEMENTS",
+      "name": "Elementos de estrangulamiento",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 350,
+      "description": "Fuente: Excel Hoja1!BF6. Encabezado original: Elementos de estrangulamiento."
+    },
+    {
+      "code": "PHT_STEM_PARASITIC_HEMIPARASITIC_EPIPHYTES",
+      "name": "Epífitas parásitas o hemiparasitas",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 360,
+      "description": "Fuente: Excel Hoja1!BG6. Encabezado original: Epífitas parásitas o hemiparasitas."
+    },
+    {
+      "code": "PHT_STEM_VINE",
+      "name": "Bejuco o liana",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 370,
+      "description": "Fuente: Excel Hoja1!BH6. Encabezado original: Bejuco o liana."
+    },
+    {
+      "code": "PHT_STEM_STRANGLER",
+      "name": "Matapalo",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 380,
+      "description": "Fuente: Excel Hoja1!BI6. Encabezado original: Matapalo."
+    },
+    {
+      "code": "PHT_STEM_TERMITES",
+      "name": "Termitas o comején",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 390,
+      "description": "Fuente: Excel Hoja1!BJ6. Encabezado original: Termitas o comején."
+    },
+    {
+      "code": "PHT_STEM_INSECT_HOST",
+      "name": "Hospedero insectos",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_STEM",
+      "sort_order": 400,
+      "description": "Fuente: Excel Hoja1!BK6. Encabezado original: Hospedero insectos."
+    },
+    {
+      "code": "PHT_BRANCH_ROT",
+      "name": "Podridas",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_BRANCH",
+      "sort_order": 410,
+      "description": "Fuente: Excel Hoja1!BL6. Encabezado original: Podridas."
+    },
+    {
+      "code": "PHT_BRANCH_FUNGI",
+      "name": "Hongos",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_BRANCH",
+      "sort_order": 420,
+      "description": "Fuente: Excel Hoja1!BM6. Encabezado original: Hongos."
+    },
+    {
+      "code": "PHT_BRANCH_PARASITIC_HEMIPARASITIC_EPIPHYTES",
+      "name": "Epífitas parásitas o hemiparasitas",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_BRANCH",
+      "sort_order": 430,
+      "description": "Fuente: Excel Hoja1!BN6. Encabezado original: Epífitas parásitas o hemiparasitas."
+    },
+    {
+      "code": "PHT_BRANCH_DEAD",
+      "name": "Muertas",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_BRANCH",
+      "sort_order": 440,
+      "description": "Fuente: Excel Hoja1!BO6. Encabezado original: Muertas."
+    },
+    {
+      "code": "PHT_FOLIAGE_SCANT",
+      "name": "Escaso",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FOLIAGE",
+      "sort_order": 450,
+      "description": "Fuente: Excel Hoja1!BP6. Encabezado original: Escaso."
+    },
+    {
+      "code": "PHT_FOLIAGE_ABUNDANT",
+      "name": "Abundante",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FOLIAGE",
+      "sort_order": 460,
+      "description": "Fuente: Excel Hoja1!BQ6. Encabezado original: Abundante."
+    },
+    {
+      "code": "PHT_FOLIAGE_HEALTHY",
+      "name": "Sano",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FOLIAGE",
+      "sort_order": 470,
+      "description": "Fuente: Excel Hoja1!BR6. Encabezado original: Sano."
+    },
+    {
+      "code": "PHT_FOLIAGE_CHLOROSIS",
+      "name": "Clorosis",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FOLIAGE",
+      "sort_order": 480,
+      "description": "Fuente: Excel Hoja1!BS6. Encabezado original: Clorosis."
+    },
+    {
+      "code": "PHT_FOLIAGE_CURLING",
+      "name": "Entorchamiento",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FOLIAGE",
+      "sort_order": 490,
+      "description": "Fuente: Excel Hoja1!BT6. Encabezado original: Entorchamiento."
+    },
+    {
+      "code": "PHT_FOLIAGE_WILTING",
+      "name": "Marchitamiento",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FOLIAGE",
+      "sort_order": 500,
+      "description": "Fuente: Excel Hoja1!BU6. Encabezado original: Marchitamiento."
+    },
+    {
+      "code": "PHT_FOLIAGE_LOCALIZED_ROT",
+      "name": "Pudrición localizada",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FOLIAGE",
+      "sort_order": 510,
+      "description": "Fuente: Excel Hoja1!BV6. Encabezado original: Pudrición localizada."
+    },
+    {
+      "code": "PHT_FOLIAGE_PARASITIC_HEMIPARASITIC_EPIPHYTES",
+      "name": "Epífitas parásitas o hemiparasitas",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FOLIAGE",
+      "sort_order": 520,
+      "description": "Fuente: Excel Hoja1!BW6. Encabezado original: Epífitas parásitas o hemiparasitas."
+    },
+    {
+      "code": "PHT_FOLIAGE_ABNORMAL_LEAF_ABSCISSION",
+      "name": "Absición foliar anormal - No desfoliación genetica",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FOLIAGE",
+      "sort_order": 530,
+      "description": "Fuente: Excel Hoja1!BX6. Encabezado original: Absición foliar anormal - No desfoliación genetica."
+    },
+    {
+      "code": "PHT_FLOWER_FRUIT_SCANT",
+      "name": "Escasa",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FLOWER_FRUIT",
+      "sort_order": 540,
+      "description": "Fuente: Excel Hoja1!BY6. Encabezado original: Escasa."
+    },
+    {
+      "code": "PHT_FLOWER_FRUIT_ABUNDANT",
+      "name": "Abundante",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FLOWER_FRUIT",
+      "sort_order": 550,
+      "description": "Fuente: Excel Hoja1!BZ6. Encabezado original: Abundante."
+    },
+    {
+      "code": "PHT_FLOWER_FRUIT_HEALTHY",
+      "name": "Sana",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FLOWER_FRUIT",
+      "sort_order": 560,
+      "description": "Fuente: Excel Hoja1!CA6. Encabezado original: Sana."
+    },
+    {
+      "code": "PHT_FLOWER_FRUIT_LOCAL_OR_GENERAL_ROT",
+      "name": "Pudrición localizada o general",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FLOWER_FRUIT",
+      "sort_order": 570,
+      "description": "Fuente: Excel Hoja1!CB6. Encabezado original: Pudrición localizada o general."
+    },
+    {
+      "code": "PHT_FLOWER_FRUIT_WILTING_BEFORE_POLLINATION_DURING_FRUITING",
+      "name": "Marchitamiento antes de polinización - En fructificación",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FLOWER_FRUIT",
+      "sort_order": 580,
+      "description": "Fuente: Excel Hoja1!CC6. Encabezado original: Marchitamiento antes de polinización - En fructificación."
+    },
+    {
+      "code": "PHT_FLOWER_FRUIT_ABNORMAL_FLOWER_FRUIT_ABSCISSION",
+      "name": "Absición anormal de flores y/o frutos",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_FLOWER_FRUIT",
+      "sort_order": 590,
+      "description": "Fuente: Excel Hoja1!CD6. Encabezado original: Absición anormal de flores y/o frutos."
+    },
+    {
+      "code": "PHT_GENERAL_HEALTHY",
+      "name": "Sano",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_GENERAL",
+      "sort_order": 600,
+      "description": "Fuente: Excel Hoja1!CG6. Encabezado original: Sano."
+    },
+    {
+      "code": "PHT_GENERAL_DIEBACK",
+      "name": "Muerte descendente",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_GENERAL",
+      "sort_order": 610,
+      "description": "Fuente: Excel Hoja1!CH6. Encabezado original: Muerte descendente."
+    },
+    {
+      "code": "PHT_GENERAL_DYING_OVER_50",
+      "name": "Proceso de muerte > 50%",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_GENERAL",
+      "sort_order": 620,
+      "description": "Fuente: Excel Hoja1!CI6. Encabezado original: Proceso de muerte > 50%."
+    },
+    {
+      "code": "PHT_GENERAL_DYING_UNDER_50",
+      "name": "Proceso de muerte < 50%",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_GENERAL",
+      "sort_order": 630,
+      "description": "Fuente: Excel Hoja1!CJ6. Encabezado original: Proceso de muerte < 50%."
+    },
+    {
+      "code": "PHT_GENERAL_BENIGN_INSECT_HOST",
+      "name": "Hospedero insectos benignos - Avispas, abejas",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_GENERAL",
+      "sort_order": 640,
+      "description": "Fuente: Excel Hoja1!CK6. Encabezado original: Hospedero insectos benignos - Avispas, abejas."
+    },
+    {
+      "code": "PHT_GENERAL_HARMFUL_INSECT_HOST",
+      "name": "Hospedero insectos dañinos - Trozadores, perforadores",
+      "assessment_type": "phytosanitary",
+      "category_code": "PHT_GENERAL",
+      "sort_order": 650,
+      "description": "Fuente: Excel Hoja1!CL6. Encabezado original: Hospedero insectos dañinos - Trozadores, perforadores."
+    }
+  ]
+}

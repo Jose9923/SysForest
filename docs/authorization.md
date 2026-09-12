@@ -17,7 +17,7 @@ Los cuatro roles tienen ámbito fijo:
 | ORGANIZATION_ADMIN | Una membresía de una organización |
 | OFFICIAL | Una membresía de una organización |
 
-La matriz inicial contiene 18 permisos. En la tabla, **N** significa concesión nacional, **D** el departamento asignado y **O** la organización de la membresía autorizada. El guion indica ausencia del permiso.
+La matriz vigente contiene 20 permisos: los 18 de Fase 4 y dos de catálogos incorporados en Fase 5. En la tabla, **N** significa concesión nacional, **D** el departamento asignado y **O** la organización de la membresía autorizada. El guion indica ausencia del permiso.
 
 | Permiso | SUPER_ADMIN | DEPARTMENT_ADMIN | ORGANIZATION_ADMIN | OFFICIAL |
 | --- | --- | --- | --- | --- |
@@ -39,6 +39,10 @@ La matriz inicial contiene 18 permisos. En la tabla, **N** significa concesión 
 | roles.assign-organization | N | — | O | — |
 | sessions.view | N | — | — | — |
 | sessions.revoke | N | — | — | — |
+| catalogs.view | Consulta | Consulta | Consulta | Consulta |
+| catalogs.manage | N | — | — | — |
+
+`catalogs.view` consulta valores nacionales compartidos, pero exige una asignación vigente dentro de su ámbito: cuenta activa/verificada, rol y permiso; además departamento/país activos o membresía/organización activas según corresponda. No exige seleccionar tenant ni convierte el permiso de lectura local en escritura nacional. `catalogs.manage` se comprueba exclusivamente con `allowsNational`.
 
 El perfil y las sesiones propias se protegen por identidad y propiedad del recurso; no requieren conceder administración global a todos los usuarios. El permiso organizacional users.view permite consultar la gestión de miembros de esa organización, no otras membresías ni sesiones de esas cuentas.
 
@@ -88,6 +92,7 @@ allowsNational(User $actor, string $permission): bool;
 allowsDepartment(User $actor, string $permission, string $departmentId): bool;
 allowsOrganization(User $actor, string $permission, string $organizationId): bool;
 hasOrganizationRole(User $actor, string $organizationId): bool;
+allowsCatalogView(User $actor): bool;
 ~~~
 
 Cada decisión consulta el estado actual de la cuenta: debe existir, estar activa y tener email_verified_at. Un objeto User cargado antes de una desactivación no conserva sus derechos.

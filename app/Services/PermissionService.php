@@ -21,6 +21,13 @@ class PermissionService
         return $this->eligible($actor) && $this->assignments->hasNationalPermission((int) $actor->id, $permission);
     }
 
+    /** Consultar un catálogo nacional no convierte el rol local en autoridad de escritura nacional. */
+    public function allowsCatalogView(User $actor): bool
+    {
+        return $this->eligible($actor)
+            && $this->assignments->hasCatalogReadPermission((int) $actor->id);
+    }
+
     public function allowsDepartment(User $actor, string $permission, string $departmentId): bool
     {
         if (!Str::isUuid($departmentId) || !$this->eligible($actor) || !$this->assignments->activeDepartment($departmentId)) {

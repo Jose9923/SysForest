@@ -1,7 +1,9 @@
 # SYSFOREST: acuerdos de implementación
 
-La Fase 3 fue aprobada. El alcance actual es la Fase 4: autenticación, JWT, usuarios, RBAC por alcance, invitaciones y correos.
-No implementar módulos forestales ni comenzar la Fase 5 sin aprobación.
+La Fase 4 fue aprobada y cerrada en el commit 652070e. El alcance actual es la Fase 5: catálogos forestales nacionales.
+No comenzar la Fase 6 ni implementar Tree, TreeInspection, operaciones forestales, importaciones o reportes finales.
+Los catálogos nacionales no llevan organization_id; solo SUPER_ADMIN administra, los demás roles consultan.
+La semántica forestal del Excel tiene prioridad sobre el mockup. No inventar equivalencias ni valores sin respaldo.
 La única fuente de verdad es /home/josev/SYSFOREST. No depender de phase2-staging.
 
 - Laravel 13 y PHP 8.4 en Docker dentro de Ubuntu-24.04 WSL.

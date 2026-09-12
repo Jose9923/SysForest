@@ -28,6 +28,27 @@ class RoleAssignmentRepository
             ->exists();
     }
 
+    /** La lectura compartida exige una asignación vigente y un alcance todavía activo. */
+    public function hasCatalogReadPermission(int $userId): bool
+    {
+        $permission = 'catalogs.view';
+        if ($this->hasNationalPermission($userId, $permission)) {
+            return true;
+        }
+
+        $department = DepartmentRoleAssignment::query()->where('user_id', $userId)
+            ->where('active', true)->whereNull('revoked_at')
+            ->whereHas('role.permissions', fn (Builder $query) => $query->where('code', $permission))
+            ->whereHas('department', fn (Builder $query) => $query->where('active', true)
+                ->whereHas('country', fn (Builder $country) => $country->where('active', true)))->exists();
+
+        return $department || OrganizationRoleAssignment::query()->where('active', true)->whereNull('revoked_at')
+            ->whereHas('role.permissions', fn (Builder $query) => $query->where('code', $permission))
+            ->whereHas('membership', fn (Builder $query) => $query->where('user_id', $userId)
+                ->where('active', true)->whereNull('left_at'))
+            ->whereHas('organization', fn (Builder $query) => $query->where('active', true))->exists();
+    }
+
     public function hasDepartmentPermission(int $userId, string $permission, string $departmentId): bool
     {
         return DepartmentRoleAssignment::query()->where('user_id', $userId)->where('department_id', $departmentId)
