@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // La evidencia textual del GPS se conserva; el parser normaliza una copia para interpretar.
+        $middleware->trimStrings(except: ['coordinate_raw']);
         $middleware->alias([
             'jwt.cookie' => \App\Http\Middleware\AuthenticateJwtCookie::class,
             'jwt.optional' => \App\Http\Middleware\OptionalJwtCookie::class,

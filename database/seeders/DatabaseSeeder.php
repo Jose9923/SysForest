@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             TerritorySeeder::class, PilotOrganizationSeeder::class, AuthorizationSeeder::class,
             ForestryCatalogSeeder::class, TaxonomySeeder::class, ConditionCatalogSeeder::class,
             EvidenceTypeSeeder::class, MaintenanceCatalogSeeder::class, ClassificationRuleSeeder::class,
+            PilotInventorySeeder::class,
         ]);
         // Las cuentas de desarrollo siempre requieren ejecutar su seeder de forma explícita.
     }

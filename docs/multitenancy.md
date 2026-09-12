@@ -1,12 +1,14 @@
 # Aislamiento multi-tenant de SYSFOREST
 
-## Alcance de Fase 4
+## Base aprobada y extensión actual
+
+Las secciones de identidad describen la base de Fase 4. La extensión operativa de Fase 6 se documenta al final: inventarios, árboles, ocho permisos adicionales y restricciones compuestas implementadas.
 
 SYSFOREST comparte una aplicación y una base PostgreSQL/PostGIS entre organizaciones. La organización conserva la propiedad de sus datos; la cuenta que los registra no reemplaza esa propiedad. La jerarquía es `Country → Department → Municipality → Organization`, y toda organización tiene un municipio obligatorio.
 
 Las entidades territoriales, organizaciones, membresías y asignaciones de roles usan UUID. `users` conserva su identificador BIGINT y representa una identidad global. El tipo de organización describe a la institución y no concede permisos.
 
-Fase 4 añade autenticación JWT, sesiones revocables y autorización mediante **cuatro roles y 18 permisos**. Consulta [autenticación](authentication.md), [matriz de autorización](authorization.md#roles-y-permisos), [recuperación e invitaciones](account-recovery.md) y [cuentas de desarrollo](development-accounts.md). Los módulos forestales aún no están implementados.
+Fase 4 añade autenticación JWT, sesiones revocables y autorización mediante **cuatro roles y 18 permisos**. Consulta [autenticación](authentication.md), [matriz de autorización](authorization.md#roles-y-permisos), [recuperación e invitaciones](account-recovery.md) y [cuentas de desarrollo](development-accounts.md). Fase 5 añadió dos permisos de catálogo y Fase 6 añade ocho operativos, para 28 permisos actuales.
 
 ## Identidad, pertenencia, selección y permiso
 
@@ -128,7 +130,7 @@ Los jobs futuros transportarán identificadores y volverán a consultar permisos
 
 Cada recurso operativo futuro incluirá `organization_id NOT NULL`. Los padres expondrán `UNIQUE(organization_id, id)`; las referencias a otro recurso del mismo tenant usarán ambas columnas.
 
-Ejemplo conceptual; estas tablas forestales aún no existen:
+Patrón implementado en Fase 6 para inventory_trees y ambos historiales:
 
 ~~~sql
 UNIQUE (organization_id, id)
@@ -155,5 +157,29 @@ docker compose exec app php artisan test --filter=AuthenticationTest
 ~~~
 
 `TerritorialFoundationTest` verifica integridad territorial y membresías; `TerritorySpatialTest` verifica PostGIS. Los fixtures espaciales artificiales se limitan a pruebas. `PostgresTestCase` protege la base separada `sysforest_testing` y revierte sus transacciones. No se deben ejecutar varias suites simultáneamente sobre esa base.
+
+## Operaciones forestales de Fase 6
+
+Inventory y Tree incluyen organization_id obligatorio. Inventory ↔ Tree utiliza inventory_trees; el individuo no tiene inventory_id. Los padres exponen UNIQUE(organization_id,id) y la asociación referencia ambos padres con claves compuestas. Historiales de estado y ubicación también referencian (organization_id,tree_id). PostgreSQL rechaza una combinación Inventory B / Tree A aunque un cliente conozca ambos UUID.
+
+| Permiso | SUPER_ADMIN | DEPARTMENT_ADMIN | ORGANIZATION_ADMIN | OFFICIAL |
+| --- | --- | --- | --- | --- |
+| inventories.view | Sí, tenant seleccionado | Consulta del departamento | Su organización | Su organización |
+| inventories.create / update | Sí, tenant seleccionado | No | Su organización | No |
+| trees.view | Sí, tenant seleccionado | Consulta del departamento | Su organización | Su organización |
+| trees.create / update | Sí, tenant seleccionado | No | Su organización | Campañas activas de su organización |
+| trees.void / restore | Sí, tenant seleccionado | No | Su organización | No |
+
+ForestryAccessService revalida TenantContextService y los permisos persistidos. InventoryPolicy y TreePolicy verifican actor, tenant, operación y estado del recurso. No hay bypass nacional: SUPER_ADMIN selecciona la organización y usa su concesión global explícita. Un actor departamental solo consulta organizaciones activas del departamento autorizado; no cambia identidad, estado ni ubicación. Los servicios vuelven a comprobar el contexto al ejecutar.
+
+Las rutas reciben UUID como cadenas con whereUuid y nunca usan binding global de Tree o Inventory. El Repository resuelve WHERE organization_id = tenant AND id = recurso antes de Policy y devuelve 404 para UUID ajenos. Los Form Requests de mutación Tree llaman la resolución autorizada antes de validar el cuerpo; datos inventados o UUID conocidos no revelan el recurso. En formularios, un inventario ajeno devuelve un error genérico de disponibilidad institucional. La base protege además la asociación.
+
+OFFICIAL puede editar el árbol creado por otro funcionario de la misma organización si participa en al menos una campaña activa. created_by permanece inmutable y updated_by identifica al último editor. Los permisos no dependen de la autoría. Solo se añaden nuevos vínculos a campañas activas; no se borran campañas históricas al editar la ficha. Los filtros sí permiten consultar campañas cerradas.
+
+Las escrituras bloquean actor, organización/membresía y recurso en transacción. TreeWriteService compara lock_version y devuelve 409 con el mensaje solicitado antes de modificar una versión obsoleta. Cada operación confirmada incrementa la versión; creación, código, pertenencias y estados/ubicación iniciales comparten commit. La secuencia por organización usa UPSERT ... RETURNING, con bloqueo de fila PostgreSQL, sin MAX+1. Las reservas de operaciones fallidas se revierten; los códigos de individuos confirmados o anulados nunca se reciclan.
+
+Tree SoftDeletes significa registro erróneo, con autor/motivo/nota; dead, felled y removed no modifican deleted_at. Restaurar conserva UUID/código/autor y vínculos, registra restored_by/restored_at y auditoría. Los triggers protegen identidad e historiales; el rol de aplicación no elimina físicamente árboles ni reescribe el historial.
+
+No hay consultas en Blade ni cálculo espacial de distancias en JavaScript. La ubicación se valida en servicios y persiste mediante PostGIS y bindings. Cada consulta bbox/radio/proximidad lleva organization_id y el filtro de campaña utiliza la asociación institucional.
 
 Consulta el [README](../README.md) para la operación local y el [reporte de Fase 4](phase-4.md) para el cierre y los resultados consolidados. Los comandos anteriores son procedimientos; no expresan un total de pruebas ejecutadas.

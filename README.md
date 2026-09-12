@@ -1,12 +1,12 @@
-# SYSFOREST — Fase 5
+# SYSFOREST — Fase 6
 
 **Inventario y gestión forestal inteligente.**
 
-SYSFOREST incorpora catálogos forestales nacionales sobre la autenticación, usuarios, roles, membresías y territorios aprobados en las fases anteriores. La interfaz se renderiza con Blade. El piloto es la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia.
+SYSFOREST incorpora inventarios institucionales, individuos forestales permanentes y ubicación PostGIS, sobre los catálogos, la autenticación y el territorio aprobados. La interfaz se renderiza con Blade. El piloto es la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia.
 
-El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Los módulos de inventarios, árboles e inspecciones corresponden a fases posteriores y aún no están implementados.
+El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Inventory y Tree están implementados; TreeInspection, mediciones, evidencias y operaciones posteriores esperan la aprobación de Fase 7.
 
-El [reporte A–AE de Fase 5](docs/phase-5.md) documenta la entrega actual: **352 pruebas, 1.438 aserciones y PSR-12 sobre 232 archivos PHP**. La [matriz de 94 campos del Excel](docs/excel-field-mapping.md) y la [trazabilidad de catálogos](docs/forestry-catalogs.md) conservan las fuentes. El [reporte de Fase 4](docs/phase-4.md) mantiene su evidencia histórica. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
+El [reporte A–AJ de Fase 6](docs/phase-6.md) documenta la entrega actual y sus resultados verificados. El checkpoint de Fase 5 es **28c2bf7**, validado con 352 pruebas y 1.438 aserciones. La [matriz de 94 campos del Excel](docs/excel-field-mapping.md) y la [trazabilidad de catálogos](docs/forestry-catalogs.md) conservan las fuentes. El [reporte de Fase 4](docs/phase-4.md) mantiene su evidencia histórica. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
 
 ## Entorno local
 
@@ -53,13 +53,13 @@ La imagen instala las dependencias fijadas en `composer.lock`. El primer arranqu
 
 Si Docker devuelve `docker-credential-desktop.exe: exec format error`, el procedimiento para usar una configuración temporal destinada a imágenes públicas está en [el cierre de Fase 2](docs/phase-2.md#r-problemas-y-resoluciones).
 
-Carga el piloto territorial/institucional, los permisos y los catálogos forestales nacionales:
+Carga el piloto territorial/institucional, los permisos, los catálogos y su inventario piloto:
 
 ~~~bash
 docker compose exec app php artisan db:seed --class=DatabaseSeeder
 ~~~
 
-`DatabaseSeeder` es idempotente: conserva las identidades del piloto y sincroniza cuatro roles y 20 permisos. Los seeders forestales agregan códigos ausentes y conservan IDs, nombres, orden y desactivaciones administrativas. No crea cuentas de usuario ni geometrías.
+`DatabaseSeeder` es idempotente: conserva las identidades del piloto y sincroniza cuatro roles y 28 permisos. Los seeders forestales agregan códigos ausentes y conservan IDs, nombres, orden y desactivaciones administrativas. Crea el inventario «Inventario Forestal Institucional - Piloto SysForest», con código PILOT-SYSFOREST, sin generar árboles ficticios ni cuentas de usuario.
 
 Para habilitar las cuatro cuentas de revisión local, ejecuta explícitamente:
 
@@ -89,7 +89,7 @@ El acceso institucional exige además correo verificado y permisos vigentes. Una
 | `ORGANIZATION_ADMIN` | Organización de su membresía | Gestión institucional, miembros, invitaciones y roles organizacionales autorizados. |
 | `OFFICIAL` | Organización de su membresía | Consulta institucional y territorial; sin administración de miembros. |
 
-La [matriz completa de 20 permisos](docs/authorization.md#roles-y-permisos) es la referencia de cada operación. El perfil y las sesiones propias se protegen por identidad y propiedad. La administración global de usuarios exige autorización nacional.
+La [matriz de autorización](docs/authorization.md#roles-y-permisos) y su [extensión forestal de ocho permisos](docs/multitenancy.md#operaciones-forestales-de-fase-6) es la referencia de cada operación. El perfil y las sesiones propias se protegen por identidad y propiedad. La administración global de usuarios exige autorización nacional.
 
 Al seleccionar una organización, `TenantContextService` determina el modo `organization`, `national` o `department_read`. Reconsulta cuenta, concesión, organización y membresía cuando corresponde. Un administrador nacional puede seleccionar una organización sin pertenecer a ella, y un administrador departamental conserva únicamente lectura. Las operaciones sobre recursos concretos también exigen que su organización coincida con la seleccionada.
 
@@ -102,6 +102,16 @@ Hay 16 tablas nacionales: emplazamientos, dos dimensiones de origen, hábitos, m
 La regla `EXCEL_V1` conserva intervalos exactos de 5 cm para DAP y 10 m para altura total, con cuatro estados Fustal. Sus parámetros y bandas están sellados: modificar una fórmula requiere otra versión, sin reescribir resultados históricos. BCMath trabaja con cadenas decimales y precisión de seis decimales; no redondea entradas antes de clasificar. La interfaz ofrece una consulta de ejemplo sin crear inspecciones.
 
 No hay rutas de borrado de catálogos. Los selectores de nuevos registros excluyen valores inactivos y las referencias anteriores se conservan. Los cambios se auditan con actor y sin tenant. Familias, especies y categorías tienen selectores Select2 locales; el servidor valida todas las relaciones.
+
+## Inventarios y árboles
+
+Después de iniciar sesión, selecciona una organización y abre [Inventarios](http://localhost:8080/inventories) o [Árboles](http://localhost:8080/trees). ORGANIZATION_ADMIN administra campañas, árboles, anulaciones y restauraciones; OFFICIAL crea y edita individuos de campañas activas; DEPARTMENT_ADMIN consulta el ámbito seleccionado de su departamento. SUPER_ADMIN mantiene selección institucional para operar, sin membresías artificiales.
+
+El mismo árbol participa en varias campañas mediante `inventory_trees`. El código se genera en backend usando una secuencia por organización. La ficha permite identidad/taxonomía, descripción de ubicación, coordenadas decimales o DMS, GPS opcional, estados e historiales. Leaflet previsualiza la validación del servidor; Select2 busca especies por nombres científicos y comunes. Un guardado obsoleto devuelve 409, conservando la edición anterior.
+
+«Anular» identifica un registro erróneo y conserva UUID/código; muerto, talado o retirado siguen siendo estados de individuos reales. La restauración conserva identidad y vínculos. No hay mediciones ni inspecciones en estos formularios.
+
+Consulta [dominio del árbol](docs/tree-domain.md), [georreferenciación](docs/georeferencing.md) y [Fase 6](docs/phase-6.md). Si el datum no fue informado, se conserva NULL y se declara la referencia de trabajo del mapa; no se infiere el datum del GPS. Esta fase no transforma coordenadas de otros datums.
 
 ## Servicios
 
@@ -181,7 +191,7 @@ docker compose exec app php artisan test --fail-on-warning
 
 `phpunit.xml` fija `APP_ENV=testing`, `DB_DATABASE=sysforest_testing` y activa `SYSFOREST_RUN_INTEGRATION=1`. Se utiliza PostgreSQL/PostGIS real. `PostgresTestCase` verifica entorno, driver y nombre de base antes de abrir transacciones y revierte los fixtures. No ejecutes suites concurrentes contra la misma base de pruebas.
 
-Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 5](docs/phase-5.md); estos comandos describen el procedimiento, no un resultado ejecutado.
+Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 6](docs/phase-6.md); estos comandos describen el procedimiento, no un resultado ejecutado.
 
 Revisa el formato:
 
@@ -240,16 +250,19 @@ Los volúmenes no sustituyen las copias de seguridad. Los enlaces de los correos
 
 | Documento | Contenido |
 | --- | --- |
-| [Fase 5](docs/phase-5.md) | Reporte A–AE, comandos, pruebas, rollback y decisiones pendientes. |
+| [Fase 6](docs/phase-6.md) | Reporte A–AJ, pruebas, rollback y estado de servicios. |
+| [Dominio forestal](docs/tree-domain.md) | Identidad, campañas, estados, códigos y anulación. |
+| [Georreferenciación](docs/georeferencing.md) | PostGIS, Garmin, DMS y metadatos. |
+| [Fase 5](docs/phase-5.md) | Evidencia histórica de catálogos aprobados. |
 | [Catálogos forestales](docs/forestry-catalogs.md) | Valores, códigos, fuentes y discrepancias. |
 | [94 campos Excel](docs/excel-field-mapping.md) | Trazabilidad completa para las fases posteriores. |
 | [Fase 4](docs/phase-4.md) | Evidencia histórica de autenticación y autorización. |
 | [Autenticación](docs/authentication.md) | JWT, cookies, renovación y sesiones autenticadas. |
-| [Autorización](docs/authorization.md) | Cuatro roles, 20 permisos, scopes y restricciones SQL. |
+| [Autorización](docs/authorization.md) | Cuatro roles; base de permisos y extensión forestal en multitenancy. |
 | [Recuperación e invitaciones](docs/account-recovery.md) | Verificación de correo, contraseñas, invitaciones y entrega local. |
 | [Cuentas de desarrollo](docs/development-accounts.md) | Variables y seeder explícito de revisión local. |
 | [Multi-tenancy](docs/multitenancy.md) | Selección, revalidación, consultas y aislamiento entre organizaciones. |
 | [Arquitectura](docs/architecture.md) y [modelo de datos](docs/database.md) | Diseño conceptual aprobado y módulos previstos. |
 | [Fase 2](docs/phase-2.md) y [Fase 3](docs/phase-3.md) | Evidencia histórica de infraestructura y fundamento institucional. |
 
-El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales llegan hasta Fase 5; los diagramas conceptuales de módulos posteriores no implican que estén implementados.
+El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales llegan hasta Fase 6; los diagramas conceptuales de módulos posteriores no implican que estén implementados.

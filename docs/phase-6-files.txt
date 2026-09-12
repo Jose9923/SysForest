@@ -1,0 +1,106 @@
+Rama: codex/phase-6
+HEAD: 28c2bf7
+Fase 6 sin commit, pendiente de revisión.
+Archivos: 101 (90 nuevos, 11 modificados).
+
+ M AGENTS.md
+ M CLAUDE.md
+ M README.md
+?? app/DTOs/ParsedCoordinates.php
+?? app/Enums/InventoryStatus.php
+?? app/Enums/LocationChangeType.php
+?? app/Enums/TreeStatus.php
+?? app/Exceptions/StaleRecordException.php
+?? app/Forestry/InventoryInput.php
+?? app/Http/Controllers/CoordinatePreviewController.php
+?? app/Http/Controllers/InventoryController.php
+?? app/Http/Controllers/TreeController.php
+?? app/Http/Controllers/TreeInventoryController.php
+?? app/Http/Controllers/TreeLocationController.php
+?? app/Http/Controllers/TreeRestoreController.php
+?? app/Http/Controllers/TreeStatusController.php
+?? app/Http/Controllers/TreeVoidController.php
+?? app/Http/Requests/CoordinatePreviewRequest.php
+?? app/Http/Requests/IncludeTreeInventoryRequest.php
+?? app/Http/Requests/RestoreTreeRequest.php
+?? app/Http/Requests/StoreInventoryRequest.php
+?? app/Http/Requests/StoreTreeRequest.php
+?? app/Http/Requests/TreeFilterRequest.php
+?? app/Http/Requests/UpdateInventoryRequest.php
+?? app/Http/Requests/UpdateTreeLocationRequest.php
+?? app/Http/Requests/UpdateTreeRequest.php
+?? app/Http/Requests/UpdateTreeStatusRequest.php
+?? app/Http/Requests/VoidTreeRequest.php
+?? app/Models/Inventory.php
+?? app/Models/InventoryTree.php
+?? app/Models/OrganizationSequence.php
+?? app/Models/Tree.php
+?? app/Models/TreeLocationHistory.php
+?? app/Models/TreeStatusHistory.php
+?? app/Policies/InventoryPolicy.php
+?? app/Policies/TreePolicy.php
+ M app/Providers/AppServiceProvider.php
+?? app/Repositories/InventoryRepository.php
+?? app/Repositories/OrganizationSequenceRepository.php
+?? app/Repositories/TreeCatalogRepository.php
+?? app/Repositories/TreeLocationRepository.php
+?? app/Repositories/TreeRepository.php
+?? app/Repositories/TreeStatusHistoryRepository.php
+?? app/Services/CoordinateParserService.php
+?? app/Services/CoordinatePreviewService.php
+?? app/Services/ForestryAccessService.php
+?? app/Services/InventoryService.php
+?? app/Services/TreeCodeService.php
+?? app/Services/TreeLifecycleService.php
+?? app/Services/TreeLocationService.php
+?? app/Services/TreeReadService.php
+?? app/Services/TreeRelationService.php
+?? app/Services/TreeService.php
+?? app/Services/TreeStatusService.php
+?? app/Services/TreeWriteService.php
+?? app/Validation/TreeInput.php
+ M bootstrap/app.php
+?? database/migrations/2026_09_12_000010_create_inventory_and_tree_tables.php
+?? database/migrations/2026_09_12_000011_preserve_capture_precision_and_inventory_codes.php
+ M database/seeders/AuthorizationSeeder.php
+ M database/seeders/DatabaseSeeder.php
+?? database/seeders/PilotInventorySeeder.php
+ M docs/excel-field-mapping.md
+?? docs/georeferencing.md
+ M docs/multitenancy.md
+?? docs/phase-6-files.txt
+?? docs/phase-6.md
+?? docs/tree-domain.md
+?? public/css/forestry.css
+?? public/js/forestry.js
+?? public/vendor/leaflet/LICENSE
+?? public/vendor/leaflet/SOURCE.json
+?? public/vendor/leaflet/images/layers-2x.png
+?? public/vendor/leaflet/images/layers.png
+?? public/vendor/leaflet/images/marker-icon-2x.png
+?? public/vendor/leaflet/images/marker-icon.png
+?? public/vendor/leaflet/images/marker-shadow.png
+?? public/vendor/leaflet/leaflet.css
+?? public/vendor/leaflet/leaflet.js
+?? resources/views/errors/409.blade.php
+?? resources/views/forestry/assets.blade.php
+?? resources/views/forestry/coordinates.blade.php
+?? resources/views/forestry/map.blade.php
+?? resources/views/inventories/form.blade.php
+?? resources/views/inventories/index.blade.php
+?? resources/views/inventories/show.blade.php
+ M resources/views/partials/institutional-navigation.blade.php
+?? resources/views/trees/form.blade.php
+?? resources/views/trees/index.blade.php
+?? resources/views/trees/show.blade.php
+?? routes/forestry.php
+ M routes/web.php
+?? tests/Feature/ForestryAccessTest.php
+?? tests/Feature/InventoryTest.php
+?? tests/Feature/TreeCaptureHttpTest.php
+?? tests/Feature/TreeCodeConcurrencyTest.php
+?? tests/Feature/TreeDomainTest.php
+?? tests/Feature/TreeHttpSecurityTest.php
+?? tests/Feature/TreePresentationTest.php
+?? tests/Feature/TreeSpatialTest.php
+?? tests/Unit/CoordinateParserTest.php

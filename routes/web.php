@@ -48,6 +48,7 @@ Route::middleware('identity.headers')->group(function (): void {
             Route::put('/users/{user}', [C\UserController::class, 'update'])->whereNumber('user')->name('users.update');
             Route::post('/users/{user}/roles', [C\UserController::class, 'roles'])->whereNumber('user')->name('users.roles');
             Route::middleware('tenant.context')->group(function (): void {
+                require __DIR__.'/forestry.php';
                 Route::get('/organizations/{organization}', [C\OrganizationController::class, 'show'])->whereUuid('organization')->name('organizations.show');
                 Route::get('/organizations/{organization}/edit', [C\OrganizationController::class, 'edit'])->whereUuid('organization')->name('organizations.edit');
                 Route::put('/organizations/{organization}', [C\OrganizationController::class, 'update'])->whereUuid('organization')->name('organizations.update');

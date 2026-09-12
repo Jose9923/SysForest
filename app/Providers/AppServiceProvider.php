@@ -30,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
         // El guard conserva identidad solo durante la petición validada por JWT.
         Auth::viaRequest('jwt-context', fn (Request $request) => null);
         Gate::policy(Organization::class, OrganizationPolicy::class);
+        Gate::policy(\App\Models\Tree::class, \App\Policies\TreePolicy::class);
+        Gate::policy(\App\Models\Inventory::class, \App\Policies\InventoryPolicy::class);
+        foreach (['inventories.view', 'inventories.create', 'inventories.update', 'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore'] as $permission) {
+            Gate::define($permission, fn (User $actor) => app(\App\Services\ForestryAccessService::class)->allows($actor, $permission));
+        }
         Gate::policy(OrganizationMembership::class, OrganizationMembershipPolicy::class);
         $permissions = fn () => app(PermissionService::class);
         Gate::define('organizations.create', fn (User $actor) => $permissions()->allowsNational($actor, 'organizations.create'));

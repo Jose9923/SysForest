@@ -1,7 +1,8 @@
 # SYSFOREST: acuerdos de implementación
 
-La Fase 4 fue aprobada y cerrada en el commit 652070e. El alcance actual es la Fase 5: catálogos forestales nacionales.
-No comenzar la Fase 6 ni implementar Tree, TreeInspection, operaciones forestales, importaciones o reportes finales.
+La Fase 5 fue aprobada y cerrada en el commit 28c2bf7. El alcance actual es la Fase 6: inventarios, individuos forestales y georreferenciación PostGIS.
+No comenzar la Fase 7 ni implementar TreeInspection, mediciones, condiciones aplicadas, evidencias, mantenimientos, importaciones o reportes finales.
+Los cambios de Fase 6 permanecen sin commit en codex/phase-6 hasta revisión del usuario.
 Los catálogos nacionales no llevan organization_id; solo SUPER_ADMIN administra, los demás roles consultan.
 La semántica forestal del Excel tiene prioridad sobre el mockup. No inventar equivalencias ni valores sin respaldo.
 La única fuente de verdad es /home/josev/SYSFOREST. No depender de phase2-staging.
@@ -13,7 +14,7 @@ La única fuente de verdad es /home/josev/SYSFOREST. No depender de phase2-stagi
 - Toda interfaz y los reportes/PDF utilizan Blade. CSV, Excel y GeoJSON reutilizarán Services, Repositories y filtros.
 - PostgreSQL/PostGIS, Redis, Nginx, PHP-FPM, queue y scheduler en servicios separados.
 - Una base multi-tenant con organization_id; Tree separado de TreeInspection e inventory_trees.
-- Autenticación JWT con cookies HttpOnly, refresh opaco con hash, rotación y revocación. Los módulos forestales pertenecen a fases posteriores.
+- Autenticación JWT con cookies HttpOnly, refresh opaco con hash, rotación y revocación. Tree conserva la identidad; TreeInspection pertenecerá a Fase 7.
 - PHPDoc, comentarios útiles y documentación en español; identificadores técnicos en inglés.
 - Formato PSR-12. No comentar cada línea ni repetir lo evidente.
 - No consultar desde Blade ni poner reglas de negocio en Controllers o JavaScript.
