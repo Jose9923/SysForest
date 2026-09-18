@@ -29,6 +29,26 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (!$request->is('evidences/*', 'trees/*/evidences*', 'inspections/*/evidences*')
+                || $exception instanceof \Illuminate\Validation\ValidationException
+                || $exception instanceof AuthenticationException) {
+                return null;
+            }
+            $status = $exception instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface ? $exception->getStatusCode() : 503;
+            $message = match ($status) {
+                403 => 'No tienes permiso para realizar esta operación con evidencias.',
+                404 => 'La evidencia o su propietario no está disponible.',
+                409 => 'La evidencia fue modificada por otro usuario.',
+                413 => 'El lote supera el tamaño máximo permitido.',
+                419 => 'La sesión del formulario caducó. Actualiza la página antes de continuar.',
+                429 => 'Has realizado demasiadas solicitudes. Espera antes de volver a intentarlo.',
+                default => 'No fue posible completar la operación. Consulta la galería antes de volver a intentarlo.',
+            };
+
+            return $request->expectsJson() ? response()->json(['message' => $message], $status)
+                : response()->view('errors.evidence', ['message' => $message, 'status' => $status], $status);
+        });
         $exceptions->dontFlash(['password', 'password_confirmation', 'current_password', 'token', 'refresh_token', 'access_token']);
         $exceptions->shouldRenderJsonWhen(fn (Request $request) => $request->is('api/*') || $request->expectsJson());
         $exceptions->render(function (AuthenticationException $exception, Request $request) {

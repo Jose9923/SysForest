@@ -1,6 +1,7 @@
 @extends('layouts.institutional')
 @section('title', 'Inspección '.$inspection->inspection_date->format('d/m/Y'))
 @include('inspections.assets')
+@include('evidences.assets')
 @section('content')
     <a class="back-link" href="{{ route('trees.show', $tree->id) }}#tree-inspections">← Volver a la ficha del árbol</a>
     <div class="page-heading forestry-heading"><div><p class="eyebrow">{{ $organization->name }} · {{ $tree->code }}</p><h1>Inspección del {{ $inspection->inspection_date->format('d/m/Y') }}</h1><p class="muted">{{ $tree->species?->commonNames->pluck('name')->join(', ') ?: ($tree->species ? 'Sin nombre común registrado' : 'Especie sin identificar') }} @if ($tree->species) · <i>{{ $tree->species->scientific_name }}</i>@endif</p></div>@if ($canUpdate)<a class="button" href="{{ route('inspections.edit', $inspection->id) }}">Corregir inspección</a>@endif</div>
@@ -19,6 +20,7 @@
         </div></section>
         <section class="panel forestry-panel"><span class="section-kicker">FAUNA ASOCIADA</span><h2>Fauna observada</h2><ul class="inventory-chip-list">@forelse ($inspection->faunaCategories as $category)<li><span>{{ $category->name }}{{ !$category->active ? ' · referencia histórica inactiva' : '' }}</span></li>@empty<li><span>Sin categorías registradas</span></li>@endforelse</ul><p class="preserve-lines inspection-help-line">{{ $inspection->fauna_observations ?? 'Sin descripción de fauna registrada.' }}</p></section>
         <section class="panel forestry-panel"><span class="section-kicker">OBSERVACIONES</span><h2>Observaciones generales</h2><p class="preserve-lines">{{ $inspection->general_observations ?? 'Sin observaciones generales registradas.' }}</p></section>
+        @if ($inspectionEvidenceGallery ?? null)@include('evidences.gallery', ['gallery' => $inspectionEvidenceGallery])@endif
         <section class="panel forestry-panel"><span class="section-kicker">TRAZABILIDAD</span><h2>Registro y correcciones</h2><p class="inspection-history-meta">Última edición: {{ $inspection->updated_at?->format('d/m/Y H:i') }} UTC · {{ $inspection->updater?->name ?? 'No disponible' }}</p><ol class="inspection-timeline">
             @forelse ($revisions as $revision)<li><article><div><strong>Versión {{ $revision->version }}</strong><p>{{ $revision->version === 1 ? 'Inspección registrada' : 'Corrección de inspección registrada' }}</p><p>{{ $revision->changed_at?->format('d/m/Y H:i') }} UTC · {{ $revision->changedBy?->name ?? 'Responsable no disponible' }}</p></div></article></li>@empty<li><p>No hay revisiones disponibles.</p></li>@endforelse
         </ol></section>

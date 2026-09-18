@@ -5,6 +5,20 @@ declare(strict_types=1);
 use App\Http\Controllers as C;
 use Illuminate\Support\Facades\Route;
 
+// La fotografía se entrega únicamente después de comprobar sesión, tenant y propietario.
+foreach (['trees' => 'tree', 'inspections' => 'inspection'] as $owners => $parameter) {
+    Route::get('/'.$owners.'/{'.$parameter.'}/evidences', [C\EvidenceController::class, 'index'])->whereUuid($parameter)->name($owners.'.evidences.index');
+    Route::get('/'.$owners.'/{'.$parameter.'}/evidences/create', [C\EvidenceController::class, 'create'])->whereUuid($parameter)->name($owners.'.evidences.create');
+    Route::post('/'.$owners.'/{'.$parameter.'}/evidences', [C\EvidenceController::class, 'store'])->whereUuid($parameter)->middleware('throttle:30,1')->name($owners.'.evidences.store');
+}
+Route::get('/evidences/{evidence}', [C\EvidenceController::class, 'show'])->whereUuid('evidence')->name('evidences.show');
+Route::put('/evidences/{evidence}', [C\EvidenceController::class, 'update'])->whereUuid('evidence')->name('evidences.update');
+Route::delete('/evidences/{evidence}', [C\EvidenceController::class, 'destroy'])->whereUuid('evidence')->name('evidences.void');
+Route::post('/evidences/{evidence}/restore', [C\EvidenceController::class, 'restore'])->whereUuid('evidence')->name('evidences.restore');
+Route::get('/evidences/{evidence}/view', [C\EvidenceController::class, 'view'])->whereUuid('evidence')->name('evidences.view');
+Route::get('/evidences/{evidence}/download', [C\EvidenceController::class, 'download'])->whereUuid('evidence')->name('evidences.download');
+
+
 // Las rutas reciben UUID como texto: el Service resuelve primero por tenant y luego aplica Policy.
 Route::get('/inspections', [C\TreeInspectionController::class, 'index'])->name('inspections.index');
 Route::get('/trees/{tree}/inspections/create', [C\TreeInspectionController::class, 'create'])->whereUuid('tree')->name('trees.inspections.create');

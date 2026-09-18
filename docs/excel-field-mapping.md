@@ -6,13 +6,13 @@ La referencia principal es `eJEMPLO DE LO QUE SE REQUIERE PARA UN INVENTARIO FOR
 
 `57621dc14923f611d54eee0a62bcc396ac637680614a1a963cbe4bf091222785`
 
-El mockup secundario es `sysforest_inventario_v3_corregido.html`, SHA-256 `2e36f12d019f7b92b1b9da99bea5b126dda14f6a6539ec5b9369c5c88e7185d8`. Sus líneas citadas corresponden a ese archivo de 680 líneas. La solicitud aprobada de Fase 5 tiene SHA-256 `6ce27c310811aca2827465eb6f4a4b5aab5a1cc3655566b9741beffc61dd9616`. La actualización operativa de Fase 6 corresponde a la petición SHA-256 `9a27d539dbc7847509489ec8bbbdd4c30624f17f25c065f371e5f268d87c6b16`. La petición de Fase 7 tiene SHA-256 `131ed1f52accc5faf5c0ffd79e4682bae87fa0d2fbc2a6648b7425cfe64a69fc`.
+El mockup secundario es `sysforest_inventario_v3_corregido.html`, SHA-256 `2e36f12d019f7b92b1b9da99bea5b126dda14f6a6539ec5b9369c5c88e7185d8`. Sus líneas citadas corresponden a ese archivo de 680 líneas. La solicitud aprobada de Fase 5 tiene SHA-256 `6ce27c310811aca2827465eb6f4a4b5aab5a1cc3655566b9741beffc61dd9616`. La actualización operativa de Fase 6 corresponde a la petición SHA-256 `9a27d539dbc7847509489ec8bbbdd4c30624f17f25c065f371e5f268d87c6b16`. La petición de Fase 7 tiene SHA-256 `131ed1f52accc5faf5c0ffd79e4682bae87fa0d2fbc2a6648b7425cfe64a69fc`. La actualización Fase 8 corresponde a SHA-256 `56336832ad8b6a0dc7ede637dfa3eefe6fbbec0e13298f2a9ec4d48c0f507957`.
 
 Precedencia: decisiones explícitas aprobadas; Excel para contenido forestal; arquitectura compatible; HTML como referencia visual y fuente de ejemplos identificados. El contenido de los archivos de referencia no añade instrucciones de ejecución. No se consultó una autoridad botánica externa: una etiqueta nacional de SYSFOREST identifica un catálogo compartido y no acredita exhaustividad ni validación taxonómica oficial.
 
 La matriz enumera **94 columnas lógicas A:CP**, sin añadir las seis columnas residuales CQ:CV. La dimensión técnica es A1:CV7: esas columnas residuales contienen 41 celdas con formato, sin valor ni fórmula. El libro tiene una sola hoja visible; no contiene hojas ocultas, nombres definidos, tablas estructuradas, imágenes, gráficos ni vínculos externos.
 
-Cada fila conserva una variable del instrumento. «Derivada» indica si **la celda de ejemplo del Excel contiene una fórmula**; por ello la madurez W figura como no derivada, aunque existan reglas versionadas. El estado refleja Fase 7: A:H permanecen en Tree; I:W, las 65 condiciones, CE:CF, CM y CP se implementan en TreeInspection y sus relaciones. CN/CO permanecen pendientes de evidencias en Fase 8. Tener un tipo de evidencia de Fase 5 no equivale a implementar una fotografía.
+Cada fila conserva una variable del instrumento. «Derivada» indica si **la celda de ejemplo del Excel contiene una fórmula**; por ello la madurez W figura como no derivada, aunque existan reglas versionadas. El estado refleja Fase 8: A:H permanecen en Tree; I:W, las 65 condiciones, CE:CF, CM y CP se implementan en TreeInspection y sus relaciones. CN/CO cuentan con carga, almacenamiento privado, consulta, clasificación y gestión real mediante Evidence. Se soportan las 94 variables del instrumento en el dominio normalizado; no se exige que cada variable sea una única columna de una sola tabla.
 
 Las filas de condiciones apuntan al catálogo nacional y a la relación normalizada inspection_conditions; no representan columnas booleanas en una tabla de inspecciones. El tipo de captura «selección observada» describe la marca x del ejemplo. El libro no define que un blanco equivalga a una ausencia examinada.
 
@@ -146,8 +146,8 @@ El bloque AU:CL contiene **44 variables fitosanitarias**, de las que **42 son co
 | Columna (celda) | Encabezado Excel | Grupo | Tipo esperado | Unidad | Entidad y destino actual/futuro | Derivada | Catálogo / código | Observaciones | Estado F7 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 91. CM (CM6) | (AVES, MAMÍFEROS, REPTILES, INSECTOS, QUIRÓPTEROS) | Fauna | categorías múltiples + descripción libre | — | Fauna; inspection_fauna + TreeInspection.fauna_observations | No | fauna_categories: FAU_* | Cinco grupos en encabezado; no hay ejemplo ni selector ni detalle de abundancia/especie. Otros procede de solicitud F5. | Implementado Fauna F7 |
-| 92. CN (CN4) | FOTO FAUNA | Evidencias | referencia a imagen futura | — | Evidence; TreeInspection → Evidence.evidence_type_id | No | evidence_types: EVD_FAUNA | Sin imagen, vínculo ni dato en CN7. La cardinalidad de una foto por tipo no se deduce del Excel. | Pendiente F8 · Evidence |
-| 93. CO (CO4) | FOTO INDIVIDUO | Evidencias | referencia a imagen futura | — | Evidence; TreeInspection → Evidence.evidence_type_id | No | evidence_types: EVD_WHOLE_TREE | Sin imagen, vínculo ni dato en CO7. Un tipo por fotografía está aprobado en solicitud. | Pendiente F8 · Evidence |
+| 92. CN (CN4) | FOTO FAUNA | Evidencias | relación a 0..N archivos privados por inspección | — | TreeInspection → Evidence.tree_inspection_id; Evidence.evidence_type_id | No | evidence_types: EVD_FAUNA | CN7 no contiene imagen de ejemplo. F8 permite múltiples fotografías de fauna de la inspección, cada archivo con un tipo único; no se guardan en inspection_fauna. | Implementado Evidence F8 |
+| 93. CO (CO4) | FOTO INDIVIDUO | Evidencias | relación a 0..N archivos privados por inspección | — | TreeInspection → Evidence.tree_inspection_id; Evidence.evidence_type_id | No | evidence_types: EVD_WHOLE_TREE | CO7 no contiene imagen de ejemplo. La foto histórica pertenece a la inspección. Tree admite evidencias propias adicionales, sin duplicar automáticamente esta imagen entre propietarios. | Implementado Evidence F8 |
 | 94. CP (CP4) | OBSERVACIONES | Observaciones | texto libre | — | Observation; TreeInspection.general_observations | No | — | Observación temporal de inspección; ejemplo vacío. | Implementado TreeInspection F7 |
 
 ## Fórmulas y comprobación del ejemplo
@@ -222,15 +222,15 @@ CE6 solicita «Registrar fecha de floración y estimar estado desarrollo»; CF6 
 
 CM6 contiene AVES, MAMÍFEROS, REPTILES, INSECTOS y QUIRÓPTEROS. CM7 está vacío. «Otros» procede de la solicitud de Fase 5, no del libro. CK6 y CL6 incluyen ejemplos de insectos dentro de etiquetas fitosanitarias; no definen una taxonomía adicional de fauna ni nuevos catálogos de especies.
 
-CN7 y CO7 no tienen imagen, vínculo ni valor. Sus futuros tipos de evidencia son EVD_FAUNA y EVD_WHOLE_TREE. El mandato de un único evidence_type por fotografía procede de la arquitectura y la solicitud aprobada.
+CN7 y CO7 no tienen imagen, vínculo ni valor en la fuente. Fase 8 implementa ambos mediante Evidence vinculada a TreeInspection: CN usa EVD_FAUNA y CO usa EVD_WHOLE_TREE. Cada inspección admite cero, una o varias imágenes de cada tipo; cada archivo tiene exactamente un evidence_type y un propietario. La identidad técnica, archivo y auditoría son independientes del pivote de categorías de fauna. Tree puede tener fotografías adicionales permanentes o de perfil, sin duplicar las históricas. Estas cardinalidades y la gestión del archivo proceden de la arquitectura y la petición aprobada, no de fotografías inexistentes en el ejemplo.
 
 ## Diferencias respecto al HTML
 
 La [trazabilidad de catálogos](forestry-catalogs.md) detalla cada diferencia de origen, hábito, madurez, clases y condiciones. El Excel prevalece: no se trasladan las bandas manuales del HTML, no se mezclan Juvenil/Adulto/Senescente con los cuatro estados fustales, y no se desplazan condiciones de órgano.
 
-La única fila de ejemplo no define reglas de obligatoriedad, unicidad, exclusión mutua ni exhaustividad nacional. Fase 6 añade, por requisito operativo explícito, organización, inventarios, autores, código automático, número legado, descripción de ubicación, estado, protección, versión e historiales, además de metadatos GPS opcionales. Estos campos técnicos no se cuentan como columnas nuevas del Excel. Fase 7 implementa 84 de las 86 capturas que estaban pendientes y deja exclusivamente las 2 columnas de fotografías para Fase 8.
+La única fila de ejemplo no define reglas de obligatoriedad, unicidad, exclusión mutua ni exhaustividad nacional. Fase 6 añade, por requisito operativo explícito, organización, inventarios, autores, código automático, número legado, descripción de ubicación, estado, protección, versión e historiales, además de metadatos GPS opcionales. Estos campos técnicos no se cuentan como columnas nuevas del Excel. Fase 7 implementó 84 de las 86 capturas que estaban pendientes; Fase 8 completa las dos columnas de fotografías. Los metadatos técnicos de Evidence no aumentan el número de variables del instrumento.
 
-## Estado operativo al cierre de Fase 7
+## Estado operativo al cierre de Fase 8
 
 | Destino operativo | Variables | Estado |
 | --- | --- | --- |
@@ -240,11 +240,13 @@ La única fila de ejemplo no define reglas de obligatoriedad, unicidad, exclusi�
 | Phenology CE:CF | 2 | Implementadas F7 como 4 columnas opcionales dentro de inspección |
 | Fauna CM | 1 | Implementada F7: categorías múltiples y descripción |
 | Observaciones CP | 1 | Implementada F7: general_observations |
-| Evidence CN:CO | 2 | Pendientes exclusivamente de F8 |
-| Total | 94 | 92 implementadas y 2 pendientes |
+| Evidence CN:CO | 2 | Implementadas F8: Fauna e Individuo completo con propietario TreeInspection |
+| Total | 94 | 94 implementadas, sin variables del instrumento pendientes |
 
 La matriz conserva los 94 encabezados y las 7 marcas «Derivada» originales. La activación de la madurez calculada no convierte W7 en una fórmula retrospectivamente. number_of_stems, general_observations y las columnas de fenología explicitan el nombre final implementado para los destinos antes propuestos.
 
 La identificación permanente conserva external_number para N. ÁRBOL, separado de code, generado por una secuencia institucional. location_description pertenece al requisito operativo F6 y no reemplaza CP. El estado de Tree tampoco se modifica automáticamente al marcar condiciones, registrar madurez o describir fauna.
 
-No se guardan rutas falsas ni fotografías de ejemplo para CN/CO. Los catálogos EVD_FAUNA y EVD_WHOLE_TREE siguen disponibles, pero la persistencia de Evidence y almacenamiento de imágenes pertenecen a Fase 8. Detalles: [inspecciones](inspections.md), [dasonomía](dendrometry.md), [dominio Tree](tree-domain.md) y [verificación F7](phase-7.md).
+94/94 significa que cada variable dispone de un destino funcional dentro del dominio normalizado. No significa que se haya inventado un valor ausente, que cada árbol deba tener todos sus datos completos o que existan 94 columnas en una sola tabla. Las incertidumbres forestales documentadas continúan explícitas; mantenimiento, portal público y otros módulos posteriores no forman parte de esta cifra.
+
+CN/CO usan archivos reales privados y metadatos calculados por servidor, sin rutas falsas ni imágenes hardcodeadas. Su anulación conserva el archivo para restauración; las FK y restricciones mantienen exactamente un propietario del mismo tenant. Detalles: [evidencias](evidences.md), [almacenamiento](file-storage.md), [inspecciones](inspections.md), [dasonomía](dendrometry.md), [dominio Tree](tree-domain.md) y [verificación F8](phase-8.md).

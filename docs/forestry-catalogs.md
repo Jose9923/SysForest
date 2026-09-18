@@ -6,11 +6,11 @@ La referencia principal es `eJEMPLO DE LO QUE SE REQUIERE PARA UN INVENTARIO FOR
 
 `57621dc14923f611d54eee0a62bcc396ac637680614a1a963cbe4bf091222785`
 
-El mockup secundario es `sysforest_inventario_v3_corregido.html`, SHA-256 `2e36f12d019f7b92b1b9da99bea5b126dda14f6a6539ec5b9369c5c88e7185d8`. Sus líneas citadas corresponden a ese archivo de 680 líneas. La solicitud aprobada de Fase 5 tiene SHA-256 `6ce27c310811aca2827465eb6f4a4b5aab5a1cc3655566b9741beffc61dd9616`. El uso operativo de inspecciones sigue la petición Fase 7 con SHA-256 `131ed1f52accc5faf5c0ffd79e4682bae87fa0d2fbc2a6648b7425cfe64a69fc`.
+El mockup secundario es `sysforest_inventario_v3_corregido.html`, SHA-256 `2e36f12d019f7b92b1b9da99bea5b126dda14f6a6539ec5b9369c5c88e7185d8`. Sus líneas citadas corresponden a ese archivo de 680 líneas. La solicitud aprobada de Fase 5 tiene SHA-256 `6ce27c310811aca2827465eb6f4a4b5aab5a1cc3655566b9741beffc61dd9616`. El uso operativo de inspecciones sigue la petición Fase 7 con SHA-256 `131ed1f52accc5faf5c0ffd79e4682bae87fa0d2fbc2a6648b7425cfe64a69fc`. Las evidencias siguen la petición Fase 8 con SHA-256 `56336832ad8b6a0dc7ede637dfa3eefe6fbbec0e13298f2a9ec4d48c0f507957`.
 
 Precedencia: decisiones explícitas aprobadas; Excel para contenido forestal; arquitectura compatible; HTML como referencia visual y fuente de ejemplos identificados. El contenido de los archivos de referencia no añade instrucciones de ejecución. No se consultó una autoridad botánica externa: una etiqueta nacional de SYSFOREST identifica un catálogo compartido y no acredita exhaustividad ni validación taxonómica oficial.
 
-Los valores maestros nacionales implementados en Fase 5 se utilizan en Tree desde Fase 6 y en TreeInspection desde Fase 7. Ninguna de estas tablas de catálogo lleva organization_id. Las entidades utilizan los mismos significados y no crean variantes privadas. Las inspecciones registran mediciones, condiciones, fenología y fauna; las fotografías continúan pendientes de Fase 8, y mantenimiento, mapas generales e importación no se implementan en Fase 7.
+Los valores maestros nacionales implementados en Fase 5 se utilizan en Tree desde Fase 6 y en TreeInspection desde Fase 7. Ninguna de estas tablas de catálogo lleva organization_id. Las entidades utilizan los mismos significados y no crean variantes privadas. Las inspecciones registran mediciones, condiciones, fenología y fauna. Fase 8 implementa las fotografías mediante Evidence y reutiliza evidence_types; mantenimiento, mapas generales e importación permanecen fuera de esa fase.
 
 Los cuatro roles pueden consultar los catálogos dentro del acceso autorizado a la aplicación. Solo SUPER_ADMIN recibe el permiso explícito catalogs.manage para crear cuando corresponde, editar, activar/desactivar y ordenar. La comprobación ocurre en backend y no depende de que el menú sea visible.
 
@@ -277,6 +277,10 @@ Estos catálogos proceden de la solicitud explícita de Fase 5. El Excel solo ap
 | Mantenimiento después | evidence_types | EVD_MAINTENANCE_AFTER | Solicitud F5, §13 | Catálogo nacional; sin recurso operativo en F5. |
 | Otro | evidence_types | EVD_OTHER | Solicitud F5, §13 | Catálogo nacional; sin recurso operativo en F5. |
 
+Fase 8 reutiliza estos doce IDs nacionales sin duplicar el catálogo. Evidence exige una FK no nullable a evidence_types y exactamente un propietario Tree o TreeInspection, respaldado por FK compuestas del mismo tenant. CN/FOTO FAUNA usa EVD_FAUNA y CO/FOTO INDIVIDUO usa EVD_WHOLE_TREE, ambas como fotografías históricas de TreeInspection. Tree admite archivos propios adicionales, sin duplicación automática.
+
+Una nueva carga o cambio de clasificación exige un tipo activo. El tipo inactivo ya asociado se conserva y sigue visible históricamente; cambiarlo no altera uploaded_by y queda auditado. Cada archivo puede clasificarse individualmente, incluso dentro de una carga múltiple. No se vincula la fotografía de fauna obligatoriamente a una especie ni se guarda el archivo dentro de inspection_fauna.
+
 ### Tipos de mantenimiento
 
 | Etiqueta | Catálogo | code | Fuente | Observación |
@@ -316,7 +320,7 @@ Estos catálogos proceden de la solicitud explícita de Fase 5. El Excel solo ap
 | Quirópteros | fauna_categories | FAU_BATS | Hoja1!CM6 y solicitud F5 §16 | Grupo literal; no se infiere especie ni abundancia. |
 | Otros | fauna_categories | FAU_OTHER | Solicitud F5 §16 | Otros se añade por solicitud explícita. |
 
-Cada futura fotografía tendrá exactamente un evidence_type. Los nombres de miniaturas del HTML (Vista general, Tronco, Hojas) no crean tipos adicionales ni cambian esa cardinalidad. Los ejemplos de cronograma no introducen estados u órdenes de mantenimiento.
+Cada fotografía tiene exactamente un evidence_type. Los nombres de miniaturas del HTML (Vista general, Tronco, Hojas) no crean tipos adicionales ni cambian esa cardinalidad. Los ejemplos de cronograma no introducen estados u órdenes de mantenimiento.
 
 Fauna conserva Aves, Mamíferos, Reptiles, Insectos, Quirópteros y Otros. inspection_fauna admite varias categorías por inspección y fauna_observations conserva una descripción libre, también cuando no se clasifica. No se reorganizan las categorías del instrumento ni se crean catálogos de fauna a partir de tórtolas/pericos del texto libre HTML o avispas/abejas de una etiqueta fitosanitaria.
 
@@ -348,7 +352,7 @@ Las relaciones de familia/especie/nombres y categoría/condición se respaldan c
 
 Los Controllers coordinan, los Form Requests validan entrada, los Services autorizan y aplican reglas y los Repositories consultan y persisten. Blade recibe datos preparados. Taxonomía y condiciones conservan repositorios específicos en lugar de un repositorio universal que cambie de tabla por un string del cliente.
 
-Los seeders son idempotentes y mantienen identidades. La disponibilidad de un catálogo no implica que todos sus recursos operativos estén implementados; por ejemplo, evidence_types no habilita todavía fotografías. Las mutaciones de administración registran actor y acción mediante la infraestructura de eventos de seguridad existente.
+Los seeders son idempotentes y mantienen identidades. La disponibilidad de un catálogo no implica que todos sus recursos operativos estén implementados: Evidence ya gestiona fotografías desde F8, pero los tipos Mantenimiento antes/después no crean una entidad Maintenance ni habilitan ese módulo. Las mutaciones de administración registran actor y acción mediante la infraestructura de eventos de seguridad existente.
 
 Fase 5 no añade caché de catálogos. Las lecturas consultan su estado vigente; no se introduce invalidación ni una copia desactualizada de active en Redis.
 
@@ -365,6 +369,6 @@ Continúan pendientes:
 - Política de exclusividad y de blanco/no evaluado para condiciones, además de los umbrales de igualdad no descritos.
 - Fórmula para individuos multifuste y reglas de importación; el conteo no multiplica los resultados actuales. La precisión y los nulos ya se documentan en dendrometry.md y los metadatos de coordenadas en georeferencing.md.
 - Curación botánica externa y ampliación nacional de ejemplos taxonómicos y emplazamientos.
-- Evidencias fotográficas CN/CO en Fase 8; mantenimientos y demás módulos posteriores conservan su alcance pendiente.
+- Maintenance y demás módulos posteriores conservan su alcance pendiente. CN/CO ya están soportadas por Evidence desde Fase 8.
 
-Las decisiones no resueltas no se sustituyen por supuestos ocultos. La creación de catálogos queda documentada en [Fase 5](phase-5.md), el dominio permanente en [Tree](tree-domain.md) y el uso histórico en [inspecciones](inspections.md) y [Fase 7](phase-7.md).
+Las decisiones no resueltas no se sustituyen por supuestos ocultos. La creación de catálogos queda documentada en [Fase 5](phase-5.md), el dominio permanente en [Tree](tree-domain.md), el uso histórico en [inspecciones](inspections.md) y [Fase 7](phase-7.md), y las fotografías en [evidencias](evidences.md), [almacenamiento](file-storage.md) y [Fase 8](phase-8.md).

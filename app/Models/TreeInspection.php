@@ -80,6 +80,11 @@ class TreeInspection extends Model
             ->using(InspectionFauna::class)->withPivot(['organization_id', 'created_at']);
     }
 
+    public function evidences(): HasMany
+    {
+        return $this->hasMany(Evidence::class, 'tree_inspection_id')->orderByDesc('created_at')->orderByDesc('id');
+    }
+
     public function revisions(): HasMany
     {
         return $this->hasMany(InspectionRevision::class, 'inspection_id')->orderByDesc('version');

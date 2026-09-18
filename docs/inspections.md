@@ -2,7 +2,7 @@
 
 ## Alcance y separación del dominio
 
-Fase 7 implementa visitas fechadas, mediciones, resultados, condiciones, fenología, fauna y observaciones. Tree conserva identidad, taxonomía, ubicación y estado permanente. Ningún dato de inspección se copia a trees. La fuente forestal es la matriz de 94 variables aprobada; las fotografías CN/CO continúan pendientes de Fase 8. No se incorporan mantenimientos, mapas generales, importación ni reportes finales.
+Fase 7 implementa visitas fechadas, mediciones, resultados, condiciones, fenología, fauna y observaciones. Tree conserva identidad, taxonomía, ubicación y estado permanente. Ningún dato de inspección se copia a trees. La fuente forestal es la matriz de 94 variables aprobada; las fotografías CN/CO están implementadas mediante Evidence desde Fase 8. No se incorporan mantenimientos, mapas generales, importación ni reportes finales.
 
 Una inspección tiene UUID, organization_id, tree_id, inventory_tree_id nullable, inspection_date, created_by, updated_by, lock_version y timestamps con microsegundos. Las variables numéricas y sus fórmulas se describen en [dendrometry.md](dendrometry.md). Las clasificaciones guardan resultados e ID de la versión sellada; el código DENDROMETRY_V1 identifica las fórmulas. Las correcciones utilizan la versión original, incluso si se desactiva. El navegador nunca decide esos valores.
 
@@ -46,7 +46,7 @@ general_observations conserva CP del instrumento. No sustituye location_descript
 | inspections.create | Sí, tenant seleccionado | No | Sí | Sí |
 | inspections.update | Sí, tenant seleccionado | No | Sí | Sí |
 
-Los tres permisos son explícitos en el catálogo RBAC; hay 31 permisos totales. SuperAdmin no necesita membresías artificiales. Los Services revalidan actor, sesión/contexto y concesiones vigentes. Los repositorios resuelven UUID por tenant antes de autorizar o validar contenido; conocer un UUID ajeno no permite leerlo ni modificarlo. Official puede corregir a otro funcionario de la misma institución. created_by permanece intacto; updated_by cambia.
+Los tres permisos son explícitos en el catálogo RBAC; Fase 7 cerró con 31 permisos totales y Fase 8 amplió el catálogo a 36. SuperAdmin no necesita membresías artificiales. Los Services revalidan actor, sesión/contexto y concesiones vigentes. Los repositorios resuelven UUID por tenant antes de autorizar o validar contenido; conocer un UUID ajeno no permite leerlo ni modificarlo. Official puede corregir a otro funcionario de la misma institución. created_by permanece intacto; updated_by cambia.
 
 Tree anulado no admite visitas nuevas ni correcciones. La lectura histórica sigue TreePolicy: necesita autorización para ver el Tree, incluyendo permiso de restauración si está anulado. La bandeja ordinaria excluye esos árboles.
 
@@ -79,3 +79,7 @@ Rutas privadas: GET /inspections; GET/POST /trees/{tree}/inspections[/create]; G
 El formulario completo normaliza grupos de casillas omitidos como arreglos vacíos, para permitir desmarcarlas todas sin JavaScript. En llamadas directas al servicio, los campos omitidos conservan el valor anterior y NULL explícito limpia un dato opcional.
 
 Los resultados ejecutados, inventario de archivos y deudas se registran en [phase-7.md](phase-7.md).
+
+## Evidencias de Fase 8
+
+TreeInspection tiene una relación evidences independiente de inspection_fauna. CN4 FOTO FAUNA utiliza EVD_FAUNA; CO4 FOTO INDIVIDUO utiliza EVD_WHOLE_TREE. Ambas admiten 0..N archivos por visita y exactamente un tipo por archivo. No se duplica la foto al árbol ni se inventa una relación con una especie individual de fauna. La ficha integra una galería Blade real y carga múltiple privada. La autorización exige acceso a la inspección y al Tree raíz, además del permiso de evidencia; no permite cargas si el árbol está anulado. El ciclo propio de Evidence utiliza SoftDeletes, auditoría y restauración; la anulación formal de la inspección completa permanece pendiente. Contratos en [evidences.md](evidences.md).

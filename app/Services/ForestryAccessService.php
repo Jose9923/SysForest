@@ -15,6 +15,7 @@ class ForestryAccessService
         'inventories.view', 'inventories.create', 'inventories.update',
         'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore',
         'inspections.view', 'inspections.create', 'inspections.update',
+        'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'evidences.restore',
     ];
 
     public function __construct(
@@ -42,7 +43,7 @@ class ForestryAccessService
         }
 
         if ($this->context->accessMode() === 'department_read') {
-            return in_array($permission, ['inventories.view', 'trees.view', 'inspections.view'], true)
+            return in_array($permission, ['inventories.view', 'trees.view', 'inspections.view', 'evidences.view'], true)
                 && $this->permissions->allowsDepartment($actor, $permission, $organization->municipality->department_id);
         }
 

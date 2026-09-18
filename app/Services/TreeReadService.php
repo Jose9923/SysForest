@@ -22,6 +22,7 @@ class TreeReadService
         private TreeRepository $trees,
         private TreeCatalogRepository $catalogs,
         private InventoryRepository $inventories,
+        private EvidenceReadService $evidences,
         private TreeInspectionReadService $inspections
     ) {
     }
@@ -57,7 +58,11 @@ class TreeReadService
         $tree = $this->trees->findForTenant($organization->id, $id, false, $this->access->allows($actor, 'trees.restore'));
         Gate::forUser($actor)->authorize('view', $tree);
 
-        return array_merge($this->shared($actor, $tree), $this->inspections->treeSummary($actor, $tree), ['organization' => $organization, 'tree' => $this->trees->detail($tree)]);
+        $summary = $this->inspections->treeSummary($actor, $tree);
+
+        return array_merge($this->shared($actor, $tree), $summary, ['organization' => $organization, 'tree' => $this->trees->detail($tree),
+            'treeEvidenceGallery' => $this->evidences->gallery($actor, $tree),
+            'latestInspectionEvidenceGallery' => $summary['latestInspection'] ? $this->evidences->gallery($actor, $summary['latestInspection']) : null]);
     }
 
     public function authorizeExisting(User $actor, string $id, string $ability, bool $withTrashed = false): bool

@@ -2,6 +2,7 @@
 @section('title', $tree->code)
 @include('forestry.assets', ['withMap' => true])
 @include('inspections.assets', ['stylesOnly' => true])
+@include('evidences.assets')
 @section('content')
     @php
         $statusValue = $tree->current_status instanceof \BackedEnum ? $tree->current_status->value : $tree->current_status;
@@ -15,6 +16,7 @@
     @if (!$canUpdate && !$tree->trashed())<p class="forestry-readonly">La ficha está disponible para consulta. La edición requiere permisos vigentes y, para funcionarios, una campaña activa vinculada.</p>@endif
     <div class="forestry-stack" style="margin-bottom:22px">
         @include('inspections.tree-summary')
+        @if ($latestInspectionEvidenceGallery ?? null)@include('evidences.gallery', ['gallery' => $latestInspectionEvidenceGallery])@endif
     </div>
     <div class="forestry-layout">
         <div class="forestry-stack">
@@ -46,6 +48,7 @@
         </aside>
     </div>
     <div class="forestry-stack" style="margin-top:22px">
+        @if ($treeEvidenceGallery ?? null)@include('evidences.gallery', ['gallery' => $treeEvidenceGallery])@endif
         @include('inspections.tree-timeline')
         @if ($canUpdate && !$tree->trashed())
             <details id="status-change" class="panel forestry-panel forestry-disclosure" @if ($errors->has('current_status') || $errors->has('reason')) open @endif><summary>Cambiar estado del árbol</summary>

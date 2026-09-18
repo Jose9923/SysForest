@@ -1,12 +1,12 @@
-# SYSFOREST — Fase 7
+# SYSFOREST — Fase 8
 
 **Inventario y gestión forestal inteligente.**
 
-SYSFOREST incorpora inventarios institucionales, individuos forestales permanentes, ubicación PostGIS e inspecciones históricas con dasonomía, condiciones, fenología y fauna, sobre los catálogos, la autenticación y el territorio aprobados. La interfaz se renderiza con Blade. El piloto es la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia.
+SYSFOREST incorpora inventarios institucionales, individuos forestales permanentes, ubicación PostGIS e inspecciones históricas con dasonomía, condiciones, fenología, fauna y evidencias fotográficas privadas, sobre los catálogos, la autenticación y el territorio aprobados. La interfaz se renderiza con Blade. El piloto es la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia.
 
-El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Inventory, Tree y TreeInspection están implementados. Las fotografías/evidencias corresponden a Fase 8, que requiere una nueva aprobación.
+El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Inventory, Tree, TreeInspection y Evidence están implementados. La Fase 9 de mantenimiento requiere una nueva aprobación.
 
-El [reporte A–AN de Fase 7](docs/phase-7.md) documenta la entrega actual y sus verificaciones. Consulta [inspecciones](docs/inspections.md) y [dasonomía](docs/dendrometry.md) para sus contratos. El checkpoint de Fase 6 es **89911d8**, validado con 546 pruebas y 2.484 aserciones; su [reporte histórico](docs/phase-6.md) permanece disponible. Los cambios actuales se conservan sin commit final en `codex/phase-7`. La [matriz de 94 campos del Excel](docs/excel-field-mapping.md) y la [trazabilidad de catálogos](docs/forestry-catalogs.md) conservan las fuentes. El [reporte de Fase 4](docs/phase-4.md) mantiene su evidencia histórica. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
+El [reporte A–AN de Fase 8](docs/phase-8.md) documenta la entrega actual y sus verificaciones. Consulta [evidencias](docs/evidences.md) y [almacenamiento privado](docs/file-storage.md). El [reporte de Fase 7](docs/phase-7.md) conserva su evidencia histórica. Consulta [inspecciones](docs/inspections.md) y [dasonomía](docs/dendrometry.md) para sus contratos. El checkpoint de Fase 7 es **8fcb2d5**, validado con 752 pruebas y 3.207 aserciones; su [reporte histórico](docs/phase-7.md) permanece disponible. Los cambios actuales se conservan sin commit final en `codex/phase-8`. La [matriz de 94 campos del Excel](docs/excel-field-mapping.md) y la [trazabilidad de catálogos](docs/forestry-catalogs.md) conservan las fuentes. El [reporte de Fase 4](docs/phase-4.md) mantiene su evidencia histórica. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
 
 ## Entorno local
 
@@ -59,7 +59,7 @@ Carga el piloto territorial/institucional, los permisos, los catálogos y su inv
 docker compose exec app php artisan db:seed --class=DatabaseSeeder
 ~~~
 
-`DatabaseSeeder` es idempotente: conserva las identidades del piloto y sincroniza cuatro roles y 28 permisos. Los seeders forestales agregan códigos ausentes y conservan IDs, nombres, orden y desactivaciones administrativas. Crea el inventario «Inventario Forestal Institucional - Piloto SysForest», con código PILOT-SYSFOREST, sin generar árboles ficticios ni cuentas de usuario.
+`DatabaseSeeder` es idempotente: conserva las identidades del piloto y sincroniza cuatro roles y 36 permisos. Los seeders forestales agregan códigos ausentes y conservan IDs, nombres, orden y desactivaciones administrativas. Crea el inventario «Inventario Forestal Institucional - Piloto SysForest», con código PILOT-SYSFOREST, sin generar árboles ficticios ni cuentas de usuario.
 
 Para habilitar las cuatro cuentas de revisión local, ejecuta explícitamente:
 
@@ -97,7 +97,7 @@ Al seleccionar una organización, `TenantContextService` determina el modo `orga
 
 Abre [Catálogos forestales](http://localhost:8080/admin/catalogs) después de iniciar sesión. No necesitas seleccionar una organización. SUPER_ADMIN puede crear valores, editar etiquetas, activar/desactivar y ordenar; DEPARTMENT_ADMIN, ORGANIZATION_ADMIN y OFFICIAL tienen consulta desde una asignación vigente. Los catálogos no llevan `organization_id`.
 
-Hay 16 tablas nacionales: emplazamientos, dos dimensiones de origen, hábitos, madurez, familias/especies/nombres comunes, categorías/condiciones, evidencia, mantenimiento, motivos de anulación, fauna y reglas versionadas con bandas. Se sembraron 23 condiciones físico-mecánicas y 42 fitosanitarias; las dos columnas de fenología del mismo bloque se documentan para una fase posterior.
+Hay 16 tablas nacionales: emplazamientos, dos dimensiones de origen, hábitos, madurez, familias/especies/nombres comunes, categorías/condiciones, evidencia, mantenimiento, motivos de anulación, fauna y reglas versionadas con bandas. Se sembraron 23 condiciones físico-mecánicas y 42 fitosanitarias; las dos columnas de fenología del mismo bloque se implementan en TreeInspection desde Fase 7.
 
 La regla `EXCEL_V1` conserva intervalos exactos de 5 cm para DAP y 10 m para altura total, con cuatro estados Fustal. Sus parámetros y bandas están sellados: modificar una fórmula requiere otra versión, sin reescribir resultados históricos. BCMath trabaja con cadenas decimales y precisión de seis decimales; no redondea entradas antes de clasificar. La consulta de reglas de catálogo permanece disponible. Las inspecciones usan CAP/π con precisión interna ampliada, sin clasificar a partir del DAP redondeado; consulta el contrato de dasonomía.
 
@@ -191,7 +191,7 @@ docker compose exec app php artisan test --fail-on-warning
 
 `phpunit.xml` fija `APP_ENV=testing`, `DB_DATABASE=sysforest_testing` y activa `SYSFOREST_RUN_INTEGRATION=1`. Se utiliza PostgreSQL/PostGIS real. `PostgresTestCase` verifica entorno, driver y nombre de base antes de abrir transacciones y revierte los fixtures. No ejecutes suites concurrentes contra la misma base de pruebas.
 
-Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 7](docs/phase-7.md); estos comandos describen el procedimiento, no un resultado ejecutado.
+Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 8](docs/phase-8.md); estos comandos describen el procedimiento, no un resultado ejecutado.
 
 Revisa el formato:
 
@@ -251,7 +251,10 @@ Los volúmenes no sustituyen las copias de seguridad. Los enlaces de los correos
 | Documento | Contenido |
 | --- | --- |
 | [Fase 6](docs/phase-6.md) | Reporte histórico A–AJ, pruebas, rollback y estado de servicios. |
-| [Fase 7](docs/phase-7.md) | Reporte A–AN de inspecciones, verificaciones y alcance actual. |
+| [Fase 7](docs/phase-7.md) | Reporte histórico de inspecciones. |
+| [Fase 8](docs/phase-8.md) | Reporte A–AN de evidencias, pruebas y alcance actual. |
+| [Evidencias](docs/evidences.md) | Propietarios, galerías, permisos y auditoría. |
+| [Almacenamiento](docs/file-storage.md) | Archivos privados, validación y recuperación. |
 | [Inspecciones](docs/inspections.md) | Historia, condiciones, fenología, fauna, filtros, auditoría y permisos. |
 | [Dasonomía](docs/dendrometry.md) | Fórmulas, unidades, precisiones y versiones de clasificación. |
 | [Dominio forestal](docs/tree-domain.md) | Identidad, campañas, estados, códigos y anulación. |
@@ -268,4 +271,4 @@ Los volúmenes no sustituyen las copias de seguridad. Los enlaces de los correos
 | [Arquitectura](docs/architecture.md) y [modelo de datos](docs/database.md) | Diseño conceptual aprobado y módulos previstos. |
 | [Fase 2](docs/phase-2.md) y [Fase 3](docs/phase-3.md) | Evidencia histórica de infraestructura y fundamento institucional. |
 
-El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales llegan hasta Fase 7; los diagramas conceptuales de módulos posteriores no implican que estén implementados.
+El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales llegan hasta Fase 8; los diagramas conceptuales de módulos posteriores no implican que estén implementados.

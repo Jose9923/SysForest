@@ -1,0 +1,78 @@
+SYSFOREST — Inventario de Fase 8
+Proyecto: /home/josev/SYSFOREST (Ubuntu-24.04 WSL)
+Rama: codex/phase-8
+Checkpoint Fase 7: 8fcb2d5
+Archivos: 70; modificados: 23; nuevos: 47.
+Sin commit final de Fase 8.
+Estados originales de git status --porcelain=v1: M modificado; ?? nuevo sin seguimiento.
+
+ M .env.example
+ M AGENTS.md
+ M CLAUDE.md
+ M README.md
+?? app/Console/Commands/ReconcileEvidenceUpload.php
+?? app/Exceptions/StaleEvidenceException.php
+?? app/Http/Controllers/EvidenceController.php
+?? app/Http/Requests/RestoreEvidenceRequest.php
+?? app/Http/Requests/StoreEvidenceRequest.php
+?? app/Http/Requests/UpdateEvidenceRequest.php
+?? app/Http/Requests/VoidEvidenceRequest.php
+?? app/Models/Evidence.php
+?? app/Models/EvidenceRevision.php
+ M app/Models/Tree.php
+ M app/Models/TreeInspection.php
+?? app/Policies/EvidencePolicy.php
+ M app/Providers/AppServiceProvider.php
+?? app/Repositories/EvidenceRepository.php
+?? app/Repositories/EvidenceRevisionRepository.php
+?? app/Repositories/EvidenceTypeRepository.php
+?? app/Services/EvidenceAuditService.php
+?? app/Services/EvidenceDeliveryService.php
+?? app/Services/EvidenceOwnerService.php
+?? app/Services/EvidenceReadService.php
+?? app/Services/EvidenceRecoveryService.php
+?? app/Services/EvidenceService.php
+?? app/Services/EvidenceStorageJournal.php
+?? app/Services/EvidenceStorageService.php
+?? app/Services/EvidenceWriteService.php
+ M app/Services/ForestryAccessService.php
+?? app/Services/ImageMetadataService.php
+ M app/Services/TreeInspectionReadService.php
+ M app/Services/TreeReadService.php
+?? app/Validation/EvidenceInput.php
+ M bootstrap/app.php
+?? config/evidence.php
+ M config/filesystems.php
+?? database/migrations/2026_09_12_000014_create_evidence_tables.php
+ M database/seeders/AuthorizationSeeder.php
+ M docker/nginx/default.conf
+ M docker/php/php.ini
+?? docs/evidences.md
+ M docs/excel-field-mapping.md
+?? docs/file-storage.md
+ M docs/forestry-catalogs.md
+ M docs/inspections.md
+?? docs/phase-8-files.txt
+?? docs/phase-8.md
+ M docs/tree-domain.md
+?? public/css/evidences.css
+?? public/js/evidences.js
+ M resources/views/errors/409.blade.php
+?? resources/views/errors/evidence.blade.php
+?? resources/views/evidences/assets.blade.php
+?? resources/views/evidences/gallery.blade.php
+?? resources/views/evidences/index.blade.php
+?? resources/views/evidences/show.blade.php
+?? resources/views/evidences/upload.blade.php
+ M resources/views/inspections/show.blade.php
+ M resources/views/trees/show.blade.php
+ M routes/forestry.php
+?? tests/EvidenceTestCase.php
+?? tests/Feature/EvidenceAuthorizationTest.php
+?? tests/Feature/EvidenceDomainTest.php
+?? tests/Feature/EvidenceHttpSecurityTest.php
+?? tests/Feature/EvidencePresentationTest.php
+?? tests/Feature/EvidenceRepositoryTest.php
+?? tests/Frontend/evidences.test.mjs
+?? tests/Unit/EvidenceStorageServiceTest.php
+?? tests/Unit/ImageMetadataServiceTest.php

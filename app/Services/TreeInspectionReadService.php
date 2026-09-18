@@ -31,6 +31,7 @@ class TreeInspectionReadService
         private InspectionReferenceRepository $references,
         private InspectionRevisionRepository $revisions,
         private InventoryRepository $inventories,
+        private EvidenceReadService $evidences,
     ) {
     }
 
@@ -81,7 +82,8 @@ class TreeInspectionReadService
         return ['organization' => $this->access->organization($actor), 'tree' => $inspection->tree,
             'inspection' => $inspection, 'canUpdate' => Gate::forUser($actor)->allows('update', $inspection),
             'selectedConditionGroups' => $inspection->conditions->groupBy('assessment_type')->map(fn ($items) => $items->groupBy('condition_category_id')),
-            'revisions' => $this->revisions->forInspection($inspection->organization_id, $inspection->id)];
+            'revisions' => $this->revisions->forInspection($inspection->organization_id, $inspection->id),
+            'inspectionEvidenceGallery' => $this->evidences->gallery($actor, $inspection)];
     }
 
     public function treeSummary(User $actor, Tree $tree): array

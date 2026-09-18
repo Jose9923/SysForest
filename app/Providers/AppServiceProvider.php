@@ -32,8 +32,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(\App\Models\Tree::class, \App\Policies\TreePolicy::class);
         Gate::policy(\App\Models\TreeInspection::class, \App\Policies\TreeInspectionPolicy::class);
+        Gate::policy(\App\Models\Evidence::class, \App\Policies\EvidencePolicy::class);
         Gate::policy(\App\Models\Inventory::class, \App\Policies\InventoryPolicy::class);
-        foreach (['inventories.view', 'inventories.create', 'inventories.update', 'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore', 'inspections.view', 'inspections.create', 'inspections.update'] as $permission) {
+        foreach (['inventories.view', 'inventories.create', 'inventories.update', 'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore', 'inspections.view', 'inspections.create', 'inspections.update', 'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'evidences.restore'] as $permission) {
             Gate::define($permission, fn (User $actor) => app(\App\Services\ForestryAccessService::class)->allows($actor, $permission));
         }
         Gate::policy(OrganizationMembership::class, OrganizationMembershipPolicy::class);

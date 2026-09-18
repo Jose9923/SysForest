@@ -1,0 +1,37 @@
+@extends('layouts.institutional')
+@section('title', 'Evidencia fotográfica')
+@include('evidences.assets', ['withForestryAssets' => true])
+@section('content')
+    <a class="back-link" href="{{ $ownerUrl }}">← Volver a {{ $ownerLabel }}</a>
+    <div class="page-heading forestry-heading"><div><p class="eyebrow">{{ $organization->name }} · {{ $ownerLabel }}</p><h1>Evidencia fotográfica</h1><div class="forestry-flags"><span class="pill">{{ $evidenceItem['typeName'] }}</span>@if ($evidenceItem['isVoided'])<span class="pill danger">Anulada</span>@endif @unless ($evidenceItem['typeActive'])<span class="pill neutral">Tipo histórico inactivo</span>@endunless</div></div><div class="forestry-actions"><a class="button secondary" href="{{ $evidenceItem['viewUrl'] }}" target="_blank" rel="noopener noreferrer">Abrir imagen</a><a class="button secondary" href="{{ $evidenceItem['downloadUrl'] }}">Descargar original</a></div></div>
+    @if ($evidenceItem['isVoided'])<div class="record-warning"><strong>Esta evidencia está anulada</strong><p>Se conserva para trazabilidad y su restauración requiere autorización.</p>@if (($evidenceItem['deletionNotes'] ?? null) !== null)<p class="preserve-lines">{{ $evidenceItem['deletionNotes'] }}</p>@endif</div>@endif
+    <div class="evidence-detail-layout">
+        <section class="panel forestry-panel"><div class="evidence-original"><img src="{{ $evidenceItem['viewUrl'] }}" alt="{{ $evidenceItem['caption'] ?? $evidenceItem['typeName'] }}" decoding="async" data-evidence-image><p class="evidence-image-unavailable" hidden>No se pudo cargar la imagen. Sus datos permanecen disponibles; intenta abrirla nuevamente.</p></div><p class="evidence-detail-caption preserve-lines">{{ $evidenceItem['caption'] ?? 'Sin descripción' }}</p></section>
+        <section class="panel forestry-panel"><span class="section-kicker">DATOS DE LA EVIDENCIA</span><h2>Información registrada</h2><dl class="details evidence-details">
+            <div><dt>Tipo</dt><dd>{{ $evidenceItem['typeName'] }}</dd></div><div><dt>Fecha de captura</dt><dd>{{ $evidenceItem['capturedAt'] ?? 'No informada' }}</dd></div>
+            <div><dt>Nombre original</dt><dd>{{ $evidenceItem['originalName'] }}</dd></div><div><dt>Formato</dt><dd>{{ $evidenceItem['mimeType'] }}</dd></div><div><dt>Tamaño</dt><dd>{{ $evidenceItem['sizeLabel'] }}</dd></div><div><dt>Dimensiones</dt><dd>{{ $evidenceItem['dimensions'] ?? 'No disponibles' }}</dd></div>
+            <div><dt>Subida por</dt><dd>{{ $evidenceItem['uploadedByName'] ?? 'No disponible' }}</dd></div><div><dt>Fecha de subida</dt><dd>{{ $evidenceItem['createdAt'] }}</dd></div><div><dt>Última actualización</dt><dd>{{ $evidenceItem['updatedAt'] }}</dd></div><div><dt>Actualizada por</dt><dd>{{ $evidenceItem['updatedByName'] ?? 'No disponible' }}</dd></div><div><dt>Versión</dt><dd>{{ $lockVersion }}</dd></div>
+        </dl>@if ($evidenceItem['checksum'] ?? null)<details class="evidence-technical"><summary>Huella técnica del archivo</summary><p class="field-hint">SHA-256</p><code>{{ $evidenceItem['checksum'] }}</code></details>@endif</section>
+    </div>
+    <div class="forestry-stack evidence-following">
+        <section class="panel forestry-panel"><h2>Notas</h2><p class="preserve-lines">{{ $evidenceItem['notes'] ?? 'Sin notas registradas.' }}</p></section>
+        @if ($evidenceItem['canUpdate'])
+            <section class="panel forestry-panel" id="evidence-metadata"><span class="section-kicker">EDICIÓN DE METADATA</span><h2>Editar datos de la evidencia</h2>
+                <form method="POST" action="{{ $updateUrl }}">@csrf @method('PUT')<input type="hidden" name="lock_version" value="{{ old('lock_version', $lockVersion) }}">
+                    <div class="form-grid"><div class="field"><label for="evidence-edit-type">Tipo de evidencia *</label><select class="catalog-select" id="evidence-edit-type" name="evidence_type_id" required><option value="">Selecciona un tipo</option>@foreach ($typeOptions as $type)<option value="{{ $type->id }}" @selected(old('evidence_type_id', $evidenceItem['typeId']) === $type->id)>{{ $type->name }}{{ !$type->active ? ' · referencia histórica inactiva' : '' }}</option>@endforeach</select>@error('evidence_type_id')<span class="field-error">{{ $message }}</span>@enderror</div>
+                        <div class="field"><label for="evidence-edit-captured">Fecha y hora de captura (UTC)</label><input type="datetime-local" id="evidence-edit-captured" name="captured_at" step="60" value="{{ old('captured_at', $evidenceItem['capturedAtInput']) }}"><p class="field-hint">Opcional. Deja en blanco si se desconoce la fecha de la fotografía.</p>@error('captured_at')<span class="field-error">{{ $message }}</span>@enderror</div>
+                        <div class="field wide"><label for="evidence-edit-caption">Descripción de la fotografía</label><textarea id="evidence-edit-caption" name="caption" rows="2" maxlength="2000">{{ old('caption', $evidenceItem['caption']) }}</textarea>@error('caption')<span class="field-error">{{ $message }}</span>@enderror</div>
+                        <div class="field wide"><label for="evidence-edit-notes">Notas</label><textarea id="evidence-edit-notes" name="notes" rows="3" maxlength="20000">{{ old('notes', $evidenceItem['notes']) }}</textarea>@error('notes')<span class="field-error">{{ $message }}</span>@enderror</div>
+                    </div><div class="form-actions"><button class="button">Guardar datos</button></div>
+                </form>
+            </section>
+        @endif
+        @if ($evidenceItem['canVoid'])
+            <details class="panel forestry-panel forestry-disclosure danger-zone"><summary>Anular evidencia</summary><form method="POST" action="{{ $voidUrl }}" data-confirm-submit="¿Anular esta evidencia? Se conservará el archivo y su historial.">@csrf @method('DELETE')<input type="hidden" name="lock_version" value="{{ $lockVersion }}"><p class="muted">Utiliza la anulación cuando una fotografía fue registrada por error.</p><div class="field"><label for="evidence-deletion-notes">Detalle de la anulación</label><textarea id="evidence-deletion-notes" name="deletion_notes" rows="2" maxlength="2000">{{ old('deletion_notes') }}</textarea>@error('deletion_notes')<span class="field-error">{{ $message }}</span>@enderror</div><div class="form-actions"><button class="button danger">Anular evidencia</button></div></form></details>
+        @endif
+        @if ($evidenceItem['canRestore'])
+            <section class="panel forestry-panel" id="evidence-restore"><h2>Restaurar evidencia</h2><p class="muted">La restauración recupera el mismo registro cuando el archivo todavía está disponible.</p><form method="POST" action="{{ $restoreUrl }}" data-confirm-submit="¿Restaurar esta evidencia?">@csrf<input type="hidden" name="lock_version" value="{{ $lockVersion }}"><div class="form-actions"><button class="button">Restaurar evidencia</button></div></form></section>
+        @endif
+        <section class="panel forestry-panel"><span class="section-kicker">TRAZABILIDAD</span><h2>Historial de la evidencia</h2><ol class="history-list">@forelse ($revisions as $revision)<li><time>{{ $revision['changedAt'] }}</time><strong>{{ $revision['eventLabel'] }}</strong>@if ($revision['summary'] ?? null)<p>{{ $revision['summary'] }}</p>@endif<small>{{ $revision['changedByName'] ?? 'No disponible' }}</small></li>@empty<li><p>Sin eventos disponibles.</p></li>@endforelse</ol></section>
+    </div>
+@endsection
