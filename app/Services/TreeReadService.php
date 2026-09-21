@@ -10,9 +10,7 @@ use App\Models\User;
 use App\Repositories\InventoryRepository;
 use App\Repositories\TreeCatalogRepository;
 use App\Repositories\TreeRepository;
-use App\Validation\TreeInput;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Validator;
 
 /** Prepara datos y permisos para Blade sin consultas implícitas en las vistas. */
 class TreeReadService
@@ -24,7 +22,8 @@ class TreeReadService
         private InventoryRepository $inventories,
         private EvidenceReadService $evidences,
         private TreeInspectionReadService $inspections,
-        private MaintenanceReadService $maintenances
+        private MaintenanceReadService $maintenances,
+        private TreeFilterService $filters
     ) {
     }
 
@@ -32,7 +31,14 @@ class TreeReadService
     {
         $organization = $this->access->organization($actor);
         Gate::forUser($actor)->authorize('viewAny', Tree::class);
-        $filters = Validator::make($input, TreeInput::filters(), TreeInput::messages())->validate();
+        $criteria = $this->filters->validate($input);
+        $filters = $criteria->values();
+        if ($criteria->hasInspectionFilters()) {
+            $this->access->authorize($actor, 'inspections.view');
+        }
+        if ($criteria->hasMaintenanceFilters()) {
+            $this->access->authorize($actor, 'maintenances.view');
+        }
         if (!empty($filters['trashed'])) {
             $this->access->authorize($actor, 'trees.restore');
         }

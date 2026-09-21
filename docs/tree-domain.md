@@ -4,7 +4,7 @@
 
 La Fase 6 implementa la identidad permanente del individuo, inventarios, ubicación actual e histórica, estado, colaboración institucional, anulación y restauración. La petición aprobada tiene SHA-256 `9a27d539dbc7847509489ec8bbbdd4c30624f17f25c065f371e5f268d87c6b16`.
 
-El Excel conserva sus 94 variables en la [matriz de trazabilidad](excel-field-mapping.md). A:H se materializan desde Fase 6 mediante Tree y sus relaciones nacionales. Fase 7 añade TreeInspection con mediciones, cálculos dasométricos, condiciones, fenología, fauna y observaciones históricas, separados de Tree. Fase 8 incorpora fotos CN/CO de inspección mediante Evidence y fotografías propias de Tree; Fase 9 añade mantenimientos manuales e historial propio; importación permanece fuera del alcance actual.
+El Excel conserva sus 94 variables en la [matriz de trazabilidad](excel-field-mapping.md). A:H se materializan desde Fase 6 mediante Tree y sus relaciones nacionales. Fase 7 añade TreeInspection con mediciones, cálculos dasométricos, condiciones, fenología, fauna y observaciones históricas, separados de Tree. Fase 8 incorpora fotos CN/CO de inspección mediante Evidence y fotografías propias de Tree; Fase 9 añade mantenimientos manuales e historial propio. Fase 10 incorpora el mapa general interno y un motor de filtros compartido; la importación permanece fuera del alcance actual.
 
 Las decisiones de catálogos de Fase 5 se mantienen: [catálogos y reglas](forestry-catalogs.md). La pertenencia a una organización se resuelve con el modelo vigente de [multitenancy](multitenancy.md), sin trasladar catálogos nacionales a cada tenant.
 
@@ -64,7 +64,7 @@ Una inspección puede carecer de contexto de campaña. Si se informa inventory_t
 
 La creación de Tree ofrece continuar a «Nueva inspección» mediante una operación separada. Official puede registrar o corregir visitas de otros funcionarios de la misma institución sin exigir una campaña activa para la inspección. El requisito de inventario activo para modificar Tree no cambia. Tree anulado no admite nuevas visitas ni correcciones; la lectura histórica exige autorización sobre el Tree anulado.
 
-La última inspección se determina por inspection_date, created_at e id, todos en orden descendente, con UUID como último desempate. Actualizar una visita antigua no altera created_at ni la convierte en la última. Los filtros de condición y las combinaciones ANY/ALL de la última visita se aplican a esa misma inspección, no a hallazgos de fechas distintas.
+La última inspección se determina por inspection_date, created_at e id, todos en orden descendente, con UUID como último desempate. Actualizar una visita antigua no altera created_at ni la convierte en la última. Desde Fase 10, InspectionQueryRepository centraliza ese orden y TreeQueryRepository incorpora una subconsulta LEFT JOIN LATERAL con el alias latest_inspection: primero selecciona la visita global más reciente y después aplica los filtros. Las combinaciones ANY/ALL de condiciones se evalúan sobre esa misma inspección, no sobre hallazgos de fechas distintas. El contrato de filtros de bandejas y mapa se detalla en [map-filters.md](map-filters.md).
 
 TreeInspectionService conserva transacciones, concurrencia y revisión estructurada por versión. El detalle de pertenencia, permisos inspections.view/create/update, pivotes, auditoría y filtros está en [inspections.md](inspections.md); las fórmulas y referencias históricas en [dendrometry.md](dendrometry.md).
 
@@ -113,7 +113,7 @@ Fase 6 añadió estos ocho permisos forestales al catálogo RBAC. Fase 7 conserv
 | trees.void | Sí | No | Sí | No |
 | trees.restore | Sí | No | Sí | No |
 
-Cada celda de escritura se limita al contexto institucional seleccionado. SUPER_ADMIN no necesita una membresía ficticia, pero sus escrituras usan TenantContext nacional y un organization_id concreto. department_read permite consulta y rechaza todas las mutaciones forestales. Un UUID de otra organización no se resuelve en el repositorio del tenant actual; no se trata como una oportunidad para cambiar de contexto.
+La tabla anterior describe las operaciones institucionales. Fase 10 añade alcances amplios exclusivamente para lectura en el mapa, documentados más adelante; las bandejas y fichas mantienen el contexto seleccionado. Cada celda de escritura se limita al contexto institucional seleccionado. SUPER_ADMIN no necesita una membresía ficticia, pero sus escrituras usan TenantContext nacional y un organization_id concreto. department_read permite consulta y rechaza todas las mutaciones forestales. Un UUID de otra organización no se resuelve en el repositorio del tenant actual; no se trata como una oportunidad para cambiar de contexto.
 
 El dato pertenece a la organización, por lo que Official A puede editar un árbol creado por Official B cuando ambos mantienen acceso vigente y el árbol satisface la condición de inventario activo. created_by no cambia; updated_by refleja al último editor.
 
@@ -134,7 +134,9 @@ Las reglas principales se distribuyen así:
 | TreeStatusService | Estado e historial; evento tree.status_changed. |
 | TreeLocationService / TreeLocationRepository | GPS, PostGIS, historial y evento tree.location_changed. |
 | TreeLifecycleService | Cambiar estado/ubicación, anular y restaurar mediante el mismo control de escritura. |
-| TreeReadService / TreeRepository | Preparar listados, ficha, referencias e historiales por tenant. |
+| TreeReadService / TreeRepository | Preparar listados, ficha, referencias e historiales por tenant; el listado delega la selección al motor común. |
+| TreeFilterService / TreeFilterDTO / TreeQueryRepository | Validar filtros y compartir la selección entre bandeja, última inspección y mapa, con TreeReadScope explícito. |
+| InspectionQueryRepository | Orden determinista de visitas, predicados históricos y de última inspección, ANY/ALL sin mezclar fechas. |
 | InventoryService / InventoryRepository | Inventarios, versiones e inclusiones idempotentes. |
 
 Los Controllers coordinan Requests y Services. Blade recibe las relaciones y permisos preparados; no ejecuta consultas. El navegador permite previsualizar una ubicación, pero guardar siempre vuelve a validarla en el servidor.
@@ -150,3 +152,15 @@ Tree tiene una relación evidences con fotografías permanentes propias. La fich
 Tree tiene maintenances y una sección con las diez últimas órdenes activas, acceso al listado filtrado y registro manual según Policy. La orden conserva identidad, responsable, programación, ejecución y estados en su propio dominio; su anulación no anula el árbol ni sus fotografías independientes.
 
 Registrar o verificar una tala, traslado u otra intervención no cambia automáticamente current_status, coordenadas PostGIS ni inspecciones. Esos cambios requieren sus operaciones explícitas y autorizadas. Un árbol anulado rechaza nuevas órdenes y cambios operativos; los administradores con acceso histórico conservan la consulta. [Contrato de mantenimientos](maintenances.md).
+
+## Mapa y motor compartido de Fase 10
+
+TreeRepository::paginate y TreeInspectionRepository::latestTrees conservan sus APIs institucionales y utilizan TreeQueryRepository con App\DTOs\TreeReadScope::organization. MapTreeRepository compone el mismo motor con un alcance autorizado de organización, departamentos o nacional. El DTO describe la consulta; MapAccessService revalida cuenta y concesiones y ningún filtro recibido del navegador amplía ese alcance. Las organizaciones y su jerarquía territorial deben permanecer activas.
+
+Los filtros abarcan identidad y búsqueda literal, taxonomía normalizada, emplazamiento, hábito, las dos dimensiones de origen, protección/patrimonio, estado, territorio institucional, campañas, última inspección y órdenes de mantenimiento. Las referencias de catálogo inactivas siguen siendo consultables. Se conserva false y cero como valores expresos. Las claves, tipos, permisos y combinaciones están en [map-filters.md](map-filters.md).
+
+La campaña se resuelve mediante EXISTS sobre inventory_trees: no duplica individuos y no obliga a que la última visita pertenezca a esa campaña. Los criterios de mantenimiento también usan un único EXISTS para que tipo, estado y prioridad correspondan a la misma orden. Las órdenes anuladas se excluyen; las canceladas solo coinciden cuando se solicita ese estado. La casilla de pendientes incluye pending/scheduled y false no exige ausencia de órdenes.
+
+Los alcances departamental y nacional del mapa permiten leer varias instituciones sin ampliar TenantContext ni otorgar escritura. Abrir una ficha usa un POST protegido con CSRF y selección explícita de la organización, y las operaciones posteriores mantienen sus controles institucionales. SUPER_ADMIN no recibe membresías ficticias y DEPARTMENT_ADMIN conserva lectura solamente.
+
+El mapa excluye siempre anulados administrativos; las bandejas conservan la papelera con trees.restore. Los estados dead/felled/removed no equivalen a anulación. Un Tree sin geometry conserva su identidad y puede aparecer en el total autorizado, pero nunca genera un marcador inventado. El mapa utiliza la ubicación actual PostGIS y no reinterpreta coordinate_raw. Véase [georreferenciación y consulta espacial](georeferencing.md).

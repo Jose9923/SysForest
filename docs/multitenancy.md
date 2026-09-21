@@ -2,13 +2,13 @@
 
 ## Base aprobada y extensión actual
 
-Las secciones de identidad describen la base de Fase 4. La extensión operativa de Fase 6 se documenta al final: inventarios, árboles, ocho permisos adicionales y restricciones compuestas implementadas.
+Las secciones de identidad conservan la base de Fase 4 y las operaciones forestales documentan la extensión de Fase 6. Al final se añade la lectura cartográfica de Fase 10, con un alcance explícito separado del contexto institucional y sin ampliar sus permisos de escritura.
 
 SYSFOREST comparte una aplicación y una base PostgreSQL/PostGIS entre organizaciones. La organización conserva la propiedad de sus datos; la cuenta que los registra no reemplaza esa propiedad. La jerarquía es `Country → Department → Municipality → Organization`, y toda organización tiene un municipio obligatorio.
 
 Las entidades territoriales, organizaciones, membresías y asignaciones de roles usan UUID. `users` conserva su identificador BIGINT y representa una identidad global. El tipo de organización describe a la institución y no concede permisos.
 
-Fase 4 añade autenticación JWT, sesiones revocables y autorización mediante **cuatro roles y 18 permisos**. Consulta [autenticación](authentication.md), [matriz de autorización](authorization.md#roles-y-permisos), [recuperación e invitaciones](account-recovery.md) y [cuentas de desarrollo](development-accounts.md). Fase 5 añadió dos permisos de catálogo y Fase 6 añade ocho operativos, para 28 permisos actuales.
+Fase 4 añade autenticación JWT, sesiones revocables y autorización mediante **cuatro roles y 18 permisos**. Consulta [autenticación](authentication.md), [matriz de autorización](authorization.md#roles-y-permisos), [recuperación e invitaciones](account-recovery.md) y [cuentas de desarrollo](development-accounts.md). Fase 5 añadió dos permisos de catálogo y Fase 6 incorporó ocho operativos, para 28 permisos al cierre de esa fase. Inspecciones, evidencias y mantenimientos completaron 43 permisos hasta Fase 9. Fase 10 reutiliza esa autorización y no añade permisos persistidos.
 
 ## Identidad, pertenencia, selección y permiso
 
@@ -183,3 +183,44 @@ Tree SoftDeletes significa registro erróneo, con autor/motivo/nota; dead, felle
 No hay consultas en Blade ni cálculo espacial de distancias en JavaScript. La ubicación se valida en servicios y persiste mediante PostGIS y bindings. Cada consulta bbox/radio/proximidad lleva organization_id y el filtro de campaña utiliza la asociación institucional.
 
 Consulta el [README](../README.md) para la operación local y el [reporte de Fase 4](phase-4.md) para el cierre y los resultados consolidados. Los comandos anteriores son procedimientos; no expresan un total de pruebas ejecutadas.
+
+## Lectura cartográfica explícita de Fase 10
+
+El mapa introduce un alcance de consulta independiente de `TenantContext`. Incluso su modo nacional sigue representando una sola organización seleccionada; no se convierte en un contexto sin propietario ni permite saltar las Policies de las fichas.
+
+`App\DTOs\TreeReadScope` es un DTO readonly con `kind`, `organizationId` y `departmentIds`. Sus fábricas son `organization(UUID)`, `department(UUID[])` y `national()`. El conjunto departamental no puede estar vacío. No contiene actor, no se guarda como concesión en sesión y no acredita permisos por sí mismo. Los wrappers institucionales construyen únicamente `organization(orgId)` después de su autorización previa; un valor nulo nunca significa consulta nacional.
+
+| Operación | Contrato |
+| --- | --- |
+| `MapAccessService::resolve(User, ?requestedKind): TreeReadScope` | Reconsulta cuenta y concesiones actuales; exige `organizations.view` y `trees.view` en el ámbito correspondiente. |
+| `MapAccessService::allows / authorize` | Comprueban `trees.view`, `inspections.view` o `maintenances.view` en todo el alcance; no aceptan permisos de escritura. |
+| `MapAccessService::canView(User): bool` | Prepara navegación autorizada; solo transforma `AuthorizationException` en `false`. Los errores de infraestructura se propagan. |
+| `MapScopeRepository::organizations(scope): Builder` | Restringe organizaciones no anuladas y activas con municipio, departamento y país activos. |
+| `MapScopeRepository::applyTo(query, scope, alias): void` | Compone `EXISTS` por `organization_id` antes de filtros; no duplica filas. |
+| `MapScopeRepository::findTree(scope, UUID): Tree` | Recupera un árbol vigente del alcance; UUID ajeno o anulado produce 404. |
+
+`ORGANIZATION_ADMIN` y `OFFICIAL` usan su organización seleccionada con membresía y rol vigentes. `DEPARTMENT_ADMIN` consulta sus departamentos autorizados sin seleccionar una institución, pero no obtiene escritura. `SUPER_ADMIN` consulta el ámbito nacional permitido sin membresías artificiales ni selección previa. El código comprueba permisos, no nombres de rol.
+
+Sin `scope` explícito se elige primero el nacional autorizado, después el departamental y finalmente la organización seleccionada. Solicitar `organization`, `department` o `national` solo expresa una selección; un ámbito no autorizado se rechaza. Departamento, municipio, organización, campaña y demás criterios del navegador siempre estrechan el alcance.
+
+Los filtros y opciones de inspecciones requieren `inspections.view`; los de mantenimientos, `maintenances.view`. El resumen de última visita se omite si falta su permiso. Las respuestas usan Resources con campos explícitos, sin observaciones, metadatos GPS, autores ni rutas de evidencias.
+
+### Navegación desde el mapa y revocación
+
+Las rutas cartográficas están dentro de JWT, vinculación de sesión, verificación de correo y `ShareTenantContext`, pero fuera de `ResolveTenantContext` obligatorio. Consultar capas nacionales/departamentales no cambia `active_organization_id`.
+
+La apertura utiliza `POST /map/trees/{tree}/open` con CSRF. El `open_url` conserva el tipo de `scope` elegido para no sustituirlo por otro ámbito de una cuenta multirrol. `MapTreeNavigationService` valida esa selección y resuelve otra vez permisos; no acepta un DTO de autoridad del navegador. Obtiene el propietario desde el árbol autorizado, llama a `TenantContextService::activate` y aplica `TreePolicy::view`. Solo entonces el Controller guarda la selección y redirige a `trees.show`. `scope=national` no convierte una membresía en concesión nacional; organización y URL de retorno manipuladas no deciden el destino.
+
+La revalidación mantiene cuenta activa/verificada, membresía cuando corresponde, concesiones y organización vigentes. Una revocación invalida solicitudes posteriores aunque exista un scope anterior. `MapAccessService` revalida el contexto una vez por operación organizacional y consulta permisos específicos actuales; evita llamadas recursivas repetidas sin cachear permisos ni modificar los servicios globales.
+
+Los middleware conservan su limpieza `finally`. Este alcance de lectura no se serializa como autorización para jobs ni reemplaza `UseTenantContext` en escrituras futuras.
+
+### Restricciones y pruebas del mapa
+
+El mapa excluye árboles anulados incluso para administradores; la consulta histórica de las fichas conserva sus políticas. `dead`, `felled` y `removed` siguen separados de `deleted_at`.
+
+No se añadieron roles, permisos persistidos ni membresías para el mapa. `maps.view` es una capacidad de Gate respaldada por `MapAccessService`; Fase 10 mantiene los 43 permisos acumulados hasta Fase 9. Las garantías de FK compuesta, identidad inmutable, versiones y auditoría siguen vigentes.
+
+`MapScopeSecurityTest` y `MapEndpointSecurityTest` cubren A/B, departamentos ajenos, cuentas multirrol, nacional sin selección, revocación, referencias manipuladas, permisos separados, anonimato, CSRF, proyección mínima y límites HTTP. Los fixtures pertenecen exclusivamente a `sysforest_testing` y las suites se ejecutan en serie.
+
+Consulte [maps.md](maps.md) para API, proyecciones, límites, geometrías territoriales y mediciones; [map-filters.md](map-filters.md) para el motor compartido y la última inspección. Esta extensión conserva los límites históricos de fases anteriores y no autoriza el portal público.

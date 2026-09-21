@@ -36,6 +36,7 @@ Route::middleware('identity.headers')->group(function (): void {
 
         Route::middleware(['identity.verified', 'tenant.share'])->group(function (): void {
             require __DIR__.'/catalogs.php';
+            require __DIR__.'/maps.php';
             Route::get('/territories', C\TerritoryController::class)->name('territories.index');
             Route::post('/active-organization', C\TenantSelectionController::class)->name('tenant.select');
             Route::get('/organizations', [C\OrganizationController::class, 'index'])->name('organizations.index');

@@ -1,0 +1,23 @@
+{
+  "name": "supercluster",
+  "version": "9.1.0",
+  "official_repository": "https://github.com/mapbox/supercluster",
+  "registry_metadata": "https://registry.npmjs.org/supercluster/9.1.0",
+  "tarball": "https://registry.npmjs.org/supercluster/-/supercluster-9.1.0.tgz",
+  "tarball_integrity": "sha512-WMhsJPm8Tf9f5mKxJ1D0mB5tbCMOFi8wTrm/LGnsJHGg8xkeNT/TWDZuFauOGRISnclbYgnxD7g3xJAfQO3FLg==",
+  "verified_at": "2026-09-21",
+  "license": "ISC",
+  "files": [
+    {
+      "path": "supercluster.min.js",
+      "archive_member": "package/dist/supercluster.min.js",
+      "sha256": "52e16b1abc1c8cdb3719c5f2fc57da44b4fd65eb0d16803c1106d0975afb72b7"
+    },
+    {
+      "path": "LICENSE",
+      "archive_member": "package/LICENSE",
+      "sha256": "324139c19d87af03fda38afea1590e00ca354c4159bdb2ae9e9cec070cfa46a8"
+    }
+  ],
+  "note": "Distribución UMD oficial con kdbush incluido. Sin CDN ni resolución de versiones en ejecución."
+}

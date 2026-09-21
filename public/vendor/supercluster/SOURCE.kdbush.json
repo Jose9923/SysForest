@@ -1,0 +1,9 @@
+{
+  "name": "kdbush",
+  "version": "4.1.0",
+  "tarball": "https://registry.npmjs.org/kdbush/-/kdbush-4.1.0.tgz",
+  "tarball_integrity": "sha512-e9vurzrXJQrFX6ckpHP3bvj5l+9CnYzkxDNnNQ1h2QTqdWsUAJgXiKdGNcOa1EY85dU8KbQ+z/FdQdB7P+9yfQ==",
+  "license": "ISC",
+  "license_sha256": "0aba693a2c2e5b1b1465f9e06d29c21769450add9dbb7dc915b41a60e900196f",
+  "note": "Aviso de la dependencia incluida en la distribuci\u00f3n; no se instala ni carga otro runtime."
+}

@@ -29,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // El guard conserva identidad solo durante la petición validada por JWT.
         Auth::viaRequest('jwt-context', fn (Request $request) => null);
+        Gate::define('maps.view', fn (User $actor) => app(\App\Services\MapAccessService::class)->canView($actor));
         Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(\App\Models\Tree::class, \App\Policies\TreePolicy::class);
         Gate::policy(\App\Models\TreeInspection::class, \App\Policies\TreeInspectionPolicy::class);
@@ -60,6 +61,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('memberships.manage', fn (User $actor) => Gate::forUser($actor)->allows('memberships.update'));
         Gate::define('catalogs.view', fn (User $actor) => $permissions()->allowsCatalogView($actor));
         Gate::define('catalogs.manage', fn (User $actor) => $permissions()->allowsNational($actor, 'catalogs.manage'));
+
+        RateLimiter::for('maps.read', fn (Request $request) => Limit::perMinute((int) config('maps.rate_limit', 180))
+            ->by('map:'.($request->user()?->id ?? $request->ip())));
 
         foreach (['login' => 10, 'refresh' => 30, 'password' => 5, 'invitation' => 20] as $name => $default) {
             RateLimiter::for('identity.'.$name, function (Request $request) use ($name, $default): array {

@@ -17,7 +17,6 @@ use App\Repositories\TreeRepository;
 use App\Validation\TreeInspectionInput;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 /** Proyecciones preparadas para Blade y filtros reutilizables por futuros consumidores. */
 class TreeInspectionReadService
@@ -32,6 +31,7 @@ class TreeInspectionReadService
         private InspectionRevisionRepository $revisions,
         private InventoryRepository $inventories,
         private EvidenceReadService $evidences,
+        private TreeFilterService $treeFilters,
     ) {
     }
 
@@ -102,7 +102,16 @@ class TreeInspectionReadService
         $organization = $this->access->organization($actor);
         Gate::forUser($actor)->authorize('viewAny', TreeInspection::class);
 
-        return $this->inspections->latestTrees($organization->id, $this->filters($input));
+        Gate::forUser($actor)->authorize('viewAny', Tree::class);
+        $filters = $this->treeFilters->validate($input);
+        if ($filters->hasMaintenanceFilters()) {
+            $this->access->authorize($actor, 'maintenances.view');
+        }
+        if ($filters->get('trashed') === 'only') {
+            $this->access->authorize($actor, 'trees.restore');
+        }
+
+        return $this->inspections->latestTrees($organization->id, $filters->values());
     }
 
     public function authorizeTree(User $actor, string $treeId): bool
@@ -126,21 +135,9 @@ class TreeInspectionReadService
     private function filters(array $input): array
     {
         $input = array_map(fn ($value) => is_string($value) && trim($value) === '' ? null : $value, $input);
-        $filters = Validator::make($input, TreeInspectionInput::filters(), TreeInspectionInput::messages())->validate();
-        foreach (['physical_condition_ids' => 'physical_mechanical', 'phytosanitary_condition_ids' => 'phytosanitary'] as $field => $type) {
-            if (!$this->conditions->validateForFilter($filters[$field] ?? [], $type)) {
-                throw ValidationException::withMessages([$field => 'Seleccione condiciones existentes del grupo correspondiente.']);
-            }
-        }
-        if (isset($filters['date_from'], $filters['date_to']) && $filters['date_from'] > $filters['date_to']) {
-            throw ValidationException::withMessages(['date_to' => 'La fecha final no puede preceder a la inicial.']);
-        }
-        foreach (['cap_cm', 'dap_m', 'total_height_m'] as $field) {
-            if (isset($filters[$field.'_min'], $filters[$field.'_max']) && bccomp((string) $filters[$field.'_min'], (string) $filters[$field.'_max'], 12) > 0) {
-                throw ValidationException::withMessages([$field.'_max' => 'El máximo debe ser mayor o igual que el mínimo.']);
-            }
-        }
+        // La bandeja de visitas conserva sus campos y su semántica propia de campaña.
+        $accepted = Validator::make($input, TreeInspectionInput::filters(), TreeInspectionInput::messages())->validate();
 
-        return $filters;
+        return $this->treeFilters->validate($accepted)->values();
     }
 }

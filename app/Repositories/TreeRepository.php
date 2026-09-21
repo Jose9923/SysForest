@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\DTOs\TreeFilterDTO;
+use App\DTOs\TreeReadScope;
 use App\Models\Tree;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,6 +16,10 @@ use Illuminate\Support\Str;
 class TreeRepository
 {
     private const RELATIONS = ['species.family', 'species.commonNames', 'placement', 'growthHabit', 'establishmentOrigin', 'biogeographicOrigin', 'inventories', 'creator', 'updater', 'deletionReason'];
+
+    public function __construct(private TreeQueryRepository $queries)
+    {
+    }
 
     public function queryForTenant(string $organizationId): Builder
     {
@@ -37,36 +43,10 @@ class TreeRepository
 
     public function paginate(string $organizationId, array $filters): LengthAwarePaginator
     {
-        $query = $this->queryForTenant($organizationId)->with(self::RELATIONS);
-        if (($filters['trashed'] ?? '') === 'only') {
-            $query->onlyTrashed();
-        }
-        foreach (['species_id', 'placement_id', 'current_status'] as $key) {
-            if (!empty($filters[$key])) {
-                $query->where('trees.'.$key, $filters[$key]);
-            }
-        }
-        if (!empty($filters['inventory_id'])) {
-            $query->whereHas('inventories', fn (Builder $q) => $q->where('inventories.id', $filters['inventory_id'])->where('inventories.organization_id', $organizationId));
-        }
-        if (!empty($filters['q'])) {
-            $term = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $filters['q']).'%';
-            $query->where(function (Builder $q) use ($term): void {
-                $q->where('trees.code', 'ilike', $term)->orWhere('external_number', 'ilike', $term)
-                    ->orWhere('location_description', 'ilike', $term)
-                    ->orWhereHas('species', fn (Builder $s) => $s->where('scientific_name', 'ilike', $term)
-                        ->orWhereHas('commonNames', fn (Builder $n) => $n->where('name', 'ilike', $term)));
-            });
-        }
-        $direction = ($filters['direction'] ?? '') === 'desc' ? 'desc' : 'asc';
-        $sort = $filters['sort'] ?? 'code';
-        if ($sort === 'scientific_name') {
-            $query->leftJoin('species', 'species.id', '=', 'trees.species_id')->select('trees.*')->orderBy('species.scientific_name', $direction);
-        } else {
-            $query->orderBy('trees.'.($sort === 'created_at' ? 'created_at' : 'code'), $direction);
-        }
+        $criteria = TreeFilterDTO::fromValidated($filters);
+        $query = $this->queries->query(TreeReadScope::organization($organizationId), $criteria)->with(self::RELATIONS);
 
-        return $query->orderBy('trees.id')->paginate(20)->withQueryString();
+        return $this->queries->ordered($query, $criteria)->paginate(20)->withQueryString();
     }
 
     /** Los atributos de identidad llegan exclusivamente desde el servicio transaccional. */

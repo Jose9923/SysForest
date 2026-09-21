@@ -1,0 +1,9 @@
+{
+  "name": "simpleheat",
+  "version": "0.4.0",
+  "tarball": "https://registry.npmjs.org/simpleheat/-/simpleheat-0.4.0.tgz",
+  "tarball_integrity": "sha512-tdg3I1NvzMdPKscWBrHbF0LBf+VWuBBazzGUPtFJjG5Q12VQX6gPY8jLy9hx5CbgAIVc5nfnePwJvAYK6z1rAA==",
+  "license": "BSD-2-Clause",
+  "license_sha256": "756d6c334c9289a7b8e563cad0be32ab425cd35303d491789ab1adb9fbcef847",
+  "note": "Aviso de la dependencia incluida en la distribuci\u00f3n; no se instala ni carga otro runtime."
+}

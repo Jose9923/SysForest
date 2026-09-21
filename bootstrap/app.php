@@ -74,10 +74,36 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return response()->view('maintenances.error', ['message' => $message, 'status' => $status], $status);
         });
+
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (!$request->is('map', 'map/*', 'api/v1/map/*')
+                || $exception instanceof \Illuminate\Validation\ValidationException
+                || $exception instanceof AuthenticationException) {
+                return null;
+            }
+            $status = $exception instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface ? $exception->getStatusCode() : 503;
+            $message = match ($status) {
+                403 => 'No tienes permiso para consultar el mapa en este alcance.',
+                404 => 'El registro o territorio solicitado no está disponible.',
+                405 => 'Esta acción requiere el formulario de la ficha.',
+                419 => 'La sesión caducó. Actualiza la página antes de continuar.',
+                429 => 'Has realizado demasiadas consultas. Espera unos segundos antes de continuar.',
+                default => 'No fue posible consultar el mapa. Inténtalo de nuevo en unos momentos.',
+            };
+            $response = $request->is('api/*') || $request->expectsJson()
+                ? response()->json(['message' => $message], $status)
+                : response()->view('maps.error', ['message' => $message, 'status' => $status], $status);
+
+            if ($exception instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                $response->headers->add($exception->getHeaders());
+            }
+
+            return $response->header('Cache-Control', 'private, no-store');
+        });
         $exceptions->dontFlash(['password', 'password_confirmation', 'current_password', 'token', 'refresh_token', 'access_token']);
         $exceptions->shouldRenderJsonWhen(fn (Request $request) => $request->is('api/*') || $request->expectsJson());
         $exceptions->render(function (AuthenticationException $exception, Request $request) {
-            if ($request->expectsJson()) {
+            if ($request->is('api/v1/map/*') || $request->expectsJson()) {
                 return response()->json(['message' => 'La sesión no es válida. Inicia sesión nuevamente.'], 401);
             }
 

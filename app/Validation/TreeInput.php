@@ -58,12 +58,7 @@ class TreeInput
 
     public static function filters(): array
     {
-        return ['q' => ['nullable', 'string', 'max:150'], 'inventory_id' => ['nullable', 'uuid'],
-            'species_id' => ['nullable', 'uuid'], 'placement_id' => ['nullable', 'uuid'],
-            'current_status' => ['nullable', Rule::enum(TreeStatus::class)],
-            'sort' => ['nullable', Rule::in(['code', 'created_at', 'scientific_name'])],
-            'direction' => ['nullable', Rule::in(['asc', 'desc'])], 'trashed' => ['nullable', Rule::in(['only'])],
-            'page' => ['nullable', 'integer', 'min:1', 'max:1000000']];
+        return TreeFilterInput::rules();
     }
 
     public static function messages(): array

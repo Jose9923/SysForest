@@ -6,6 +6,7 @@
         <a class="{{ request()->is('territories*') ? 'selected' : '' }}" href="{{ route('territories.index') }}"><span aria-hidden="true">◎</span> Territorios</a>
         @can('inventories.view')<a class="{{ request()->is('inventories*') ? 'selected' : '' }}" href="{{ route('inventories.index') }}"><span aria-hidden="true">▤</span> Inventarios</a>@endcan
         @can('trees.view')<a class="{{ request()->is('trees*') && !request()->is('trees/*/inspections*', 'trees/*/maintenances*') ? 'selected' : '' }}" href="{{ route('trees.index') }}"><span aria-hidden="true">♧</span> Árboles</a>@endcan
+        @can('maps.view')<a class="{{ request()->is('map') ? 'selected' : '' }}" href="{{ route('maps.index') }}"><span aria-hidden="true">◎</span> Mapa general</a>@endcan
         @can('inspections.view')<a class="{{ request()->is('inspections*', 'trees/*/inspections*') ? 'selected' : '' }}" href="{{ route('inspections.index') }}"><span aria-hidden="true">▧</span> Inspecciones</a>@endcan
         @can('maintenances.view')<a class="{{ request()->is('maintenances*', 'trees/*/maintenances*') ? 'selected' : '' }}" href="{{ route('maintenances.index') }}"><span aria-hidden="true">♧</span> Mantenimientos</a>@endcan
         @can('memberships.view')<a class="{{ request()->is('memberships*', 'invitations*') ? 'selected' : '' }}" href="{{ route('memberships.index') }}"><span aria-hidden="true">♧</span> Usuarios de organización</a>@endcan

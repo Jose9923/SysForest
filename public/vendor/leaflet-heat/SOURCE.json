@@ -1,0 +1,23 @@
+{
+  "name": "@linkurious/leaflet-heat",
+  "version": "0.2.6",
+  "official_repository": "https://github.com/Linkurious/Leaflet-heat",
+  "registry_metadata": "https://registry.npmjs.org/@linkurious%2Fleaflet-heat/0.2.6",
+  "tarball": "https://registry.npmjs.org/@linkurious/leaflet-heat/-/leaflet-heat-0.2.6.tgz",
+  "tarball_integrity": "sha512-a9Cn97ds3RGRIq6DoRBL19BAYXaMbGY7r3h3LnYIIZMBaOBXd73ECuTFtEApssLvyBhnLLW1M6STzd162EcCGw==",
+  "verified_at": "2026-09-21",
+  "license": "BSD-2-Clause AND Apache-2.0 (archivo LICENSE distribuido)",
+  "files": [
+    {
+      "path": "leaflet-heat.js",
+      "archive_member": "package/dist/leaflet-heat.js",
+      "sha256": "7aec316d4e9403c593e604766cf24ea04627843609582e60d84527f9c633f3e1"
+    },
+    {
+      "path": "LICENSE",
+      "archive_member": "package/LICENSE",
+      "sha256": "8509b23bcd8e1db1bde44f2cf56dfa176ea918a0371249783ec5c252820bef25"
+    }
+  ],
+  "note": "La metadata npm declara ISC, pero el LICENSE real distribuido contiene BSD-2-Clause y Apache-2.0; se conserva íntegro. UMD con simpleheat incluido y Leaflet 1.9.4 local como peer. Sin CDN en ejecución."
+}

@@ -1,0 +1,77 @@
+# Inventario Fase 10 · codex/phase-10 · checkpoint d71c3dd
+# 74 archivos: 59 nuevos y 15 modificados. Sin commit final.
+
+ M AGENTS.md
+ M CLAUDE.md
+ M README.md
+?? app/DTOs/MapTreeFilterDTO.php
+?? app/DTOs/TreeFilterDTO.php
+?? app/DTOs/TreeReadScope.php
+?? app/Http/Controllers/MapController.php
+?? app/Http/Resources/MapCellResource.php
+?? app/Http/Resources/MapTreeResource.php
+ M app/Providers/AppServiceProvider.php
+?? app/Repositories/InspectionQueryRepository.php
+?? app/Repositories/MapOptionRepository.php
+?? app/Repositories/MapScopeRepository.php
+?? app/Repositories/MapTreeRepository.php
+ M app/Repositories/TreeInspectionRepository.php
+?? app/Repositories/TreeQueryRepository.php
+ M app/Repositories/TreeRepository.php
+?? app/Services/MapAccessService.php
+?? app/Services/MapFilterService.php
+?? app/Services/MapReadService.php
+?? app/Services/MapTreeNavigationService.php
+?? app/Services/TreeFilterService.php
+ M app/Services/TreeInspectionReadService.php
+ M app/Services/TreeReadService.php
+?? app/Validation/MapInput.php
+?? app/Validation/TreeFilterInput.php
+ M app/Validation/TreeInput.php
+ M bootstrap/app.php
+?? config/maps.php
+ M docs/georeferencing.md
+?? docs/map-filters.md
+?? docs/maps.md
+ M docs/multitenancy.md
+?? docs/phase-10-files.txt
+?? docs/phase-10-performance.json
+?? docs/phase-10.md
+ M docs/tree-domain.md
+?? public/css/maps.css
+?? public/js/map/api.js
+?? public/js/map/filters.js
+?? public/js/map/layers.js
+?? public/js/map/map.js
+?? public/js/map/popup.js
+?? public/js/map/state.js
+?? public/vendor/leaflet-heat/LICENSE
+?? public/vendor/leaflet-heat/LICENSE.simpleheat
+?? public/vendor/leaflet-heat/SOURCE.json
+?? public/vendor/leaflet-heat/SOURCE.simpleheat.json
+?? public/vendor/leaflet-heat/leaflet-heat.js
+?? public/vendor/supercluster/LICENSE
+?? public/vendor/supercluster/LICENSE.kdbush
+?? public/vendor/supercluster/SOURCE.json
+?? public/vendor/supercluster/SOURCE.kdbush.json
+?? public/vendor/supercluster/supercluster.min.js
+?? resources/views/maps/assets.blade.php
+?? resources/views/maps/error.blade.php
+?? resources/views/maps/filters.blade.php
+?? resources/views/maps/index.blade.php
+?? resources/views/maps/select.blade.php
+ M resources/views/partials/institutional-navigation.blade.php
+?? routes/maps.php
+ M routes/web.php
+?? tests/Feature/MapEndpointSecurityTest.php
+?? tests/Feature/MapPerformanceTest.php
+?? tests/Feature/MapPresentationTest.php
+?? tests/Feature/MapScopeSecurityTest.php
+?? tests/Feature/MapSpatialPrecisionTest.php
+?? tests/Feature/MapSpatialTest.php
+?? tests/Feature/TreeFilterEngineTest.php
+?? tests/Frontend/map-api.test.mjs
+?? tests/Frontend/map-layers.test.mjs
+?? tests/Frontend/map-popup.test.mjs
+?? tests/Frontend/map-state.test.mjs
+?? tests/MapTestCase.php

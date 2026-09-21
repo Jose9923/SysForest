@@ -74,7 +74,7 @@ Las FK compuestas (organization_id,tree_id) enlazan cada historial con un Tree d
 
 ## Consultas espaciales
 
-TreeLocationRepository usa SQL parametrizado y aplica organization_id a cada consulta. El argumento de organización procede del contexto autorizado; el repositorio no decide por sí solo los permisos RBAC.
+TreeLocationRepository usa SQL parametrizado y aplica organization_id a cada consulta. El argumento de organización procede del contexto autorizado; el repositorio no decide por sí solo los permisos RBAC. Estas APIs institucionales de Fase 6 se conservan. El mapa general de Fase 10 usa MapTreeRepository con el motor compartido y TreeReadScope explícito, descritos más adelante.
 
 | API | Resultado y criterio |
 | --- | --- |
@@ -96,7 +96,21 @@ La interfaz usa Leaflet local para el punto individual. Pegar o editar coordenad
 
 El navegador muestra la respuesta validada y puede actualizar el texto decimal al arrastrar o seleccionar un punto. Guardar vuelve a validar todo en el servidor y exige una versión vigente. Una respuesta de previsualización no autoriza otra organización ni confirma la exactitud del GPS.
 
-La cartografía de fondo depende de teselas de OpenStreetMap. Si no hay red o falla una tesela, el texto de coordenadas se conserva y el fallo se informa. La ficha sin coordenadas no crea un marcador ficticio. No hay mapa general, mapa de calor ni cálculo de superficie en esta fase.
+La cartografía de fondo depende de teselas de OpenStreetMap. Si no hay red o falla una tesela, el texto de coordenadas se conserva y el fallo se informa. La ficha sin coordenadas no crea un marcador ficticio. Fase 6 se limitó al mapa individual; Fase 10 añade el mapa general interno y calor de densidad descritos a continuación. No se implementa cálculo de superficie.
+
+## Mapa general interno de Fase 10
+
+MapReadService prepara puntos, clusters, calor, búsqueda y extensión mediante MapTreeRepository y el mismo TreeQueryRepository usado por los listados. La definición de filtros, última inspección, ANY/ALL, participación en campañas y órdenes de mantenimiento está en [map-filters.md](map-filters.md). Estas consultas consumen trees.geometry; nunca vuelven a interpretar el texto GPS ni dependen de coordenadas calculadas por JavaScript.
+
+App\DTOs\TreeReadScope describe organization, department o national y MapAccessService autoriza al actor en cada petición. Un alcance amplio de consulta no modifica TenantContext ni concede permisos de escritura. Los filtros territoriales corresponden a la organización propietaria y su municipio/departamento, no a una contención espacial inferida. Se excluyen organizaciones y territorios inactivos y todos los árboles anulados, incluso en consultas de administradores.
+
+Los endpoints de puntos, clusters y calor exigen west/south/east/north completos y válidos, con oeste menor que este y sur menor que norte. ST_Intersects con ST_MakeEnvelope(..., 4326) incluye los bordes. El filtro métrico recibe radius_latitude, radius_longitude y radius_meters juntos, admite de 0 a 20000000 metros y usa ST_DWithin sobre geography. Caja y radio se combinan si ambos existen; no hay aproximación de metros a grados. La caja HTTP actual no cruza el antimeridiano mediante límites invertidos.
+
+PostGIS produce los puntos mediante ST_X/ST_Y y GeoJSON utiliza [longitud, latitud]; los bounds para Leaflet utilizan pares [latitud, longitud]. Un árbol sin punto se cuenta como without_geometry cuando los demás filtros lo permiten, pero no se dibuja en 0,0. Un radio implica disponer de geometría, por lo que ese criterio excluye también del total a los árboles sin punto.
+
+Los conteos total/georeferenced/without_geometry corresponden al conjunto autorizado antes del encuadre, incluyendo el radio cuando existe. in_view cuenta los puntos del encuadre y returned los elementos transmitidos. La respuesta de puntos tiene un máximo configurable de 2000 y avisa mediante truncated; no recorta el conteo. Los clusters y el calor agrupan en SQL una malla acotada según zoom y encuadre. El calor representa cantidad de individuos, sin atribuir riesgo o estado fitosanitario.
+
+La extensión se obtiene con ST_Extent de los puntos reales filtrados. Si no existen, se pueden usar polígonos territoriales reales autorizados; si no hay geometrías disponibles, permanece el estado vacío y la vista general configurada. No se geocodifican nombres ni se siembran polígonos o árboles ficticios. Los índices GiST de geometry y geography se reutilizan; la comprobación de plan y rendimiento de Fase 10 se registra cuando termine su ejecución, sin sustituir los resultados históricos de abajo.
 
 ## Verificación
 
