@@ -54,6 +54,13 @@ class AuthorizationSeeder extends Seeder
                 'evidences.update' => 'Corregir clasificación y descripción de evidencias institucionales.',
                 'evidences.delete' => 'Anular evidencias cargadas por error conservando el archivo.',
                 'evidences.restore' => 'Restaurar evidencias anuladas cuyo archivo permanece disponible.',
+                'maintenances.view' => 'Consultar órdenes e historial de mantenimiento dentro del alcance autorizado.',
+                'maintenances.create' => 'Crear manualmente órdenes de mantenimiento institucionales.',
+                'maintenances.update' => 'Corregir y asignar órdenes abiertas de la organización.',
+                'maintenances.transition' => 'Programar, iniciar, ejecutar o cancelar órdenes autorizadas.',
+                'maintenances.verify' => 'Verificar administrativamente el resultado de una intervención ejecutada.',
+                'maintenances.void' => 'Anular órdenes creadas por error conservando su historial.',
+                'maintenances.restore' => 'Restaurar órdenes institucionales anuladas por error.',
             ];
             $ids = [];
 
@@ -64,7 +71,7 @@ class AuthorizationSeeder extends Seeder
             // Catálogo explícito: ningún rol obtiene automáticamente permisos añadidos en otras fases.
             $matrix = [
                 'SUPER_ADMIN' => ['national', array_keys($catalog)],
-                'DEPARTMENT_ADMIN' => ['department', ['organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'inspections.view', 'evidences.view']],
+                'DEPARTMENT_ADMIN' => ['department', ['organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'inspections.view', 'evidences.view', 'maintenances.view']],
                 'ORGANIZATION_ADMIN' => ['organization', [
                     'organizations.view', 'organizations.manage', 'memberships.view', 'memberships.create',
                     'memberships.update', 'memberships.activate', 'memberships.deactivate', 'users.view',
@@ -73,8 +80,9 @@ class AuthorizationSeeder extends Seeder
                     'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore',
                     'inspections.view', 'inspections.create', 'inspections.update',
                     'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'evidences.restore',
+                    'maintenances.view', 'maintenances.create', 'maintenances.update', 'maintenances.transition', 'maintenances.verify', 'maintenances.void', 'maintenances.restore',
                 ]],
-                'OFFICIAL' => ['organization', ['organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'trees.create', 'trees.update', 'inspections.view', 'inspections.create', 'inspections.update', 'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete']],
+                'OFFICIAL' => ['organization', ['organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'trees.create', 'trees.update', 'inspections.view', 'inspections.create', 'inspections.update', 'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'maintenances.view', 'maintenances.create', 'maintenances.update', 'maintenances.transition']],
             ];
 
             foreach ($matrix as $name => [$scope, $codes]) {

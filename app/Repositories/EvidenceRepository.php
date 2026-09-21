@@ -16,7 +16,7 @@ use LogicException;
 
 class EvidenceRepository
 {
-    private const RELATIONS = ['evidenceType', 'uploader', 'updater', 'deleter', 'tree', 'inspection.tree'];
+    private const RELATIONS = ['evidenceType', 'uploader', 'updater', 'deleter', 'tree', 'inspection.tree', 'maintenance.tree'];
 
     public function findForTenant(string $organizationId, string $id, bool $lock = false, bool $withTrashed = false): Evidence
     {
@@ -66,39 +66,40 @@ class EvidenceRepository
         return $this->persist($evidence, $changes);
     }
 
-    public function forOwner(string $organizationId, ?string $treeId, ?string $inspectionId, array $filters = []): Collection
+    public function forOwner(string $organizationId, ?string $treeId, ?string $inspectionId, array $filters = [], ?string $maintenanceId = null): Collection
     {
-        return $this->ownerQuery($organizationId, $treeId, $inspectionId, $filters)->get();
+        return $this->ownerQuery($organizationId, $treeId, $inspectionId, $filters, $maintenanceId)->get();
     }
 
-    public function paginateForOwner(string $organizationId, ?string $treeId, ?string $inspectionId, array $filters = []): LengthAwarePaginator
+    public function paginateForOwner(string $organizationId, ?string $treeId, ?string $inspectionId, array $filters = [], ?string $maintenanceId = null): LengthAwarePaginator
     {
-        return $this->ownerQuery($organizationId, $treeId, $inspectionId, $filters)->paginate(20)->withQueryString();
+        return $this->ownerQuery($organizationId, $treeId, $inspectionId, $filters, $maintenanceId)->paginate(20)->withQueryString();
     }
 
     /** La ficha muestra una muestra acotada y el total; la página solicitada no altera este resumen. */
-    public function summaryForOwner(string $organizationId, ?string $treeId, ?string $inspectionId, int $limit = 6): LengthAwarePaginator
+    public function summaryForOwner(string $organizationId, ?string $treeId, ?string $inspectionId, int $limit = 6, ?string $maintenanceId = null): LengthAwarePaginator
     {
         if ($limit < 1) {
             throw new InvalidArgumentException('El resumen requiere un límite positivo.');
         }
 
-        return $this->ownerQuery($organizationId, $treeId, $inspectionId, [])->paginate($limit, ['*'], 'evidence_summary', 1);
+        return $this->ownerQuery($organizationId, $treeId, $inspectionId, [], $maintenanceId)->paginate($limit, ['*'], 'evidence_summary', 1);
     }
 
-    /** Prepara galerías por lotes para árboles y últimas inspecciones, sin consultar desde Blade. */
-    public function forOwners(string $organizationId, array $treeIds = [], array $inspectionIds = [], array $filters = []): Collection
+    /** Prepara galerías por lotes para árboles, inspecciones y mantenimientos, sin consultar desde Blade. */
+    public function forOwners(string $organizationId, array $treeIds = [], array $inspectionIds = [], array $filters = [], array $maintenanceIds = []): Collection
     {
         $this->requireUuid($organizationId);
-        foreach (array_merge($treeIds, $inspectionIds) as $id) {
+        foreach (array_merge($treeIds, $inspectionIds, $maintenanceIds) as $id) {
             $this->requireUuid($id);
         }
-        if ($treeIds === [] && $inspectionIds === []) {
+        if ($treeIds === [] && $inspectionIds === [] && $maintenanceIds === []) {
             return new Collection();
         }
 
-        $query = $this->queryForTenant($organizationId)->where(function (Builder $owners) use ($treeIds, $inspectionIds): void {
-            $owners->whereIn('tree_id', array_unique($treeIds))->orWhereIn('tree_inspection_id', array_unique($inspectionIds));
+        $query = $this->queryForTenant($organizationId)->where(function (Builder $owners) use ($treeIds, $inspectionIds, $maintenanceIds): void {
+            $owners->whereIn('tree_id', array_unique($treeIds))->orWhereIn('tree_inspection_id', array_unique($inspectionIds))
+                ->orWhereIn('maintenance_id', array_unique($maintenanceIds));
         });
 
         return $this->applyFilters($query, $filters)->get();
@@ -118,18 +119,16 @@ class EvidenceRepository
         DB::selectOne("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", ['sysforest:evidence:'.strtolower($id)]);
     }
 
-    private function ownerQuery(string $organizationId, ?string $treeId, ?string $inspectionId, array $filters): Builder
+    private function ownerQuery(string $organizationId, ?string $treeId, ?string $inspectionId, array $filters, ?string $maintenanceId): Builder
     {
         $this->requireUuid($organizationId);
-        if (($treeId === null) === ($inspectionId === null)) {
+        if (count(array_filter([$treeId, $inspectionId, $maintenanceId], fn ($id) => $id !== null)) !== 1) {
             throw new InvalidArgumentException('La consulta de evidencias requiere exactamente un propietario.');
         }
-        $this->requireUuid($treeId ?? $inspectionId);
+        $this->requireUuid($treeId ?? $inspectionId ?? $maintenanceId);
         $query = $this->queryForTenant($organizationId);
-        if ($treeId !== null) {
-            $query->where('tree_id', $treeId)->whereNull('tree_inspection_id');
-        } else {
-            $query->where('tree_inspection_id', $inspectionId)->whereNull('tree_id');
+        foreach (['tree_id' => $treeId, 'tree_inspection_id' => $inspectionId, 'maintenance_id' => $maintenanceId] as $column => $id) {
+            $id === null ? $query->whereNull($column) : $query->where($column, $id);
         }
 
         return $this->applyFilters($query, $filters);

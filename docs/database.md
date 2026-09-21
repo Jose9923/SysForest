@@ -2,9 +2,9 @@
 
 ## Alcance del diseño
 
-Este es el modelo conceptual objetivo para las fases posteriores a la infraestructura. **La Fase 2 no implementa las tablas de dominio de este documento.** Las migraciones efectivamente disponibles deben consultarse en `database/migrations`; la presencia de una entidad en este diseño no implica que ya exista en la base.
+Este documento conserva el modelo conceptual objetivo y señala su implementación actual hasta Fase 9. Las migraciones efectivamente disponibles deben consultarse en `database/migrations`; las entidades de fases futuras no se consideran implementadas por aparecer en el diseño.
 
-Fase 5 concreta los catálogos nacionales, la taxonomía, las condiciones y las reglas de clasificación descritas más abajo. Tree, TreeInspection, TreePhenology, evidencias y mantenimientos operativos siguen pendientes de sus fases: sus relaciones en este documento son diseño, no tablas o flujos ya disponibles.
+Fase 5 concreta los catálogos nacionales, la taxonomía, las condiciones y las reglas de clasificación descritas más abajo. Tree, TreeInspection, Evidence y Maintenance ya disponen de dominio operativo; la fenología está almacenada en columnas de TreeInspection, sin tabla TreePhenology. Fase 9 agrega maintenances, maintenance_revisions y maintenance_status_histories, y amplía Evidence con maintenance_id y propietario exclusivo entre tres referencias.
 
 Se utiliza PostgreSQL con PostGIS, una única base y un esquema compartido. Los modelos principales disponen de UUID interno; el código visible de un árbol es un identificador funcional diferente. Los catálogos forestales nacionales se comparten, no contienen `organization_id` y solo se administran con el permiso nacional `catalogs.manage`. Los registros operativos pertenecen a una organización.
 
@@ -44,7 +44,7 @@ erDiagram
     IMPORT_BATCH ||--o{ IMPORT_ROW : contiene
 ```
 
-`inventory_trees` representa la participación de un individuo en campañas sin cambiar su identidad ni su organización propietaria. Una inspección siempre corresponde a un árbol y puede indicar una campaña de la misma organización. Las evidencias se vinculan a su árbol, inspección o mantenimiento con integridad explícita; su vínculo concreto se documentará al implementar la fase de evidencias.
+`inventory_trees` representa la participación de un individuo en campañas sin cambiar su identidad ni su organización propietaria. Una inspección siempre corresponde a un árbol y puede indicar una campaña de la misma organización. Las evidencias se vinculan a su árbol, inspección o mantenimiento con integridad explícita; el vínculo utiliza FK compuestas por organización y CHECK num_nonnulls(tree_id,tree_inspection_id,maintenance_id)=1, descritos en [evidencias](evidences.md).
 
 ## Entidades por responsabilidad
 
@@ -61,7 +61,7 @@ erDiagram
 | Seguimiento | tree_inspections, condition_categories, conditions, inspection_conditions | Mediciones fechadas y condiciones múltiples por categoría/órgano. |
 | Fauna | fauna_categories, inspection_fauna | Categoría estructurada y observaciones adicionales. |
 | Estados | tree_statuses, tree_status_histories | Estado operativo actual y trazabilidad de transiciones. |
-| Evidencias | evidence_types, evidences | Exactamente un tipo por fotografía; metadatos y clasificación de publicación. |
+| Evidencias | evidence_types, evidences, evidence_revisions | Exactamente un tipo y un propietario por fotografía; almacenamiento y entrega privados. |
 | Intervenciones | maintenance_types, maintenances, maintenance_status_histories | Orden manual, responsable de la organización, programación, resultado y seguimiento. |
 | Integridad | deletion_reasons, audit_logs | Anulación recuperable de errores y registro de modificaciones. |
 | Intercambio | import_batches, import_rows | Validación, errores por fila, trazabilidad y resultado del lote. |

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Models\Evidence;
+use App\Models\Maintenance;
 use App\Models\Tree;
 use App\Models\TreeInspection;
 use App\Models\User;
@@ -25,10 +26,11 @@ class EvidencePolicy
         return $this->access->allows($actor, 'evidences.view');
     }
 
-    public function create(User $actor, Tree|TreeInspection $owner): Response
+    public function create(User $actor, Tree|TreeInspection|Maintenance $owner): Response
     {
         $root = $owner instanceof Tree ? $owner : $owner->tree;
         $allowed = $this->sameContext($actor, $owner->organization_id) && !$root->trashed()
+            && !($owner instanceof Maintenance && $owner->trashed())
             && $this->access->allows($actor, 'evidences.create') && Gate::forUser($actor)->allows('view', $owner);
 
         return $allowed ? Response::allow() : Response::deny('No tienes permiso para adjuntar evidencias a este registro.');
@@ -48,6 +50,7 @@ class EvidencePolicy
         $root = $owner instanceof Tree ? $owner : $owner->tree;
 
         return $this->view($actor, $evidence) && !$evidence->trashed() && !$root->trashed()
+            && !($owner instanceof Maintenance && $owner->trashed())
             && $this->access->allows($actor, 'evidences.update');
     }
 
@@ -66,9 +69,9 @@ class EvidencePolicy
         return false;
     }
 
-    private function owner(Evidence $evidence): Tree|TreeInspection
+    private function owner(Evidence $evidence): Tree|TreeInspection|Maintenance
     {
-        return $evidence->tree_id !== null ? $evidence->tree : $evidence->inspection;
+        return $evidence->ownerRecord();
     }
 
     private function sameContext(User $actor, string $organizationId): bool

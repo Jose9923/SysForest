@@ -2,9 +2,9 @@
 
 ## Estado y alcance
 
-Este documento describe la arquitectura objetivo acordada para SYSFOREST. La Fase 2 se limita a preparar Laravel, Docker, Nginx, PHP-FPM, PostgreSQL/PostGIS, Redis, el worker de colas y el scheduler. Las entidades y capacidades descritas para fases posteriores no deben interpretarse como módulos ya implementados.
+Este documento conserva la arquitectura objetivo acordada para SYSFOREST. El desarrollo actual alcanza Fase 9: territorio, autenticación, catálogos, inventarios, árboles, inspecciones, evidencias y mantenimientos. La infraestructura de Fase 2 continúa como base. Los módulos de fases posteriores son diseño, no capacidades implementadas.
 
-La Fase 5 concreta los catálogos forestales nacionales, la taxonomía, las condiciones y las reglas versionadas de clasificación. El diseño de Tree, TreeInspection, fenología, evidencias, mantenimiento y demás módulos operativos sigue siendo una referencia para fases posteriores. La trazabilidad implementada se detalla en [catálogos forestales](forestry-catalogs.md) y en la [matriz de las 94 variables](excel-field-mapping.md).
+La Fase 5 concreta los catálogos forestales nacionales, la taxonomía, las condiciones y las reglas versionadas de clasificación. Tree y TreeInspection se concretaron en Fases 6/7, fenología como campos de inspección, Evidence en Fase 8 y Maintenance en Fase 9. Mapas generales, portal público, reportes e importación conservan sus fases posteriores. La trazabilidad implementada se detalla en [catálogos forestales](forestry-catalogs.md) y en la [matriz de las 94 variables](excel-field-mapping.md).
 
 SYSFOREST será una aplicación web para inventario y gestión del arbolado urbano, con un piloto en la Institucion Educativa INEM Luis Lopez de Mesa, municipio de Villavicencio, departamento del Meta, Colombia. El piloto no cambia la arquitectura territorial y municipal del producto.
 
@@ -96,7 +96,7 @@ Los catálogos forestales son nacionales y **no llevan `organization_id`**. Las 
 
 `TreeInspection` representa la observación en una fecha: mediciones, madurez, condiciones físico-mecánicas, condiciones fitosanitarias, fauna y observaciones. Su campaña puede registrarse como contexto. Una nueva campaña o inspección no duplica automáticamente el árbol ni sobrescribe su historia.
 
-Las condiciones se normalizan por categoría y órgano; una misma palabra, como «Hongos», no sustituye la identidad de condiciones de órganos diferentes. Fase 5 conserva **23 condiciones físico-mecánicas y 42 fitosanitarias**. El bloque fitosanitario de 44 columnas del Excel incluye además **dos campos compuestos de fenología**, CE/CF, que solicitan fecha y estimación de desarrollo. Esos campos no se convierten en condiciones ni originan un catálogo de etapas sin respaldo. Cada imagen tendrá exactamente un tipo de evidencia. Las órdenes de mantenimiento se crearán manualmente.
+Las condiciones se normalizan por categoría y órgano; una misma palabra, como «Hongos», no sustituye la identidad de condiciones de órganos diferentes. Fase 5 conserva **23 condiciones físico-mecánicas y 42 fitosanitarias**. El bloque fitosanitario de 44 columnas del Excel incluye además **dos campos compuestos de fenología**, CE/CF, que solicitan fecha y estimación de desarrollo. Esos campos no se convierten en condiciones ni originan un catálogo de etapas sin respaldo. Cada imagen tiene exactamente un tipo de evidencia y un propietario explícito. Las órdenes de mantenimiento se crean manualmente, con reglas de estado en MaintenanceWorkflowService; sus fotografías reutilizan Evidence y sus restricciones tenant. [Contrato Fase 9](maintenances.md).
 
 El origen se divide en `establishment_origins` (Espontánea y Plantada) y `biogeographic_origins` (Especie nativa, Especie exótica, Especie naturalizada y Especie invasora). La única columna de origen del Excel no permite inferir ambas respuestas. Introducido del HTML no se siembra ni se transforma automáticamente en uno de esos valores.
 

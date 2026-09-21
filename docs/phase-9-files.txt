@@ -1,0 +1,81 @@
+SYSFOREST — Archivos de la Fase 9
+Base: f750f66; rama: codex/phase-9; cambios sin commit final.
+Rutas relativas a /home/josev/SYSFOREST.
+A: archivo nuevo. M: archivo modificado.
+
+M AGENTS.md
+M CLAUDE.md
+M README.md
+A app/Enums/MaintenancePriority.php
+A app/Enums/MaintenanceStatus.php
+A app/Exceptions/StaleMaintenanceException.php
+M app/Http/Controllers/EvidenceController.php
+A app/Http/Controllers/MaintenanceController.php
+A app/Http/Requests/MaintenanceFilterRequest.php
+A app/Http/Requests/RestoreMaintenanceRequest.php
+M app/Http/Requests/StoreEvidenceRequest.php
+A app/Http/Requests/StoreMaintenanceRequest.php
+A app/Http/Requests/TransitionMaintenanceRequest.php
+A app/Http/Requests/UpdateMaintenanceRequest.php
+A app/Http/Requests/VoidMaintenanceRequest.php
+M app/Models/Evidence.php
+A app/Models/Maintenance.php
+A app/Models/MaintenanceRevision.php
+A app/Models/MaintenanceStatusHistory.php
+M app/Models/Tree.php
+M app/Policies/EvidencePolicy.php
+A app/Policies/MaintenancePolicy.php
+M app/Providers/AppServiceProvider.php
+M app/Repositories/EvidenceRepository.php
+A app/Repositories/MaintenanceReferenceRepository.php
+A app/Repositories/MaintenanceRepository.php
+A app/Repositories/MaintenanceRevisionRepository.php
+A app/Repositories/MaintenanceStatusHistoryRepository.php
+M app/Repositories/OrganizationSequenceRepository.php
+M app/Services/EvidenceAuditService.php
+M app/Services/EvidenceOwnerService.php
+M app/Services/EvidenceReadService.php
+M app/Services/EvidenceService.php
+M app/Services/EvidenceWriteService.php
+M app/Services/ForestryAccessService.php
+A app/Services/MaintenanceAuditService.php
+A app/Services/MaintenanceReadService.php
+A app/Services/MaintenanceService.php
+A app/Services/MaintenanceWorkflowService.php
+A app/Services/MaintenanceWriteService.php
+M app/Services/TreeReadService.php
+M app/Validation/EvidenceInput.php
+A app/Validation/MaintenanceInput.php
+M bootstrap/app.php
+A database/migrations/2026_09_21_000015_create_maintenance_tables.php
+A database/migrations/2026_09_21_000016_add_maintenance_owner_to_evidences.php
+M database/seeders/AuthorizationSeeder.php
+M docs/architecture.md
+M docs/database.md
+M docs/evidences.md
+M docs/file-storage.md
+M docs/forestry-catalogs.md
+A docs/maintenances.md
+A docs/phase-9-files.txt
+A docs/phase-9.md
+M docs/tree-domain.md
+A public/css/maintenances.css
+M resources/views/errors/409.blade.php
+A resources/views/maintenances/assets.blade.php
+A resources/views/maintenances/error.blade.php
+A resources/views/maintenances/form.blade.php
+A resources/views/maintenances/index.blade.php
+A resources/views/maintenances/show.blade.php
+A resources/views/maintenances/timeline.blade.php
+A resources/views/maintenances/tree-summary.blade.php
+M resources/views/partials/institutional-navigation.blade.php
+M resources/views/trees/show.blade.php
+M routes/forestry.php
+A tests/Feature/MaintenanceDomainTest.php
+A tests/Feature/MaintenanceEvidenceTest.php
+A tests/Feature/MaintenanceHttpSecurityTest.php
+A tests/Feature/MaintenancePresentationTest.php
+A tests/Feature/MaintenanceRepositoryTest.php
+A tests/MaintenanceTestCase.php
+
+Total: 74 archivos; nuevos: 43; modificados: 31.

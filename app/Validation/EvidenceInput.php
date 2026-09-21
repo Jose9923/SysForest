@@ -13,7 +13,7 @@ class EvidenceInput
 {
     public static function guards(): array
     {
-        return array_fill_keys(['id', 'organization_id', 'tree_id', 'tree_inspection_id', 'disk', 'path',
+        return array_fill_keys(['id', 'organization_id', 'tree_id', 'tree_inspection_id', 'maintenance_id', 'disk', 'path',
             'original_name', 'mime_type', 'extension', 'size_bytes', 'width', 'height', 'checksum_sha256',
             'metadata', 'uploaded_by', 'updated_by', 'deleted_by', 'deleted_at', 'created_at', 'updated_at', 'is_public'], ['prohibited']);
     }
@@ -78,13 +78,13 @@ class EvidenceInput
             '*.max' => 'El valor supera el límite permitido.', 'lock_version.required' => 'La versión del registro es obligatoria.'];
     }
 
-    public static function owner(?string $treeId, ?string $inspectionId): void
+    public static function owner(?string $treeId, ?string $inspectionId, ?string $maintenanceId = null): void
     {
-        if (($treeId === null) === ($inspectionId === null)) {
-            throw ValidationException::withMessages(['owner' => 'La evidencia debe pertenecer exactamente a un árbol o a una inspección.']);
+        if (count(array_filter([$treeId, $inspectionId, $maintenanceId], fn ($id) => $id !== null)) !== 1) {
+            throw ValidationException::withMessages(['owner' => 'La evidencia debe pertenecer exactamente a un árbol, una inspección o un mantenimiento.']);
         }
-        Validator::make(['tree_id' => $treeId, 'tree_inspection_id' => $inspectionId], [
-            'tree_id' => ['nullable', 'uuid'], 'tree_inspection_id' => ['nullable', 'uuid'],
+        Validator::make(['tree_id' => $treeId, 'tree_inspection_id' => $inspectionId, 'maintenance_id' => $maintenanceId], [
+            'tree_id' => ['nullable', 'uuid'], 'tree_inspection_id' => ['nullable', 'uuid'], 'maintenance_id' => ['nullable', 'uuid'],
         ], self::messages())->validate();
     }
 }

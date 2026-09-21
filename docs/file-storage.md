@@ -2,7 +2,7 @@
 
 ## Contrato y configuración
 
-Evidence es una entidad independiente. Guarda disk y path relativos; Tree y TreeInspection no tienen columnas de imagen ni conocen una ruta física. EvidenceStorageService encapsula Laravel Filesystem y EvidenceStorageJournal registra intenciones recuperables. Los Controllers y Repositories no escriben archivos.
+Evidence es una entidad independiente. Guarda disk y path relativos; Tree, TreeInspection y Maintenance no tienen columnas de imagen ni conocen una ruta física. EvidenceStorageService encapsula Laravel Filesystem y EvidenceStorageJournal registra intenciones recuperables. Los Controllers y Repositories no escriben archivos.
 
 La petición Fase 8 tiene SHA-256 `56336832ad8b6a0dc7ede637dfa3eefe6fbbec0e13298f2a9ec4d48c0f507957`. La semántica del instrumento y sus propietarios se documenta en [la matriz](excel-field-mapping.md).
 
@@ -20,6 +20,14 @@ Los tamaños llamados MB en la configuración se convierten a MiB: 1 MiB = 1.048
 El disco evidences se define en config/filesystems.php con driver local, root dentro de storage/app/private/evidences, visibility y directory_visibility privadas, serve=false y throw=true. El disco local padre también tiene serve=false para impedir rutas genéricas de entrega o carga firmada fuera de la autorización de evidencias. No se crea storage:link para evidencias, URL pública ni directorio public/uploads. No se debe configurar este disco hacia un directorio servido por Nginx.
 
 El alias disk persistido es estable. Para usar almacenamiento S3 compatible se cambia el driver/configuración de ese alias y se incorpora su adaptador de Filesystem si falta; también deben transferirse los objetos existentes preservando sus claves. No se reescriben Tree, Evidence ni sus servicios. Cambiar solo el nombre del disco sin migrar las referencias no traslada archivos.
+
+## Propietario Maintenance en Fase 9
+
+Las imágenes de una orden utilizan el mismo disco privado evidences, las mismas claves generadas por organización/UUID y el mismo protocolo de journal. No se crea un directorio público ni se duplica el archivo al asociarlo con su árbol raíz. Los tipos nacionales EVD_MAINTENANCE_BEFORE y EVD_MAINTENANCE_AFTER sólo describen la fotografía; su selección no cambia los límites, la validación real ni el procedimiento de recuperación.
+
+La autorización resuelve tenant → Tree → Maintenance antes de cargar y vuelve a comprobarla bajo bloqueo dentro de la transacción. La lectura histórica de una orden anulada conserva su referencia a Evidence y requiere autorización del propietario. referencedStoragePath incluye evidencias anuladas de cualquiera de los tres propietarios, por lo que la reconciliación sigue protegiendo originales confirmados aunque la orden esté anulada.
+
+La extensión no modifica EvidenceStorageService, EvidenceStorageJournal, ImageMetadataService ni EvidenceRecoveryService. La migración rechaza su rollback si hay evidencias de mantenimiento; no elimina archivos para resolver dependencias. El ensayo real de persistencia documentado más abajo corresponde a Fase 8 y conserva su alcance original de Tree/TreeInspection.
 
 ## Persistencia y permisos en Docker
 

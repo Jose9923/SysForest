@@ -86,6 +86,11 @@ class Tree extends Model
         return $this->hasMany(Evidence::class)->orderByDesc('created_at')->orderByDesc('id');
     }
 
+    public function maintenances(): HasMany
+    {
+        return $this->hasMany(Maintenance::class)->orderByDesc('created_at')->orderByDesc('id');
+    }
+
     public function inspections(): HasMany
     {
         return $this->hasMany(TreeInspection::class)->orderByDesc('inspection_date')->orderByDesc('created_at')->orderByDesc('id');

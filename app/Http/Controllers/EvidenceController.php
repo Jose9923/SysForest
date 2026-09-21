@@ -25,17 +25,17 @@ class EvidenceController extends Controller
 
     public function index(Request $request): View
     {
-        return view('evidences.index', $this->reader->index($request->user(), $request->route('tree'), $request->route('inspection'), $request->query()));
+        return view('evidences.index', $this->reader->index($request->user(), $request->route('tree'), $request->route('inspection'), $request->query(), $request->route('maintenance')));
     }
 
     public function create(Request $request): View
     {
-        return view('evidences.upload', $this->reader->uploadForm($request->user(), $request->route('tree'), $request->route('inspection')));
+        return view('evidences.upload', $this->reader->uploadForm($request->user(), $request->route('tree'), $request->route('inspection'), $request->route('maintenance')));
     }
 
     public function store(StoreEvidenceRequest $request): JsonResponse|RedirectResponse
     {
-        $records = $this->evidences->upload($request->user(), $request->route('tree'), $request->route('inspection'), $request->validated());
+        $records = $this->evidences->upload($request->user(), $request->route('tree'), $request->route('inspection'), $request->validated(), $request->route('maintenance'));
         $url = $this->reader->ownerUrl($records->first());
         $message = 'Fotografías adjuntadas correctamente.';
 

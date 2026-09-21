@@ -1,8 +1,8 @@
 # SYSFOREST: acuerdos de implementación
 
-La Fase 7 fue aprobada y cerrada en el commit 8fcb2d5, con 752 pruebas y 3207 aserciones. El alcance actual es la Fase 8: evidencias fotográficas privadas de Tree y TreeInspection.
-No comenzar Fase 9 ni implementar mantenimientos, portal público, importaciones o reportes finales.
-Los cambios de Fase 8 permanecen sin commit en codex/phase-8 hasta el reporte y revisión del usuario.
+La Fase 8 fue aprobada y cerrada en el commit f750f66, con 949 pruebas PHP y 4229 aserciones. El usuario autorizó continuar con la Fase 9: mantenimientos manuales e integración con evidencias.
+Trabajar en codex/phase-9. No iniciar Fase 10, portal público, importaciones ni reportes finales.
+Conservar el cierre F8; dejar los cambios de Fase 9 sin commit final hasta entregar el reporte y recibir revisión.
 Los catálogos nacionales no llevan organization_id; solo SUPER_ADMIN administra, los demás roles consultan.
 La semántica forestal del Excel tiene prioridad sobre el mockup. No inventar equivalencias ni valores sin respaldo.
 La única fuente de verdad es /home/josev/SYSFOREST. No depender de phase2-staging.

@@ -51,6 +51,21 @@ class Evidence extends Model
         return $this->belongsTo(TreeInspection::class, 'tree_inspection_id');
     }
 
+    public function maintenance(): BelongsTo
+    {
+        return $this->belongsTo(Maintenance::class)->withTrashed();
+    }
+
+    /** El CHECK de PostgreSQL garantiza un único propietario explícito. */
+    public function ownerRecord(): Tree|TreeInspection|Maintenance
+    {
+        return match (true) {
+            $this->tree_id !== null => $this->tree,
+            $this->tree_inspection_id !== null => $this->inspection,
+            default => $this->maintenance,
+        };
+    }
+
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');

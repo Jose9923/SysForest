@@ -23,7 +23,8 @@ class TreeReadService
         private TreeCatalogRepository $catalogs,
         private InventoryRepository $inventories,
         private EvidenceReadService $evidences,
-        private TreeInspectionReadService $inspections
+        private TreeInspectionReadService $inspections,
+        private MaintenanceReadService $maintenances
     ) {
     }
 
@@ -58,7 +59,7 @@ class TreeReadService
         $tree = $this->trees->findForTenant($organization->id, $id, false, $this->access->allows($actor, 'trees.restore'));
         Gate::forUser($actor)->authorize('view', $tree);
 
-        $summary = $this->inspections->treeSummary($actor, $tree);
+        $summary = array_merge($this->inspections->treeSummary($actor, $tree), $this->maintenances->treeSummary($actor, $tree));
 
         return array_merge($this->shared($actor, $tree), $summary, ['organization' => $organization, 'tree' => $this->trees->detail($tree),
             'treeEvidenceGallery' => $this->evidences->gallery($actor, $tree),

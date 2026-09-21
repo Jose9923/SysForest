@@ -5,8 +5,9 @@
         <a class="{{ request()->is('organizations*') ? 'selected' : '' }}" href="{{ route('organizations.index') }}"><span aria-hidden="true">▦</span> Organizaciones</a>
         <a class="{{ request()->is('territories*') ? 'selected' : '' }}" href="{{ route('territories.index') }}"><span aria-hidden="true">◎</span> Territorios</a>
         @can('inventories.view')<a class="{{ request()->is('inventories*') ? 'selected' : '' }}" href="{{ route('inventories.index') }}"><span aria-hidden="true">▤</span> Inventarios</a>@endcan
-        @can('trees.view')<a class="{{ request()->is('trees*') && !request()->is('trees/*/inspections*') ? 'selected' : '' }}" href="{{ route('trees.index') }}"><span aria-hidden="true">♧</span> Árboles</a>@endcan
+        @can('trees.view')<a class="{{ request()->is('trees*') && !request()->is('trees/*/inspections*', 'trees/*/maintenances*') ? 'selected' : '' }}" href="{{ route('trees.index') }}"><span aria-hidden="true">♧</span> Árboles</a>@endcan
         @can('inspections.view')<a class="{{ request()->is('inspections*', 'trees/*/inspections*') ? 'selected' : '' }}" href="{{ route('inspections.index') }}"><span aria-hidden="true">▧</span> Inspecciones</a>@endcan
+        @can('maintenances.view')<a class="{{ request()->is('maintenances*', 'trees/*/maintenances*') ? 'selected' : '' }}" href="{{ route('maintenances.index') }}"><span aria-hidden="true">♧</span> Mantenimientos</a>@endcan
         @can('memberships.view')<a class="{{ request()->is('memberships*', 'invitations*') ? 'selected' : '' }}" href="{{ route('memberships.index') }}"><span aria-hidden="true">♧</span> Usuarios de organización</a>@endcan
         @can('users.view')<a class="{{ request()->is('users*') ? 'selected' : '' }}" href="{{ route('users.index') }}"><span aria-hidden="true">▤</span> Usuarios globales</a>@endcan
         @can('catalogs.view')<a class="{{ request()->is('admin/catalogs*') ? 'selected' : '' }}" href="{{ route('catalogs.dashboard') }}"><span aria-hidden="true">❧</span> Catálogos forestales</a>@endcan

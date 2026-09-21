@@ -2,6 +2,7 @@
 @section('title', $tree->code)
 @include('forestry.assets', ['withMap' => true])
 @include('inspections.assets', ['stylesOnly' => true])
+@include('maintenances.assets', ['stylesOnly' => true])
 @include('evidences.assets')
 @section('content')
     @php
@@ -50,6 +51,7 @@
     <div class="forestry-stack" style="margin-top:22px">
         @if ($treeEvidenceGallery ?? null)@include('evidences.gallery', ['gallery' => $treeEvidenceGallery])@endif
         @include('inspections.tree-timeline')
+        @include('maintenances.tree-summary')
         @if ($canUpdate && !$tree->trashed())
             <details id="status-change" class="panel forestry-panel forestry-disclosure" @if ($errors->has('current_status') || $errors->has('reason')) open @endif><summary>Cambiar estado del árbol</summary>
                 <form method="POST" action="{{ route('trees.status', $tree->id) }}">@csrf @method('PATCH')<input type="hidden" name="lock_version" value="{{ old('lock_version', $tree->lock_version) }}">

@@ -6,7 +6,7 @@ use App\Http\Controllers as C;
 use Illuminate\Support\Facades\Route;
 
 // La fotografía se entrega únicamente después de comprobar sesión, tenant y propietario.
-foreach (['trees' => 'tree', 'inspections' => 'inspection'] as $owners => $parameter) {
+foreach (['trees' => 'tree', 'inspections' => 'inspection', 'maintenances' => 'maintenance'] as $owners => $parameter) {
     Route::get('/'.$owners.'/{'.$parameter.'}/evidences', [C\EvidenceController::class, 'index'])->whereUuid($parameter)->name($owners.'.evidences.index');
     Route::get('/'.$owners.'/{'.$parameter.'}/evidences/create', [C\EvidenceController::class, 'create'])->whereUuid($parameter)->name($owners.'.evidences.create');
     Route::post('/'.$owners.'/{'.$parameter.'}/evidences', [C\EvidenceController::class, 'store'])->whereUuid($parameter)->middleware('throttle:30,1')->name($owners.'.evidences.store');
@@ -45,3 +45,14 @@ Route::post('/inventories', [C\InventoryController::class, 'store'])->name('inve
 Route::get('/inventories/{inventory}', [C\InventoryController::class, 'show'])->whereUuid('inventory')->name('inventories.show');
 Route::get('/inventories/{inventory}/edit', [C\InventoryController::class, 'edit'])->whereUuid('inventory')->name('inventories.edit');
 Route::put('/inventories/{inventory}', [C\InventoryController::class, 'update'])->whereUuid('inventory')->name('inventories.update');
+
+// Las órdenes de trabajo pertenecen al árbol y conservan sus estados e historial.
+Route::get('/maintenances', [C\MaintenanceController::class, 'index'])->name('maintenances.index');
+Route::get('/trees/{tree}/maintenances/create', [C\MaintenanceController::class, 'create'])->whereUuid('tree')->name('trees.maintenances.create');
+Route::post('/trees/{tree}/maintenances', [C\MaintenanceController::class, 'store'])->whereUuid('tree')->name('trees.maintenances.store');
+Route::get('/maintenances/{maintenance}', [C\MaintenanceController::class, 'show'])->whereUuid('maintenance')->name('maintenances.show');
+Route::get('/maintenances/{maintenance}/edit', [C\MaintenanceController::class, 'edit'])->whereUuid('maintenance')->name('maintenances.edit');
+Route::put('/maintenances/{maintenance}', [C\MaintenanceController::class, 'update'])->whereUuid('maintenance')->name('maintenances.update');
+Route::patch('/maintenances/{maintenance}/status', [C\MaintenanceController::class, 'transition'])->whereUuid('maintenance')->name('maintenances.status');
+Route::delete('/maintenances/{maintenance}', [C\MaintenanceController::class, 'destroy'])->whereUuid('maintenance')->name('maintenances.void');
+Route::post('/maintenances/{maintenance}/restore', [C\MaintenanceController::class, 'restore'])->whereUuid('maintenance')->name('maintenances.restore');

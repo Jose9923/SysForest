@@ -2,7 +2,7 @@
 
 ## Alcance y relación con el instrumento
 
-Una Evidence representa un archivo de fotografía y una clasificación nacional. Pertenece exactamente a Tree o TreeInspection, nunca a ambos ni a ninguno. Cada propietario admite cero o múltiples fotografías. No hay BLOB ni columnas de fotografías en árboles, inspecciones o fauna.
+Una Evidence representa un archivo de fotografía y una clasificación nacional. Pertenece exactamente a Tree, TreeInspection o Maintenance; nunca a varios propietarios ni a ninguno. Cada propietario admite cero o múltiples fotografías. No hay BLOB ni columnas de fotografías en árboles, inspecciones o fauna.
 
 CN4 «FOTO FAUNA» corresponde a TreeInspection + EVD_FAUNA. CO4 «FOTO INDIVIDUO» corresponde a TreeInspection + EVD_WHOLE_TREE. Las dos evidencias documentan la visita del instrumento; Tree admite adicionalmente fotografías permanentes de perfil, independientes. El sistema no copia automáticamente una foto de una inspección al árbol. Fauna fotográfica coexiste con inspection_fauna sin inventar especies individuales ni enlaces entre una fotografía y una especie.
 
@@ -10,9 +10,9 @@ Se reutilizan los doce EvidenceTypes nacionales de Fase 5. Cada archivo exige un
 
 ## Modelo y restricciones
 
-evidences contiene UUID; organization_id; evidence_type_id; tree_id/tree_inspection_id; disk/path; original_name/mime_type/extension/size_bytes; width/height/checksum_sha256; caption/notes/captured_at; metadata JSONB; uploaded_by/updated_by; lock_version; timestamps; deleted_at/deleted_by/deletion_notes. uploaded_by es obligatorio. Captura desconocida, notas y dimensiones admiten NULL en el esquema; el flujo actual calcula dimensiones para todos sus formatos.
+evidences contiene UUID; organization_id; evidence_type_id; tree_id/tree_inspection_id/maintenance_id; disk/path; original_name/mime_type/extension/size_bytes; width/height/checksum_sha256; caption/notes/captured_at; metadata JSONB; uploaded_by/updated_by; lock_version; timestamps; deleted_at/deleted_by/deletion_notes. uploaded_by es obligatorio. Captura desconocida, notas y dimensiones admiten NULL en el esquema; el flujo actual calcula dimensiones para todos sus formatos.
 
-`CHECK (num_nonnulls(tree_id,tree_inspection_id)=1)` fija el propietario. Las FK `(organization_id,tree_id)` y `(organization_id,tree_inspection_id)` impiden cruces institucionales. `UNIQUE(disk,path)` conserva la identidad física incluso después de anular. La tabla prohíbe hard delete; trigger protege UUID, organización, propietario, uploaded_by/created_at y procedencia técnica del archivo. Una nueva imagen se carga como nueva Evidence: la edición no sustituye archivos ni cambia de propietario.
+`CHECK (num_nonnulls(tree_id,tree_inspection_id,maintenance_id)=1)` fija el propietario. Las FK `(organization_id,tree_id)`, `(organization_id,tree_inspection_id)` y `(organization_id,maintenance_id)` impiden cruces institucionales. `UNIQUE(disk,path)` conserva la identidad física incluso después de anular. La tabla prohíbe hard delete; trigger protege UUID, organización, propietario, uploaded_by/created_at y procedencia técnica del archivo. Una nueva imagen se carga como nueva Evidence: la edición no sustituye archivos ni cambia de propietario.
 
 evidence_revisions registra una versión por cambio, actor, organización, momento y valores anteriores/nuevos. Lleva FK compuesta a Evidence y restricciones append-only. Se auditan propietario, tipo, descripciones, fecha y ciclo de vida; no contiene binarios, rutas, tokens ni EXIF. Los eventos son evidence.uploaded, evidence.updated, evidence.voided y evidence.restored; security_events conserva además el UUID del recurso.
 
@@ -22,7 +22,7 @@ EvidenceController coordina los Requests con EvidenceService, EvidenceReadServic
 
 EvidenceRepository concentra lecturas, filtros, escrituras, referencias físicas y locks. EvidenceTypeRepository prepara opciones actuales/históricas y valida disponibilidad. EvidenceRevisionRepository persiste y consulta revisiones. No hay consultas desde Blade, lógica forestal en JavaScript ni imágenes incrustadas en el código de la aplicación. Los fixtures visuales son imágenes técnicas de pruebas y no datos del piloto.
 
-La lectura prepara DTOs con URLs de aplicación; no serializa Model directamente. Tree y TreeInspection tienen relaciones evidences. El repositorio permite lotes de propietarios, galerías de seis elementos y listas paginadas de veinte; carga tipos, autores y propietarios antes de Blade. Una página de galería comparte propietario y estado, por lo que las acciones se resuelven una vez por página, evitando consultas de permisos por tarjeta.
+La lectura prepara DTOs con URLs de aplicación; no serializa Model directamente. Tree, TreeInspection y Maintenance tienen relaciones evidences. Evidence mantiene las relaciones tree y maintenance con registros anulados para autorizar su lectura histórica. El repositorio permite lotes de propietarios, galerías de seis elementos y listas paginadas de veinte; carga tipos, autores y propietarios antes de Blade. Una página de galería comparte propietario y estado, por lo que las acciones se resuelven una vez por página, evitando consultas de permisos por tarjeta.
 
 ## Tenant y permisos
 
@@ -34,19 +34,19 @@ La lectura prepara DTOs con URLs de aplicación; no serializa Model directamente
 | evidences.delete | Sí | No | Sí | Sí |
 | evidences.restore | Sí | No | Sí | No |
 
-Existen 36 permisos totales: cinco nuevos respecto de Fase 7. Tener permiso de evidencia nunca sustituye la autorización del propietario. El contexto se establece en servidor; un organization_id enviado por navegador se rechaza. Los UUID se buscan dentro del tenant antes de autorizar o validar contenido. SUPER_ADMIN selecciona tenant sin membresía artificial; DEPARTMENT_ADMIN mantiene lectura territorial. Una cuenta sin concesión/membresía vigente queda excluida.
+Los cinco permisos de evidencias establecidos en Fase 8 conservan sus concesiones en Fase 9. Tener permiso de evidencia nunca sustituye la autorización del propietario. El contexto se establece en servidor; un organization_id enviado por navegador se rechaza. Los UUID se buscan dentro del tenant antes de autorizar o validar contenido. SUPER_ADMIN selecciona tenant sin membresía artificial; DEPARTMENT_ADMIN mantiene lectura territorial. Una cuenta sin concesión/membresía vigente queda excluida.
 
 Official puede corregir o anular la evidencia de un colega de la misma institución; uploaded_by no cambia y updated_by identifica al último actor. No se exige campaña activa para cargar o corregir evidencia. Tree raíz anulado impide cargas nuevas y correcciones, incluso si el propietario es una inspección histórica que un administrador puede leer. La lectura histórica conserva TreePolicy. Restaurar Tree no restaura evidencias anuladas independientemente.
 
 ## HTTP y formularios
 
-Rutas privadas: GET `/{trees|inspections}/{uuid}/evidences`, GET la misma ruta con `/create`, POST la ruta de colección; GET/PUT/DELETE `/evidences/{uuid}`; POST `/evidences/{uuid}/restore`; GET `/evidences/{uuid}/view` y `/download`. Exigen JWT, sesión, correo verificado, tenant y Policy. La carga admite treinta solicitudes por minuto; no sustituye los límites de bytes/archivos.
+Rutas privadas: GET `/{trees|inspections|maintenances}/{uuid}/evidences`, GET la misma ruta con `/create`, POST la ruta de colección; GET/PUT/DELETE `/evidences/{uuid}`; POST `/evidences/{uuid}/restore`; GET `/evidences/{uuid}/view` y `/download`. Exigen JWT, sesión, correo verificado, tenant y Policy. La carga admite treinta solicitudes por minuto; no sustituye los límites de bytes/archivos.
 
 StoreEvidenceRequest recibe `items[i][file]`, `items[i][evidence_type_id]` y caption/notes/captured_at opcionales. Cada fila tiene su Select2 sin tipo preseleccionado, preview, quitar y errores. XHR envía el lote y muestra progreso total real. Un 422 conserva los archivos seleccionados y sus descripciones. No hay reintento automático tras un timeout ambiguo: se indica consultar la galería. Sin JavaScript hay formulario de una imagen. La selección múltiple y el botón de cámara son opciones separadas; cámara solicita `capture=environment`, no obliga a usarla ni promete soporte idéntico en todos los dispositivos.
 
 Caption admite 2000 caracteres; notes 20000; deletion_notes 2000. Captured_at es opcional, ingresado explícitamente en UTC con precisión de minuto (`YYYY-MM-DDTHH:mm`), validado como calendario y almacenado timestamptz. No se infiere desde fecha de modificación ni EXIF. La interfaz escapa nombres, captions y notas; conserva el valor textual «0».
 
-UpdateEvidenceRequest, VoidEvidenceRequest y RestoreEvidenceRequest exigen lock_version entero positivo; se valida antes de convertirlo. Una versión obsoleta devuelve 409: «La evidencia fue modificada por otro usuario.» El orden de bloqueo es actor → organización → Tree → TreeInspection → Evidence. Todas las escrituras de metadata/ciclo y auditoría se confirman en una transacción.
+UpdateEvidenceRequest, VoidEvidenceRequest y RestoreEvidenceRequest exigen lock_version entero positivo; se valida antes de convertirlo. Una versión obsoleta devuelve 409: «La evidencia fue modificada por otro usuario.» El orden de bloqueo es actor → organización → Tree → TreeInspection o Maintenance, cuando corresponda → Evidence. Todas las escrituras de metadata/ciclo y auditoría se confirman en una transacción.
 
 ## Anulación, restauración y archivos
 
@@ -58,4 +58,26 @@ No hay miniaturas persistidas: las tarjetas solicitan el original autorizado con
 
 No hay is_public ni portal público en Fase 8: el estado seguro es privado. Una fase posterior deberá definir publicación explícita y variantes saneadas; su DTO público excluirá uploaded_by, email, disk/path, EXIF, auditoría y metadata privada. Cambiar el disk lógico evidences a S3-compatible implica configurar el adaptador y copiar las claves relativas; no reescribir Tree/Evidence. La dependencia S3 no está instalada todavía.
 
-Fase 9 agregará maintenance_id nullable, UNIQUE(organization_id,id) en Maintenance y FK compuesta `(organization_id,maintenance_id)`. Reemplazará el CHECK por num_nonnulls(tree_id,tree_inspection_id,maintenance_id)=1 y ampliará owner resolver, políticas, repositorios, auditoría y galerías. Deberá ajustar el trigger de identidad para incluir maintenance_id. No se crea ninguna tabla Maintenance anticipada. La anulación formal de una inspección continúa pendiente de definición.
+La anulación formal de una inspección continúa pendiente de definición.
+
+## Mantenimientos: extensión de Fase 9
+
+Maintenance es el tercer propietario explícito. Sus fotografías antes y después utilizan los tipos nacionales existentes EVD_MAINTENANCE_BEFORE y EVD_MAINTENANCE_AFTER. No se copian al árbol ni a una inspección y no sustituyen los destinos CN/CO del instrumento. Cada imagen mantiene su tipo, original, autor, checksum, metadata y revisiones independientes.
+
+La carga y la edición intersectan los permisos de evidencia con MaintenancePolicy.view, su organización y TreePolicy.view. Requieren orden y árbol raíz sin anular. Los estados ejecutado y verificado no impiden añadir fotografías ni corregir su descripción. Anular una orden conserva sus fotos y archivos privados; su consulta histórica exige maintenances.restore además de evidences.view y acceso al árbol. La anulación/restauración independiente de una Evidence conserva los controles evidences.delete/evidences.restore. Restaurar una orden no restaura automáticamente evidencias anuladas.
+
+La migración 000016 agrega la FK compuesta, el índice de galería por organización/mantenimiento, el CHECK de tres propietarios y maintenance_id al trigger de identidad. Su rollback toma un bloqueo exclusivo y se rechaza si existe cualquier evidencia de mantenimiento, incluso anulada; nunca elimina archivos ni reasigna propietarios para permitir una reversión.
+
+Las firmas anteriores conservan su orden. Las APIs agregan el nuevo argumento opcional al final:
+
+| API | Firma ampliada |
+| --- | --- |
+| EvidenceService.upload | `(actor, treeId, inspectionId, input, maintenanceId = null)` |
+| EvidenceOwnerService.resolve | `(actor, treeId, inspectionId, lock = false, maintenanceId = null)` |
+| EvidenceReadService.index | `(actor, treeId, inspectionId, input = [], maintenanceId = null)` |
+| authorizeUpload / uploadForm | `(actor, treeId, inspectionId, maintenanceId = null)` |
+| EvidenceRepository.forOwner / paginateForOwner | `(organizationId, treeId, inspectionId, filters = [], maintenanceId = null)` |
+| summaryForOwner | `(organizationId, treeId, inspectionId, limit = 6, maintenanceId = null)` |
+| forOwners | `(organizationId, treeIds = [], inspectionIds = [], filters = [], maintenanceIds = [])` |
+
+Para una orden se envían treeId e inspectionId como NULL. gallery admite el Model Maintenance y proyecta rutas maintenances.evidences.*, con retorno a maintenances.show. maintenance_id enviado como atributo del formulario se rechaza: sólo el recurso de la ruta autorizada establece el propietario. Las rutas privadas de descarga y vista por UUID de Evidence permanecen iguales. Las pruebas de integración nuevas están en MaintenanceEvidenceTest; la verificación conjunta se registra en el informe de Fase 9.

@@ -4,7 +4,7 @@
 
 La Fase 6 implementa la identidad permanente del individuo, inventarios, ubicación actual e histórica, estado, colaboración institucional, anulación y restauración. La petición aprobada tiene SHA-256 `9a27d539dbc7847509489ec8bbbdd4c30624f17f25c065f371e5f268d87c6b16`.
 
-El Excel conserva sus 94 variables en la [matriz de trazabilidad](excel-field-mapping.md). A:H se materializan desde Fase 6 mediante Tree y sus relaciones nacionales. Fase 7 añade TreeInspection con mediciones, cálculos dasométricos, condiciones, fenología, fauna y observaciones históricas, separados de Tree. Fase 8 incorpora fotos CN/CO de inspección mediante Evidence y fotografías propias de Tree; mantenimiento e importación permanecen fuera del alcance actual.
+El Excel conserva sus 94 variables en la [matriz de trazabilidad](excel-field-mapping.md). A:H se materializan desde Fase 6 mediante Tree y sus relaciones nacionales. Fase 7 añade TreeInspection con mediciones, cálculos dasométricos, condiciones, fenología, fauna y observaciones históricas, separados de Tree. Fase 8 incorpora fotos CN/CO de inspección mediante Evidence y fotografías propias de Tree; Fase 9 añade mantenimientos manuales e historial propio; importación permanece fuera del alcance actual.
 
 Las decisiones de catálogos de Fase 5 se mantienen: [catálogos y reglas](forestry-catalogs.md). La pertenencia a una organización se resuelve con el modelo vigente de [multitenancy](multitenancy.md), sin trasladar catálogos nacionales a cada tenant.
 
@@ -144,3 +144,9 @@ Los resultados de pruebas, migraciones, rollback y revisión de interfaz de la b
 ## Evidencias de Fase 8
 
 Tree tiene una relación evidences con fotografías permanentes propias. La ficha muestra su galería y, por separado, la galería de la última TreeInspection; nunca copia una fotografía entre propietarios. Las cargas están protegidas por organización, EvidencePolicy y TreePolicy, con archivos privados y tipos nacionales. Tree anulado no admite cargas ni correcciones nuevas; su restauración conserva las evidencias activas y no restaura las que se anularon independientemente. CN/CO del Excel pertenecen a la visita, no a columnas de Tree. Véanse [evidences.md](evidences.md) y [file-storage.md](file-storage.md).
+
+## Mantenimientos de Fase 9
+
+Tree tiene maintenances y una sección con las diez últimas órdenes activas, acceso al listado filtrado y registro manual según Policy. La orden conserva identidad, responsable, programación, ejecución y estados en su propio dominio; su anulación no anula el árbol ni sus fotografías independientes.
+
+Registrar o verificar una tala, traslado u otra intervención no cambia automáticamente current_status, coordenadas PostGIS ni inspecciones. Esos cambios requieren sus operaciones explícitas y autorizadas. Un árbol anulado rechaza nuevas órdenes y cambios operativos; los administradores con acceso histórico conservan la consulta. [Contrato de mantenimientos](maintenances.md).

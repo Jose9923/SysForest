@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Evidence;
+use App\Models\Maintenance;
 use App\Models\Tree;
+use App\Models\TreeInspection;
 use App\Models\User;
 use App\Repositories\EvidenceRepository;
 use App\Repositories\EvidenceTypeRepository;
@@ -37,9 +39,9 @@ class EvidenceService
     ) {
     }
 
-    public function upload(User $actor, ?string $treeId, ?string $inspectionId, array $input): Collection
+    public function upload(User $actor, ?string $treeId, ?string $inspectionId, array $input, ?string $maintenanceId = null): Collection
     {
-        $owner = $this->owners->resolve($actor, $treeId, $inspectionId);
+        $owner = $this->owners->resolve($actor, $treeId, $inspectionId, false, $maintenanceId);
         Gate::forUser($actor)->authorize('create', [Evidence::class, $owner]);
         $data = Validator::make($input, EvidenceInput::storeRules(), EvidenceInput::messages())->validate();
         $technical = [];
@@ -52,9 +54,9 @@ class EvidenceService
         $operationIds = [];
         try {
             // No se reintenta automáticamente una transacción que haya escrito archivos.
-            return DB::transaction(function () use ($actor, $treeId, $inspectionId, $data, $technical, &$operationIds): Collection {
+            return DB::transaction(function () use ($actor, $treeId, $inspectionId, $data, $technical, &$operationIds, $maintenanceId): Collection {
                 $actor = $this->users->findForUpdate((int) $actor->id);
-                $owner = $this->owners->resolve($actor, $treeId, $inspectionId, true);
+                $owner = $this->owners->resolve($actor, $treeId, $inspectionId, true, $maintenanceId);
                 Gate::forUser($actor)->authorize('create', [Evidence::class, $owner]);
                 foreach ($data['items'] as $index => $item) {
                     $this->validateType($item['evidence_type_id'], null, 'items.'.$index.'.evidence_type_id');
@@ -70,7 +72,8 @@ class EvidenceService
                     $evidence = $this->evidences->create($technical[$index] + $this->metadata($item) + [
                         'id' => $id, 'organization_id' => $owner->organization_id,
                         'tree_id' => $owner instanceof Tree ? $owner->id : null,
-                        'tree_inspection_id' => $owner instanceof Tree ? null : $owner->id,
+                        'tree_inspection_id' => $owner instanceof TreeInspection ? $owner->id : null,
+                        'maintenance_id' => $owner instanceof Maintenance ? $owner->id : null,
                         'disk' => $reference['disk'], 'path' => $reference['path'],
                         'uploaded_by' => $actor->id, 'updated_by' => $actor->id, 'lock_version' => 1,
                     ]);

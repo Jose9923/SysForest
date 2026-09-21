@@ -19,7 +19,7 @@ class EvidenceAuditService
     public function snapshot(Evidence $evidence): array
     {
         return array_intersect_key($evidence->attributesToArray(), array_flip([
-            'tree_id', 'tree_inspection_id', 'evidence_type_id', 'caption', 'notes', 'captured_at',
+            'tree_id', 'tree_inspection_id', 'maintenance_id', 'evidence_type_id', 'caption', 'notes', 'captured_at',
             'uploaded_by', 'updated_by', 'deleted_at', 'deleted_by', 'deletion_notes', 'lock_version',
         ]));
     }

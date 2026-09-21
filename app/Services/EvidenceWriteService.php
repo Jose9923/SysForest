@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Exceptions\StaleEvidenceException;
 use App\Models\Evidence;
 use App\Models\Tree;
+use App\Models\TreeInspection;
 use App\Models\User;
 use App\Repositories\EvidenceRepository;
 use App\Repositories\UserRepository;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 
-/** Orden común de bloqueo: actor, organización, árbol, inspección, evidencia. */
+/** Orden común de bloqueo: actor, organización, árbol, inspección o mantenimiento, evidencia. */
 class EvidenceWriteService
 {
     public function __construct(
@@ -34,9 +35,13 @@ class EvidenceWriteService
             $actor = $this->users->findForUpdate((int) $actor->id);
             $organization = $this->access->organization($actor, true);
             $reference = $this->evidences->findForTenant($organization->id, $id, false, true);
-            $owner = $this->owners->resolve($actor, $reference->tree_id, $reference->tree_inspection_id, true);
+            $owner = $this->owners->resolve($actor, $reference->tree_id, $reference->tree_inspection_id, true, $reference->maintenance_id);
             $evidence = $this->evidences->findForTenant($organization->id, $id, true, true);
-            $evidence->setRelation($owner instanceof Tree ? 'tree' : 'inspection', $owner);
+            $evidence->setRelation(match (true) {
+                $owner instanceof Tree => 'tree',
+                $owner instanceof TreeInspection => 'inspection',
+                default => 'maintenance',
+            }, $owner);
             Gate::forUser($actor)->authorize($ability, $evidence);
             $validated = Validator::make($input, EvidenceInput::versionRules(), EvidenceInput::messages())->validate();
             if ((int) $validated['lock_version'] !== $evidence->lock_version) {

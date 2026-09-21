@@ -30,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (Throwable $exception, Request $request) {
-            if (!$request->is('evidences/*', 'trees/*/evidences*', 'inspections/*/evidences*')
+            if (!$request->is('evidences/*', 'trees/*/evidences*', 'inspections/*/evidences*', 'maintenances/*/evidences*')
                 || $exception instanceof \Illuminate\Validation\ValidationException
                 || $exception instanceof AuthenticationException) {
                 return null;
@@ -48,6 +48,31 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return $request->expectsJson() ? response()->json(['message' => $message], $status)
                 : response()->view('errors.evidence', ['message' => $message, 'status' => $status], $status);
+        });
+
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (!$request->is('maintenances', 'maintenances/*', 'trees/*/maintenances*')
+                || $exception instanceof \Illuminate\Validation\ValidationException
+                || $exception instanceof AuthenticationException) {
+                return null;
+            }
+            $status = $exception instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface ? $exception->getStatusCode() : 503;
+            $message = match ($status) {
+                403 => 'No tienes permiso para realizar esta operación con mantenimientos.',
+                404 => 'El mantenimiento o su árbol no está disponible.',
+                409 => 'El mantenimiento fue modificado por otro usuario.',
+                419 => 'La sesión del formulario caducó. Actualiza la página antes de continuar.',
+                429 => 'Has realizado demasiadas solicitudes. Espera antes de volver a intentarlo.',
+                default => 'No fue posible completar la operación. Consulta el mantenimiento antes de volver a intentarlo.',
+            };
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], $status);
+            }
+            if ($exception instanceof \App\Exceptions\StaleMaintenanceException) {
+                return response()->view('errors.409', ['exception' => $exception], $status);
+            }
+
+            return response()->view('maintenances.error', ['message' => $message, 'status' => $status], $status);
         });
         $exceptions->dontFlash(['password', 'password_confirmation', 'current_password', 'token', 'refresh_token', 'access_token']);
         $exceptions->shouldRenderJsonWhen(fn (Request $request) => $request->is('api/*') || $request->expectsJson());

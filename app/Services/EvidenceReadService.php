@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Evidence;
+use App\Models\Maintenance;
 use App\Models\Tree;
 use App\Models\TreeInspection;
 use App\Models\User;
@@ -28,9 +29,9 @@ class EvidenceReadService
     ) {
     }
 
-    public function authorizeUpload(User $actor, ?string $treeId, ?string $inspectionId): bool
+    public function authorizeUpload(User $actor, ?string $treeId, ?string $inspectionId, ?string $maintenanceId = null): bool
     {
-        $owner = $this->owners->resolve($actor, $treeId, $inspectionId);
+        $owner = $this->owners->resolve($actor, $treeId, $inspectionId, false, $maintenanceId);
         Gate::forUser($actor)->authorize('create', [Evidence::class, $owner]);
 
         return true;
@@ -45,9 +46,9 @@ class EvidenceReadService
         return $evidence;
     }
 
-    public function uploadForm(User $actor, ?string $treeId, ?string $inspectionId): array
+    public function uploadForm(User $actor, ?string $treeId, ?string $inspectionId, ?string $maintenanceId = null): array
     {
-        $owner = $this->owners->resolve($actor, $treeId, $inspectionId);
+        $owner = $this->owners->resolve($actor, $treeId, $inspectionId, false, $maintenanceId);
         Gate::forUser($actor)->authorize('create', [Evidence::class, $owner]);
 
         return ['organization' => $this->access->organization($actor), 'ownerLabel' => $this->label($owner),
@@ -57,9 +58,9 @@ class EvidenceReadService
                 'maxFiles' => config('evidence.max_files'), 'allowedMimes' => config('evidence.allowed_mimes')]];
     }
 
-    public function index(User $actor, ?string $treeId, ?string $inspectionId, array $input = []): array
+    public function index(User $actor, ?string $treeId, ?string $inspectionId, array $input = [], ?string $maintenanceId = null): array
     {
-        $owner = $this->owners->resolve($actor, $treeId, $inspectionId);
+        $owner = $this->owners->resolve($actor, $treeId, $inspectionId, false, $maintenanceId);
         Gate::forUser($actor)->authorize('viewAny', Evidence::class);
         $input = array_map(fn (mixed $value): mixed => is_string($value) && trim($value) === '' ? null : $value, $input);
         $filters = Validator::make($input, EvidenceInput::filters(), EvidenceInput::messages())->validate();
@@ -69,7 +70,7 @@ class EvidenceReadService
         if (isset($filters['date_from'], $filters['date_to']) && $filters['date_from'] > $filters['date_to']) {
             throw ValidationException::withMessages(['date_to' => 'La fecha final no puede preceder a la inicial.']);
         }
-        $records = $this->evidences->paginateForOwner($owner->organization_id, $treeId, $inspectionId, $filters);
+        $records = $this->evidences->paginateForOwner($owner->organization_id, $treeId, $inspectionId, $filters, $maintenanceId);
         $gallery = $this->projectGallery($actor, $owner, $records);
         $gallery['pagination'] = $records;
 
@@ -77,7 +78,7 @@ class EvidenceReadService
             'typeOptions' => $this->types->optionsForFilter(), 'trashedAllowed' => $this->access->allows($actor, 'evidences.restore')];
     }
 
-    public function gallery(User $actor, Tree|TreeInspection $owner): ?array
+    public function gallery(User $actor, Tree|TreeInspection|Maintenance $owner): ?array
     {
         if (!Gate::forUser($actor)->allows('view', $owner) || !Gate::forUser($actor)->allows('viewAny', Evidence::class)) {
             return null;
@@ -86,7 +87,9 @@ class EvidenceReadService
         $records = $this->evidences->summaryForOwner(
             $owner->organization_id,
             $owner instanceof Tree ? $owner->id : null,
-            $owner instanceof TreeInspection ? $owner->id : null
+            $owner instanceof TreeInspection ? $owner->id : null,
+            6,
+            $owner instanceof Maintenance ? $owner->id : null
         );
 
         return $this->projectGallery($actor, $owner, $records);
@@ -95,7 +98,7 @@ class EvidenceReadService
     public function show(User $actor, string $id): array
     {
         $evidence = $this->authorizeExisting($actor, $id);
-        $owner = $evidence->tree_id !== null ? $evidence->tree : $evidence->inspection;
+        $owner = $evidence->ownerRecord();
         $events = ['evidence.uploaded' => 'Fotografía adjuntada', 'evidence.updated' => 'Metadata corregida',
             'evidence.voided' => 'Evidencia anulada', 'evidence.restored' => 'Evidencia restaurada'];
         $revisions = $this->revisions->forEvidence($evidence->organization_id, $evidence->id)->map(fn ($revision) => [
@@ -113,18 +116,26 @@ class EvidenceReadService
 
     public function ownerUrl(Evidence $evidence): string
     {
-        return $this->owners->url($evidence->tree_id !== null ? $evidence->tree : $evidence->inspection);
+        return $this->owners->url($evidence->ownerRecord());
     }
 
-    private function projectGallery(User $actor, Tree|TreeInspection $owner, $records): array
+    private function projectGallery(User $actor, Tree|TreeInspection|Maintenance $owner, $records): array
     {
         $first = $records->first();
         // Toda la página comparte propietario y estado de anulación; resolver permisos una vez evita N+1.
         $abilities = $first ? $this->abilities($actor, $first) : [];
         $canUpload = Gate::forUser($actor)->allows('create', [Evidence::class, $owner]);
 
-        return ['domId' => 'evidence-gallery-'.$owner->id, 'title' => $owner instanceof Tree ? 'Fotografías del árbol' : 'Fotografías de la inspección',
-            'description' => $owner instanceof Tree ? 'Evidencias permanentes del individuo.' : 'Evidencias de esta visita, incluidas fauna e individuo completo.',
+        return ['domId' => 'evidence-gallery-'.$owner->id, 'title' => match (true) {
+            $owner instanceof Tree => 'Fotografías del árbol',
+            $owner instanceof TreeInspection => 'Fotografías de la inspección',
+            default => 'Fotografías del mantenimiento',
+        },
+            'description' => match (true) {
+                $owner instanceof Tree => 'Evidencias permanentes del individuo.',
+                $owner instanceof TreeInspection => 'Evidencias de esta visita, incluidas fauna e individuo completo.',
+                default => 'Evidencias de esta orden, incluidas fotografías antes y después de la intervención.',
+            },
             'ownerLabel' => $this->label($owner), 'ownerUrl' => $this->owners->url($owner),
             'items' => collect($records->items())->map(fn (Evidence $evidence) => $this->item($evidence, $abilities)), 'total' => $records->total(),
             'indexUrl' => route($this->routePrefix($owner).'.index', $owner->id),
@@ -159,13 +170,21 @@ class EvidenceReadService
             'checksum' => $evidence->checksum_sha256];
     }
 
-    private function label(Tree|TreeInspection $owner): string
+    private function label(Tree|TreeInspection|Maintenance $owner): string
     {
-        return $owner instanceof Tree ? 'Árbol '.$owner->code : 'Inspección '.$owner->inspection_date->format('Y-m-d').' · '.$owner->tree->code;
+        return match (true) {
+            $owner instanceof Tree => 'Árbol '.$owner->code,
+            $owner instanceof TreeInspection => 'Inspección '.$owner->inspection_date->format('Y-m-d').' · '.$owner->tree->code,
+            default => 'Mantenimiento '.$owner->code.' · '.$owner->tree->code,
+        };
     }
 
-    private function routePrefix(Tree|TreeInspection $owner): string
+    private function routePrefix(Tree|TreeInspection|Maintenance $owner): string
     {
-        return $owner instanceof Tree ? 'trees.evidences' : 'inspections.evidences';
+        return match (true) {
+            $owner instanceof Tree => 'trees.evidences',
+            $owner instanceof TreeInspection => 'inspections.evidences',
+            default => 'maintenances.evidences',
+        };
     }
 }
