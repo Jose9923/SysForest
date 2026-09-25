@@ -1,10 +1,10 @@
-# Motor compartido de filtros y mapa interno
+# Motor compartido de filtros y mapas
 
 ## Alcance de Fase 10
 
 El listado de árboles, el listado de árboles con su última inspección y el mapa consultan un único motor forestal. PostGIS resuelve la selección espacial y las agregaciones. No se reconstruyen coordenadas desde `coordinate_raw`, no se cargan todos los árboles para filtrarlos en PHP o JavaScript y no se crean puntos para registros sin geometría.
 
-El mapa es interno, con autenticación JWT, sesión vigente, correo verificado y autorización actual. Esta fase no introduce un portal público, exportaciones ni reportes finales. Los futuros consumidores podrán reutilizar los contratos descritos aquí, pero deberán autorizar su propio alcance y proyección.
+El mapa institucional de Fase 10 mantiene autenticación JWT, sesión vigente, correo verificado y autorización actual. Fase 11 añade el alcance publicado del mismo motor para el portal anónimo; su contrato específico está en [public-portal.md](public-portal.md) y en la sección de publicación de este documento. Las exportaciones y los reportes finales siguen pendientes de fases posteriores; cada consumidor deberá definir su alcance y proyección.
 
 ## Contratos y responsabilidades
 
@@ -13,7 +13,7 @@ El mapa es interno, con autenticación JWT, sesión vigente, correo verificado y
 | `TreeFilterInput` | Reglas comunes de tipos y límites para las entradas forestales. `TreeInput::filters()` conserva su API delegando en estas reglas. |
 | `TreeFilterService::validate(array): TreeFilterDTO` | Valida grupos de condiciones, fechas y rangos; devuelve únicamente los campos reconocidos. No decide permisos ni amplía un alcance. |
 | `TreeFilterDTO::fromValidated(array)` / `values()` | DTO inmutable de filtros previamente validados. No es una credencial de autorización. |
-| `App\DTOs\TreeReadScope` | Alcance obligatorio y explícito mediante `organization(UUID)`, `department(UUID[])` o `national()`. No contiene actor ni acepta que `NULL` signifique acceso nacional. |
+| `App\DTOs\TreeReadScope` | Alcance obligatorio y explícito mediante `organization(UUID)`, `department(UUID[])`, `national()` o `published()`. Este último aplica publicación explícita, no permisos nacionales. No contiene actor ni acepta que `NULL` signifique acceso nacional. |
 | `MapAccessService` | Autoriza el actor y el alcance en cada petición; exige permisos actuales de árboles y organizaciones. Los permisos adicionales se comprueban para inspecciones y mantenimientos. |
 | `MapScopeRepository::applyTo(Builder, TreeReadScope, alias='trees')` | Añade `EXISTS` sobre organizaciones y jerarquía territorial activas, sin multiplicar las filas del árbol. |
 | `TreeQueryRepository::query(TreeReadScope, TreeFilterDTO): Builder` | Selecciona `trees.*`, aplica alcance y filtros y expone el alias `latest_inspection`. No pagina ni establece el orden de presentación. |
@@ -27,7 +27,7 @@ Los filtros distintos se combinan con AND. Las condiciones ANY/ALL son la excepc
 
 ## Claves de selección forestal
 
-Todas son opcionales. Los UUID de catálogo sirven para consultar datos históricos y no se reemplazan por nombres o códigos visibles.
+Las tablas siguientes describen el contrato institucional. Todas las claves son opcionales. Sus UUID de catálogo sirven para consultar datos históricos. En el portal público se mantienen los nombres de campo, pero las referencias llegan como códigos públicos y se resuelven internamente; sus exclusiones y diferencias figuran más adelante.
 
 | Clave | Tipo / valores | Criterio |
 | --- | --- | --- |
@@ -53,7 +53,7 @@ Las referencias taxonómicas y de catálogo inactivas conservan su capacidad de 
 
 ## Última inspección y ANY/ALL
 
-El motor incorpora siempre `LEFT JOIN LATERAL (...) AS latest_inspection`. La subconsulta correlaciona `organization_id` y `tree_id`, ordena por `inspection_date DESC, created_at DESC, id DESC` y toma una sola fila. Primero elige la última visita global del individuo y después aplica los filtros; nunca escoge una visita anterior porque esa visita sí coincida con la búsqueda.
+El motor incorpora siempre `LEFT JOIN LATERAL (...) AS latest_inspection`. La subconsulta correlaciona `organization_id` y `tree_id`, ordena por `inspection_date DESC, created_at DESC, id DESC` y toma una sola fila. En los alcances institucionales primero elige la última visita global del individuo y después aplica los filtros; nunca escoge una visita anterior porque esa visita sí coincida con la búsqueda.
 
 El mismo orden se conserva en la consulta histórica y en la carga por lote de `latestInspection`. Una corrección no altera `created_at`; el UUID deshace el último empate. Un árbol sin inspecciones permanece en los listados sin criterios de inspección. Si se pide una condición, fecha o medición, debe existir una última visita que la satisfaga.
 
@@ -128,10 +128,31 @@ Los metadatos `total`, `georeferenced` y `without_geometry` describen el conjunt
 
 La extensión usa las geometrías reales filtradas. Si no existen puntos, puede recurrir a geometrías territoriales reales autorizadas; si tampoco existen, conserva el estado vacío y la vista general configurada. No se obtienen coordenadas desde nombres de municipios, cadenas GPS o ejemplos de documentos. La búsqueda del mapa opera sobre todos los individuos del conjunto autorizado y devuelve hasta 20 resultados por página. Un resultado sin ubicación conserva geometry=NULL y permite abrir su ficha, sin centrar el mapa ni crear un punto ficticio; si hay filtro de radio, solo pueden coincidir individuos con geometría.
 
+## Alcance publicado incorporado en Fase 11
+
+`TreeReadScope::published()` es independiente de JWT y de `TenantContext`. `MapScopeRepository` exige organización publicada y activa con jerarquía territorial activa. `PublicVisibilityRepository` añade árbol publicado, ausencia de anulación y participación en un inventario publicado, activo y distinto de `draft`. Las campañas cerradas o archivadas pueden conservar historia pública. No se cambia la semántica institucional de campañas.
+
+`PublicTreeFilterService` valida una lista cerrada, resuelve códigos con `PublicReferenceRepository` y reutiliza `TreeFilterService` para rangos, grupos de condiciones y booleanos. El DTO público contiene `trees`, `publicValues` y `map`. Los formularios y enlaces conservan códigos; los UUID internos no se serializan. Los territorios usan códigos compuestos país/departamento/municipio; la organización usa `public_code` y la campaña `public_code~inventory.code`.
+
+Las diferencias públicas son explícitas:
+
+- `q` solo consulta código y nombres comunes/científico. Los conteos no pueden usarse para buscar textos operativos privados.
+- La subconsulta LATERAL limita primero a inspecciones publicadas cuya campaña, si existe, es pública elegible. Mantiene `inspection_date DESC, created_at DESC, id DESC`. Después aplica fechas, medidas y ANY/ALL a esa única visita. Cuando todas las visitas son publicables, coincide con el resultado institucional.
+- `inventory_id` exige publicación de la campaña seleccionada dentro del mismo `EXISTS` de participación. No redefine la última visita.
+- El `EXISTS` de mantenimiento restringe `executed|verified` en la misma orden que satisface tipo y estado. La consulta pública no ofrece prioridad ni pendientes.
+- Se rechazan `scope`, `tree_id`, papelera e inclusión de anulados, campos desconocidos y estados de mantenimiento no publicables.
+- El orden admite `code`, `common_name`, `scientific_name`, `municipality` y `latest_inspection_date`, con `asc|desc`; las páginas públicas admiten 1..1000. El nombre común mostrado y ordenado prioriza el principal, después nombre e ID; el orden de relaciones del mapa privado se conserva.
+
+`PublicTreeRepository` compone el motor común para tabla, indicadores, ficha e historiales. `PublicMapService` usa el mismo `MapTreeRepository` para puntos, clusters, calor, extensión y búsqueda. El radio se aplica también a tabla e indicadores; la caja limita el dibujo. La geometría, precisión de parámetros, unidades métricas, ausencia de punto y límites de transporte mantienen las reglas espaciales anteriores.
+
+Los Resources públicos proyectan campos autorizados y referencias por códigos; nunca se devuelve un modelo completo. Las fotos se resuelven por ULID y revalidan el árbol y el propietario publicable. Véase [public-portal.md](public-portal.md) para rutas, filtros, errores y ejemplos sin credenciales.
+
 ## Verificación y límites conservados
 
 El motor compartido pasó `TreeFilterEngineTest`: **27 pruebas y 239 aserciones**, con semántica de última visita, ANY/ALL, campañas, referencias inactivas, filtros booleanos, búsquedas literales, scopes institucionales y órdenes de mantenimiento. Los resultados históricos de Fase 6 y Fase 7 permanecen en sus reportes; no se suman aquí como pruebas nuevas.
 
-`MapPerformanceTest` prepara comparaciones de 1 y 100 marcadores y un conjunto transaccional de 4096 puntos para `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`. No se afirma un conteo medido ni un plan verificado hasta terminar su ejecución coordinada. El artefacto optativo usa `SYSFOREST_MAP_EXPLAIN=1`; los datos pertenecen exclusivamente a `sysforest_testing` y se revierten. No se deshabilita el recorrido secuencial para demostrar GiST.
+`MapPerformanceTest` registró durante Fase 10 73 consultas para 1 y para 100 marcadores completos, y un plan natural con `trees_geometry_gist` sobre 4096 puntos. Los resultados y sus límites están en [maps.md](maps.md) y [phase-10-performance.json](phase-10-performance.json). El artefacto optativo usa `SYSFOREST_MAP_EXPLAIN=1`; los datos pertenecen exclusivamente a `sysforest_testing` y se revierten. No se deshabilita el recorrido secuencial para demostrar GiST.
+
+`PublicTreeEngineTest` y `PublicPortalPerformanceTest` verifican el alcance publicado y su reutilización espacial. Los resultados de Fase 11 se documentan por separado; no se suman ni sustituyen las cifras históricas anteriores.
 
 Se conservan las deudas previas: certificación del levantamiento, transformaciones de datum, altitud, corrección diferencial y validación territorial avanzada. La pertenencia institucional a un municipio no certifica que el punto esté dentro de su polígono. No se añaden geometrías territoriales de ejemplo, inferencias ambientales, importación ni reportes finales. Véanse [georeferencing.md](georeferencing.md), [tree-domain.md](tree-domain.md) y [maintenances.md](maintenances.md).

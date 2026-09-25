@@ -13,6 +13,8 @@
         @can('users.view')<a class="{{ request()->is('users*') ? 'selected' : '' }}" href="{{ route('users.index') }}"><span aria-hidden="true">▤</span> Usuarios globales</a>@endcan
         @can('catalogs.view')<a class="{{ request()->is('admin/catalogs*') ? 'selected' : '' }}" href="{{ route('catalogs.dashboard') }}"><span aria-hidden="true">❧</span> Catálogos forestales</a>@endcan
         <a class="{{ request()->is('profile*') ? 'selected' : '' }}" href="{{ route('profile.show') }}"><span aria-hidden="true">○</span> Mi perfil</a>
+        @can('publication.manage')<a class="{{ request()->is('publication*') ? 'selected' : '' }}" href="{{ route('publication.index') }}"><span aria-hidden="true">◎</span> Publicación ciudadana</a>@endcan
+        <a href="{{ route('public.home') }}"><span aria-hidden="true">♧</span> Portal público</a>
         <a href="/"><span aria-hidden="true">◉</span> Estado del sistema</a>
     </nav>
     <div class="sidebar-note"><span class="dot"></span> Entorno local <p>El territorio es el punto de partida.</p></div>

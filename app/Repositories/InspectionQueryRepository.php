@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\DTOs\TreeReadScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,10 @@ use InvalidArgumentException;
 /** Una definición de orden y predicados para visitas históricas y última inspección del árbol. */
 class InspectionQueryRepository
 {
+    public function __construct(private PublicVisibilityRepository $visibility)
+    {
+    }
+
     public function ordered(Builder|QueryBuilder $query, string $alias = 'tree_inspections'): Builder|QueryBuilder
     {
         $this->requireAlias($alias);
@@ -19,13 +24,18 @@ class InspectionQueryRepository
         return $query->orderByDesc($alias.'.inspection_date')->orderByDesc($alias.'.created_at')->orderByDesc($alias.'.id');
     }
 
-    /** Primero elige la visita global; los filtros se aplican exclusivamente fuera de este LIMIT. */
-    public function latestForTreeSubquery(): QueryBuilder
+    /** Publicación delimita el universo antes del LIMIT; los filtros forestales siempre van después. */
+    public function latestForTreeSubquery(?TreeReadScope $scope = null): QueryBuilder
     {
-        return $this->ordered(DB::table('tree_inspections')
+        $query = DB::table('tree_inspections')
             ->whereColumn('tree_inspections.organization_id', 'trees.organization_id')
             ->whereColumn('tree_inspections.tree_id', 'trees.id')
-            ->select('tree_inspections.*'))->limit(1);
+            ->select('tree_inspections.*');
+        if ($scope?->kind === 'published') {
+            $this->visibility->inspection($query);
+        }
+
+        return $this->ordered($query)->limit(1);
     }
 
     public function applyFilters(Builder $query, array $filters, string $alias = 'tree_inspections'): void

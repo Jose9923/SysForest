@@ -1,8 +1,8 @@
-# Mapa interno de SYSFOREST
+# Mapas de SYSFOREST
 
 ## Alcance y componentes
 
-Fase 10 incorpora un mapa privado en `/map` para consultar individuos, agruparlos y representar densidad. Utiliza exclusivamente `Tree.geometry`, un punto 2D con SRID 4326, y los datos persistidos de cada dominio. No reconstruye puntos desde texto GPS ni modifica árboles, inspecciones, mantenimientos o evidencias. El portal público y Fase 11 quedan fuera de esta entrega.
+Fase 10 incorpora un mapa privado en `/map` para consultar individuos, agruparlos y representar densidad. Utiliza exclusivamente `Tree.geometry`, un punto 2D con SRID 4326, y los datos persistidos de cada dominio. No reconstruye puntos desde texto GPS ni modifica árboles, inspecciones, mantenimientos o evidencias. Fase 11 incorpora `/portal/map` sobre ese mismo motor, con publicación explícita y proyecciones anónimas. Las secciones institucionales de este documento conservan el contrato privado; las diferencias públicas están documentadas más adelante y en [public-portal.md](public-portal.md).
 
 Se mantiene el flujo `Controller → Service → Repository → Model`. Blade recibe datos preparados; JavaScript representa capas y coordina peticiones. La autorización, las condiciones forestales, las distancias y los conteos se resuelven en el backend. El contrato completo de criterios está en [map-filters.md](map-filters.md).
 
@@ -113,6 +113,20 @@ El límite de marcadores no reduce los conteos. La agregación de densidad conse
 
 El backend mantiene UTC. `date_from` y `date_to` comparan fechas de inspección `AAAA-MM-DD` inclusivas, sin convertirlas en instantes locales. El desempate conserva los timestamps almacenados; Fase 10 no cambia las reglas históricas de fechas o mediciones.
 
+## Reutilización pública en Fase 11
+
+`PublicMapService` recibe filtros de `PublicTreeFilterService` y consulta `MapTreeRepository` con `TreeReadScope::published()`. No recibe actor ni activa `TenantContext`. `PublicReferenceRepository` adapta las opciones a códigos públicos sobre `MapOptionRepository`; no expone UUID institucionales.
+
+El alcance exige organización y árbol publicados, jerarquía territorial activa y participación en un inventario publicado, activo y fuera de borrador. Excluye anulados. La última inspección pública conserva el orden determinista, pero primero restringe las visitas a las publicadas y sus campañas elegibles. El mantenimiento se restringe a ejecutado/verificado dentro del mismo `EXISTS` que satisface los filtros. La búsqueda pública usa únicamente código y nombres; los textos internos de ubicación y legado permanecen fuera incluso de los predicados.
+
+Las rutas son `GET /portal/map` y `GET /api/public/v1/map/{trees,clusters,heat,extent,search}`, con opciones en `GET /api/public/v1/options/{kind}`. La apertura de una ficha pública es un enlace GET por `organization.public_code` y `Tree.code`, sin selección institucional. El flujo POST/CSRF de apertura privada permanece vigente para `/map`.
+
+El mapa público reutiliza caja y radio PostGIS, precisión de bindings, extensión real, malla acotada, advertencias territoriales y límites de 2.000 puntos. La tabla pública y sus indicadores comparten el universo forestal filtrado y el radio; el viewport limita solamente el dibujo. La búsqueda conserva árboles sin geometría sin colocar puntos ficticios. El nombre común público prioriza el principal y luego nombre/ID para mantener coherencia con el orden de la tabla.
+
+`PublicTreeMapResource` devuelve código compuesto público, punto, nombres, estado, emplazamiento, fecha de última inspección publicada y URL pública. Los conteos y celdas no incluyen registros privados. No devuelve UUID, usuarios, GPS técnico, número legado, notas ni evidencias originales. Los detalles de inspecciones y fotos están en Resources separados con sus propias listas de campos.
+
+Las páginas/API públicas usan `no-store`, límites por IP y errores genéricos. No usan sesión ni cookies JWT y no amplían las concesiones del mapa interno. Las bibliotecas y teselas de la sección siguiente se reutilizan; la política de publicación no depende de filtros del navegador. Véase [public-portal.md](public-portal.md) para las cinco banderas, identificadores, rutas, ejemplos, fotografías y pruebas.
+
 ## Bibliotecas y mapa base
 
 Las distribuciones se sirven desde `public/vendor`; no se resuelven versiones ni se descargan scripts desde CDN al abrir el mapa. `SOURCE*.json` conserva procedencia, versiones, hashes y avisos incluidos.
@@ -169,4 +183,4 @@ Estos comandos no implican que las suites se hayan ejecutado nuevamente al redac
 
 La pertenencia institucional a un municipio no certifica que un punto caiga dentro de un polígono oficial. Se conservan los límites de [georreferenciación](georeferencing.md), [inspecciones](inspections.md) y [mantenimientos](maintenances.md). El mapa no añade notificaciones de mantenimiento, reglas de fenología o multirramificación, anulación de inspecciones, importaciones, exportaciones ni informes finales. Tampoco cambia la deuda documentada de fijación de dependencia JWT.
 
-No hay geometrías territoriales inventadas ni descarga nacional de individuos. La selección compartida podrá reutilizarse en módulos futuros, pero sus permisos, proyecciones y aprobación quedan fuera de Fase 10.
+No hay geometrías territoriales inventadas ni descarga nacional de individuos. Fase 11 ya reutiliza la selección compartida para el alcance publicado. Las exportaciones y reportes futuros aún requieren alcance, proyección y aprobación propios; no se implementan como parte del portal.

@@ -29,7 +29,7 @@ class TreeInput
 
     public static function identityGuards(): array
     {
-        return array_fill_keys(['id', 'organization_id', 'code', 'created_by', 'updated_by', 'created_at', 'updated_at', 'geometry', 'deleted_at', 'deleted_by', 'restored_by', 'restored_at', 'family_id', 'inventory_id', 'coordinate_format'], ['prohibited']);
+        return array_fill_keys(['is_public', 'publication_version', 'id', 'organization_id', 'code', 'created_by', 'updated_by', 'created_at', 'updated_at', 'geometry', 'deleted_at', 'deleted_by', 'restored_by', 'restored_at', 'family_id', 'inventory_id', 'coordinate_format'], ['prohibited']);
     }
 
     public static function locationRules(): array

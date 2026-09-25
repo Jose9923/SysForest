@@ -30,7 +30,7 @@ class MapOptionRepository
         'maintenance_types' => M\MaintenanceType::class,
     ];
 
-    public function __construct(private MapScopeRepository $scopes)
+    public function __construct(private MapScopeRepository $scopes, private PublicVisibilityRepository $visibility)
     {
     }
 
@@ -41,7 +41,7 @@ class MapOptionRepository
                 ->whereHas('country', fn (Builder $country) => $country->where('active', true));
             if ($scope->kind === 'department') {
                 $query->whereIn('id', $scope->departmentIds);
-            } elseif ($scope->kind === 'organization') {
+            } elseif (in_array($scope->kind, ['organization', 'published'], true)) {
                 $query->whereHas('municipalities', fn (Builder $municipalities) => $municipalities
                     ->whereIn('id', $this->scopes->organizations($scope)->select('municipality_id')));
             }
@@ -54,7 +54,7 @@ class MapOptionRepository
             if (!empty($filters['department_id'])) {
                 $query->where('department_id', $filters['department_id']);
             }
-            if ($scope->kind === 'organization') {
+            if (in_array($scope->kind, ['organization', 'published'], true)) {
                 $query->whereIn('id', $this->scopes->organizations($scope)->select('municipality_id'));
             }
 
@@ -74,6 +74,9 @@ class MapOptionRepository
         }
         if ($kind === 'inventories') {
             $query = M\Inventory::query()->whereIn('organization_id', $this->query('organizations', $scope, $filters)->select('organizations.id'));
+            if ($scope->kind === 'published') {
+                $this->visibility->inventory($query);
+            }
             if (!empty($filters['organization_id'])) {
                 $query->where('organization_id', $filters['organization_id']);
             }

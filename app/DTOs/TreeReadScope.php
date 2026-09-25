@@ -49,6 +49,12 @@ final readonly class TreeReadScope
         return new self('national', null, []);
     }
 
+    /** Universo anónimo sujeto a publicación explícita; no concede permisos privados. */
+    public static function published(): self
+    {
+        return new self('published', null, []);
+    }
+
     private static function requireUuid(string $id): void
     {
         if (! Str::isUuid($id)) {

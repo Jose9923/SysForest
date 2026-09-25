@@ -30,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         // El guard conserva identidad solo durante la petición validada por JWT.
         Auth::viaRequest('jwt-context', fn (Request $request) => null);
         Gate::define('maps.view', fn (User $actor) => app(\App\Services\MapAccessService::class)->canView($actor));
+        Gate::define('publication.manage', fn (User $actor) => app(\App\Services\PublicationAccessService::class)->canManage($actor));
         Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(\App\Models\Tree::class, \App\Policies\TreePolicy::class);
         Gate::policy(\App\Models\TreeInspection::class, \App\Policies\TreeInspectionPolicy::class);
@@ -61,6 +62,11 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('memberships.manage', fn (User $actor) => Gate::forUser($actor)->allows('memberships.update'));
         Gate::define('catalogs.view', fn (User $actor) => $permissions()->allowsCatalogView($actor));
         Gate::define('catalogs.manage', fn (User $actor) => $permissions()->allowsNational($actor, 'catalogs.manage'));
+
+        foreach (config('public-portal.rate_limits') as $surface => $limit) {
+            RateLimiter::for('public.'.$surface, fn (Request $request) => Limit::perMinute((int) $limit)
+                ->by('public:'.$surface.':'.hash('sha256', (string) $request->ip())));
+        }
 
         RateLimiter::for('maps.read', fn (Request $request) => Limit::perMinute((int) config('maps.rate_limit', 180))
             ->by('map:'.($request->user()?->id ?? $request->ip())));

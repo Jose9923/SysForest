@@ -11,9 +11,9 @@ export const FILTER_KEYS = Object.freeze([
 export const ARRAY_KEYS = Object.freeze(['physical_condition_ids', 'phytosanitary_condition_ids']);
 export const MODES = Object.freeze(['points', 'clusters', 'heat']);
 
-export function cleanFilters(source = {}) {
+export function cleanFilters(source = {}, keys = FILTER_KEYS) {
     const result = {};
-    for (const key of FILTER_KEYS) {
+    for (const key of keys) {
         const value = source[key];
         if (ARRAY_KEYS.includes(key)) {
             if (Array.isArray(value)) {
@@ -28,43 +28,43 @@ export function cleanFilters(source = {}) {
     return result;
 }
 
-export function filtersFromEntries(entries) {
+export function filtersFromEntries(entries, keys = FILTER_KEYS) {
     const filters = {};
     for (const [name, value] of entries) {
         const key = name.endsWith('[]') ? name.slice(0, -2) : name;
-        if (!FILTER_KEYS.includes(key)) continue;
+        if (!keys.includes(key)) continue;
         if (ARRAY_KEYS.includes(key)) (filters[key] ??= []).push(value);
         else filters[key] = value;
     }
-    return cleanFilters(filters);
+    return cleanFilters(filters, keys);
 }
 
-export function filterParams(filters) {
+export function filterParams(filters, keys = FILTER_KEYS) {
     const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(cleanFilters(filters))) {
+    for (const [key, value] of Object.entries(cleanFilters(filters, keys))) {
         if (Array.isArray(value)) value.forEach(item => params.append(`${key}[]`, item));
         else params.set(key, value);
     }
     return params;
 }
 
-export function readUrlState(search) {
+export function readUrlState(search, keys = FILTER_KEYS) {
     const params = new URLSearchParams(search);
     const rawMode = params.get('render_mode');
-    return {filters: filtersFromEntries(params.entries()), mode: MODES.includes(rawMode) ? rawMode : 'clusters'};
+    return {filters: filtersFromEntries(params.entries(), keys), mode: MODES.includes(rawMode) ? rawMode : 'clusters'};
 }
 
-export function shareableUrl(href, filters, mode) {
+export function shareableUrl(href, filters, mode, keys = FILTER_KEYS) {
     const url = new URL(href);
-    const params = filterParams(filters);
+    const params = filterParams(filters, keys);
     if (MODES.includes(mode) && mode !== 'clusters') params.set('render_mode', mode);
     url.search = params.toString();
     url.hash = '';
     return `${url.pathname}${url.search}`;
 }
 
-export function filterCount(filters) {
-    return Object.keys(cleanFilters(filters)).filter(key => !['condition_mode', 'scope'].includes(key)).length;
+export function filterCount(filters, keys = FILTER_KEYS) {
+    return Object.keys(cleanFilters(filters, keys)).filter(key => !['condition_mode', 'scope'].includes(key)).length;
 }
 
 export function viewportBounds(bounds, zoom) {

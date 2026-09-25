@@ -11,7 +11,7 @@ RUN apt-get update \
         libpng-dev libjpeg62-turbo-dev libfreetype6-dev libwebp-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
-        pdo_pgsql intl mbstring zip gd bcmath pcntl opcache \
+        pdo_pgsql intl mbstring zip gd exif bcmath pcntl opcache \
     && pecl install "redis-${PHPREDIS_VERSION}" \
     && docker-php-ext-enable redis \
     && groupadd --gid "${APP_GID}" sysforest \

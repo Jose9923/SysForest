@@ -13,6 +13,10 @@ use InvalidArgumentException;
 
 class MapScopeRepository
 {
+    public function __construct(private PublicVisibilityRepository $visibility)
+    {
+    }
+
     /** Consulta interna: el Service debe autorizar previamente el alcance y el actor. */
     public function organizations(TreeReadScope $scope): Builder
     {
@@ -26,6 +30,8 @@ class MapScopeRepository
         } elseif ($scope->kind === 'department') {
             $query->whereHas('municipality', fn (Builder $municipality) => $municipality
                 ->whereIn('department_id', $scope->departmentIds));
+        } elseif ($scope->kind === 'published') {
+            $query->where('organizations.is_public', true)->whereNotNull('organizations.public_code');
         } elseif ($scope->kind !== 'national') {
             throw new InvalidArgumentException('El alcance de lectura no es válido.');
         }
@@ -44,6 +50,9 @@ class MapScopeRepository
             ->whereColumn('organizations.id', $treeAlias.'.organization_id');
 
         $query->whereExists($organizations->toBase());
+        if ($scope->kind === 'published') {
+            $this->visibility->tree($query, $treeAlias);
+        }
     }
 
     /** La navegación del mapa excluye árboles anulados incluso para administradores. */

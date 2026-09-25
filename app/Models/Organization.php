@@ -22,7 +22,8 @@ class Organization extends Model
 
     protected function casts(): array
     {
-        return ['active' => 'boolean', 'type' => OrganizationType::class, 'settings' => 'array'];
+        return ['active' => 'boolean', 'is_public' => 'boolean', 'publication_version' => 'integer',
+            'type' => OrganizationType::class, 'settings' => 'array'];
     }
 
     public function municipality(): BelongsTo

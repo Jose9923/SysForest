@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Http\Controllers as C;
 use Illuminate\Support\Facades\Route;
 
+require __DIR__.'/public.php';
+
 // Disponibilidad técnica independiente de Redis y de las sesiones de usuario.
 Route::withoutMiddleware('web')->group(function (): void {
     Route::get('/', [C\SystemStatusController::class, 'index'])->name('system.home');
@@ -50,6 +52,7 @@ Route::middleware('identity.headers')->group(function (): void {
             Route::post('/users/{user}/roles', [C\UserController::class, 'roles'])->whereNumber('user')->name('users.roles');
             Route::middleware('tenant.context')->group(function (): void {
                 require __DIR__.'/forestry.php';
+                require __DIR__.'/publication.php';
                 Route::get('/organizations/{organization}', [C\OrganizationController::class, 'show'])->whereUuid('organization')->name('organizations.show');
                 Route::get('/organizations/{organization}/edit', [C\OrganizationController::class, 'edit'])->whereUuid('organization')->name('organizations.edit');
                 Route::put('/organizations/{organization}', [C\OrganizationController::class, 'update'])->whereUuid('organization')->name('organizations.update');

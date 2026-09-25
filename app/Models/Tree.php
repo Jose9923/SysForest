@@ -23,6 +23,7 @@ class Tree extends Model
     protected function casts(): array
     {
         return [
+            'is_public' => 'boolean', 'publication_version' => 'integer',
             'current_status' => TreeStatus::class, 'is_protected' => 'boolean', 'is_heritage' => 'boolean',
             'lock_version' => 'integer', 'accuracy_m' => 'decimal:3', 'captured_at' => 'immutable_datetime',
             'restored_at' => 'immutable_datetime', 'created_by' => 'integer', 'updated_by' => 'integer',

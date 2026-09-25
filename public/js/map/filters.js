@@ -1,4 +1,4 @@
-import {cleanFilters, filtersFromEntries, ARRAY_KEYS} from './state.js';
+import {cleanFilters, filtersFromEntries, ARRAY_KEYS, FILTER_KEYS} from './state.js';
 import {LatestRequest, requestUrl} from './api.js';
 
 const CASCADES = Object.freeze({
@@ -9,8 +9,8 @@ const CASCADES = Object.freeze({
 });
 
 export class MapFilters {
-    constructor({form, config, getAppliedFilters, onApply, onSearch, onError, document, origin, $}) {
-        Object.assign(this, {form, config, getAppliedFilters, onApply, onSearch, onError, document, origin, $});
+    constructor({form, config, getAppliedFilters, onApply, onSearch, onError, document, origin, $, filterKeys = FILTER_KEYS, createRequest = () => new LatestRequest()}) {
+        Object.assign(this, {form, config, getAppliedFilters, onApply, onSearch, onError, document, origin, $, filterKeys, createRequest});
         this.requests = [];
         this.synchronizing = false;
     }
@@ -32,9 +32,9 @@ export class MapFilters {
         const search = this.document.querySelector('[data-map-search]');
         if (search) this.remoteSelect(search, true);
     }
-    values() { return filtersFromEntries(new FormData(this.form).entries()); }
+    values() { return filtersFromEntries(new FormData(this.form).entries(), this.filterKeys); }
     remoteSelect(select, search = false) {
-        const request = new LatestRequest();
+        const request = this.createRequest();
         this.requests.push(request);
         const endpoint = search ? this.config.endpoints.search : `${this.config.endpoints.options.replace(/\/$/, '')}/${select.dataset.mapOptions}`;
         this.$(select).select2({
@@ -45,7 +45,7 @@ export class MapFilters {
                 data: params => ({term: params.term || '', page: params.page || 1}),
                 transport: (params, success, failure) => {
                     const filters = search ? this.getAppliedFilters() : this.values();
-                    request.get(requestUrl(endpoint, this.origin, filters, params.data)).then(data => {
+                    request.get(requestUrl(endpoint, this.origin, filters, params.data, this.filterKeys)).then(data => {
                         if (data) success(data);
                     }).catch(error => { this.onError(error.message); failure(error); });
                     return {abort: () => request.cancel()};
@@ -59,10 +59,11 @@ export class MapFilters {
     cancelLookups() { this.requests.forEach(request => request.cancel()); }
     sync(filters) {
         this.synchronizing = true;
-        const values = cleanFilters(filters);
+        const values = cleanFilters(filters, this.filterKeys);
         for (const element of this.form.elements) {
             if (!element.name) continue;
             const key = element.name.replace(/\[\]$/, '');
+            if (!this.filterKeys.includes(key)) continue;
             const value = values[key] ?? (ARRAY_KEYS.includes(key) ? [] : key === 'condition_mode' ? 'any' : '');
             if (element.type === 'checkbox') element.checked = value === element.value;
             else if (element.tagName === 'SELECT') {
@@ -78,7 +79,7 @@ export class MapFilters {
     }
     resetSearch() { this.$('[data-map-search]').val(null).trigger('change.select2'); }
     describe(filters) {
-        return Object.entries(cleanFilters(filters)).filter(([key]) => !['condition_mode', 'scope'].includes(key)).map(([key, value]) => {
+        return Object.entries(cleanFilters(filters, this.filterKeys)).filter(([key]) => !['condition_mode', 'scope'].includes(key)).map(([key, value]) => {
             const element = this.form.elements.namedItem(ARRAY_KEYS.includes(key) ? `${key}[]` : key);
             const name = element?.dataset.filterLabel || key;
             let text = String(value);

@@ -52,11 +52,11 @@ UpdateEvidenceRequest, VoidEvidenceRequest y RestoreEvidenceRequest exigen lock_
 
 Anular guarda deleted_at/deleted_by/deletion_notes y oculta la evidencia de la galería normal. El archivo no se borra. Solo quien puede restaurar accede a la lista de anuladas y a sus originales, además de autorización del propietario. Restore comprueba que el archivo exista y preserva UUID, ruta y cargador; si falta, devuelve un error en español y no cambia el registro. No se reutilizan deletion_reasons de Tree.
 
-No hay miniaturas persistidas: las tarjetas solicitan el original autorizado con lazy loading. Descarga utiliza attachment con UUID seguro; vista utiliza inline con MIME calculado, nosniff, CSP restrictiva y Cache-Control private/no-store. No hay ETag/304 que evada autorización, URLs físicas en HTML ni symlink público. Los detalles del protocolo de almacenamiento, compensación, MIME, límites, memoria y persistencia están en [file-storage.md](file-storage.md).
+En la galería institucional no hay miniaturas persistidas: sus tarjetas solicitan el original autorizado con lazy loading. La variante pública de Fase 11 se describe al final. Descarga utiliza attachment con UUID seguro; vista utiliza inline con MIME calculado, nosniff, CSP restrictiva y Cache-Control private/no-store. No hay ETag/304 que evada autorización, URLs físicas en HTML ni symlink público. Los detalles del protocolo de almacenamiento, compensación, MIME, límites, memoria y persistencia están en [file-storage.md](file-storage.md).
 
 ## Evolución acotada
 
-No hay is_public ni portal público en Fase 8: el estado seguro es privado. Una fase posterior deberá definir publicación explícita y variantes saneadas; su DTO público excluirá uploaded_by, email, disk/path, EXIF, auditoría y metadata privada. Cambiar el disk lógico evidences a S3-compatible implica configurar el adaptador y copiar las claves relativas; no reescribir Tree/Evidence. La dependencia S3 no está instalada todavía.
+Fase 8 se entregó sin is_public ni portal público: todos sus originales eran privados. Fase 11 incorpora la publicación explícita y variantes saneadas descritas más adelante, conservando esa entrega privada y excluyendo uploaded_by, email, disk/path, EXIF, auditoría y metadata privada del portal. Cambiar el disk lógico evidences a S3-compatible implica configurar el adaptador y copiar las claves relativas; no reescribir Tree/Evidence. La dependencia S3 no está instalada todavía.
 
 La anulación formal de una inspección continúa pendiente de definición.
 
@@ -81,3 +81,19 @@ Las firmas anteriores conservan su orden. Las APIs agregan el nuevo argumento op
 | forOwners | `(organizationId, treeIds = [], inspectionIds = [], filters = [], maintenanceIds = [])` |
 
 Para una orden se envían treeId e inspectionId como NULL. gallery admite el Model Maintenance y proyecta rutas maintenances.evidences.*, con retorno a maintenances.show. maintenance_id enviado como atributo del formulario se rechaza: sólo el recurso de la ruta autorizada establece el propietario. Las rutas privadas de descarga y vista por UUID de Evidence permanecen iguales. Las pruebas de integración nuevas están en MaintenanceEvidenceTest; la verificación conjunta se registra en el informe de Fase 9.
+
+## Publicación explícita: extensión de Fase 11
+
+La incorporación del portal no cambia el propietario, la identidad técnica ni la entrega privada del original. La migración 000017 añade is_public=false, publication_version, public_id y public_caption a Evidence. Los registros existentes y las cargas nuevas permanecen privados; los formularios ordinarios rechazan esos atributos. PublicationService es el único flujo administrativo de publicación y exige publication.manage, tenant vigente y versión. OrganizationAdmin opera en su entidad; SuperAdmin selecciona entidad; Official y DepartmentAdmin no publican.
+
+Public_id es un ULID independiente del UUID interno: se reserva al publicar por primera vez y no cambia al ocultar/restaurar. Public_caption es una descripción explícita distinta de caption; no se rellena automáticamente con texto privado. Las modificaciones de publicación se auditan completas en publication_revisions, con FK real, actor, tenant, fecha y before/after, además de un evento mínimo publication.changed. La auditoría privada evidence_revisions de Fase 8 mantiene sus eventos originales.
+
+La foto solo aparece si ella y toda su cadena son publicables. Tree requiere organización publicada/activa, flag propio, ausencia de SoftDelete y participación en una campaña pública disponible fuera de Borrador. Una foto de inspección exige además la publicación de esa visita y de su campaña asociada, cuando existe. Una foto de mantenimiento exige orden ejecutada/verificada y no anulada. Publicar Tree o ejecutar una orden nunca publica automáticamente sus fotografías.
+
+GET /portal/media/{public_id} entrega exclusivamente un WebP reencodeado desde píxeles: GD retira metadatos originales y aplica orientación EXIF JPEG. No entrega rutas físicas, nombre original, autores, SHA privado ni EXIF/XMP/IPTC. Original y checksum permanecen sin cambios. La fecha pública es la fecha declarada de captured_at; no se extrae de EXIF. PublicEvidenceResource incluye URL, tipo, public_caption, fecha y alt; width/height son null porque la orientación puede intercambiar las dimensiones originales.
+
+El derivado se cachea en archivos privados del servidor, con namespace específico y caducidad por defecto de una hora. Cada GET revalida publicación antes de consultar caché y antes del 304. ETag deriva de los bytes públicos y Cache-Control usa public,max-age=0,must-revalidate. Ocultar la foto o cualquiera de sus propietarios provoca 404 en la siguiente solicitud, incluso si el navegador envía un ETag anterior. Los originales siguen teniendo private,no-store y autorización institucional; no se habilita storage público.
+
+Cambiar active o anular oculta el recurso por la cadena; no borra la autorización guardada. Restaurar un propietario puede recuperar visibilidad de hijos aún autorizados, pero no restaura fotografías anuladas independientemente. Una autorización de publicación debe retirarse expresamente cuando se quiera revocarla más allá del estado temporal del propietario.
+
+La política completa de campos y propietarios está en [public-data-policy.md](public-data-policy.md). La anulación formal de inspecciones sigue pendiente; el portal no inventa ese ciclo.

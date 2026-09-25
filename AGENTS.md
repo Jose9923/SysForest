@@ -1,8 +1,9 @@
 # SYSFOREST: acuerdos de implementación
 
-La Fase 9 fue aprobada y cerrada en el commit d71c3dd, tras verificar 1088 pruebas PHP, 4868 aserciones, 7 pruebas JavaScript y PSR-12 en 404 archivos. El usuario autorizó la Fase 10: mapa general interno con Leaflet, puntos, clusters, calor de densidad y filtros espaciales/forestales.
-Trabajar en codex/phase-10. No iniciar Fase 11 ni portal público, importaciones o reportes finales.
-Conservar el checkpoint F9; dejar los cambios de Fase 10 sin commit final hasta entregar el reporte y recibir revisión.
+La Fase 10 fue aprobada y cerrada en el commit 599728f, tras verificar 1251 pruebas PHP, 6277 aserciones, 37 pruebas JavaScript y PSR-12 en 432 archivos. El usuario autorizó la Fase 11: portal público SIGAU, consulta anónima, mapa, filtros y ficha pública del árbol.
+Trabajar en codex/phase-11. No iniciar Fase 12, importaciones, exportaciones ni reportes finales.
+Conservar el checkpoint F10; dejar los cambios de Fase 11 sin commit final hasta entregar el reporte y recibir revisión.
+La API pública usa proyecciones explícitas, publicación privada por defecto y el motor común de filtros. No depende de JWT, usuarios ni TenantContext. Nunca expone funcionarios, auditoría, textos internos ni archivos originales con metadatos.
 Consolidar el motor de filtros de árboles, última inspección determinista y ANY/ALL. El mapa amplio usa scopes explícitos de lectura sin ampliar TenantContext ni permisos de escritura. PostGIS es la fuente espacial; nunca insertar datos productivos ficticios para llenar el mapa.
 Los catálogos nacionales no llevan organization_id; solo SUPER_ADMIN administra, los demás roles consultan.
 La semántica forestal del Excel tiene prioridad sobre el mockup. No inventar equivalencias ni valores sin respaldo.

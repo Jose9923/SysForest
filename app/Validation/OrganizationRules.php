@@ -39,6 +39,7 @@ class OrganizationRules
             'email' => ['nullable', 'email:rfc', 'max:255'],
             'phone' => ['nullable', 'string', 'max:40'],
             'active' => ['required', 'boolean'],
+            'is_public' => ['prohibited'], 'publication_version' => ['prohibited'], 'public_code' => ['prohibited'],
             'id' => ['prohibited'],
             'organization_id' => ['prohibited'],
             'user_id' => ['prohibited'],

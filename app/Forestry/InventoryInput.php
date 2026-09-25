@@ -20,6 +20,7 @@ final class InventoryInput
             'status' => ['required', 'string', Rule::in(array_keys(InventoryStatus::options()))],
             'active' => ['required', 'boolean'],
             'lock_version' => $updating ? ['required', 'integer', 'min:1', 'max:2147483647'] : ['prohibited'],
+            'is_public' => ['prohibited'], 'publication_version' => ['prohibited'],
             'organization_id' => ['prohibited'], 'created_by' => ['prohibited'], 'updated_by' => ['prohibited'],
             'created_at' => ['prohibited'], 'updated_at' => ['prohibited'], 'id' => ['prohibited'],
         ];

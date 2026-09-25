@@ -23,6 +23,7 @@ class Evidence extends Model
     protected function casts(): array
     {
         return [
+            'is_public' => 'boolean', 'publication_version' => 'integer',
             'size_bytes' => 'integer', 'width' => 'integer', 'height' => 'integer',
             'uploaded_by' => 'integer', 'updated_by' => 'integer', 'deleted_by' => 'integer',
             'lock_version' => 'integer', 'metadata' => 'array',

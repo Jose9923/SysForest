@@ -15,7 +15,7 @@ class EvidenceInput
     {
         return array_fill_keys(['id', 'organization_id', 'tree_id', 'tree_inspection_id', 'maintenance_id', 'disk', 'path',
             'original_name', 'mime_type', 'extension', 'size_bytes', 'width', 'height', 'checksum_sha256',
-            'metadata', 'uploaded_by', 'updated_by', 'deleted_by', 'deleted_at', 'created_at', 'updated_at', 'is_public'], ['prohibited']);
+            'metadata', 'uploaded_by', 'updated_by', 'deleted_by', 'deleted_at', 'created_at', 'updated_at', 'is_public', 'publication_version', 'public_id', 'public_caption'], ['prohibited']);
     }
 
     public static function metadataRules(): array

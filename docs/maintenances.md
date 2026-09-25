@@ -35,7 +35,7 @@ Notas, tipo, prioridad, programación y asignación se corrigen en estados abier
 
 El responsable debe pertenecer a la organización, con membresía vigente, cuenta activa/verificada y rol OFFICIAL u ORGANIZATION_ADMIN activo. Una referencia histórica puede conservarse al corregir otros datos; asignar, iniciar y ejecutar vuelven a verificar su elegibilidad. SuperAdmin no recibe una membresía artificial para poder asignarse una orden.
 
-Hay siete permisos nuevos, 43 en total:
+Fase 9 añadió siete permisos y cerró con 43 en total; la extensión de publicación de Fase 11 no modifica esos siete permisos:
 
 | Rol | Consultar | Crear/editar/avanzar | Verificar | Anular/restaurar registro |
 | --- | --- | --- | --- | --- |
@@ -68,6 +68,20 @@ Las imágenes utilizan el mismo flujo privado F8, tipos EVD_MAINTENANCE_BEFORE y
 
 ## Límites de esta entrega
 
-No hay generación automática de órdenes, planificación recurrente, calendario externo, cuadrillas, costes, notificaciones por correo de mantenimiento ni alteraciones automáticas del árbol. Los disparadores y destinatarios de notificaciones quedan por definir; la infraestructura Mail/Queue existente no envía avisos nuevos por esta fase. No se implementan mapas generales, portal público, reportes ni exportaciones. Cualquier regla futura de reapertura, verificación independiente o prioridad con plazos deberá incorporarse explícitamente y con auditoría.
+No hay generación automática de órdenes, planificación recurrente, calendario externo, cuadrillas, costes, notificaciones por correo de mantenimiento ni alteraciones automáticas del árbol. Los disparadores y destinatarios de notificaciones quedan por definir; la infraestructura Mail/Queue existente no envía avisos nuevos por esta fase. Fase 9 no implementó mapas generales, portal público, reportes ni exportaciones; Fase 10 añadió el mapa privado y Fase 11 incorpora la consulta pública acotada descrita abajo. Reportes y exportaciones permanecen fuera de esta entrega. Cualquier regla futura de reapertura, verificación independiente o prioridad con plazos deberá incorporarse explícitamente y con auditoría.
 
 Resultados ejecutados y estado de servicios: [Fase 9](phase-9.md). Almacenamiento y límites de imágenes: [file-storage.md](file-storage.md).
+
+## Consulta ciudadana: extensión de Fase 11
+
+El portal añade un resumen mínimo de intervenciones de árboles publicables. Una orden solo participa si está executed o verified, no está anulada y su Tree satisface toda la cadena de publicación: organización activa/publicada, árbol autorizado sin SoftDelete y participación en al menos una campaña publicable disponible fuera de Borrador.
+
+No se añade is_public a Maintenance ni se altera su flujo de estados. El resumen público incluye nombre del tipo, estado/etiqueta y fecha real de ejecución; no incluye código operativo, UUID, responsable, autores, prioridad, programación, notas, resultado, motivos, revisiones ni historial de transiciones. Pasar una orden de un árbol público a executed/verified la hace elegible para ese resumen. Pending, scheduled, assigned, in_progress y cancelled permanecen fuera del portal.
+
+Los filtros públicos de tipo/estado restringen dentro del mismo EXISTS a órdenes ejecutadas/verificadas, evitando inferir programación privada a partir de puntos o conteos. No se crean consultas alternativas de lógica forestal ni cambios automáticos de estado o ubicación del árbol.
+
+Las fotografías continúan siendo Evidence independientes: cada una nace privada y necesita autorización propia. Incluso una Evidence autorizada no se entrega anónimamente si su orden no está ejecutada/verificada o está anulada, o si su árbol deja de ser público. La ruta pública usa un derivado sin metadatos; las rutas institucionales conservan originales y permisos. Anular la orden oculta también sus fotos públicas, sin borrarlas ni retirar necesariamente la autorización individual guardada.
+
+Publication.manage, incorporado por Fase 11 para OrganizationAdmin/SuperAdmin en una entidad explícita, no cambia los siete permisos operativos de Maintenance ni concede publicación a Official. La verificación administrativa de una intervención no publica por sí sola fotografías ni textos internos.
+
+Reglas completas: [política de datos públicos](public-data-policy.md) y [evidencias](evidences.md). Las notificaciones por correo, calendarios y demás límites operativos de Fase 9 continúan pendientes.

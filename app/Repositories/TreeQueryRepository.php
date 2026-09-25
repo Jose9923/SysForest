@@ -13,7 +13,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 /** Motor único de selección: los Services autorizan; sus consumidores agregan proyección y límites. */
 class TreeQueryRepository
 {
-    public function __construct(private MapScopeRepository $scopes, private InspectionQueryRepository $inspections)
+    public function __construct(private MapScopeRepository $scopes, private InspectionQueryRepository $inspections, private PublicVisibilityRepository $visibility)
     {
     }
 
@@ -22,7 +22,7 @@ class TreeQueryRepository
     {
         $query = Tree::query()->select('trees.*');
         $this->scopes->applyTo($query, $scope);
-        $query->leftJoinLateral($this->inspections->latestForTreeSubquery(), 'latest_inspection');
+        $query->leftJoinLateral($this->inspections->latestForTreeSubquery($scope), 'latest_inspection');
         if ($filters->get('trashed') === 'only') {
             $query->onlyTrashed();
         }
@@ -37,18 +37,26 @@ class TreeQueryRepository
         }
         $this->territoryFilters($query, $filters);
         $this->taxonomyFilters($query, $filters);
-        $this->searchFilters($query, $filters);
+        $this->searchFilters($query, $filters, $scope);
         if ($filters->has('inventory_id')) {
-            $query->whereExists(fn (QueryBuilder $inventory) => $inventory->selectRaw('1')->from('inventory_trees as matched_inventory')
-                ->whereColumn('matched_inventory.organization_id', 'trees.organization_id')
-                ->whereColumn('matched_inventory.tree_id', 'trees.id')
-                ->where('matched_inventory.inventory_id', $filters->get('inventory_id')));
+            $query->whereExists(function (QueryBuilder $inventory) use ($filters, $scope): void {
+                $inventory->selectRaw('1')->from('inventory_trees as matched_inventory')
+                    ->whereColumn('matched_inventory.organization_id', 'trees.organization_id')
+                    ->whereColumn('matched_inventory.tree_id', 'trees.id')
+                    ->where('matched_inventory.inventory_id', $filters->get('inventory_id'));
+                if ($scope->kind === 'published') {
+                    $inventory->join('inventories as matched_public_inventory', fn ($join) => $join
+                        ->on('matched_public_inventory.id', '=', 'matched_inventory.inventory_id')
+                        ->on('matched_public_inventory.organization_id', '=', 'matched_inventory.organization_id'));
+                    $this->visibility->inventory($inventory, 'matched_public_inventory');
+                }
+            });
         }
         $inspectionFilters = $filters->values();
         // En este motor la campaña y tree_id pertenecen al individuo, incluso si aún no tiene visitas.
         unset($inspectionFilters['inventory_id'], $inspectionFilters['tree_id']);
         $this->inspections->applyFilters($query, $inspectionFilters, 'latest_inspection');
-        $this->maintenanceFilters($query, $filters);
+        $this->maintenanceFilters($query, $filters, $scope);
 
         return $query;
     }
@@ -59,6 +67,17 @@ class TreeQueryRepository
         if ($filters->get('sort') === 'scientific_name') {
             $query->leftJoin('species as sorted_species', 'sorted_species.id', '=', 'trees.species_id')
                 ->orderBy('sorted_species.scientific_name', $direction);
+        } elseif ($filters->get('sort') === 'common_name') {
+            $query->orderBy(\Illuminate\Support\Facades\DB::table('species_common_names')
+                ->select('name')->whereColumn('species_id', 'trees.species_id')
+                ->orderByDesc('is_primary')->orderBy('name')->orderBy('id')->limit(1), $direction);
+        } elseif ($filters->get('sort') === 'municipality') {
+            $query->leftJoin('organizations as sorted_organization', 'sorted_organization.id', '=', 'trees.organization_id')
+                ->leftJoin('municipalities as sorted_municipality', 'sorted_municipality.id', '=', 'sorted_organization.municipality_id')
+                ->orderBy('sorted_municipality.name', $direction);
+        } elseif ($filters->get('sort') === 'latest_inspection_date') {
+            // La dirección proviene exclusivamente de la lista cerrada anterior.
+            $query->orderByRaw('latest_inspection.inspection_date '.$direction.' NULLS LAST');
         } else {
             $query->orderBy('trees.'.($filters->get('sort') === 'created_at' ? 'created_at' : 'code'), $direction);
         }
@@ -89,29 +108,36 @@ class TreeQueryRepository
         }
     }
 
-    private function searchFilters(Builder $query, TreeFilterDTO $filters): void
+    private function searchFilters(Builder $query, TreeFilterDTO $filters, TreeReadScope $scope): void
     {
         if ($filters->has('code')) {
             $query->where('trees.code', 'ilike', $this->literalSearch($filters->get('code')));
         }
         if ($filters->has('q')) {
             $term = $this->literalSearch($filters->get('q'));
-            $query->where(fn (Builder $query) => $query->where('trees.code', 'ilike', $term)
-                ->orWhere('trees.external_number', 'ilike', $term)->orWhere('trees.location_description', 'ilike', $term)
-                ->orWhereHas('species', fn (Builder $species) => $species->where('scientific_name', 'ilike', $term)
-                    ->orWhereHas('commonNames', fn (Builder $names) => $names->where('name', 'ilike', $term))));
+            $query->where(function (Builder $query) use ($term, $scope): void {
+                $query->where('trees.code', 'ilike', $term);
+                if ($scope->kind !== 'published') {
+                    $query->orWhere('trees.external_number', 'ilike', $term)->orWhere('trees.location_description', 'ilike', $term);
+                }
+                $query->orWhereHas('species', fn (Builder $species) => $species->where('scientific_name', 'ilike', $term)
+                    ->orWhereHas('commonNames', fn (Builder $names) => $names->where('name', 'ilike', $term)));
+            });
         }
     }
 
-    private function maintenanceFilters(Builder $query, TreeFilterDTO $filters): void
+    private function maintenanceFilters(Builder $query, TreeFilterDTO $filters, TreeReadScope $scope): void
     {
         if (!$filters->hasMaintenanceFilters()) {
             return;
         }
-        $query->whereExists(function (QueryBuilder $maintenance) use ($filters): void {
+        $query->whereExists(function (QueryBuilder $maintenance) use ($filters, $scope): void {
             $maintenance->selectRaw('1')->from('maintenances as matched_maintenance')
                 ->whereColumn('matched_maintenance.organization_id', 'trees.organization_id')
                 ->whereColumn('matched_maintenance.tree_id', 'trees.id')->whereNull('matched_maintenance.deleted_at');
+            if ($scope->kind === 'published') {
+                $this->visibility->maintenance($maintenance, 'matched_maintenance');
+            }
             foreach (['maintenance_type_id' => 'maintenance_type_id', 'maintenance_status' => 'status', 'maintenance_priority' => 'priority'] as $key => $column) {
                 if ($filters->has($key)) {
                     $maintenance->where('matched_maintenance.'.$column, $filters->get($key));

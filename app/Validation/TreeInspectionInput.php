@@ -28,7 +28,7 @@ class TreeInspectionInput
             $rules[$field] = ['sometimes', 'array', 'max:100'];
             $rules[$field.'.*'] = ['required', 'uuid', 'distinct:strict'];
         }
-        foreach (['id', 'organization_id', 'tree_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'deleted_at'] as $field) {
+        foreach (['is_public', 'publication_version', 'id', 'organization_id', 'tree_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'deleted_at'] as $field) {
             $rules[$field] = ['prohibited'];
         }
 

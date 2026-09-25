@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\PublicExceptionRenderer::class)->render($exception, $request));
         $exceptions->render(function (Throwable $exception, Request $request) {
             if (!$request->is('evidences/*', 'trees/*/evidences*', 'inspections/*/evidences*', 'maintenances/*/evidences*')
                 || $exception instanceof \Illuminate\Validation\ValidationException

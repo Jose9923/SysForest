@@ -10,9 +10,9 @@ export function debounce(callback, delay = 300, timers = globalThis) {
     return debounced;
 }
 
-export function requestUrl(endpoint, origin, filters, extra = {}) {
+export function requestUrl(endpoint, origin, filters, extra = {}, filterKeys) {
     const url = sameOriginUrl(endpoint, origin);
-    const params = filterParams(filters);
+    const params = filterParams(filters, filterKeys);
     for (const [key, value] of Object.entries(extra)) {
         if (value !== undefined && value !== null && value !== '' && key !== 'fullWorld') params.set(key, String(value));
     }
@@ -22,10 +22,11 @@ export function requestUrl(endpoint, origin, filters, extra = {}) {
 
 /** Cada canal cancela su petición previa y descarta resultados incluso si el transporte ignora abort. */
 export class LatestRequest {
-    constructor(fetcher = globalThis.fetch.bind(globalThis)) {
+    constructor(fetcher = globalThis.fetch.bind(globalThis), options = {}) {
         this.fetcher = fetcher;
         this.sequence = 0;
         this.controller = null;
+        this.options = {credentials: 'same-origin', public: false, ...options};
     }
     cancel() {
         this.sequence += 1;
@@ -39,14 +40,15 @@ export class LatestRequest {
         this.controller = controller;
         try {
             const response = await this.fetcher(url, {
-                signal: controller.signal, credentials: 'same-origin',
+                signal: controller.signal, credentials: this.options.credentials,
                 headers: {'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest'},
             });
             if (sequence !== this.sequence) return null;
-            if (response.redirected) throw new Error('La sesión cambió. Recarga la página para continuar.');
+            if (response.redirected) throw new Error(this.options.public ? 'La consulta pública no está disponible. Inténtalo nuevamente.' : 'La sesión cambió. Recarga la página para continuar.');
             const data = await response.json();
             if (sequence !== this.sequence) return null;
             if (!response.ok) {
+                if (this.options.public && [401, 403, 419].includes(response.status)) throw new Error('La consulta pública no está disponible. Inténtalo nuevamente.');
                 if (response.status === 401 || response.status === 419) throw new Error('Tu sesión venció. Recarga la página para continuar.');
                 if (response.status === 403) throw new Error('No tienes permiso para consultar este alcance del mapa.');
                 const messages = Object.values(data.errors ?? {}).flat().filter(value => typeof value === 'string');

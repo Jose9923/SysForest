@@ -20,6 +20,7 @@ class Inventory extends Model
     protected function casts(): array
     {
         return [
+            'is_public' => 'boolean', 'publication_version' => 'integer',
             'starts_at' => 'immutable_date', 'ends_at' => 'immutable_date',
             'status' => InventoryStatus::class, 'active' => 'boolean', 'lock_version' => 'integer',
         ];

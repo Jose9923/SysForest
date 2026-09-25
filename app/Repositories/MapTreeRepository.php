@@ -61,8 +61,12 @@ class MapTreeRepository
             ->select(['trees.id', 'trees.code', 'trees.species_id', 'trees.placement_id', 'trees.current_status'])
             ->selectRaw('ST_X(trees.geometry) AS longitude, ST_Y(trees.geometry) AS latitude, latest_inspection.inspection_date AS latest_inspection_date')
             ->with(['species:id,scientific_name',
-                'species.commonNames' => fn ($names) => $names->select('id', 'species_id', 'name')->orderBy('name')->orderBy('id'),
+                'species.commonNames' => fn ($names) => $names->select('id', 'species_id', 'name')
+                    ->when($scope->kind === 'published', fn ($query) => $query->orderByDesc('is_primary'))
+                    ->orderBy('name')->orderBy('id'),
                 'placement:id,name'])
+            ->when($scope->kind === 'published', fn (Builder $query) => $query
+                ->addSelect('trees.organization_id')->with('organization:id,public_code,name'))
             ->orderBy('trees.code')->orderBy('trees.id')->limit($limit)->get();
     }
 
@@ -78,8 +82,12 @@ class MapTreeRepository
             ->select(['trees.id', 'trees.code', 'trees.species_id', 'trees.placement_id', 'trees.current_status'])
             ->selectRaw('ST_X(trees.geometry) AS longitude, ST_Y(trees.geometry) AS latitude, NULL AS latest_inspection_date')
             ->with(['species:id,scientific_name',
-                'species.commonNames' => fn ($names) => $names->select('id', 'species_id', 'name')->orderBy('name')->orderBy('id'),
+                'species.commonNames' => fn ($names) => $names->select('id', 'species_id', 'name')
+                    ->when($scope->kind === 'published', fn ($query) => $query->orderByDesc('is_primary'))
+                    ->orderBy('name')->orderBy('id'),
                 'placement:id,name'])
+            ->when($scope->kind === 'published', fn (Builder $query) => $query
+                ->addSelect('trees.organization_id')->with('organization:id,public_code,name'))
             ->orderBy('trees.code')->orderBy('trees.id')->offset(($page - 1) * 20)->limit(21)->get();
     }
 

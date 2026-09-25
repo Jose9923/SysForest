@@ -1,12 +1,12 @@
-# SYSFOREST — Fase 10
+# SYSFOREST — Fase 11
 
 **Inventario y gestión forestal inteligente.**
 
 SYSFOREST incorpora inventarios institucionales, individuos forestales permanentes, ubicación PostGIS e inspecciones históricas con dasonomía, condiciones, fenología, fauna, evidencias fotográficas privadas y órdenes manuales de mantenimiento, sobre los catálogos, la autenticación y el territorio aprobados. La interfaz se renderiza con Blade. El piloto es la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia.
 
-El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Inventory, Tree, TreeInspection, Evidence y Maintenance están implementados. La Fase 10 incorpora el mapa general interno; el Portal Público de Fase 11 queda pendiente de aprobación.
+El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Inventory, Tree, TreeInspection, Evidence y Maintenance están implementados. La Fase 10 incorpora el mapa general interno y la Fase 11 añade el portal público SIGAU con publicación explícita. La Fase 12 aún no se ha iniciado.
 
-El [reporte A–AL de Fase 10](docs/phase-10.md) documenta la entrega actual y sus verificaciones. Consulta la [arquitectura del mapa](docs/maps.md) y el [motor compartido de filtros](docs/map-filters.md). El [reporte de Fase 9](docs/phase-9.md) conserva su evidencia histórica. Consulta el contrato de [mantenimientos](docs/maintenances.md). El [reporte A–AN de Fase 8](docs/phase-8.md) conserva su evidencia histórica. Consulta [evidencias](docs/evidences.md) y [almacenamiento privado](docs/file-storage.md). El [reporte de Fase 7](docs/phase-7.md) conserva su evidencia histórica. Consulta [inspecciones](docs/inspections.md) y [dasonomía](docs/dendrometry.md) para sus contratos. El checkpoint de Fase 7 es **8fcb2d5**, validado con 752 pruebas y 3.207 aserciones; su [reporte histórico](docs/phase-7.md) permanece disponible. El cierre de Fase 8 es **f750f66**, validado nuevamente con 949 pruebas y 4.229 aserciones. El checkpoint aprobado de Fase 9 es **d71c3dd**, con 1.088 pruebas y 4.868 aserciones. Los cambios actuales se conservan sin commit final en `codex/phase-10`. La [matriz de 94 campos del Excel](docs/excel-field-mapping.md) y la [trazabilidad de catálogos](docs/forestry-catalogs.md) conservan las fuentes. El [reporte de Fase 4](docs/phase-4.md) mantiene su evidencia histórica. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
+El [reporte A–AN de Fase 11](docs/phase-11.md) documenta la entrega actual y sus verificaciones. El [reporte A–AL de Fase 10](docs/phase-10.md) conserva la evidencia histórica del mapa interno. Consulta la [arquitectura del mapa](docs/maps.md) y el [motor compartido de filtros](docs/map-filters.md). El [reporte de Fase 9](docs/phase-9.md) conserva su evidencia histórica. Consulta el contrato de [mantenimientos](docs/maintenances.md). El [reporte A–AN de Fase 8](docs/phase-8.md) conserva su evidencia histórica. Consulta [evidencias](docs/evidences.md) y [almacenamiento privado](docs/file-storage.md). El [reporte de Fase 7](docs/phase-7.md) conserva su evidencia histórica. Consulta [inspecciones](docs/inspections.md) y [dasonomía](docs/dendrometry.md) para sus contratos. El checkpoint de Fase 7 es **8fcb2d5**, validado con 752 pruebas y 3.207 aserciones; su [reporte histórico](docs/phase-7.md) permanece disponible. El cierre de Fase 8 es **f750f66**, validado nuevamente con 949 pruebas y 4.229 aserciones. El checkpoint aprobado de Fase 9 es **d71c3dd**, con 1.088 pruebas y 4.868 aserciones. El checkpoint aprobado de Fase 10 es **599728f**, con 1.251 pruebas PHP, 6.277 aserciones y 37 pruebas JavaScript. Los cambios actuales se conservan sin commit final en `codex/phase-11`. La [matriz de 94 campos del Excel](docs/excel-field-mapping.md) y la [trazabilidad de catálogos](docs/forestry-catalogs.md) conservan las fuentes. El [reporte de Fase 4](docs/phase-4.md) mantiene su evidencia histórica. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
 
 ## Entorno local
 
@@ -59,7 +59,7 @@ Carga el piloto territorial/institucional, los permisos, los catálogos y su inv
 docker compose exec app php artisan db:seed --class=DatabaseSeeder
 ~~~
 
-`DatabaseSeeder` es idempotente: conserva las identidades del piloto y sincroniza cuatro roles y 43 permisos. Los seeders forestales agregan códigos ausentes y conservan IDs, nombres, orden y desactivaciones administrativas. Crea el inventario «Inventario Forestal Institucional - Piloto SysForest», con código PILOT-SYSFOREST, sin generar árboles ficticios ni cuentas de usuario.
+`DatabaseSeeder` es idempotente: conserva las identidades del piloto y sincroniza cuatro roles y 44 permisos. Los seeders forestales agregan códigos ausentes y conservan IDs, nombres, orden y desactivaciones administrativas. Crea el inventario «Inventario Forestal Institucional - Piloto SysForest», con código PILOT-SYSFOREST, sin generar árboles ficticios ni cuentas de usuario.
 
 Para habilitar las cuatro cuentas de revisión local, ejecuta explícitamente:
 
@@ -120,6 +120,16 @@ Abre [Mapa general](http://localhost:8080/map) con una sesión válida. Funciona
 Puntos, Clusters y Mapa de calor utilizan `Tree.geometry` y comparten filtros con las bandejas. Los filtros de condición actual se aplican sobre la última inspección determinista; ALL exige todas las condiciones en esa visita. Los contadores distinguen total filtrado, árboles en el encuadre y árboles sin ubicación. El calor muestra densidad, no un índice de riesgo. Los límites de payload y contornos se anuncian en pantalla.
 
 La base inicial puede estar vacía: no se han creado árboles productivos de demostración. Configuración de mapas en `config/maps.php`; bibliotecas locales y controles responsive descritos en [maps.md](docs/maps.md). Ningún endpoint cartográfico interno se ofrece al público.
+
+## Portal público SIGAU
+
+Abre [Portal público](http://localhost:8080/portal), [Mapa público](http://localhost:8080/portal/map) o [Inventario público](http://localhost:8080/portal/trees) sin iniciar sesión. El ciudadano consulta árboles publicados, indicadores filtrados, fichas, inspecciones autorizadas, fotografías limpias de metadatos y resúmenes de mantenimientos ejecutados/verificados.
+
+La publicación es **privada por defecto**. Un administrador institucional selecciona su organización y entra a [Publicación ciudadana](http://localhost:8080/publication): autoriza la organización, una campaña activa fuera de Borrador y los árboles correspondientes. Inspecciones y fotografías necesitan autorización propia. Ocultar cualquier propietario retira sus dependientes en la siguiente consulta, incluso si una imagen estaba en caché. SUPER_ADMIN también requiere selección institucional; OFFICIAL y DEPARTMENT_ADMIN no publican.
+
+Las rutas `/api/public/v1/...` son independientes de las privadas y no resuelven JWT, usuarios ni tenant. Sus filtros usan códigos públicos y reutilizan el motor consolidado. Las fichas se identifican por código público de organización + código del árbol. No se publican notas internas, datos del personal ni archivos originales. La base operativa puede estar vacía y no recibe fixtures de prueba.
+
+Consulta [guía del portal](docs/public-portal.md), [política de datos públicos](docs/public-data-policy.md) y [reporte A–AN de Fase 11](docs/phase-11.md). Las exportaciones y los reportes finales corresponden a Fase 12 y todavía no están implementados.
 
 ## Servicios
 
@@ -199,7 +209,7 @@ docker compose exec app php artisan test --fail-on-warning
 
 `phpunit.xml` fija `APP_ENV=testing`, `DB_DATABASE=sysforest_testing` y activa `SYSFOREST_RUN_INTEGRATION=1`. Se utiliza PostgreSQL/PostGIS real. `PostgresTestCase` verifica entorno, driver y nombre de base antes de abrir transacciones y revierte los fixtures. No ejecutes suites concurrentes contra la misma base de pruebas.
 
-Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 10](docs/phase-10.md); estos comandos describen el procedimiento, no un resultado ejecutado.
+Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 11](docs/phase-11.md); estos comandos describen el procedimiento, no un resultado ejecutado.
 
 Revisa el formato:
 
@@ -262,7 +272,10 @@ Los volúmenes no sustituyen las copias de seguridad. Los enlaces de los correos
 | [Fase 7](docs/phase-7.md) | Reporte histórico de inspecciones. |
 | [Fase 8](docs/phase-8.md) | Reporte histórico A–AN de evidencias. |
 | [Fase 9](docs/phase-9.md) | Reporte histórico de mantenimientos. |
-| [Fase 10](docs/phase-10.md) | Reporte A–AL del mapa, pruebas y rendimiento. |
+| [Fase 10](docs/phase-10.md) | Reporte histórico A–AL del mapa interno. |
+| [Fase 11](docs/phase-11.md) | Reporte A–AN del portal público y validaciones. |
+| [Portal público](docs/public-portal.md) | Rutas anónimas, filtros, API y operación. |
+| [Política pública](docs/public-data-policy.md) | Clasificación de campos, publicación y privacidad. |
 | [Mapa interno](docs/maps.md) | Endpoints, PostGIS, Leaflet, clusters, calor y seguridad. |
 | [Filtros compartidos](docs/map-filters.md) | DTO, última inspección, ANY/ALL, territorio y mantenimiento. |
 | [Mantenimientos](docs/maintenances.md) | Órdenes manuales, estados, responsables, auditoría y fotografías. |
@@ -284,4 +297,4 @@ Los volúmenes no sustituyen las copias de seguridad. Los enlaces de los correos
 | [Arquitectura](docs/architecture.md) y [modelo de datos](docs/database.md) | Diseño conceptual aprobado y módulos previstos. |
 | [Fase 2](docs/phase-2.md) y [Fase 3](docs/phase-3.md) | Evidencia histórica de infraestructura y fundamento institucional. |
 
-El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales llegan hasta Fase 10; los diagramas conceptuales de módulos posteriores no implican que estén implementados.
+El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales llegan hasta Fase 11; los diagramas conceptuales de módulos posteriores no implican que estén implementados.

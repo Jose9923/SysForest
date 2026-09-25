@@ -19,7 +19,7 @@ class ImageMetadataService
         'image/webp' => ['webp', IMAGETYPE_WEBP, ['webp']],
     ];
 
-    /** No infiere fecha, GPS ni cámara: el runtime actual no incorpora EXIF. */
+    /** La carga no extrae fecha, GPS ni cámara; EXIF se utiliza solo al orientar el derivado público. */
     public function inspect(UploadedFile $file, string $errorKey = 'file'): array
     {
         if (! $file->isValid()) {

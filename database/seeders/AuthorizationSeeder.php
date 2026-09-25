@@ -21,6 +21,7 @@ class AuthorizationSeeder extends Seeder
                 'organizations.view' => 'Consultar organizaciones dentro del alcance autorizado.',
                 'organizations.create' => 'Crear una organización desde la administración nacional.',
                 'organizations.manage' => 'Modificar la configuración institucional autorizada.',
+                'publication.manage' => 'Administrar la publicación explícita de la organización seleccionada.',
                 'memberships.view' => 'Consultar la administración de miembros de una organización.',
                 'memberships.create' => 'Agregar miembros mediante un flujo autorizado.',
                 'memberships.update' => 'Actualizar miembros de la organización autorizada.',
@@ -73,7 +74,7 @@ class AuthorizationSeeder extends Seeder
                 'SUPER_ADMIN' => ['national', array_keys($catalog)],
                 'DEPARTMENT_ADMIN' => ['department', ['organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'inspections.view', 'evidences.view', 'maintenances.view']],
                 'ORGANIZATION_ADMIN' => ['organization', [
-                    'organizations.view', 'organizations.manage', 'memberships.view', 'memberships.create',
+                    'organizations.view', 'organizations.manage', 'publication.manage', 'memberships.view', 'memberships.create',
                     'memberships.update', 'memberships.activate', 'memberships.deactivate', 'users.view',
                     'users.invite', 'territories.view', 'roles.assign-organization', 'catalogs.view',
                     'inventories.view', 'inventories.create', 'inventories.update',

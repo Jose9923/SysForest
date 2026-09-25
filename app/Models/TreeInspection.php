@@ -22,6 +22,7 @@ class TreeInspection extends Model
     protected function casts(): array
     {
         return [
+            'is_public' => 'boolean', 'publication_version' => 'integer',
             'inspection_date' => 'immutable_date', 'flowering_date' => 'immutable_date', 'fruiting_date' => 'immutable_date',
             'cap_cm' => 'decimal:6', 'total_height_m' => 'decimal:6', 'commercial_height_m' => 'decimal:6',
             'crown_x_m' => 'decimal:6', 'crown_y_m' => 'decimal:6', 'form_factor' => 'decimal:6',

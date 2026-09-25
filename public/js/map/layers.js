@@ -1,5 +1,5 @@
 import {LayerSlot, heatPoints, pointLatLng, validBounds} from './state.js';
-import {treePopup} from './popup.js';
+import {treePopupContent} from './popup-content.js';
 
 function colorFor(status, legend) {
     const color = legend.find(item => item.status === status)?.color;
@@ -7,10 +7,17 @@ function colorFor(status, legend) {
 }
 
 export class MapLayers {
-    constructor({map, L, Supercluster, heatLayer, heatGradient, legend, document, csrf, origin, onPoints}) {
-        Object.assign(this, {map, L, Supercluster, heatLayer, heatGradient, legend, document, csrf, origin, onPoints});
+    constructor({map, L, Supercluster, heatLayer, heatGradient, legend, document, csrf, origin, onPoints, popupRenderer = treePopupContent}) {
+        Object.assign(this, {map, L, Supercluster, heatLayer, heatGradient, legend, document, csrf, origin, onPoints, popupRenderer});
         this.slot = new LayerSlot(layer => map.removeLayer(layer));
         this.index = null;
+        map.on?.('popupopen', ({popup}) => {
+            const close = popup.getElement()?.querySelector('.leaflet-popup-close-button');
+            if (close) {
+                close.setAttribute('title', 'Cerrar ficha');
+                close.setAttribute('aria-label', 'Cerrar ficha');
+            }
+        });
     }
     clear() { this.slot.clear(); this.index = null; }
     render(mode, collection) {
@@ -47,7 +54,7 @@ export class MapLayers {
         dot.setAttribute('aria-hidden', 'true');
         const icon = this.L.divIcon({className: 'map-tree-marker', html: dot, iconSize: [26, 26], iconAnchor: [13, 13]});
         return this.L.marker(pointLatLng(feature), {icon, keyboard: true, title: `${properties.code || 'Árbol'} · ${properties.status_label || 'Estado no informado'}`, riseOnHover: true})
-            .bindPopup(() => treePopup(properties, this), {maxWidth: 310, minWidth: 220});
+            .bindPopup(() => this.popupRenderer(properties, this), {maxWidth: 310, minWidth: 220});
     }
     clusterMarker(feature, count, callback) {
         const label = this.document.createElement('span');
@@ -99,7 +106,7 @@ export class MapLayers {
                 const button = this.document.createElement('button');
                 button.type = 'button'; button.className = 'map-coincident-item';
                 button.textContent = feature.properties.code || 'Ver árbol';
-                button.addEventListener('click', () => this.L.popup({maxWidth: 300}).setLatLng(pointLatLng(feature)).setContent(treePopup(feature.properties, this)).openOn(this.map));
+                button.addEventListener('click', () => this.L.popup({maxWidth: 300}).setLatLng(pointLatLng(feature)).setContent(this.popupRenderer(feature.properties, this)).openOn(this.map));
                 items.append(button);
             });
             offset += 20; next.hidden = offset >= total;

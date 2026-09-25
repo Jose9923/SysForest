@@ -1,24 +1,8 @@
 import {sameOriginUrl} from './state.js';
-
-function paragraph(document, label, value) {
-    const line = document.createElement('p');
-    const name = document.createElement('strong');
-    name.textContent = `${label}: `;
-    line.append(name, document.createTextNode(value === null || value === undefined || value === '' ? 'No informado' : String(value)));
-    return line;
-}
+import {treePopupContent} from './popup-content.js';
 
 export function treePopup(properties, {document, csrf, origin}) {
-    const box = document.createElement('div');
-    box.className = 'map-tree-popup';
-    const title = document.createElement('h3');
-    title.textContent = properties.code || 'Árbol';
-    box.append(title);
-    box.append(paragraph(document, 'Nombre común', properties.common_name));
-    box.append(paragraph(document, 'Nombre científico', properties.scientific_name));
-    box.append(paragraph(document, 'Estado', properties.status_label));
-    box.append(paragraph(document, 'Emplazamiento', properties.placement));
-    box.append(paragraph(document, 'Última inspección', properties.latest_inspection?.date));
+    const box = treePopupContent(properties, {document});
     if (properties.open_url) {
         try {
             const url = sameOriginUrl(properties.open_url, origin);
