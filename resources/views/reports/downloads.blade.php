@@ -1,0 +1,1 @@
+<div class="report-downloads">@forelse ($downloads as $download)<a class="button secondary" href="{{ $download['url'] }}" data-report-download="{{ $download['format'] }}">{{ $download['label'] }}</a>@empty<p class="muted">No hay descargas disponibles para esta selección.</p>@endforelse</div>

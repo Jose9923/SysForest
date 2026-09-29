@@ -1,0 +1,43 @@
+Archivos de Fase 15 frente al checkpoint de Fase 14
+Fuente: /home/josev/SYSFOREST; rama codex/phase-15
+No representa el delta completo contra el último commit (incluye fases anteriores sin commit).
+
+CREADOS (9)
+bin/check
+docs/operations.md
+docs/phase-15-files.txt
+docs/phase-15.md
+docs/testing.md
+docs/user-guide.md
+public/js/select2-accessibility.js
+tests/Feature/FieldAccessibilityTest.php
+tests/Frontend/select2-accessibility.test.mjs
+
+MODIFICADOS (23)
+AGENTS.md
+CLAUDE.md
+README.md
+docker/nginx/default.conf
+docs/authorization.md
+docs/import-export.md
+public/css/auth.css
+public/css/institutional.css
+public/js/catalog-select.js
+public/js/evidences.js
+public/js/forestry.js
+public/js/map/filters.js
+public/js/municipality-select.js
+resources/views/components/field.blade.php
+resources/views/conditions/index.blade.php
+resources/views/layouts/institutional.blade.php
+resources/views/memberships/index.blade.php
+resources/views/organizations/partials/form.blade.php
+resources/views/partials/catalog-select.blade.php
+resources/views/profile/show.blade.php
+resources/views/taxonomy/index.blade.php
+resources/views/users/index.blade.php
+tests/Frontend/evidences.test.mjs
+
+ELIMINADOS (0)
+
+Total: 32 archivos; 9 creados, 23 modificados, 0 eliminados.

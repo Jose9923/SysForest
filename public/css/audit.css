@@ -1,0 +1,56 @@
+.audit-page { min-width: 0; }
+.audit-page .page-heading { align-items: flex-start; }
+.audit-scope { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; padding: 20px 24px; border: 1px solid #c9dfd0; border-radius: 10px; background: var(--mint); }
+.audit-scope strong { display: block; color: var(--green-dark); font-size: 16px; overflow-wrap: anywhere; }
+.audit-scope p { margin-top: 5px; font-size: 13px; }
+.audit-page .panel { margin-bottom: 24px; }
+.audit-section-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; margin-bottom: 22px; }
+.audit-section-heading h2 { margin: 0; }
+.audit-section-heading p { margin: 7px 0 0; max-width: 650px; font-size: 13px; }
+.audit-section-heading > .muted { font-size: 12px; }
+.audit-section-heading .pill { flex: none; }
+.audit-filter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; }
+.audit-filter-wide { grid-column: 1 / -1; }
+.audit-filter-grid .field { margin: 0; }
+.audit-filter-grid .help { margin: 0; }
+.audit-table-scroll { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.audit-table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 13px; text-align: left; }
+.audit-table th, .audit-table td { padding: 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.audit-table thead { background: #f1f6f2; color: var(--muted); }
+.audit-table thead th { font-size: 12px; font-weight: 600; }
+.audit-table tbody th { font-weight: 400; min-width: 230px; }
+.audit-table tbody tr:last-child th, .audit-table tbody tr:last-child td { border-bottom: 0; }
+.audit-table tbody tr:hover { background: #f8fbf8; }
+.audit-table td { max-width: 230px; overflow-wrap: anywhere; }
+.audit-date { min-width: 140px; font-variant-numeric: tabular-nums; }
+.audit-event-title { display: block; font-weight: 600; }
+.audit-resource-name { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+.audit-id { display: block; overflow-wrap: anywhere; font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 12px; line-height: 1.6; }
+.audit-table .audit-id { margin-top: 5px; color: var(--muted); }
+.audit-detail-link { position: relative; display: inline-block; min-width: 100px; padding-block: 4px; }
+.audit-empty { padding: 24px 0 12px; }
+.audit-empty h3 { margin-bottom: 10px; font-size: 16px; }
+.audit-empty p { max-width: 700px; }
+.audit-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; margin: 0; }
+.audit-facts > div { min-width: 0; padding: 16px 0; border-bottom: 1px solid #edf1ed; }
+.audit-facts dd { margin-top: 5px; }
+.audit-fact-wide { grid-column: 1 / -1; }
+.audit-value { white-space: pre-wrap; }
+.audit-change-list { display: grid; gap: 16px; }
+.audit-change { min-width: 0; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.audit-change h3 { margin: 0; padding: 12px 16px; background: #f1f6f2; border-bottom: 1px solid var(--line); font-size: 14px; overflow-wrap: anywhere; }
+.audit-change dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.audit-change dl > div { min-width: 0; padding: 16px; }
+.audit-change dl > div + div { border-left: 1px solid var(--line); }
+.audit-change dt { margin-bottom: 10px; font-size: 12px; font-weight: 600; }
+.audit-change dd { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.audit-footnote { margin: 0; max-width: 840px; color: var(--muted); font-size: 12px; }
+.audit-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 700px) {
+    .audit-scope { padding: 18px; }
+    .audit-filter-grid, .audit-facts, .audit-change dl { grid-template-columns: 1fr; }
+    .audit-filter-wide, .audit-fact-wide { grid-column: auto; }
+    .audit-change dl > div + div { border-left: 0; border-top: 1px solid var(--line); }
+    .audit-page .pagination { flex-wrap: wrap; gap: 12px; }
+    .audit-page .pagination .button { padding-inline: 12px; }
+}

@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# Valida el checkout actual. No instala paquetes, migra bases ni inicia servicios.
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+cd -- "$project_dir"
+
+usage() {
+    cat <<'HELP'
+Uso: bash bin/check [all|php|frontend|lint]
+
+  all       PSR-12, JavaScript y PHP/PostGIS, en ese orden (predeterminado).
+  php       Suite PHP completa y serial sobre sysforest_testing.
+  frontend  Suite JavaScript sobre el código fuente; requiere Node 18.13 o superior.
+  lint      Comprueba PSR-12 sin modificar archivos.
+
+Requisitos: ejecutar desde Ubuntu/WSL; Docker Compose iniciado para php/lint.
+Los resultados quedan en storage/app/checks/<ejecución>/, fuera de Git.
+Solo se admite una ejecución de este comando por checkout. No coordina invocaciones
+directas de PHPUnit u otros scripts; estas tampoco deben ejecutarse en paralelo.
+HELP
+}
+
+mode="${1:-all}"
+if [[ "$#" -gt 1 ]]; then usage >&2; exit 2; fi
+case "$mode" in
+    all|php|frontend|lint) ;;
+    -h|--help) usage; exit 0 ;;
+    *) usage >&2; exit 2 ;;
+esac
+
+require_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        printf 'Falta el comando requerido: %s. No se ejecutó la validación.\n' "$1" >&2
+        exit 1
+    fi
+}
+
+require_command flock
+if [[ "$mode" == all || "$mode" == frontend ]]; then
+    require_command node
+    require_command awk
+    if ! node -e 'const [major, minor] = process.versions.node.split(".").map(Number); process.exit(major > 18 || (major === 18 && minor >= 13) ? 0 : 1)'; then
+        printf '%s\n' 'La suite JavaScript requiere Node 18.13 o superior; no se omite esta comprobación.' >&2
+        exit 1
+    fi
+fi
+if [[ "$mode" != frontend ]]; then
+    require_command docker
+    docker compose version >/dev/null
+fi
+
+mkdir -p storage/app/checks
+exec 9>storage/app/checks/check.lock
+if ! flock -n 9; then
+    printf '%s\n' 'Ya hay una validación bin/check en este checkout. Espera a que termine.' >&2
+    exit 1
+fi
+result_dir="$(mktemp -d "$project_dir/storage/app/checks/$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")"
+printf 'Modo: %s\nResultados: %s\n' "$mode" "$result_dir"
+trap 'check_status=$?; printf "Código de salida: %s\n" "$check_status" | tee "$result_dir/status.txt"; exit "$check_status"' EXIT
+
+run_step() {
+    local log_name="$1"
+    shift
+    "$@" 2>&1 | tee "$result_dir/$log_name.log"
+}
+
+check_lint() {
+    # Pint usa sus dependencias de la imagen y analiza el checkout completo, sin vendor del host.
+    run_step lint docker run --rm --user "$(id -u):$(id -g)" \
+        --mount "type=bind,src=$project_dir,dst=/workspace,readonly" \
+        --workdir /workspace --entrypoint /var/www/html/vendor/bin/pint sysforest-app:local \
+        --test --preset psr12 --cache-file=/tmp/sysforest-pint.cache
+}
+
+check_frontend() {
+    local files=(tests/Frontend/*.test.mjs)
+    if [[ ! -f "${files[0]}" ]]; then
+        printf '%s\n' 'No se encontraron pruebas JavaScript; se rechaza un resultado vacío.' >&2
+        return 1
+    fi
+    run_step frontend node --test --test-reporter=tap "${files[@]}"
+    # Node 18 no ofrece --fail-on-skipped; el resumen TAP mantiene ese contrato.
+    if ! awk '/^# tests / { tests = $3 } /^# skipped / { skipped = $3; seen = 1 } /^# todo / { todo = $3 } END { exit !(tests > 0 && seen && skipped == 0 && todo == 0) }' "$result_dir/frontend.log"; then
+        printf '%s\n' 'La suite JavaScript quedó vacía, incompleta o con pruebas omitidas.' >&2
+        return 1
+    fi
+}
+
+check_php() {
+    # Ambas fuentes de PHPUnit deben seguir fijando el aislamiento de la suite.
+    run_step preflight docker compose exec -T -e APP_ENV=testing -e DB_DATABASE=sysforest_testing \
+        -e CACHE_STORE=array -e MAIL_MAILER=array -e QUEUE_CONNECTION=sync -e SESSION_DRIVER=array app php <<'PHP'
+<?php
+declare(strict_types=1);
+
+try {
+    if (is_file('bootstrap/cache/config.php')) {
+        throw new RuntimeException('Existe configuración cacheada; retírala de forma controlada antes de probar.');
+    }
+    $configuration = new DOMDocument();
+    if (! $configuration->load('phpunit.xml', LIBXML_NONET)) {
+        throw new RuntimeException('No se pudo leer phpunit.xml.');
+    }
+    $xpath = new DOMXPath($configuration);
+    foreach (['env', 'server'] as $source) {
+        foreach (['APP_ENV' => 'testing', 'DB_CONNECTION' => 'pgsql', 'DB_DATABASE' => 'sysforest_testing'] as $name => $value) {
+            $nodes = $xpath->query('/phpunit/php/'.$source.'[@name="'.$name.'" and @value="'.$value.'" and @force="true"]');
+            if ($nodes->length !== 1) {
+                throw new RuntimeException('phpunit.xml no conserva el aislamiento obligatorio de la suite.');
+            }
+        }
+    }
+    require 'vendor/autoload.php';
+    $app = require 'bootstrap/app.php';
+    $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+    if (! $app->environment('testing') || config('database.default') !== 'pgsql'
+        || config('database.connections.pgsql.database') !== 'sysforest_testing'
+        || env('DB_TEST_DATABASE', 'sysforest_testing') !== 'sysforest_testing') {
+        throw new RuntimeException('La configuración no apunta exclusivamente a sysforest_testing.');
+    }
+    $connection = Illuminate\Support\Facades\DB::connection();
+    $database = $connection->selectOne('SELECT current_database() AS name, PostGIS_Version() AS postgis');
+    if ($database->name !== 'sysforest_testing' || $database->postgis === '') {
+        throw new RuntimeException('La conexión real no corresponde a PostgreSQL/PostGIS de pruebas.');
+    }
+    if (! Illuminate\Support\Facades\Redis::connection()->ping()) {
+        throw new RuntimeException('Redis no está disponible.');
+    }
+    echo 'Base aislada: '.$database->name.PHP_EOL.'PostGIS: '.$database->postgis.PHP_EOL.'Redis: disponible'.PHP_EOL;
+} catch (Throwable $error) {
+    // Nunca imprimir la excepción de conexión: puede contener detalles de configuración.
+    file_put_contents('php://stderr', "No se pudo validar el entorno aislado de pruebas. Revisa servicios, phpunit.xml y configuración cacheada.\n");
+    exit(1);
+}
+PHP
+
+    local report="/tmp/sysforest-check-$(basename -- "$result_dir").xml"
+    local php_status=0
+    if run_step php docker compose exec -T app vendor/bin/phpunit \
+        --fail-on-skipped --fail-on-incomplete --fail-on-risky --fail-on-warning --fail-on-empty-test-suite \
+        --display-all-issues --log-junit "$report"; then
+        php_status=0
+    else
+        php_status=$?
+    fi
+    # Conservar el informe también cuando una aserción falla, sin convertir el fallo en éxito.
+    if ! docker compose cp "app:$report" "$result_dir/phpunit.xml"; then
+        if (( php_status == 0 )); then php_status=1; fi
+    fi
+    return "$php_status"
+}
+
+case "$mode" in
+    all) check_lint; check_frontend; check_php ;;
+    php) check_php ;;
+    frontend) check_frontend ;;
+    lint) check_lint ;;
+esac
+printf '%s\n' 'Validación solicitada completada sin omisiones.'
