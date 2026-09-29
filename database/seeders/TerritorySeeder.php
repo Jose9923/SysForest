@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Services\PilotSeedService;
+use App\Services\TerritorySeedService;
 use Illuminate\Database\Seeder;
 
+/** Completa los departamentos y municipios de la copia oficial de DIVIPOLA incluida en el proyecto. */
 class TerritorySeeder extends Seeder
 {
-    public function run(PilotSeedService $service): void
+    public function run(TerritorySeedService $service): void
     {
-        $service->seedTerritories();
+        $result = $service->seed();
+        $this->command?->info(json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
     }
 }

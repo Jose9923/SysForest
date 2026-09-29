@@ -6,31 +6,21 @@ namespace App\Services;
 
 use App\Models\Municipality;
 use App\Models\Organization;
-use App\Repositories\CountryRepository;
-use App\Repositories\DepartmentRepository;
-use App\Repositories\MunicipalityRepository;
 use App\Repositories\OrganizationRepository;
 use Illuminate\Support\Facades\DB;
 
 class PilotSeedService
 {
     public function __construct(
-        private CountryRepository $countries,
-        private DepartmentRepository $departments,
-        private MunicipalityRepository $municipalities,
+        private TerritorySeedService $territories,
         private OrganizationRepository $organizations,
     ) {
     }
 
-    /** Códigos UNSD/DANE confirmados en docs/phase-3.md; no se inventan límites territoriales. */
+    /** La preparación del piloto respeta los territorios existentes, incluidos los desactivados. */
     public function seedTerritories(): Municipality
     {
-        return DB::transaction(function (): Municipality {
-            $country = $this->countries->upsert('170', ['name' => 'Colombia', 'iso_alpha_2' => 'CO', 'iso_alpha_3' => 'COL', 'active' => true]);
-            $department = $this->departments->upsert($country->id, '50', ['name' => 'Meta', 'active' => true]);
-
-            return $this->municipalities->upsert($department->id, '50001', ['name' => 'Villavicencio', 'active' => true]);
-        });
+        return $this->territories->seedPilotTerritories();
     }
 
     public function seedOrganization(): Organization

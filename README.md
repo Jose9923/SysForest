@@ -30,7 +30,7 @@ En una instalación local nueva, prepara el piloto y los catálogos explícitame
 docker compose exec -T app php artisan db:seed --class=DatabaseSeeder
 ~~~
 
-Este seeder prepara el territorio, la institución piloto INEM de Villavicencio, los catálogos, cuatro roles, **49 permisos** y el inventario piloto. No genera árboles ficticios ni cuentas. Sincroniza la matriz de permisos de los roles, por lo que debe ejecutarse conscientemente. Para crear las cuatro cuentas opcionales de revisión local:
+Este seeder prepara el catálogo territorial de Colombia (32 departamentos, Bogotá D.C. y 1.104 opciones municipales), la institución piloto INEM de Villavicencio, los catálogos, cuatro roles, **49 permisos** y el inventario piloto. No genera árboles ficticios ni cuentas. Sincroniza la matriz de permisos de los roles, por lo que debe ejecutarse conscientemente. Para crear las cuatro cuentas opcionales de revisión local:
 
 ~~~bash
 docker compose exec app php artisan db:seed --class=DevelopmentIdentitySeeder
@@ -73,6 +73,7 @@ Por solicitud expresa del usuario se retiraron las pruebas automatizadas. `bash 
 
 | Necesidad | Documento |
 | --- | --- |
+| Cargar departamentos y municipios de Colombia sin duplicar territorios | [Catálogo territorial](docs/territories.md) |
 | Consultar la carga de 2.854 árboles de Restrepo, su fecha de referencia y revisiones pendientes | [Carga de Restrepo 2025](docs/restrepo-import.md) |
 | Revisar resultados, correcciones y pendientes de aceptación local | [Aceptación del piloto](docs/acceptance-local.md) |
 | Renovación de sesión, calendario de captura y cierre de mantenimiento | [Ajustes de usabilidad](docs/usability-fixes.md) |
