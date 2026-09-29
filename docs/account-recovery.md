@@ -66,12 +66,8 @@ No se almacenan tokens de acción en texto plano en estas tablas. Los eventos `i
 
 ## Pruebas de este componente
 
-Las clases `InvitationTest`, `PasswordSecurityTest` y `EmailVerificationTest` prueban permisos y alcance, toma de cuenta mediante invitación, conservación de membresías, contraseña fuerte, vencimiento y reutilización de enlaces, cambios de correo, revocación de sesiones, previsualización sin efectos, rechazo del transporte log, cifrado del payload real de Laravel y escape de las ocho variantes de correo.
+Las clases `InvitationTest`, `PasswordSecurityTest` y `EmailVerificationTest` comprobaron permisos y alcance, toma de cuenta mediante invitación, conservación de membresías, contraseña fuerte, vencimiento y reutilización de enlaces, cambios de correo, revocación de sesiones, previsualización sin efectos, rechazo del transporte log, cifrado del payload real de Laravel y escape de las ocho variantes de correo.
 
-Ejecución localizada:
-
-```bash
-docker compose exec -T -e DB_DATABASE=sysforest_testing app php artisan test tests/Feature/InvitationTest.php tests/Feature/PasswordSecurityTest.php tests/Feature/EmailVerificationTest.php
-```
+Las suites automatizadas se retiraron por solicitud del usuario. Los resultados descritos aquí son históricos; consulta [la verificación vigente](testing.md) para formato, sintaxis y revisión manual.
 
 La ejecución del 12 de septiembre de 2026 completó 36 pruebas y 138 aserciones. Se validaron las plantillas y el payload sin enviar correos SMTP externos. El informe global de la Fase 4 documenta las pruebas HTTP, los otros componentes y los resultados consolidados.

@@ -1,5 +1,9 @@
 # SYSFOREST: acuerdos de implementación
 
+La carga autorizada de Plan de Ornato de Restrepo 2025 está completada y conciliada: 2.854 árboles e inspecciones en 29 lotes, privados y separados de INEM. El 30/11/2025 es fecha de referencia de entrega autorizada, no día real de visita conocido; el estado Activo fue solicitado para todos. Hay 123 individuos con revisión material pendiente, incluidos 65 con fuente «Muerto en pie», y tres sin posición. Consulta [docs/restrepo-import.md](docs/restrepo-import.md). No reimportar el libro cambiando su huella o partición; el CLI admite reanudar exactamente la misma preparación.
+
+La decisión expresa del usuario del 28/09/2026 retira los archivos de pruebas automatizadas, su configuración y sus comandos de ejecución. No recrear suites sin una nueva solicitud. Se conservan PSR-12, comprobaciones de sintaxis, verificaciones manuales y los informes históricos. Los usuarios locales se aprovisionan con DevelopmentIdentitySeeder y contraseña por entrada oculta solo al crear una cuenta; no usar variables DEV_*_EMAIL/PASSWORD ni reiniciar claves existentes.
+
 La Fase 13 está completada y activada con aprobación expresa del usuario. Su regresión pasó 1668 pruebas PHP y 9898 aserciones, 59 pruebas JavaScript y PSR-12 en 552 archivos; el informe permanece en docs/phase-13.md.
 La Fase 14 está completada y activada; su regresión completa pasó 1803 pruebas PHP y 11104 aserciones, 59 pruebas JavaScript y PSR-12 en 576 archivos. Consulta docs/phase-14.md.
 La Fase 15 está completada: 1806 pruebas PHP y 11138 aserciones, 64 pruebas JavaScript y PSR-12 en 577 archivos; `bash bin/check` finalizó con código 0. Consulta docs/phase-15.md y docs/phase-15-files.txt.
@@ -22,7 +26,7 @@ La única fuente de verdad es /home/josev/SYSFOREST. No depender de phase2-stagi
 - Formato PSR-12. No comentar cada línea ni repetir lo evidente.
 - No consultar desde Blade ni poner reglas de negocio en Controllers o JavaScript.
 - Nunca versionar .env, secretos, vendor ni datos de almacenamiento.
-- Ejecutar pruebas y formatter al cerrar cada fase. Documentar resultados reales y limitaciones.
+- Ejecutar formatter, comprobaciones de sintaxis y revisión manual pertinente. No recrear las pruebas automatizadas retiradas por el usuario. Documentar resultados reales y limitaciones.
 - Mantener comandos pequeños, verificables y sin operaciones destructivas sobre datos preexistentes.
 
 Los requisitos del usuario reemplazan los pasos genéricos del esqueleto oficial relativos a PHP 8.5, instaladores del host y Laravel Boost. PHP/Composer se ejecutan en contenedores de PHP 8.4; no hace falta instalar esos componentes en Windows o Ubuntu.

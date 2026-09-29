@@ -167,15 +167,9 @@ Artefactos dentro del contenedor `app`:
 
 Las pruebas de seguridad verifican A/B, departamentos ajenos, nacional sin selección, revocación, permisos independientes, respuestas mínimas, CSRF, errores sin trazas, caché privada, tasa y nombres como texto. Las pruebas espaciales y de presentación complementan la cobertura. Los fixtures se revierten en `sysforest_testing`; no se cargan individuos de ejemplo en la base operativa.
 
-Procedimientos reproducibles y seriales desde WSL:
+Las suites automatizadas se retiraron por solicitud del usuario. Los resultados descritos aquí son históricos; consulta [la verificación vigente](testing.md) para formato, sintaxis y revisión manual.
 
-~~~bash
-docker compose exec -T app php artisan test tests/Feature/MapScopeSecurityTest.php tests/Feature/MapEndpointSecurityTest.php
-docker compose exec -T -e SYSFOREST_MAP_EXPLAIN=1 app php artisan test tests/Feature/MapPerformanceTest.php
-docker compose exec -T app php artisan test tests/Feature/MapSpatialTest.php
-docker compose exec -T app cat /tmp/sysforest-phase10-query-count.json
-docker compose exec -T app cat /tmp/sysforest-phase10-explain.json
-~~~
+El [informe de Fase 10](phase-10.md) conserva las mediciones y condiciones de aquella ejecución.
 
 Estos comandos no implican que las suites se hayan ejecutado nuevamente al redactar el documento.
 

@@ -147,16 +147,9 @@ Las pruebas cubren falta de contexto, cambio de actor, selección manipulada, le
 
 La cobertura de autorización añade ámbito nacional sin membresías artificiales, lectura departamental limitada, rol organizacional por pertenencia, rechazo de escaladas, restricciones SQL compuestas y diferencia entre permiso global y contextual. Las pruebas HTTP utilizan autenticación real de la fase y verifican que una sesión de navegación por sí sola no habilite el área protegida.
 
-Ejecuta las suites de forma serial, desde el proyecto WSL:
+Las suites automatizadas se retiraron por solicitud del usuario. Los resultados descritos aquí son históricos; consulta [la verificación vigente](testing.md) para formato, sintaxis y revisión manual.
 
-~~~bash
-docker compose exec app php artisan test --filter=TenantContextTest
-docker compose exec app php artisan test --filter=TenantIsolationTest
-docker compose exec app php artisan test --filter=AuthorizationTest
-docker compose exec app php artisan test --filter=AuthenticationTest
-~~~
-
-`TerritorialFoundationTest` verifica integridad territorial y membresías; `TerritorySpatialTest` verifica PostGIS. Los fixtures espaciales artificiales se limitan a pruebas. `PostgresTestCase` protege la base separada `sysforest_testing` y revierte sus transacciones. No se deben ejecutar varias suites simultáneamente sobre esa base.
+`TerritorialFoundationTest` verificó integridad territorial y membresías; `TerritorySpatialTest` verificó PostGIS. Los fixtures espaciales artificiales se limitaron a pruebas. `PostgresTestCase` protegió la base separada `sysforest_testing` y revirtió sus transacciones durante esas ejecuciones históricas.
 
 ## Operaciones forestales de Fase 6
 

@@ -152,12 +152,8 @@ No se añade una migración de tablas de exportación. La auditoría privada reg
 
 ## Verificación y límites de la fase
 
-Las pruebas de proyección verifican las 94 fuentes/65 condiciones, precisión, ceros/nulos, fotografías y campos públicos. Las de selección verifican filtros compartidos, ANY/ALL, latest, campañas, aislamiento, radio, orden, paginación y ausencia del límite cartográfico de 2.000 puntos. Los tests de writers y HTTP completan formatos, seguridad, errores y limpieza; los resultados consolidados están en [el informe de Fase 12](phase-12.md).
+Las pruebas históricas de proyección verificaron las 94 fuentes/65 condiciones, precisión, ceros/nulos, fotografías y campos públicos. Las de selección verificaron filtros compartidos, ANY/ALL, latest, campañas, aislamiento, radio, orden, paginación y ausencia del límite cartográfico de 2.000 puntos. Los tests de writers y HTTP completaron formatos, seguridad, errores y limpieza; los resultados consolidados están en [el informe de Fase 12](phase-12.md).
 
-Para ejecutar la parte del lector de forma serial, exclusivamente en la base de pruebas configurada:
+Las suites automatizadas se retiraron por solicitud del usuario. Los resultados descritos aquí son históricos; consulta [la verificación vigente](testing.md) para formato, sintaxis y revisión manual.
 
-```bash
-docker compose exec app php artisan test tests/Feature/ExportProjectionTest.php tests/Feature/ExportQueryTest.php
-```
-
-No ejecutar suites concurrentes contra `sysforest_testing`. Esta fase no implementa importación, una definición de zonas, dashboards nuevos ni distribución de exportaciones mediante correo o cola.
+El alcance histórico de esta fase no implementa importación, una definición de zonas, dashboards nuevos ni distribución de exportaciones mediante correo o cola.

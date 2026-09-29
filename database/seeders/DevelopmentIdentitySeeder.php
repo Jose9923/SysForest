@@ -14,15 +14,36 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use LogicException;
 
+/** Aprovisiona perfiles del piloto local sin conservar sus contraseñas en archivos de configuración. */
 class DevelopmentIdentitySeeder extends Seeder
 {
+    /** @var array<string, array{name: string, email: string}> */
+    private const ACCOUNTS = [
+        'SUPER_ADMIN' => [
+            'name' => 'Superadministrador de desarrollo',
+            'email' => 'superadmin@sysforest.test',
+        ],
+        'DEPARTMENT_ADMIN' => [
+            'name' => 'Administrador departamental de desarrollo',
+            'email' => 'departamento.meta@sysforest.test',
+        ],
+        'ORGANIZATION_ADMIN' => [
+            'name' => 'Administrador INEM de desarrollo',
+            'email' => 'admin.inem@sysforest.test',
+        ],
+        'OFFICIAL' => [
+            'name' => 'Funcionario INEM de desarrollo',
+            'email' => 'funcionario.inem@sysforest.test',
+        ],
+    ];
+
     public function run(): void
     {
         if (!app()->environment(['local', 'testing'])) {
             throw new LogicException('Las cuentas de desarrollo solo pueden prepararse en local o testing.');
         }
 
-        // Toda la configuración se valida antes de sembrar catálogos o crear una cuenta.
+        // Las preguntas y su validación terminan antes de abrir la transacción o sembrar dependencias.
         $accounts = $this->validatedAccounts();
 
         DB::transaction(function () use ($accounts): void {
@@ -36,6 +57,10 @@ class DevelopmentIdentitySeeder extends Seeder
                 $user = $users->findByEmail($account['email']);
 
                 if ($user === null) {
+                    if ($account['password'] === null) {
+                        throw new LogicException('Una cuenta cambió durante la preparación. Ejecuta nuevamente el seeder.');
+                    }
+
                     $user = $users->create([
                         'name' => $account['name'],
                         'email' => $account['email'],
@@ -70,37 +95,62 @@ class DevelopmentIdentitySeeder extends Seeder
         });
     }
 
-    /** @return array<string, array{name: string, email: string, password: string}> */
+    /**
+     * Conserva la identidad del piloto y pide secretos únicamente para cuentas todavía inexistentes.
+     *
+     * @return array<string, array{name: string, email: string, password: string|null}>
+     * @throws LogicException Si los correos no son válidos o no es posible recibir una contraseña segura.
+     */
     private function validatedAccounts(): array
     {
         $accounts = [];
         $seenEmails = [];
+        $users = app(UserRepository::class);
 
-        foreach (['SUPER_ADMIN', 'DEPARTMENT_ADMIN', 'ORGANIZATION_ADMIN', 'OFFICIAL'] as $roleName) {
-            $configuration = config('development.accounts.'.$roleName, []);
-            $email = is_string($configuration['email'] ?? null) ? strtolower(trim($configuration['email'])) : null;
-            $password = $configuration['password'] ?? null;
+        foreach (self::ACCOUNTS as $roleName => $configuration) {
+            $email = strtolower(trim($configuration['email']));
             $validator = Validator::make(
-                ['email' => $email, 'password' => $password],
-                [
-                    'email' => ['required', 'string', 'email:rfc', 'max:254'],
-                    'password' => ['required', 'string', 'max:128', Password::min(12)->mixedCase()->numbers()->symbols()],
-                ],
+                ['email' => $email],
+                ['email' => ['required', 'string', 'email:rfc', 'max:254']],
             );
 
-            if ($validator->fails()) {
-                // No se adjuntan valores sensibles ni el objeto Validator a la excepción.
-                throw new LogicException('Configura DEV_'.$roleName.'_EMAIL y DEV_'.$roleName.'_PASSWORD con un correo válido y una contraseña fuerte.');
-            }
-
-            if (in_array($email, $seenEmails, true)) {
-                throw new LogicException('Las cuatro cuentas de desarrollo deben utilizar correos diferentes.');
+            if ($validator->fails() || in_array($email, $seenEmails, true)) {
+                throw new LogicException('Los correos definidos por el seeder deben ser válidos y diferentes.');
             }
 
             $seenEmails[] = $email;
-            $accounts[$roleName] = ['name' => $configuration['name'], 'email' => $email, 'password' => $password];
+            $accounts[$roleName] = [
+                'name' => $configuration['name'],
+                'email' => $email,
+                'password' => $users->findByEmail($email) === null ? $this->askPassword($email) : null,
+            ];
         }
 
         return $accounts;
+    }
+
+    /**
+     * Recibe el secreto por una terminal interactiva; nunca admite el fallback que muestra caracteres.
+     * La contraseña solo vive en memoria hasta que User la almacena mediante su cast de hash.
+     */
+    private function askPassword(string $email): string
+    {
+        if ($this->command === null || $this->command->option('no-interaction') || !defined('STDIN') || !stream_isatty(STDIN)) {
+            throw new LogicException('Faltan cuentas locales. Ejecuta docker compose exec app php artisan db:seed --class=DevelopmentIdentitySeeder desde una terminal interactiva.');
+        }
+
+        $password = $this->command->secret('Contraseña inicial para '.$email, false);
+        $confirmation = $this->command->secret('Confirma la contraseña para '.$email, false);
+        $validator = Validator::make(
+            ['password' => $password, 'password_confirmation' => $confirmation],
+            ['password' => ['required', 'string', 'max:128', 'confirmed', Password::min(12)->mixedCase()->numbers()->symbols()]],
+        );
+
+        if ($validator->fails()) {
+            // Se informa la política sin adjuntar los datos del Validator ni valores sensibles.
+            throw new LogicException('Las contraseñas deben coincidir, tener entre 12 y 128 caracteres e incluir mayúsculas, minúsculas, números y símbolos. No se crearon cuentas.');
+        }
+
+        return $password;
     }
 }

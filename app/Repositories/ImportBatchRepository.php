@@ -42,6 +42,28 @@ class ImportBatchRepository
             ->where('file_sha256', $sha256)->where('status', 'completed')->exists();
     }
 
+    /** Devuelve primero un resultado completado; el hash siempre se consulta dentro de la organización. */
+    public function findBySourceHashForTenant(string $organizationId, string $sha256, bool $lock = false): ?ImportBatch
+    {
+        $query = ImportBatch::query()->where('organization_id', $organizationId)->where('file_sha256', $sha256)
+            ->orderByRaw("CASE WHEN status = 'completed' THEN 0 WHEN status = 'ready' THEN 1 ELSE 2 END")
+            ->orderBy('created_at')->orderBy('id');
+
+        return ($lock ? $query->lockForUpdate() : $query)->first();
+    }
+
+    /** La identidad original del JSON queda en el nombre inmutable, sin incorporar columnas a los lotes XLSX. */
+    public function preparedSourcesForTenant(string $organizationId, string $sourceHash, bool $lock = false): \Illuminate\Database\Eloquent\Collection
+    {
+        if (preg_match('/\\A[a-f0-9]{64}\\z/D', $sourceHash) !== 1) {
+            return new \Illuminate\Database\Eloquent\Collection();
+        }
+        $query = ImportBatch::query()->where('organization_id', $organizationId)
+            ->where('file_name', 'like', 'reviewed-'.$sourceHash.'-%')->orderBy('id');
+
+        return ($lock ? $query->lockForUpdate() : $query)->get();
+    }
+
     public function update(ImportBatch $batch, array $attributes): ImportBatch
     {
         $allowed = ['status', 'valid_rows', 'invalid_rows', 'imported_rows', 'lock_version',

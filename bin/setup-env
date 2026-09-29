@@ -43,9 +43,9 @@ for secret_spec in POSTGRES_PASSWORD:postgres_password DB_MIGRATOR_PASSWORD:migr
     fi
 done
 
-# Las claves de identidad se generan para desarrollo sin rotar valores ya configurados.
+# JWT conserva su secreto técnico; las contraseñas de usuario se reciben únicamente desde el seeder.
 if grep -q '^APP_ENV=local$' .env; then
-    for identity_variable in JWT_SECRET DEV_SUPER_ADMIN_PASSWORD DEV_DEPARTMENT_ADMIN_PASSWORD DEV_ORGANIZATION_ADMIN_PASSWORD DEV_OFFICIAL_PASSWORD; do
+    for identity_variable in JWT_SECRET; do
         if grep -qE "^${identity_variable}=.+" .env; then
             continue
         fi

@@ -134,6 +134,30 @@ El flujo mantiene `ImportController → ImportService → Services de caso de us
 
 `TreeService`, `TreeInspectionService`, `TreeCodeService`, `TreeLocationService`, `PhenologyService` y `DendrometryCalculationService` se reutilizan para mantener las mismas reglas de captura. `ImportBatchRepository`, `ImportRowRepository` e `ImportCatalogRepository` encapsulan el acceso propio del módulo. Blade presenta los datos preparados sin consultas; Select2 solo facilita seleccionar el inventario.
 
-Las pruebas relacionadas están en `ImportWorkbookTest`, `ImportTemplateTest`, `ImportRowValidationTest`, `ImportRowWriteTest`, `ImportWorkflowTest`, `ImportSecurityTest`, `ImportHttpTest` e `ImportPresentationTest`. Los comandos, resultados observados y límites prácticos de validación se documentan en el informe de cierre de Fase 13; esta guía describe el contrato y no sustituye esos resultados.
+Los resultados históricos y límites prácticos de validación se documentan en el informe de cierre de Fase 13. Las suites automatizadas se retiraron por solicitud expresa del usuario; las verificaciones vigentes se describen en docs/testing.md. Esta guía describe el contrato y no sustituye los resultados observados.
 
 La importación no incorpora actualizaciones masivas, asociación masiva de individuos existentes a otra campaña, conciliación avanzada de duplicados, carga remota de fotos o libros de formato libre.
+
+## Importación administrativa de un inventario revisado
+
+El comando `sysforest:import-reviewed-inventory` procesa un JSON previamente normalizado y revisado. Es una entrada exclusiva de consola; la interfaz HTTP sigue aceptando únicamente el XLSX oficial. No traduce etiquetas, completa fechas, interpreta celdas ambiguas ni fuerza el estado de los individuos. Esas decisiones deben quedar aprobadas y representadas en el archivo preparado.
+
+El JSON UTF-8, sin BOM, reside en `storage/app/private`, con extensión `.json` y un máximo de `imports.max_uncompressed_bytes` (32 MiB por defecto). Su raíz contiene exactamente `version: "SYSFOREST_PREPARED_IMPORT_V1"`, `source_file` (nombre del libro original sin directorios), `source_sha256` (SHA-256 original en hexadecimal minúscula) y `rows`. Cada elemento de `rows` tiene solamente `row_number` (entero, fila real del Excel, único y ascendente desde 2) y `values` (las 110 claves oficiales, cada valor como cadena o `null`; no números ni booleanos JSON). El administrador debe comprobar la huella contra el original conservado: el comando no abre dicho libro para verificar la declaración de procedencia.
+
+Desde el proyecto, valida sin guardar lotes, árboles, inspecciones ni auditoría:
+
+```bash
+docker compose exec -T app php artisan sysforest:import-reviewed-inventory \
+  /var/www/html/storage/app/private/reviewed-imports/inventario.json \
+  --actor=ID --organization=UUID --inventory=UUID
+```
+
+Tras revisar el resultado, repite el mismo comando con `--confirm` para importar. El actor debe ser una cuenta vigente, activa, verificada y autorizada en la organización y campaña; no hay elusión de permisos mediante el CLI. La organización se activa únicamente durante el caso de uso. La prevalidación comprueba todos los bloques, sus celdas y duplicados de códigos en el documento completo antes de crear la primera vista previa. Los bloques tienen `min(100, imports.max_rows)` filas y respetan también el límite de tamaño de carga. Con 2.854 filas y límite 100 resultan 29 bloques.
+
+En un documento de varios bloques, `code` debe quedar vacío o `null` en todas las filas para asignación automática, o contener un código explícito en todas. La mezcla se rechaza durante la prevalidación, sin crear lotes ni registros: la reserva de consecutivos se realiza por bloque y no puede reservar de antemano un código explícito situado en otro. Un documento de un solo bloque conserva la mezcla admitida por el servicio ordinario, que reserva primero todos sus códigos explícitos.
+
+Cada bloque se somete a `ImportUploadService` y `ImportConfirmationService`, conservando sus validaciones, bloqueos, transacciones, auditoría y referencias forestales. El nombre inmutable `reviewed-<sha-original>-<fila-inicial>-<fila-final>.json` distingue esta entrada. La huella del lote se calcula sobre su JSON canónico (versión, nombre/SHA original y filas ordenadas); los bloques no comparten artificialmente la misma huella. La auditoría de creación conserva además nombre, huella original y rango de filas Excel.
+
+La transacción es por bloque, no por documento completo. Si falla una confirmación, el resultado indica `partial` o `failed`, el bloque fallido y las cantidades ya guardadas; los bloques confirmados permanecen registrados. Reintenta **el mismo archivo, campaña y límite de filas**. Un lote completado solo se omite tras comprobar identidad, valores originales y referencias creadas; uno `ready` vigente se reutiliza y vuelve a validar. Un lote inválido, cancelado o vencido exige revisión operativa y no se sustituye automáticamente. Cambiar contenido, campaña o partición para una fuente con lotes previos se rechaza. Las comprobaciones de solapamiento y nombre/huella se repiten bajo el bloqueo institucional al crear la vista previa.
+
+La salida estándar contiene un informe JSON con estado, filas y bloques; el avance se escribe en la salida de errores sin celdas ni credenciales. Código de salida `0`: validación satisfactoria o importación completa; `1`: validación por filas rechazada, error operativo o resultado parcial; `2`: argumentos o contrato inválidos. El modo sin `--confirm` sigue siendo únicamente una validación: no demuestra que el estado concurrente de catálogos y permisos vaya a permanecer vigente al confirmar.

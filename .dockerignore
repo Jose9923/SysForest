@@ -15,3 +15,6 @@ bootstrap/cache/*.php
 docs
 phase2-staging
 .phase*-work
+# Las suites retiradas no deben incorporarse de nuevo a la imagen.
+tests
+phpunit.xml

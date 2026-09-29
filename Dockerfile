@@ -32,11 +32,11 @@ USER sysforest
 
 FROM base AS runtime
 
-# El lock se genera con el target base. El build conserva dependencias de pruebas locales.
+# El lock se genera con el target base. El build conserva las dependencias de desarrollo.
 COPY --chown=sysforest:sysforest composer.json composer.lock ./
 RUN composer install --no-interaction --prefer-dist --no-progress --no-scripts --no-autoloader
 COPY --chown=sysforest:sysforest . .
-# Dotenv puede leer un archivo vacío en tests; Compose inyecta la configuración real.
+# Dotenv dispone de un archivo vacío; Compose inyecta la configuración real.
 RUN mkdir -p storage/app/private storage/app/public storage/framework/cache/data \
         storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && touch .env \

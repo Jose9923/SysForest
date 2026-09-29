@@ -33,10 +33,10 @@ docker compose exec -T app php artisan db:seed --class=DatabaseSeeder
 Este seeder prepara el territorio, la institución piloto INEM de Villavicencio, los catálogos, cuatro roles, **49 permisos** y el inventario piloto. No genera árboles ficticios ni cuentas. Sincroniza la matriz de permisos de los roles, por lo que debe ejecutarse conscientemente. Para crear las cuatro cuentas opcionales de revisión local:
 
 ~~~bash
-docker compose exec -T app php artisan db:seed --class=DevelopmentIdentitySeeder
+docker compose exec app php artisan db:seed --class=DevelopmentIdentitySeeder
 ~~~
 
-Las credenciales proceden exclusivamente de `.env`; consulta [cuentas de desarrollo](docs/development-accounts.md). Repetir ese seeder no cambia contraseñas existentes. Las cuentas normales se incorporan mediante invitaciones, sin registro público abierto.
+Los nombres y correos locales se definen en el seeder. Al crear una cuenta solicita su contraseña mediante entrada oculta y la guarda como hash en la base de datos; no utiliza credenciales de usuarios en `.env`. Consulta [cuentas de desarrollo](docs/development-accounts.md). Repetir ese seeder no cambia contraseñas existentes. Las cuentas normales se incorporan mediante invitaciones, sin registro público abierto.
 
 ## Accesos
 
@@ -69,15 +69,16 @@ La autenticación usa JWT de acceso en cookie HttpOnly y refresh opaco, rotatori
 
 ## Guías vigentes
 
-Con el entorno iniciado, ejecuta `bash bin/check` para comprobar PSR-12, JavaScript y PHP en serie. Los requisitos, resultados y límites del runner están en la [guía de pruebas](docs/testing.md).
+Por solicitud expresa del usuario se retiraron las pruebas automatizadas. `bash bin/check` conserva las comprobaciones de PSR-12 y sintaxis de PHP y JavaScript; no ejecuta suites ni escribe en una base de pruebas. Consulta el [alcance de las verificaciones](docs/testing.md).
 
 | Necesidad | Documento |
 | --- | --- |
+| Consultar la carga de 2.854 árboles de Restrepo, su fecha de referencia y revisiones pendientes | [Carga de Restrepo 2025](docs/restrepo-import.md) |
 | Revisar resultados, correcciones y pendientes de aceptación local | [Aceptación del piloto](docs/acceptance-local.md) |
 | Renovación de sesión, calendario de captura y cierre de mantenimiento | [Ajustes de usabilidad](docs/usability-fixes.md) |
 | Aprender el flujo de trabajo y resolver mensajes habituales | [Guía de uso](docs/user-guide.md) |
 | Arrancar, actualizar, diagnosticar y preparar una futura puesta en producción | [Operación](docs/operations.md) |
-| Ejecutar pruebas, PSR-12 y revisión responsive | [Pruebas](docs/testing.md) |
+| Revisar PSR-12, sintaxis y comportamiento manual | [Verificaciones](docs/testing.md) |
 | Conocer los 49 permisos y sus ámbitos | [Autorización](docs/authorization.md) y [multi-tenancy](docs/multitenancy.md) |
 | Identidad, sesiones, invitaciones y contraseñas | [Autenticación](docs/authentication.md), [recuperación](docs/account-recovery.md) |
 | Captura y trazabilidad forestal | [Árboles](docs/tree-domain.md), [inspecciones](docs/inspections.md), [dasonomía](docs/dendrometry.md), [coordenadas](docs/georeferencing.md) |

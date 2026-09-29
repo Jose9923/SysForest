@@ -70,8 +70,6 @@ resources/views/
   emails/
 database/migrations/
 database/seeders/
-tests/Unit/
-tests/Feature/
 docs/
 ```
 

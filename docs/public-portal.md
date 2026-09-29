@@ -164,13 +164,8 @@ La corrida focal coordinada pasó **31 pruebas de motor público y 2 pruebas de 
 
 La ventana incluye los servicios y la proyección, y excluye la preparación de datos; no equivale a una petición HTTP completa. Con 2.048 puntos el payload se limita a 2.000 e informa truncamiento. El plan publicado con 4.096 puntos usó `trees_geometry_gist`, devolvió una fila y mantuvo `enable_seqscan`, `enable_indexscan` y `enable_bitmapscan` en `on`. Registró 1,784 ms de planificación y 0,196 ms de ejecución para ese fixture selectivo. Estas cifras focales no sustituyen el resultado global de la fase.
 
-Ejecutar serialmente, desde `/home/josev/SYSFOREST`, cuando `sysforest_testing` esté libre:
+Las suites automatizadas se retiraron por solicitud del usuario. Los resultados descritos aquí son históricos; consulta [la verificación vigente](testing.md) para formato, sintaxis y revisión manual.
 
-```bash
-docker compose exec -T app php artisan test tests/Feature/PublicTreeEngineTest.php
-docker compose exec -T -e SYSFOREST_PUBLIC_EXPLAIN=1 app php artisan test tests/Feature/PublicPortalPerformanceTest.php
-docker compose exec -T app cat /tmp/sysforest-phase11-query-count.json
-docker compose exec -T app cat /tmp/sysforest-phase11-explain.json
-```
+El [informe de Fase 11](phase-11.md) conserva las condiciones y resultados de aquella ejecución.
 
 Los fixtures están dentro de transacciones de la base de pruebas. El opt-in genera únicamente artefactos técnicos con SQL y parámetros sintéticos; no crea árboles ni publicaciones en la base operativa. Los tiempos de un plan selectivo no constituyen una garantía de latencia productiva.

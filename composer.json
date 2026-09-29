@@ -29,11 +29,7 @@
             "Database\\Seeders\\": "database/seeders/"
         }
     },
-    "autoload-dev": {
-        "psr-4": { "Tests\\": "tests/" }
-    },
     "scripts": {
-        "test": ["@php artisan config:clear --ansi", "@php artisan test"],
         "format": "pint --preset psr12",
         "lint": "pint --test --preset psr12",
         "post-autoload-dump": [

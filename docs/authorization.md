@@ -236,15 +236,11 @@ En invitaciones a una cuenta existente, el flujo debe inspeccionar organizationR
 
 ## Comprobación
 
-La suite focalizada se ejecuta sobre la base de pruebas PostgreSQL protegida por PostgresTestCase:
+Las suites automatizadas se retiraron por solicitud del usuario. Los resultados descritos aquí son históricos; consulta [la verificación vigente](testing.md) para formato, sintaxis y revisión manual.
 
-~~~bash
-docker compose exec app php artisan test --filter=AuthorizationTest
-~~~
+AuthorizationTest verificó idempotencia, rechazo SQL de scopes incompatibles y membresías cruzadas, unicidad del rol por miembro, fechas coherentes, acceso nacional sin membresías artificiales, lectura departamental, permisos distintos entre organizaciones, revocación, cuenta desactivada/no verificada, IDOR y rechazo de escaladas de privilegio.
 
-AuthorizationTest verifica idempotencia, rechazo SQL de scopes incompatibles y membresías cruzadas, unicidad del rol por miembro, fechas coherentes, acceso nacional sin membresías artificiales, lectura departamental, permisos distintos entre organizaciones, revocación, cuenta desactivada/no verificada, IDOR y rechazo de escaladas de privilegio.
-
-El [informe de Fase 4](phase-4.md) conserva la ejecución histórica inicial de autorización. Para acreditar el estado actual, ejecuta la suite correspondiente y consulta el informe de la entrega verificada; no se deduce el total de la aplicación de una prueba focalizada.
+El [informe de Fase 4](phase-4.md) conserva la ejecución histórica inicial de autorización. Para revisar el estado actual, sigue las comprobaciones estáticas y la revisión manual de la guía vigente; una ejecución histórica no acredita los cambios posteriores.
 
 ## Consulta privada de auditoría (Fase 14)
 

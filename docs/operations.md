@@ -19,7 +19,7 @@ docker compose ps -a
 
 `setup-env` crea `.env` desde `.env.example` si falta y completa los secretos locales ausentes. Conserva los valores existentes. No imprimas `.env` ni la salida completa de `docker compose config` en registros compartidos: utiliza `--quiet` para validar.
 
-La imagen instala el `composer.lock` existente y conserva dependencias de pruebas para revisión local. `db-init` crea o comprueba los roles, bases, extensión PostGIS y privilegios; `init` aplica migraciones incrementales a las bases operativa y de pruebas. No ejecutan seeders automáticamente.
+La imagen instala el `composer.lock` existente y conserva dependencias de desarrollo, incluido Pint. Las suites automatizadas se retiraron por solicitud del usuario; no se incluyen sus archivos ni configuración en la imagen. `db-init` crea o comprueba los roles, bases, extensión PostGIS y privilegios; `init` aplica migraciones incrementales a las bases operativa y de pruebas. No ejecutan seeders automáticamente.
 
 Para una instalación local nueva, sigue los seeders explícitos del [README](../README.md#inicio-local). `AuthorizationSeeder` sincroniza cuatro roles y 49 permisos; no es un comando de diagnóstico. `DevelopmentIdentitySeeder` crea cuentas solamente en local/testing y puede sincronizar asignaciones de las cuentas de revisión existentes; tampoco debe utilizarse para reiniciar contraseñas.
 
@@ -153,4 +153,4 @@ Estas decisiones requieren un entorno y requisitos de operación concretos. La d
 | El correo no aparece en una bandeja externa | La configuración local lo entrega a Mailpit en el puerto 8025. |
 | Cambié una clave de desarrollo y no puedo entrar | El seeder conserva contraseñas existentes; utiliza el flujo de recuperación/cambio de contraseña. |
 
-La [guía de pruebas](testing.md) explica cómo comprobar cambios sin introducir datos forestales ficticios en la base operativa.
+La [guía de verificación](testing.md) documenta `bash bin/check`: PSR-12 y sintaxis PHP/JavaScript, sin ejecutar suites ni consultar bases de datos. La revisión funcional es manual; no introduzcas datos forestales ficticios en la base operativa para completar capturas.

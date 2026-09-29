@@ -39,10 +39,8 @@ x-php-service: &php-service
     - ./resources:/var/www/html/resources:ro
     - ./routes:/var/www/html/routes:ro
     - ./public:/var/www/html/public:ro
-    - ./tests:/var/www/html/tests:ro
     - ./bootstrap/app.php:/var/www/html/bootstrap/app.php:ro
     - ./bootstrap/providers.php:/var/www/html/bootstrap/providers.php:ro
-    - ./phpunit.xml:/var/www/html/phpunit.xml:ro
     - storage_data:/var/www/html/storage
   networks:
     - backend

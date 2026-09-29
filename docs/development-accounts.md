@@ -2,67 +2,56 @@
 
 ## Alcance
 
-DevelopmentIdentitySeeder prepara cuatro cuentas para comprobar los perfiles de acceso en el entorno local. Solo admite APP_ENV=local o APP_ENV=testing. Rechaza producción antes de modificar datos, incluso si el comando Artisan utiliza --force.
+`DevelopmentIdentitySeeder` prepara cuatro perfiles del piloto local. Solo admite `APP_ENV=local` o `APP_ENV=testing`; rechaza producción antes de modificar datos, incluso con `--force`.
 
-DatabaseSeeder incorpora territorios, organización piloto y AuthorizationSeeder. **No ejecuta DevelopmentIdentitySeeder automáticamente**, en ningún entorno.
+Los nombres y correos locales se definen directamente en `database/seeders/DevelopmentIdentitySeeder.php`. Las contraseñas iniciales se introducen de forma oculta al ejecutar el seeder y se almacenan mediante el cast de hash de `User`. No se guardan en `.env`, archivos de configuración, código fuente ni registros.
 
-| Perfil | Asignación | Membresía creada |
+`DatabaseSeeder` incorpora territorios, organización piloto, catálogos y autorizaciones. **No ejecuta `DevelopmentIdentitySeeder` automáticamente**. Las cuentas normales se incorporan mediante invitaciones; no existe registro público abierto.
+
+| Perfil | Correo local | Alcance |
 | --- | --- | --- |
-| SUPER_ADMIN | Nacional | Ninguna |
-| DEPARTMENT_ADMIN | Departamento Meta, código 50 | Ninguna |
-| ORGANIZATION_ADMIN | Rol organizacional en INEM-VVC | INEM |
-| OFFICIAL | Rol organizacional en INEM-VVC | INEM |
+| SUPER_ADMIN | superadmin@sysforest.test | Nacional; no necesita membresías ficticias. |
+| DEPARTMENT_ADMIN | departamento.meta@sysforest.test | Departamento Meta, código 50. |
+| ORGANIZATION_ADMIN | admin.inem@sysforest.test | Organización INEM-VVC. |
+| OFFICIAL | funcionario.inem@sysforest.test | Organización INEM-VVC. |
 
-El administrador nacional no requiere pertenencias ficticias para acceder a las organizaciones.
+Estas identidades identifican el piloto de desarrollo; no constituyen credenciales de una instalación de producción.
 
-## Variables
+## Instalación local nueva
 
-config/development.php obtiene los datos de estas variables, sin contraseñas ni correos predeterminados:
-
-| Cuenta | Correo | Contraseña inicial |
-| --- | --- | --- |
-| SUPER_ADMIN | DEV_SUPER_ADMIN_EMAIL | DEV_SUPER_ADMIN_PASSWORD |
-| DEPARTMENT_ADMIN | DEV_DEPARTMENT_ADMIN_EMAIL | DEV_DEPARTMENT_ADMIN_PASSWORD |
-| ORGANIZATION_ADMIN | DEV_ORGANIZATION_ADMIN_EMAIL | DEV_ORGANIZATION_ADMIN_PASSWORD |
-| OFFICIAL | DEV_OFFICIAL_EMAIL | DEV_OFFICIAL_PASSWORD |
-
-Configura sus valores en el .env local no versionado o mediante el mecanismo de secretos del entorno. No incluyas sus valores reales en documentación, repositorio ni capturas.
-
-Los cuatro correos deben ser válidos y distintos, sin distinción de mayúsculas. Cada contraseña debe tener entre 12 y 128 caracteres e incluir mayúsculas, minúsculas, números y símbolos. Toda la configuración se valida antes de crear cuentas o sembrar catálogos. Los mensajes de error identifican las variables que requieren revisión sin incluir sus valores.
-
-## Ejecución explícita
-
-Desde el proyecto local:
+Desde una terminal interactiva, en `/home/josev/SYSFOREST`:
 
 ~~~bash
-docker compose exec app php artisan config:clear
 docker compose exec app php artisan db:seed --class=DatabaseSeeder
 docker compose exec app php artisan db:seed --class=DevelopmentIdentitySeeder
 ~~~
 
-El seeder de desarrollo también prepara sus dependencias de catálogo y piloto dentro de una transacción. No elimina cuentas, organizaciones ni membresías.
+El segundo comando pide y confirma una contraseña **solo para cada cuenta que todavía no existe**. Debe tener entre 12 y 128 caracteres, con mayúsculas, minúsculas, números y símbolos. Las respuestas no aparecen en pantalla. Guarda las contraseñas elegidas en tu gestor de contraseñas.
 
-Las cuentas nuevas se crean activas y con correo verificado, con las contraseñas almacenadas mediante el cast de hash de User. Pueden utilizar la pantalla /login con el correo y contraseña configurados para ese perfil.
+No utilices `-T` ni `--no-interaction` para crear cuentas: el seeder exige una terminal capaz de ocultar la entrada y no admite un modo que muestre el secreto. No pases contraseñas como argumentos del comando. Si falta una cuenta y no hay terminal interactiva, el comando termina sin crear cuentas ni sembrar dependencias.
+
+La lectura y validación terminan antes de la transacción. Las cuentas nuevas se crean activas y con correo verificado. El seeder prepara las dependencias del piloto y sus asignaciones de rol dentro de la misma transacción.
 
 ## Ejecuciones posteriores
 
-Los usuarios se buscan por correo normalizado. Si una cuenta ya existe:
-
-- Conserva su ID, contraseña, nombre, estado global y verificación.
-- Se sincroniza la asignación con el rol definido para el perfil de desarrollo.
-- Las membresías existentes conservan su estado y fechas; si falta la membresía INEM de un perfil organizacional, se crea activa.
-- Las asignaciones nacionales/departamentales y las membresías organizacionales no se duplican.
-
-Cambiar una variable DEV_*_PASSWORD y volver a ejecutar el seeder **no restablece la contraseña de una cuenta existente**. Para cambiarla se utiliza el flujo de contraseña de la aplicación. Una cuenta existente desactivada o sin verificar tampoco se habilita silenciosamente.
-
-Las contraseñas configuradas deben seguir cumpliendo la política aunque las cuentas ya existan, porque la validación se completa antes de cualquier escritura.
-
-## Pruebas
+Si las cuatro cuentas ya existen, el seeder también puede ejecutarse sin interacción:
 
 ~~~bash
-docker compose exec app php artisan test --filter=DevelopmentIdentitySeederTest
+docker compose exec -T app php artisan db:seed --class=DevelopmentIdentitySeeder --no-interaction
 ~~~
 
-Las pruebas sustituyen la configuración por credenciales de fixture y usan la base transaccional protegida por PostgresTestCase. No imprimen ni dependen de las credenciales reales del entorno.
+Los usuarios se buscan por correo normalizado. Una cuenta existente conserva su ID, contraseña hash, nombre, estado y verificación. No se le solicita contraseña ni se restablece. Se sincroniza su asignación con el rol definido; las membresías existentes conservan estado y fechas y una membresía organizacional ausente se crea activa. No se duplican las asignaciones ni se eliminan cuentas.
 
-La suite focalizada comprueba entornos local/testing, rechazo de producción, validación previa, correos distintos, roles correctos, ausencia de membresías ficticias, idempotencia, conservación de contraseñas y exclusión del seeder de desarrollo del flujo general. Resultado: **9 pruebas aprobadas y 57 aserciones**.
+Para cambiar una contraseña utiliza el flujo de contraseña de la aplicación. Modificar los correos en el seeder define otras identidades y podría crear cuentas adicionales; no lo utilices para renombrar usuarios existentes.
+
+## Migración desde la configuración anterior
+
+Se retiraron las ocho variables de correo y contraseña `DEV_*` de `.env`, `.env.example` y `bin/setup-env`, junto con `config/development.php`. Los secretos técnicos de Laravel, JWT, PostgreSQL y Redis mantienen su configuración independiente.
+
+Las cuatro identidades configuradas coincidían con las cuentas existentes del piloto. La migración conserva las contraseñas almacenadas: se inicia sesión con las mismas credenciales que ya utilizabas. Tras retirar las variables se deben recrear los contenedores PHP para que tampoco permanezcan en su entorno de procesos; reiniciar únicamente PHP no reemplaza las variables con las que se crearon los contenedores.
+
+## Verificación de la modificación
+
+Se ejecutó el seeder con `--no-interaction` sobre el piloto existente y terminó correctamente sin pedir claves. La comparación íntegra de los cinco registros de usuario, antes y después, confirmó que se conservaron todos sus campos, incluidos los hashes de contraseña. Se retiraron exactamente ocho variables del `.env` real; el resto de su contenido y sus permisos `0600` permanecieron intactos.
+
+La sintaxis PHP del seeder, la sintaxis de Bash en `bin/setup-env` y PSR-12 sobre el seeder finalizaron correctamente. La búsqueda de referencias activas no encontró lecturas de las variables retiradas. A petición del usuario no se crean ni se ejecutan pruebas automatizadas. La creación de cuentas ausentes con entrada interactiva se revisó en código y no se ejercitó sobre la base del piloto, para conservar sus cinco usuarios.
