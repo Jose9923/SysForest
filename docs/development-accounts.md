@@ -1,57 +1,59 @@
 # Cuentas de desarrollo
 
-## Alcance
+## Alcance y contraseña predeterminada
 
-`DevelopmentIdentitySeeder` prepara cuatro perfiles del piloto local. Solo admite `APP_ENV=local` o `APP_ENV=testing`; rechaza producción antes de modificar datos, incluso con `--force`.
+Por solicitud expresa del usuario, la contraseña local predeterminada es **`password`**. `DevelopmentPasswordService::DEFAULT_PASSWORD` define este valor y `User` almacena únicamente su hash. No se utilizan variables de correo o contraseña en `.env`.
 
-Los nombres y correos locales se definen directamente en `database/seeders/DevelopmentIdentitySeeder.php`. Las contraseñas iniciales se introducen de forma oculta al ejecutar el seeder y se almacenan mediante el cast de hash de `User`. No se guardan en `.env`, archivos de configuración, código fuente ni registros.
+`DevelopmentIdentitySeeder` prepara cuatro perfiles del piloto y aplica la contraseña predeterminada a todas las cuentas existentes mediante `DevelopmentPasswordSeeder`. Para restablecer solo las claves, sin preparar perfiles, roles ni organizaciones, se ejecuta directamente `DevelopmentPasswordSeeder`.
 
-`DatabaseSeeder` incorpora territorios, organización piloto, catálogos y autorizaciones. **No ejecuta `DevelopmentIdentitySeeder` automáticamente**. Las cuentas normales se incorporan mediante invitaciones; no existe registro público abierto.
+Ambos seeders solo admiten `APP_ENV=local` o `APP_ENV=testing`; rechazan los demás entornos antes de modificar datos, incluso con `--force`. Esta excepción de desarrollo no modifica la política de contraseñas de los formularios de invitación o recuperación.
 
-| Perfil | Correo local | Alcance |
+`DatabaseSeeder` incorpora territorios, organización piloto, catálogos y autorizaciones. **No ejecuta estos seeders de cuentas ni contraseñas automáticamente**. Las cuentas normales se incorporan mediante invitaciones; no existe registro público abierto.
+
+| Perfil preparado por DevelopmentIdentitySeeder | Correo local | Alcance |
 | --- | --- | --- |
 | SUPER_ADMIN | superadmin@sysforest.test | Nacional; no necesita membresías ficticias. |
 | DEPARTMENT_ADMIN | departamento.meta@sysforest.test | Departamento Meta, código 50. |
 | ORGANIZATION_ADMIN | admin.inem@sysforest.test | Organización INEM-VVC. |
 | OFFICIAL | funcionario.inem@sysforest.test | Organización INEM-VVC. |
 
-Estas identidades identifican el piloto de desarrollo; no constituyen credenciales de una instalación de producción.
+El restablecimiento abarca también cualquier otra cuenta de la base local. Las identidades y la contraseña predeterminada corresponden al piloto de desarrollo.
 
 ## Instalación local nueva
 
-Desde una terminal interactiva, en `/home/josev/SYSFOREST`:
+En `/home/josev/SYSFOREST`:
 
 ~~~bash
-docker compose exec app php artisan db:seed --class=DatabaseSeeder
-docker compose exec app php artisan db:seed --class=DevelopmentIdentitySeeder
-~~~
-
-El segundo comando pide y confirma una contraseña **solo para cada cuenta que todavía no existe**. Debe tener entre 12 y 128 caracteres, con mayúsculas, minúsculas, números y símbolos. Las respuestas no aparecen en pantalla. Guarda las contraseñas elegidas en tu gestor de contraseñas.
-
-No utilices `-T` ni `--no-interaction` para crear cuentas: el seeder exige una terminal capaz de ocultar la entrada y no admite un modo que muestre el secreto. No pases contraseñas como argumentos del comando. Si falta una cuenta y no hay terminal interactiva, el comando termina sin crear cuentas ni sembrar dependencias.
-
-La lectura y validación terminan antes de la transacción. Las cuentas nuevas se crean activas y con correo verificado. El seeder prepara las dependencias del piloto y sus asignaciones de rol dentro de la misma transacción.
-
-## Ejecuciones posteriores
-
-Si las cuatro cuentas ya existen, el seeder también puede ejecutarse sin interacción:
-
-~~~bash
+docker compose exec -T app php artisan db:seed --class=DatabaseSeeder
 docker compose exec -T app php artisan db:seed --class=DevelopmentIdentitySeeder --no-interaction
 ~~~
 
-Los usuarios se buscan por correo normalizado. Una cuenta existente conserva su ID, contraseña hash, nombre, estado y verificación. No se le solicita contraseña ni se restablece. Se sincroniza su asignación con el rol definido; las membresías existentes conservan estado y fechas y una membresía organizacional ausente se crea activa. No se duplican las asignaciones ni se eliminan cuentas.
+No se solicita entrada interactiva. Las cuentas nuevas se crean activas, con correo verificado y contraseña `password`. El seeder prepara las dependencias del piloto, los perfiles y sus asignaciones de rol dentro de una transacción.
 
-Para cambiar una contraseña utiliza el flujo de contraseña de la aplicación. Modificar los correos en el seeder define otras identidades y podría crear cuentas adicionales; no lo utilices para renombrar usuarios existentes.
+Los usuarios se buscan por correo normalizado. Una cuenta existente conserva su ID, nombre, estado y verificación. Se sincroniza su asignación con el rol definido; las membresías existentes conservan estado y fechas y una membresía organizacional ausente se crea activa. No se duplican las asignaciones ni se eliminan cuentas. Modificar los correos en el seeder define otras identidades y podría crear cuentas adicionales; no lo utilices para renombrar usuarios existentes.
 
-## Migración desde la configuración anterior
+## Restablecer todas las contraseñas locales
+
+~~~bash
+docker compose exec -T app php artisan db:seed --class=DevelopmentPasswordSeeder --no-interaction
+~~~
+
+Este comando aplica `password` a todas las cuentas existentes, sin crear usuarios ni modificar permisos, membresías, organizaciones o datos forestales. Cada cambio de contraseña revoca las sesiones de esa cuenta; se debe iniciar sesión nuevamente con la clave predeterminada.
+
+Si una cuenta ya utiliza `password`, se omite su actualización: conserva su hash y sus sesiones. Repetir el comando sin cambios de contraseña intermedios no vuelve a modificarlas. Para elegir después una contraseña individual se utiliza el flujo de la aplicación; volver a ejecutar cualquiera de los dos seeders la restablecerá al valor predeterminado.
+
+## Configuración anterior
 
 Se retiraron las ocho variables de correo y contraseña `DEV_*` de `.env`, `.env.example` y `bin/setup-env`, junto con `config/development.php`. Los secretos técnicos de Laravel, JWT, PostgreSQL y Redis mantienen su configuración independiente.
 
-Las cuatro identidades configuradas coincidían con las cuentas existentes del piloto. La migración conserva las contraseñas almacenadas: se inicia sesión con las mismas credenciales que ya utilizabas. Tras retirar las variables se deben recrear los contenedores PHP para que tampoco permanezcan en su entorno de procesos; reiniciar únicamente PHP no reemplaza las variables con las que se crearon los contenedores.
+La migración inicial conservó las contraseñas existentes y pedía entrada oculta para las cuentas nuevas. La autorización posterior de una contraseña predeterminada reemplaza ese comportamiento por los seeders no interactivos descritos aquí. Los informes históricos conservan los resultados correspondientes a su fecha.
 
-## Verificación de la modificación
+## Verificación del restablecimiento autorizado
 
-Se ejecutó el seeder con `--no-interaction` sobre el piloto existente y terminó correctamente sin pedir claves. La comparación íntegra de los cinco registros de usuario, antes y después, confirmó que se conservaron todos sus campos, incluidos los hashes de contraseña. Se retiraron exactamente ocho variables del `.env` real; el resto de su contenido y sus permisos `0600` permanecieron intactos.
+La ejecución de `DevelopmentPasswordSeeder` actualizó las contraseñas de las cinco cuentas locales existentes; ninguna utilizaba ya el valor predeterminado. Se comprobó que los cinco hashes corresponden a `password` y que el superadministrador inicia sesión correctamente mediante `AuthService`. Esta última comprobación se realizó en una transacción revertida, sin conservar su sesión ni exponer tokens. Inmediatamente después del restablecimiento no quedaban sesiones vigentes; los usuarios pueden volver a iniciarlas con la nueva clave.
 
-La sintaxis PHP del seeder, la sintaxis de Bash en `bin/setup-env` y PSR-12 sobre el seeder finalizaron correctamente. La búsqueda de referencias activas no encontró lecturas de las variables retiradas. A petición del usuario no se crean ni se ejecutan pruebas automatizadas. La creación de cuentas ausentes con entrada interactiva se revisó en código y no se ejercitó sobre la base del piloto, para conservar sus cinco usuarios.
+Una segunda ejecución informó cero actualizaciones y cinco cuentas sin cambios. La comparación de esa repetición confirmó que los perfiles, roles y datos forestales permanecieron iguales. PSR-12 y sintaxis PHP finalizaron correctamente en los cuatro archivos de código modificados o añadidos.
+
+La revisión de código comprobó las restricciones de consola y entorno, el cast de hash, el bloqueo de usuarios dentro de la transacción, la invalidación de enlaces de recuperación, la revocación de sesiones y la auditoría sin contraseñas ni hashes. También comprobó que las cuentas que ya usan la clave predeterminada se omiten y que la política de contraseñas web permanece intacta.
+
+A petición del usuario no se crean ni se ejecutan pruebas automatizadas.

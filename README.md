@@ -33,10 +33,16 @@ docker compose exec -T app php artisan db:seed --class=DatabaseSeeder
 Este seeder prepara el catálogo territorial de Colombia (32 departamentos, Bogotá D.C. y 1.104 opciones municipales), la institución piloto INEM de Villavicencio, los catálogos, cuatro roles, **49 permisos** y el inventario piloto. No genera árboles ficticios ni cuentas. Sincroniza la matriz de permisos de los roles, por lo que debe ejecutarse conscientemente. Para crear las cuatro cuentas opcionales de revisión local:
 
 ~~~bash
-docker compose exec app php artisan db:seed --class=DevelopmentIdentitySeeder
+docker compose exec -T app php artisan db:seed --class=DevelopmentIdentitySeeder --no-interaction
 ~~~
 
-Los nombres y correos locales se definen en el seeder. Al crear una cuenta solicita su contraseña mediante entrada oculta y la guarda como hash en la base de datos; no utiliza credenciales de usuarios en `.env`. Consulta [cuentas de desarrollo](docs/development-accounts.md). Repetir ese seeder no cambia contraseñas existentes. Las cuentas normales se incorporan mediante invitaciones, sin registro público abierto.
+La contraseña predeterminada es **`password`**, por solicitud expresa del usuario para el piloto local. Los nombres y correos se definen en el seeder; la clave predeterminada pertenece al servicio de contraseñas de desarrollo y la base almacena únicamente su hash. No se utilizan credenciales de usuarios en `.env`. Este seeder también ejecuta `DevelopmentPasswordSeeder`, que restablece todas las cuentas existentes, incluidas las ajenas a sus cuatro perfiles, y revoca las sesiones de quienes cambian de contraseña. Ambos seeders se restringen a `local` o `testing`. Consulta [cuentas de desarrollo](docs/development-accounts.md). Las cuentas normales se incorporan mediante invitaciones, sin registro público abierto.
+
+Para restablecer únicamente las contraseñas locales, sin aprovisionar perfiles ni sincronizar roles:
+
+~~~bash
+docker compose exec -T app php artisan db:seed --class=DevelopmentPasswordSeeder --no-interaction
+~~~
 
 ## Accesos
 
@@ -73,6 +79,7 @@ Por solicitud expresa del usuario se retiraron las pruebas automatizadas. `bash 
 
 | Necesidad | Documento |
 | --- | --- |
+| Entender Activo/En observación/Muerto y la corrección de Restrepo | [Estados de Restrepo](docs/restrepo-status-review.md) |
 | Cargar departamentos y municipios de Colombia sin duplicar territorios | [Catálogo territorial](docs/territories.md) |
 | Consultar la carga de 2.854 árboles de Restrepo, su fecha de referencia y revisiones pendientes | [Carga de Restrepo 2025](docs/restrepo-import.md) |
 | Revisar resultados, correcciones y pendientes de aceptación local | [Aceptación del piloto](docs/acceptance-local.md) |

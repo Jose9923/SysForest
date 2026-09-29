@@ -1,5 +1,7 @@
 # Carga de Plan de Ornato de Restrepo 2025
 
+**Actualización posterior:** la clasificación inicial fue corregida por solicitud del usuario: 65 Muertos, 1.897 En observación y 892 Activos. Las inspecciones y filas importadas permanecen intactas. Consulta [criterio, motivos y conciliación](restrepo-status-review.md). Las cantidades de revisión de este informe describen la situación original de carga.
+
 La carga quedó completada en el piloto local el 28 de septiembre de 2026: **2.854 árboles y 2.854 inspecciones**, organizados en 29 lotes confirmados. Se reutilizaron los Services, Repositories, validaciones, permisos, transacciones por lote y auditoría de SYSFOREST. La organización, campaña, árboles e inspecciones permanecen privados.
 
 ## Dónde consultar

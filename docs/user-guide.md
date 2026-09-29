@@ -35,6 +35,18 @@ Los cálculos derivados se realizan en el servidor. Una medida desconocida no eq
 
 Un individuo puede participar en varias campañas sin duplicar su identidad. **Anular** se reserva para registros creados por error; muerto, talado o retirado son estados de un individuo real y conservan su historial. La restauración requiere permiso y conserva UUID, código y relaciones.
 
+## Distinguir estado y condiciones del árbol
+
+El estado actual y las condiciones de una inspección son datos distintos:
+
+- **Activo**: estado operativo del individuo; no certifica que esté sano ni sustituye la revisión de sus inspecciones.
+- **En observación**: requiere revisión o seguimiento por plagas, señales de enfermedad o daños estructurales registrados.
+- **Muerto**: el individuo se reporta muerto. Una rama muerta aislada, la muerte descendente o un proceso de deterioro no acreditan por sí solos la muerte del árbol completo.
+
+Los insectos benignos, como abejas, no justifican por sí solos poner un árbol En observación. Conserva en la inspección las condiciones observadas y distingue los insectos dañinos de los benignos o no identificados.
+
+Desde la ficha abre **Cambiar estado del árbol**, selecciona el estado y explica el motivo y su fuente. Guardarlo conserva el estado anterior y registra la fecha real del cambio y la persona responsable. No reemplaza las inspecciones históricas. Registrar o corregir una inspección no cambia automáticamente el estado del árbol.
+
 ## Registrar y cerrar mantenimientos
 
 Abre **Mantenimientos** y entra en la orden. Al comienzo de su ficha aparece **Seguimiento y cierre**, con el siguiente paso disponible abierto:

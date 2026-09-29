@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class UserRepository
 {
@@ -39,6 +40,12 @@ class UserRepository
         }
         $user->forceFill($allowed)->save();
         return $user->refresh();
+    }
+
+    /** La autorización del restablecimiento global corresponde al servicio local de desarrollo. */
+    public function allForUpdate(): Collection
+    {
+        return User::query()->orderBy('id')->lockForUpdate()->get();
     }
 
     public function paginate(): LengthAwarePaginator
