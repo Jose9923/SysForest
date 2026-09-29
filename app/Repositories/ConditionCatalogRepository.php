@@ -40,7 +40,7 @@ class ConditionCatalogRepository
 
     public function create(ConditionCatalogKind $catalog, array $attributes): Model
     {
-        return $this->query($catalog)->create($attributes);
+        return $this->query($catalog)->create($attributes)->refresh();
     }
 
     public function update(Model $record, array $attributes): Model

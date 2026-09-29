@@ -27,6 +27,7 @@ class UserService
         private SecurityMailService $mail,
         private SecurityEventRepository $events,
         private RoleAssignmentService $roles,
+        private AuditSnapshotService $snapshots,
     ) {
     }
 
@@ -61,13 +62,23 @@ class UserService
             if ($user->active === $active) {
                 return;
             }
+            $before = $this->snapshots->snapshot($user);
             $this->users->update($user, ['active' => $active]);
             if (!$active) {
-                $this->sessionService->revokeAll($user, 'account_disabled');
+                $this->sessionService->revokeAll($user, 'account_disabled', $actor);
             }
             $kind = $active ? 'account_activated' : 'account_deactivated';
             $this->mail->send($kind, $user);
-            $this->events->record($active ? 'account.activated' : 'account.deactivated', $actor, null, ['target_user_id' => $id]);
+            $this->events->recordChange(
+                $active ? 'account.activated' : 'account.deactivated',
+                $actor,
+                null,
+                'user',
+                (string) $id,
+                $before,
+                $this->snapshots->snapshot($user),
+                ['target_user_id' => $id]
+            );
         }, 3);
     }
 
@@ -85,7 +96,6 @@ class UserService
             } else {
                 throw ValidationException::withMessages(['role' => 'El rol no corresponde al ámbito solicitado.']);
             }
-            $this->events->record('role.assigned', $actor, null, ['target_user_id' => $id, 'role_name' => $input['role'], 'department_id' => $input['department_id'] ?? null]);
         });
     }
 
@@ -116,7 +126,25 @@ class UserService
 
     public function updateProfile(User $actor, array $input): void
     {
-        $this->users->update($actor, ['name' => $input['name']]);
+        $values = \Illuminate\Support\Facades\Validator::make($input, ['name' => ['required', 'string', 'max:150']])->validate();
+        DB::transaction(function () use ($actor, $values): void {
+            $user = $this->users->findForUpdate((int) $actor->id);
+            if (!$user->active) {
+                throw new \Illuminate\Auth\Access\AuthorizationException('La cuenta debe estar activa.');
+            }
+            $before = $this->snapshots->snapshot($user);
+            $user = $this->users->update($user, ['name' => $values['name']]);
+            $this->events->recordChange(
+                'account.profile_updated',
+                $user,
+                null,
+                'user',
+                (string) $user->id,
+                $before,
+                $this->snapshots->snapshot($user),
+                ['target_user_id' => $user->id]
+            );
+        }, 3);
     }
 
     public function revokeOwnSession(User $actor, string $id): void

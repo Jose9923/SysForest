@@ -65,9 +65,18 @@ class EmailVerificationService
             $user = $this->users->findForUpdate((int) $actor->id);
             $action = $this->tokens->lockById($snapshot->id);
             $this->assertUsable($action, $user);
+            $before = ['email_verified_at' => $user->email_verified_at?->toISOString()];
             $this->users->update($user, ['email_verified_at' => now()]);
             $this->tokens->consumePending($user, 'verification');
-            $this->events->record('email.verified', $user, null, []);
+            $this->events->recordChange(
+                'email.verified',
+                $user,
+                null,
+                'user',
+                (string) $user->id,
+                $before,
+                ['email_verified_at' => $user->email_verified_at?->toISOString()]
+            );
         }, 3);
     }
 

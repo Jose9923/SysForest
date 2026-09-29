@@ -308,7 +308,7 @@ class InventoryTest extends PostgresTestCase
 
     public function test_creation_rolls_back_when_audit_fails(): void
     {
-        $this->mock(SecurityEventRepository::class)->shouldReceive('record')->once()->andThrow(new RuntimeException('Auditoría no disponible'));
+        $this->partialMock(SecurityEventRepository::class)->shouldReceive('record')->once()->andThrow(new RuntimeException('Auditoría no disponible'));
         try {
             app(InventoryService::class)->create($this->actor, $this->input());
             $this->fail('La operación debía revertirse al fallar la auditoría.');

@@ -31,6 +31,9 @@ class OrganizationService
         private PermissionService $permissions,
         private RoleAssignmentRepository $assignments,
         private UserRepository $users,
+        private VersionedWriteService $versions,
+        private AuditSnapshotService $snapshots,
+        private \App\Repositories\SecurityEventRepository $events,
     ) {
     }
 
@@ -71,7 +74,19 @@ class OrganizationService
                 $this->authorizeNational($current, 'organizations.create');
 
                 // El administrador nacional opera por su alcance; no se crea una membresía artificial.
-                return $this->organizations->create($attributes);
+                $organization = $this->organizations->create($attributes);
+                $this->events->recordChange(
+                    'organization.created',
+                    $current,
+                    $organization->id,
+                    'organization',
+                    $organization->id,
+                    [],
+                    $this->snapshots->snapshot($organization),
+                    ['resource_id' => $organization->id, 'resource_code' => $organization->code]
+                );
+
+                return $organization;
             }, 3);
         } catch (QueryException $exception) {
             $this->translateUniqueConflict($exception);
@@ -86,9 +101,24 @@ class OrganizationService
                 $this->tenants->assertCurrentAccess($actor, true);
                 $organization = $this->show($actor, $id);
                 Gate::forUser($actor)->authorize('update', $organization);
+                $before = $this->snapshots->snapshot($organization);
                 $attributes = Validator::make($input, OrganizationRules::rules($id), OrganizationRules::messages())->validate();
+                $this->versions->advance($organization, $attributes);
+                unset($attributes['lock_version']);
 
-                return $this->organizations->update($organization, $attributes);
+                $organization = $this->organizations->update($organization, $attributes);
+                $this->events->recordChange(
+                    'organization.updated',
+                    $actor,
+                    $organization->id,
+                    'organization',
+                    $organization->id,
+                    $before,
+                    $this->snapshots->snapshot($organization),
+                    ['resource_id' => $organization->id, 'resource_code' => $organization->code]
+                );
+
+                return $organization;
             }, 3);
         } catch (QueryException $exception) {
             $this->translateUniqueConflict($exception);
@@ -111,9 +141,24 @@ class OrganizationService
                 $current = $this->users->findForUpdate((int) $actor->id);
                 $this->authorizeNational($current, 'organizations.manage');
                 $organization = $this->organizations->find($id, true);
+                $before = $this->snapshots->snapshot($organization);
                 $attributes = Validator::make($input, OrganizationRules::rules($id), OrganizationRules::messages())->validate();
+                $this->versions->advance($organization, $attributes);
+                unset($attributes['lock_version']);
 
-                return $this->organizations->update($organization, $attributes);
+                $organization = $this->organizations->update($organization, $attributes);
+                $this->events->recordChange(
+                    'organization.updated',
+                    $current,
+                    $organization->id,
+                    'organization',
+                    $organization->id,
+                    $before,
+                    $this->snapshots->snapshot($organization),
+                    ['resource_id' => $organization->id, 'resource_code' => $organization->code]
+                );
+
+                return $organization;
             }, 3);
         } catch (QueryException $exception) {
             $this->translateUniqueConflict($exception);

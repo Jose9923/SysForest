@@ -6,8 +6,10 @@
     <script src="{{ asset('vendor/jquery/jquery.min.js') }}" defer></script>
     <script src="{{ asset('vendor/select2/select2.min.js') }}" defer></script>
     <script src="{{ asset('vendor/select2/es.js') }}" defer></script>
+    <script src="{{ asset('js/select2-accessibility.js') }}" defer></script>
     <script src="{{ asset('js/municipality-select.js') }}" defer></script>
 @endpush
+@isset($organization)<input type="hidden" name="lock_version" value="{{ old('lock_version', $organization->lock_version) }}">@endisset
 <h2>Identidad institucional</h2>
 <div class="form-grid">
     <div class="wide"><x-field name="name" label="Nombre de la organización *" :value="$organization->name ?? ''" required maxlength="200" autocomplete="organization" /></div>

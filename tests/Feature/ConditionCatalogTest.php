@@ -46,7 +46,7 @@ class ConditionCatalogTest extends PostgresTestCase
     {
         $this->seed(ConditionCatalogSeeder::class);
         $condition = Condition::query()->where('code', 'PHY_ROOT_GOOD_ANCHORAGE')->sole();
-        $this->service->update($this->admin, 'items', $condition->id, ['name' => 'Anclaje revisado', 'active' => false, 'sort_order' => 777]);
+        $this->service->update($this->admin, 'items', $condition->id, ['lock_version' => $condition->fresh()->lock_version, 'name' => 'Anclaje revisado', 'active' => false, 'sort_order' => 777]);
         $this->seed(ConditionCatalogSeeder::class);
         $this->assertDatabaseCount('conditions', 65);
         $this->assertDatabaseHas('conditions', ['id' => $condition->id, 'code' => 'PHY_ROOT_GOOD_ANCHORAGE', 'name' => 'Anclaje revisado', 'active' => false, 'sort_order' => 777]);
@@ -65,8 +65,8 @@ class ConditionCatalogTest extends PostgresTestCase
     {
         $category = $this->category('PHY_TEST', 'physical_mechanical');
         $item = $this->item($category);
-        $this->service->update($this->admin, 'items', $item->id, ['active' => false, 'sort_order' => 24, 'description' => 'Seguimiento']);
-        $this->service->update($this->admin, 'items', $item->id, ['active' => true]);
+        $this->service->update($this->admin, 'items', $item->id, ['lock_version' => $item->fresh()->lock_version, 'active' => false, 'sort_order' => 24, 'description' => 'Seguimiento']);
+        $this->service->update($this->admin, 'items', $item->id, ['lock_version' => $item->fresh()->lock_version, 'active' => true]);
         $this->assertTrue($item->fresh()->active);
         $this->assertSame(24, $item->fresh()->sort_order);
         $this->assertSame($category->id, $item->fresh()->category->id);
@@ -101,7 +101,7 @@ class ConditionCatalogTest extends PostgresTestCase
         $item = $this->item($category);
         foreach ([['code' => 'RENAMED_CODE'], ['assessment_type' => 'phytosanitary'], ['condition_category_id' => $other->id]] as $change) {
             try {
-                $this->service->update($this->admin, 'items', $item->id, $change);
+                $this->service->update($this->admin, 'items', $item->id, ['lock_version' => $item->fresh()->lock_version] + $change);
                 $this->fail('Se cambió la identidad semántica de una condición existente.');
             } catch (ValidationException) {
                 $this->assertSame($category->id, $item->fresh()->condition_category_id);
@@ -119,7 +119,7 @@ class ConditionCatalogTest extends PostgresTestCase
         } catch (ValidationException) {
             $this->assertDatabaseCount('conditions', 0);
         }
-        $this->service->update($this->admin, 'categories', $category->id, ['active' => false]);
+        $this->service->update($this->admin, 'categories', $category->id, ['lock_version' => $category->fresh()->lock_version, 'active' => false]);
         $this->expectException(ValidationException::class);
         $this->item($category);
     }
@@ -150,7 +150,7 @@ class ConditionCatalogTest extends PostgresTestCase
         } catch (ValidationException) {
             $this->assertDatabaseCount('conditions', 1);
         }
-        $this->service->update($this->admin, 'items', $item->id, ['active' => false]);
+        $this->service->update($this->admin, 'items', $item->id, ['lock_version' => $item->fresh()->lock_version, 'active' => false]);
         $this->assertSame($category->id, $item->fresh()->category->id);
     }
 
@@ -171,19 +171,19 @@ class ConditionCatalogTest extends PostgresTestCase
         $this->post('/admin/catalogs/conditions/items', ['code' => 'PHY_HTTP', 'name' => 'Anclaje especial', 'condition_category_id' => $category->id, 'assessment_type' => 'physical_mechanical'])->assertRedirect();
         $item = Condition::query()->where('code', 'PHY_HTTP')->sole();
         $this->get('/admin/catalogs/conditions/items/'.$item->id.'/edit')->assertOk();
-        $this->put('/admin/catalogs/conditions/items/'.$item->id, ['sort_order' => 12])->assertRedirect();
+        $this->put('/admin/catalogs/conditions/items/'.$item->id, ['lock_version' => $item->fresh()->lock_version, 'sort_order' => 12])->assertRedirect();
         $official = User::factory()->create();
         $this->member($official, $this->pilot());
         $this->actingAs($official)->get('/admin/catalogs/conditions/items')->assertOk()->assertSee('Anclaje especial')->assertDontSee('+ Crear valor');
         $this->get('/admin/catalogs/conditions/items/create')->assertForbidden();
-        $this->putJson('/admin/catalogs/conditions/items/'.$item->id, ['active' => false])->assertForbidden();
+        $this->putJson('/admin/catalogs/conditions/items/'.$item->id, ['lock_version' => $item->fresh()->lock_version, 'active' => false])->assertForbidden();
     }
 
     public function test_active_filter_normalizes_validated_integer_and_boolean_inputs(): void
     {
         $active = $this->item($this->category('PHY_TEST', 'physical_mechanical'));
         $inactive = $this->item($this->category('PHT_TEST', 'phytosanitary'));
-        $this->service->update($this->admin, 'items', $inactive->id, ['active' => false]);
+        $this->service->update($this->admin, 'items', $inactive->id, ['lock_version' => $inactive->fresh()->lock_version, 'active' => false]);
         foreach ([1, true, '1'] as $value) {
             $result = $this->service->index($this->admin, 'items', ['active' => $value]);
             $this->assertSame('1', $result['filters']['active']);

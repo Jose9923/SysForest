@@ -135,22 +135,32 @@ class TreeQueryRepository
             $maintenance->selectRaw('1')->from('maintenances as matched_maintenance')
                 ->whereColumn('matched_maintenance.organization_id', 'trees.organization_id')
                 ->whereColumn('matched_maintenance.tree_id', 'trees.id')->whereNull('matched_maintenance.deleted_at');
-            if ($scope->kind === 'published') {
-                $this->visibility->maintenance($maintenance, 'matched_maintenance');
-            }
-            foreach (['maintenance_type_id' => 'maintenance_type_id', 'maintenance_status' => 'status', 'maintenance_priority' => 'priority'] as $key => $column) {
-                if ($filters->has($key)) {
-                    $maintenance->where('matched_maintenance.'.$column, $filters->get($key));
-                }
-            }
-            if (!$filters->has('maintenance_status')) {
-                $maintenance->where('matched_maintenance.status', '<>', 'cancelled');
-            }
-            // Es una casilla «con pendientes/programados»: false no significa «sin pendientes».
-            if ($filters->get('has_pending_maintenance') === true) {
-                $maintenance->whereIn('matched_maintenance.status', ['pending', 'scheduled']);
-            }
+            $this->applyMaintenanceFilters($maintenance, $filters, $scope, 'matched_maintenance');
         });
+    }
+
+    /** Predicado único para seleccionar árboles y agregar las mismas órdenes que motivaron su selección. */
+    public function applyMaintenanceFilters(Builder|QueryBuilder $query, TreeFilterDTO $filters, TreeReadScope $scope, string $alias): void
+    {
+        if (!preg_match('/\A[a-z_][a-z0-9_]*\z/D', $alias)) {
+            throw new \InvalidArgumentException('El alias interno de mantenimiento no es válido.');
+        }
+        $query->whereNull($alias.'.deleted_at');
+        if ($scope->kind === 'published') {
+            $this->visibility->maintenance($query, $alias);
+        }
+        foreach (['maintenance_type_id' => 'maintenance_type_id', 'maintenance_status' => 'status', 'maintenance_priority' => 'priority'] as $key => $column) {
+            if ($filters->has($key)) {
+                $query->where($alias.'.'.$column, $filters->get($key));
+            }
+        }
+        if (!$filters->has('maintenance_status')) {
+            $query->where($alias.'.status', '<>', 'cancelled');
+        }
+        // False conserva la semántica existente: no significa «sin pendientes».
+        if ($filters->get('has_pending_maintenance') === true) {
+            $query->whereIn($alias.'.status', ['pending', 'scheduled']);
+        }
     }
 
     private function literalSearch(string $value): string

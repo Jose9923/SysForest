@@ -12,6 +12,7 @@ use App\Models\Placement;
 use App\Models\Species;
 use App\Models\Tree;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 /** Registro cerrado de referencias permanentes. Los nombres de modelos nunca proceden del cliente. */
 class TreeCatalogRepository
@@ -32,11 +33,28 @@ class TreeCatalogRepository
 
     public function validSelection(string $field, string $id, ?string $currentId = null): bool
     {
-        if ($id === $currentId) {
-            return self::MODELS[$field]::query()->whereKey($id)->exists();
+        // EXISTS no bloquea las filas consultadas: materializar la referencia evita una
+        // desactivación entre la validación y el commit de la captura o anulación.
+        $lock = DB::transactionLevel() > 0;
+        $query = self::MODELS[$field]::query()->whereKey($id);
+        $record = ($lock ? $query->sharedLock() : $query)->first();
+        if ($record === null) {
+            return false;
+        }
+        if ($currentId !== null && strtolower($id) === strtolower($currentId)) {
+            return true;
+        }
+        if (!$record->active) {
+            return false;
+        }
+        if ($record instanceof Species) {
+            $parent = $record->family();
+            $family = ($lock ? $parent->sharedLock() : $parent)->first();
+
+            return $family !== null && $family->active;
         }
 
-        return $this->available($field)->whereKey($id)->exists();
+        return true;
     }
 
     public function options(?Tree $tree = null): array

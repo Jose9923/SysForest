@@ -104,6 +104,18 @@ class RoleAssignmentRepository
             ->where('organization_id', $membership->organization_id)->where('membership_id', $membership->id)->first();
     }
 
+    public function nationalAssignment(int $userId, string $roleName): ?NationalRoleAssignment
+    {
+        return NationalRoleAssignment::query()->where('user_id', $userId)
+            ->where('role_id', $this->roleOfScope($roleName, 'national')->id)->first();
+    }
+
+    public function departmentAssignment(int $userId, string $departmentId, string $roleName): ?DepartmentRoleAssignment
+    {
+        return DepartmentRoleAssignment::query()->where('user_id', $userId)->where('department_id', $departmentId)
+            ->where('role_id', $this->roleOfScope($roleName, 'department')->id)->first();
+    }
+
     /** API de persistencia para seeders y flujos que ya verificaron la autorización. */
     public function grantNational(int $userId, string $roleName = 'SUPER_ADMIN'): NationalRoleAssignment
     {

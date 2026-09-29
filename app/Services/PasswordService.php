@@ -74,7 +74,7 @@ class PasswordService
             $this->users->update($user, ['password' => $password, 'remember_token' => Str::random(60)]);
             $this->tokens->consumePending($user, 'password_reset');
             $this->sessions->revokeAll($user, 'password_reset');
-            $this->events->record('password.reset', $user, null, []);
+            $this->events->recordChange('password.reset', $user, null, 'user', (string) $user->id, [], []);
         }, 3);
     }
 
@@ -89,7 +89,7 @@ class PasswordService
             $this->users->update($user, ['password' => $password, 'remember_token' => Str::random(60)]);
             $this->tokens->consumePending($user, 'password_reset');
             $this->sessions->revokeAll($user, 'password_changed');
-            $this->events->record('password.changed', $user, null, []);
+            $this->events->recordChange('password.changed', $user, null, 'user', (string) $user->id, [], []);
         }, 3);
     }
 

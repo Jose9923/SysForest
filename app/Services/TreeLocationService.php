@@ -23,31 +23,15 @@ class TreeLocationService
         private CoordinateParserService $parser,
         private TreeLocationRepository $locations,
         private SecurityEventRepository $events,
+        private TreeCaptureDateService $captureDates,
     ) {
     }
 
     /** Omitir un campo conserva su dato; un valor NULL explícito lo vacía. */
     public function apply(Tree $tree, User $actor, array $input, bool $initial = false): bool
     {
-        $values = Validator::make($input, [
-            'coordinate_raw' => ['nullable', 'string', 'max:2000'],
-            'datum' => ['nullable', 'string', 'max:80'],
-            'accuracy_m' => ['nullable', 'numeric', 'min:0', 'max:999999999.999', 'decimal:0,3'],
-            'gps_brand' => ['nullable', 'string', 'max:100'],
-            'gps_model' => ['nullable', 'string', 'max:100'],
-            'captured_at' => ['nullable', 'date'],
-            'location_change_type' => ['nullable', 'in:correction,relocation,transplant'],
-            'location_reason' => ['nullable', 'string', 'max:5000'],
-        ], [
-            'string' => 'El campo :attribute debe ser texto.',
-            'numeric' => 'El campo :attribute debe ser un número.',
-            'min' => 'El campo :attribute no puede ser negativo.',
-            'max' => 'El campo :attribute supera el límite permitido.',
-            'decimal' => 'La precisión admite como máximo tres decimales.',
-            'date' => 'Indica una fecha y hora de captura válidas.',
-            'in' => 'Selecciona un tipo de cambio de ubicación válido.',
-        ])->validate();
         $current = $this->locations->snapshot($tree->organization_id, $tree->id);
+        $values = $this->validateInput($input, $current->captured_at);
         $before = $this->currentCoordinates($current);
         $coordinates = $before;
         if (array_key_exists('coordinate_raw', $values)) {
@@ -72,10 +56,54 @@ class TreeLocationService
         if (! $initial && ($changeType === null || $reason === null || $reason === '')) {
             throw ValidationException::withMessages(['location_reason' => 'Indica el tipo y el motivo del cambio de ubicación o de sus metadatos.']);
         }
-        $this->locations->apply($current, $coordinates, $oldMetadata, $metadata, $actor, $changeType, $reason, $initial);
-        $this->events->record('tree.location_changed', $actor, $current->organization_id, ['resource_id' => $current->id, 'resource_code' => $current->code]);
+        $historyId = $this->locations->apply($current, $coordinates, $oldMetadata, $metadata, $actor, $changeType, $reason, $initial);
+        $this->events->recordChange(
+            'tree.location_changed',
+            $actor,
+            $current->organization_id,
+            'tree',
+            $current->id,
+            $initial ? [] : $oldMetadata + ['latitude' => $before?->latitude, 'longitude' => $before?->longitude, 'coordinate_raw' => $before?->raw],
+            $metadata + ['latitude' => $coordinates?->latitude, 'longitude' => $coordinates?->longitude, 'coordinate_raw' => $coordinates?->raw],
+            ['resource_id' => $current->id, 'resource_code' => $current->code, 'revision_id' => $historyId,
+                'reason' => $reason, 'change_type' => $changeType]
+        );
 
         return true;
+    }
+
+    /** Reutiliza todas las reglas de captura en la vista previa de importación sin consultar ni escribir árboles. */
+    public function validateInput(array $input, ?DateTimeInterface $currentCapture = null): array
+    {
+        $input = $this->captureDates->normalizeInput($input, $currentCapture);
+        $values = Validator::make($input, [
+            'coordinate_raw' => ['nullable', 'string', 'max:2000'],
+            'datum' => ['nullable', 'string', 'max:80'],
+            'accuracy_m' => ['nullable', 'numeric', 'min:0', 'max:999999999.999', 'decimal:0,3'],
+            'gps_brand' => ['nullable', 'string', 'max:100'],
+            'gps_model' => ['nullable', 'string', 'max:100'],
+            'captured_at' => ['nullable', 'date'],
+            'location_change_type' => ['nullable', 'in:correction,relocation,transplant'],
+            'location_reason' => ['nullable', 'string', 'max:5000'],
+        ], [
+            'string' => 'El campo :attribute debe ser texto.',
+            'numeric' => 'El campo :attribute debe ser un número.',
+            'min' => 'El campo :attribute no puede ser negativo.',
+            'max' => 'El campo :attribute supera el límite permitido.',
+            'decimal' => 'La precisión admite como máximo tres decimales.',
+            'date' => 'Indica una fecha y hora de captura válidas.',
+            'in' => 'Selecciona un tipo de cambio de ubicación válido.',
+        ])->validate();
+        if (isset($values['coordinate_raw']) && trim($values['coordinate_raw']) !== '') {
+            $this->parser->parse($values['coordinate_raw']);
+        }
+        foreach (self::METADATA_KEYS as $key) {
+            if (array_key_exists($key, $values)) {
+                $values[$key] = $this->normalizeMetadata($key, $values[$key]);
+            }
+        }
+
+        return $values;
     }
 
     private function currentCoordinates(Tree $tree): ?ParsedCoordinates

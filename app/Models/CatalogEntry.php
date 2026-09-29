@@ -16,6 +16,6 @@ abstract class CatalogEntry extends Model
 
     protected function casts(): array
     {
-        return ['active' => 'boolean', 'sort_order' => 'integer'];
+        return ['lock_version' => 'integer', 'active' => 'boolean', 'sort_order' => 'integer'];
     }
 }

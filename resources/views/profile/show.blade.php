@@ -69,7 +69,7 @@
 
         <section class="panel identity-panel" aria-labelledby="sessions-heading">
             <div class="identity-section-heading"><div><h2 id="sessions-heading">Tus sesiones</h2><p class="muted">Cierra las sesiones que ya no necesites.</p></div></div>
-            <div class="identity-table-wrap">
+            <div class="identity-table-wrap" tabindex="0" role="region" aria-label="Sesiones de la cuenta">
                 <table class="identity-table">
                     <thead><tr><th scope="col">Sesión</th><th scope="col">Inicio</th><th scope="col">Última actividad</th><th scope="col">Vencimiento</th><th scope="col">Acción</th></tr></thead>
                     <tbody>

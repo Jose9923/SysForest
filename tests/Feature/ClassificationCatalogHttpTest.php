@@ -152,7 +152,7 @@ class ClassificationCatalogHttpTest extends PostgresTestCase
 
     private function metadata(): array
     {
-        return ['name' => 'Clasificación de referencia', 'description' => 'Nota de administración', 'active' => false, 'sort_order' => 75];
+        return ['lock_version' => $this->version->fresh()->lock_version, 'name' => 'Clasificación de referencia', 'description' => 'Nota de administración', 'active' => false, 'sort_order' => 75];
     }
 
     private function actor(string $role): User

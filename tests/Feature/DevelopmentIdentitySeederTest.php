@@ -21,9 +21,12 @@ class DevelopmentIdentitySeederTest extends PostgresTestCase
 {
     private const TEST_PASSWORD = 'Fixture-Only!Development-2026';
 
+    private int $initialUserCount;
+
     protected function setUp(): void
     {
         parent::setUp();
+        $this->initialUserCount = User::query()->count();
         $accounts = [];
 
         foreach (['SUPER_ADMIN', 'DEPARTMENT_ADMIN', 'ORGANIZATION_ADMIN', 'OFFICIAL'] as $role) {
@@ -41,7 +44,7 @@ class DevelopmentIdentitySeederTest extends PostgresTestCase
     public function test_testing_environment_creates_four_verified_accounts_with_correct_scopes(): void
     {
         $this->seed(DevelopmentIdentitySeeder::class);
-        $this->assertSame(4, User::query()->count());
+        $this->assertSame($this->initialUserCount + 4, User::query()->count());
 
         foreach (config('development.accounts') as $account) {
             $user = app(UserRepository::class)->findByEmail($account['email']);
@@ -74,7 +77,7 @@ class DevelopmentIdentitySeederTest extends PostgresTestCase
 
         try {
             $this->seed(DevelopmentIdentitySeeder::class);
-            $this->assertSame(4, User::query()->count());
+            $this->assertSame($this->initialUserCount + 4, User::query()->count());
         } finally {
             $this->app->instance('env', 'testing');
         }
@@ -88,7 +91,7 @@ class DevelopmentIdentitySeederTest extends PostgresTestCase
             app(DevelopmentIdentitySeeder::class)->run();
             $this->fail('El seeder de desarrollo no debe ejecutarse en producción.');
         } catch (LogicException) {
-            $this->assertSame(0, User::query()->count());
+            $this->assertSame($this->initialUserCount, User::query()->count());
             $this->assertSame(0, NationalRoleAssignment::query()->count());
         } finally {
             $this->app->instance('env', 'testing');
@@ -103,7 +106,7 @@ class DevelopmentIdentitySeederTest extends PostgresTestCase
             app(DevelopmentIdentitySeeder::class)->run();
             $this->fail('Las cuatro configuraciones deben estar completas.');
         } catch (LogicException) {
-            $this->assertSame(0, User::query()->count());
+            $this->assertSame($this->initialUserCount, User::query()->count());
         }
     }
 
@@ -116,7 +119,7 @@ class DevelopmentIdentitySeederTest extends PostgresTestCase
             $this->fail('La contraseña débil debía rechazarse.');
         } catch (LogicException $exception) {
             $this->assertStringNotContainsString('weak-fixture', $exception->getMessage());
-            $this->assertSame(0, User::query()->count());
+            $this->assertSame($this->initialUserCount, User::query()->count());
         }
     }
 
@@ -128,14 +131,15 @@ class DevelopmentIdentitySeederTest extends PostgresTestCase
             app(DevelopmentIdentitySeeder::class)->run();
             $this->fail('Los perfiles de desarrollo deben utilizar cuentas distintas.');
         } catch (LogicException) {
-            $this->assertSame(0, User::query()->count());
+            $this->assertSame($this->initialUserCount, User::query()->count());
         }
     }
 
     public function test_repeated_seeding_preserves_accounts_roles_and_existing_passwords(): void
     {
         $this->seed(DevelopmentIdentitySeeder::class);
-        $before = User::query()->orderBy('id')->get()->keyBy('email');
+        $before = User::query()->whereIn('email', array_column(config('development.accounts'), 'email'))
+            ->orderBy('id')->get()->keyBy('email');
         $membershipIds = OrganizationMembership::query()->orderBy('id')->pluck('id')->all();
         $assignmentIds = OrganizationRoleAssignment::query()->orderBy('id')->pluck('id')->all();
 
@@ -145,7 +149,7 @@ class DevelopmentIdentitySeederTest extends PostgresTestCase
 
         $this->seed(DevelopmentIdentitySeeder::class);
 
-        $this->assertSame(4, User::query()->count());
+        $this->assertSame($this->initialUserCount + 4, User::query()->count());
         $this->assertSame($membershipIds, OrganizationMembership::query()->orderBy('id')->pluck('id')->all());
         $this->assertSame($assignmentIds, OrganizationRoleAssignment::query()->orderBy('id')->pluck('id')->all());
         $this->assertSame(1, NationalRoleAssignment::query()->count());
@@ -187,7 +191,7 @@ class DevelopmentIdentitySeederTest extends PostgresTestCase
         try {
             $this->artisan('db:seed', ['--class' => DatabaseSeeder::class, '--force' => true])->assertSuccessful();
             $this->assertSame(4, Role::query()->count());
-            $this->assertSame(0, User::query()->count());
+            $this->assertSame($this->initialUserCount, User::query()->count());
         } finally {
             $this->app->instance('env', 'testing');
         }

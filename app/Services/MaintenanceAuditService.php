@@ -19,14 +19,14 @@ class MaintenanceAuditService
     {
         return array_intersect_key($maintenance->attributesToArray(), array_flip([
             'tree_id', 'code', 'maintenance_type_id', 'status', 'priority', 'scheduled_date', 'performed_date',
-            'assigned_to', 'notes', 'result', 'created_by', 'updated_by', 'lock_version',
+            'assigned_to', 'notes', 'result', 'created_by', 'updated_by', 'created_at', 'lock_version',
             'deleted_at', 'deleted_by', 'deletion_notes',
         ]));
     }
 
     public function record(User $actor, Maintenance $maintenance, array $old, string $event): void
     {
-        $this->revisions->record(
+        $revision = $this->revisions->record(
             $maintenance->organization_id,
             $maintenance->id,
             (int) $actor->id,
@@ -35,6 +35,15 @@ class MaintenanceAuditService
             $this->snapshot($maintenance),
             $event
         );
-        $this->events->record($event, $actor, $maintenance->organization_id, ['resource_id' => $maintenance->id]);
+        $this->events->recordChange(
+            $event,
+            $actor,
+            $maintenance->organization_id,
+            'maintenance',
+            $maintenance->id,
+            $old,
+            $this->snapshot($maintenance),
+            ['resource_id' => $maintenance->id, 'revision_id' => $revision->id]
+        );
     }
 }

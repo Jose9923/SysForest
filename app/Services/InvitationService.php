@@ -34,6 +34,7 @@ class InvitationService
         private readonly TenantContext $tenant,
         private readonly SecurityEventRepository $events,
         private readonly SecurityMailService $mail,
+        private readonly AuditSnapshotService $snapshots,
     ) {
     }
 
@@ -67,13 +68,35 @@ class InvitationService
             }
 
             $token = bin2hex(random_bytes(32));
-            $this->invitations->revokePending($organizationId, $values['email']);
+            foreach ($this->invitations->pendingForAddress($organizationId, $values['email']) as $previous) {
+                $before = $this->snapshots->snapshot($previous);
+                $this->invitations->revoke($previous);
+                $this->events->recordChange(
+                    'invitation.revoked',
+                    $currentActor,
+                    $organizationId,
+                    'invitation',
+                    $previous->id,
+                    $before,
+                    $this->snapshots->snapshot($previous),
+                    ['invitation_id' => $previous->id, 'reason' => 'superseded']
+                );
+            }
             $invitation = $this->invitations->create([
                 'organization_id' => $organizationId, 'email' => $values['email'],
                 'role_id' => $role->id, 'scope' => 'organization', 'invited_by' => $currentActor->id,
                 'token_hash' => hash('sha256', $token), 'expires_at' => now()->addHours(48),
             ]);
-            $this->events->record('invitation.created', $currentActor, $organizationId, ['invitation_id' => $invitation->id, 'role_name' => $role->name]);
+            $this->events->recordChange(
+                'invitation.created',
+                $currentActor,
+                $organizationId,
+                'invitation',
+                $invitation->id,
+                [],
+                $this->snapshots->snapshot($invitation),
+                ['invitation_id' => $invitation->id, 'role_name' => $role->name]
+            );
             $this->mail->send('invitation', $invitation->email, [
                 'token' => $token, 'organization' => $organization->name, 'role' => $role->name, 'expires_minutes' => 2880,
             ]);
@@ -140,6 +163,8 @@ class InvitationService
                 if ($user !== null && $this->invitations->membershipForUser((int) $user->id, $organization->id) !== null) {
                     throw ValidationException::withMessages(['token' => 'La membresía ya existe. Su estado y rol deben administrarse explícitamente.']);
                 }
+                $beforeUser = $user === null ? [] : $this->snapshots->snapshot($user);
+                $newIdentity = $user === null;
                 if ($user === null) {
                     $user = $this->users->create([
                         'name' => $newUserValues['name'], 'email' => $invitation->email,
@@ -148,12 +173,44 @@ class InvitationService
                 } elseif ($user->email_verified_at === null) {
                     $user = $this->users->update($user, ['email_verified_at' => now()]);
                 }
+                if ($newIdentity || $beforeUser !== $this->snapshots->snapshot($user)) {
+                    $this->events->recordChange(
+                        $newIdentity ? 'account.created' : 'email.verified',
+                        $user,
+                        null,
+                        'user',
+                        (string) $user->id,
+                        $beforeUser,
+                        $this->snapshots->snapshot($user),
+                        ['target_user_id' => $user->id]
+                    );
+                }
                 $membership = $this->memberships->upsert((int) $user->id, $organization->id, [
                     'active' => true, 'joined_at' => now(), 'left_at' => null,
                 ]);
                 $this->assignments->grantOrganization($membership, $invitation->role->name);
+                $this->events->recordChange(
+                    'membership.created',
+                    $user,
+                    $organization->id,
+                    'organization_membership',
+                    $membership->id,
+                    [],
+                    $this->snapshots->snapshot($membership) + ['role_name' => $invitation->role->name],
+                    ['invitation_id' => $invitation->id, 'membership_id' => $membership->id, 'target_user_id' => $user->id, 'role_name' => $invitation->role->name]
+                );
+                $before = $this->snapshots->snapshot($invitation);
                 $this->invitations->consume($invitation);
-                $this->events->record('invitation.accepted', $user, $organization->id, ['invitation_id' => $invitation->id, 'membership_id' => $membership->id]);
+                $this->events->recordChange(
+                    'invitation.accepted',
+                    $user,
+                    $organization->id,
+                    'invitation',
+                    $invitation->id,
+                    $before,
+                    $this->snapshots->snapshot($invitation),
+                    ['invitation_id' => $invitation->id, 'membership_id' => $membership->id]
+                );
                 $this->mail->send($existing === null ? 'welcome' : 'membership_activated', $user, ['organization' => $organization->name]);
 
                 return $user;

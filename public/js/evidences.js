@@ -115,6 +115,7 @@
                 const type = card.querySelector('[data-upload-field="evidence_type_id"]');
                 if (window.jQuery?.fn?.select2) {
                     window.jQuery(type).select2({width: '100%', language: 'es', minimumResultsForSearch: 0});
+                    window.SysforestSelect2Accessibility?.associate(type, window.jQuery(type).data('select2'));
                 }
                 if (entry.clientError) {
                     rowErrors(entry, [entry.clientError]);
@@ -180,6 +181,9 @@
             request.open('POST', form.action);
             request.setRequestHeader('Accept', 'application/json');
             request.setRequestHeader('X-CSRF-TOKEN', token);
+            // El lote se construye a mano: conserva también el contexto de la página verificado antes del envío.
+            const context = form.querySelector('input[name="_session_context"]')?.value;
+            if (context) request.setRequestHeader('X-Session-Context', context);
             request.timeout = 180000;
             request.upload.addEventListener('progress', (event) => {
                 if (event.lengthComputable) {

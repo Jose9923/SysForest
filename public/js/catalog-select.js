@@ -6,5 +6,7 @@ jQuery(function ($) {
         width: '100%',
         language: 'es',
         minimumResultsForSearch: 0
+    }).each(function () {
+        window.SysforestSelect2Accessibility.associate(this, $(this).data('select2'));
     });
 });

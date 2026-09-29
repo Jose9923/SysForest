@@ -29,6 +29,8 @@ class RoleAssignmentService
         private DepartmentRepository $departments,
         private TenantContext $context,
         private TenantContextService $tenants,
+        private AuditSnapshotService $snapshots,
+        private \App\Repositories\SecurityEventRepository $events,
     ) {
     }
 
@@ -39,7 +41,21 @@ class RoleAssignmentService
             $this->authorizeNational($actor, 'roles.assign-national');
             $this->users->find((int) $target->id);
 
-            return $this->assignments->grantNational((int) $target->id, $roleName);
+            $previous = $this->assignments->nationalAssignment((int) $target->id, $roleName);
+            $before = $previous === null ? [] : $this->snapshots->snapshot($previous);
+            $assignment = $this->assignments->grantNational((int) $target->id, $roleName);
+            $this->events->recordChange(
+                'role.assigned',
+                $actor,
+                null,
+                'national_role_assignment',
+                $assignment->id,
+                $before,
+                $this->snapshots->snapshot($assignment),
+                ['target_user_id' => $target->id, 'role_name' => $roleName]
+            );
+
+            return $assignment;
         });
     }
 
@@ -60,7 +76,21 @@ class RoleAssignmentService
             $this->departments->find($departmentId);
             $this->users->find((int) $target->id);
 
-            return $this->assignments->grantDepartment((int) $target->id, $departmentId, $roleName);
+            $previous = $this->assignments->departmentAssignment((int) $target->id, $departmentId, $roleName);
+            $before = $previous === null ? [] : $this->snapshots->snapshot($previous);
+            $assignment = $this->assignments->grantDepartment((int) $target->id, $departmentId, $roleName);
+            $this->events->recordChange(
+                'role.assigned',
+                $actor,
+                null,
+                'department_role_assignment',
+                $assignment->id,
+                $before,
+                $this->snapshots->snapshot($assignment),
+                ['target_user_id' => $target->id, 'role_name' => $roleName, 'department_id' => $departmentId]
+            );
+
+            return $assignment;
         });
     }
 
@@ -82,7 +112,21 @@ class RoleAssignmentService
                 throw ValidationException::withMessages(['membership_id' => 'La membresía debe estar activa para asignarle un rol.']);
             }
 
-            return $this->assignments->grantOrganization($membership, $roleName);
+            $previous = $this->assignments->organizationRole($membership);
+            $before = $previous === null ? [] : $this->snapshots->snapshot($previous);
+            $assignment = $this->assignments->grantOrganization($membership, $roleName);
+            $this->events->recordChange(
+                'role.assigned',
+                $actor,
+                $organization->id,
+                'organization_role_assignment',
+                $assignment->id,
+                $before,
+                $this->snapshots->snapshot($assignment),
+                ['target_user_id' => $membership->user_id, 'membership_id' => $membership->id, 'role_name' => $roleName]
+            );
+
+            return $assignment;
         });
     }
 

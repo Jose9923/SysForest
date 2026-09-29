@@ -2,9 +2,9 @@
 
 ## Alcance del diseño
 
-Este documento conserva el modelo conceptual objetivo y señala su implementación actual hasta Fase 9. Las migraciones efectivamente disponibles deben consultarse en `database/migrations`; las entidades de fases futuras no se consideran implementadas por aparecer en el diseño.
+Este documento conserva el modelo conceptual objetivo y señala su implementación actual hasta Fase 13. Las migraciones efectivamente disponibles deben consultarse en `database/migrations`; las entidades de fases futuras no se consideran implementadas por aparecer en el diseño.
 
-Fase 5 concreta los catálogos nacionales, la taxonomía, las condiciones y las reglas de clasificación descritas más abajo. Tree, TreeInspection, Evidence y Maintenance ya disponen de dominio operativo; la fenología está almacenada en columnas de TreeInspection, sin tabla TreePhenology. Fase 9 agrega maintenances, maintenance_revisions y maintenance_status_histories, y amplía Evidence con maintenance_id y propietario exclusivo entre tres referencias.
+Fase 5 concreta los catálogos nacionales, la taxonomía, las condiciones y las reglas de clasificación descritas más abajo. Tree, TreeInspection, Evidence y Maintenance ya disponen de dominio operativo; la fenología está almacenada en columnas de TreeInspection, sin tabla TreePhenology. Fase 9 agrega maintenances, maintenance_revisions y maintenance_status_histories, y amplía Evidence con maintenance_id y propietario exclusivo entre tres referencias. Las Fases 10/11 incorporan consultas y publicación explícita; Fase 12 reutiliza esos datos para reportes y exportaciones. Fase 13 agrega import_batches e import_rows y sus restricciones institucionales y de trazabilidad.
 
 Se utiliza PostgreSQL con PostGIS, una única base y un esquema compartido. Los modelos principales disponen de UUID interno; el código visible de un árbol es un identificador funcional diferente. Los catálogos forestales nacionales se comparten, no contienen `organization_id` y solo se administran con el permiso nacional `catalogs.manage`. Los registros operativos pertenecen a una organización.
 
@@ -41,7 +41,11 @@ erDiagram
     MAINTENANCE ||--o{ MAINTENANCE_STATUS_HISTORY : transita
     EVIDENCE_TYPE ||--o{ EVIDENCE : clasifica
     ORGANIZATION ||--o{ IMPORT_BATCH : recibe
+    INVENTORY ||--o{ IMPORT_BATCH : contextualiza
+    USER ||--o{ IMPORT_BATCH : registra
     IMPORT_BATCH ||--o{ IMPORT_ROW : contiene
+    TREE o|--o{ IMPORT_ROW : resultado
+    TREE_INSPECTION o|--o| IMPORT_ROW : resultado
 ```
 
 `inventory_trees` representa la participación de un individuo en campañas sin cambiar su identidad ni su organización propietaria. Una inspección siempre corresponde a un árbol y puede indicar una campaña de la misma organización. Las evidencias se vinculan a su árbol, inspección o mantenimiento con integridad explícita; el vínculo utiliza FK compuestas por organización y CHECK num_nonnulls(tree_id,tree_inspection_id,maintenance_id)=1, descritos en [evidencias](evidences.md).
@@ -64,7 +68,7 @@ erDiagram
 | Evidencias | evidence_types, evidences, evidence_revisions | Exactamente un tipo y un propietario por fotografía; almacenamiento y entrega privados. |
 | Intervenciones | maintenance_types, maintenances, maintenance_status_histories | Orden manual, responsable de la organización, programación, resultado y seguimiento. |
 | Integridad | deletion_reasons, audit_logs | Anulación recuperable de errores y registro de modificaciones. |
-| Intercambio | import_batches, import_rows | Validación, errores por fila, trazabilidad y resultado del lote. |
+| Intercambio (Fase 13) | import_batches, import_rows | Vista previa institucional, errores por fila, resultado atómico e identidad inmutable del archivo. |
 | Comunicación | notifications | Notificaciones privadas según destinatario y alcance autorizado. |
 
 Las asignaciones de rol deben impedir combinaciones inválidas de alcance: SUPER_ADMIN es global, DEPARTMENT_ADMIN tiene departamento y los roles organizacionales requieren una membresía activa en la organización correspondiente. No basta con una etiqueta de rol sin alcance.
@@ -146,6 +150,22 @@ Los estados operativos previstos son `active`, `under_observation`, `dead`, `fel
 
 Cada evidencia registra al menos tipo obligatorio, disk, path, MIME, tamaño, nombre original, autor, fecha y metadatos pertinentes. Las fotografías privadas no se sirven mediante rutas públicas indiscriminadas. El dominio utiliza Laravel Filesystem para permitir almacenamiento local persistente y migración posterior a S3 compatible.
 
-Los lotes de importación registran organización, autor, archivo, estado y resultado; sus filas preservan errores de validación y trazabilidad. La unidad transaccional y la política de aceptación del lote deben quedar explícitas antes de importar datos. Ningún dato inválido se importa silenciosamente.
+Fase 13 implementa `import_batches` e `import_rows` mediante las migraciones `000018_create_import_batches_and_rows` y `000019_guard_completed_import_batches`. El lote conserva UUID, código humano, organización, campaña, versión del esquema, nombre/SHA-256/tamaño del archivo, creador, fecha de caducidad, contadores y `lock_version`. Sus estados son `ready`, `invalid`, `completed` y `cancelled`; la caducidad se determina por `expires_at`, sin inventar un quinto estado.
+
+Cada fila conserva su número original de Excel, `raw_values`, `reader_errors`, `normalized_values` y `errors` en JSONB, además de su estado `valid`, `invalid` o `imported`. Solo una fila importada referencia árbol e inspección; `tree_code` conserva el código resultante o solicitado. Los decimales y BIGINT viajan como cadenas dentro del JSON, evitando conversiones a float. El XLSX original no se guarda: el hash acredita su identidad y las filas persistidas conservan los datos procesados.
+
+Las claves foráneas compuestas por organización vinculan lote/campaña, fila/lote, fila/árbol y fila/inspección. Un trigger verifica que la inspección de resultado pertenece al mismo árbol. `(import_batch_id,row_number)` es único y una inspección solo puede ser resultado de una fila. El índice parcial `(organization_id,file_sha256) WHERE status='completed'` impide confirmar dos veces el mismo archivo en la organización, sin prohibir nuevas previsualizaciones de archivos aún no confirmados.
+
+Los CHECK relacionan estados, autores, fechas y contadores; otro trigger contrasta los contadores del lote con sus filas persistidas. Los triggers protegen identidad, autoría, fuente y valores originales, impiden borrar la trazabilidad y hacen inmutables los lotes finalizados y sus filas. Cancelar no elimina filas ni crea árboles; corregir un archivo requiere otra carga.
+
+Confirmar revalida y persiste árboles, participaciones, inspecciones, condiciones, fauna, auditoría y resultado en una sola transacción. Un fallo revierte todas esas escrituras, incluidos los códigos reservados. Un reintento de un lote completado devuelve su resultado sin repetir individuos. Los registros creados permanecen privados; los lotes y filas nunca forman parte del portal o de los reportes públicos. La configuración predeterminada limita cada lote síncrono a 100 filas y 5 MiB, con 24 horas de vigencia de vista previa.
+
+Tras la aprobación explícita del usuario se ejecutó `AuthorizationSeeder` en la base operativa. La lectura posterior verificó un catálogo de 48 permisos, con `imports.view` e `imports.create` asignados a SUPER_ADMIN, ORGANIZATION_ADMIN y OFFICIAL; DEPARTMENT_ADMIN conserva ambos sin asignar. La autorización continúa exigiendo la organización activa y los permisos forestales correspondientes. El bloqueo inicial de la revisión automática quedó resuelto mediante la aprobación y ejecución documentadas en [phase-13.md](phase-13.md).
 
 La auditoría registra actor, organización, acción, recurso, fecha, valores anteriores/nuevos y contexto técnico apropiado, excluyendo contraseñas y tokens. Se autoriza como información privada y no integra Resources ni exportaciones públicas.
+
+## Migraciones de Fase 14
+
+`2026_09_28_000020_extend_security_event_audit` añade tipo/identificador del recurso, valores anteriores/posteriores JSONB y contexto controlado. Los eventos previos mantienen valores NULL; no se rellenan con datos actuales. Añade índices por recurso y cronología institucional, impide UPDATE/DELETE y usa FK RESTRICT para actor e institución. También protege inventarios contra borrado físico e `inventory_trees` contra actualización/borrado.
+
+`2026_09_28_000021_add_administrative_lock_versions` añade `lock_version` inicial 1 y CHECK positivo a dieciséis tablas administrativas. Ambas migraciones son aditivas y se aplican mediante el rol migrador, sin borrar el esquema ni datos de negocio. Los detalles de consulta e integridad están en [auditoría](audit.md) y [concurrencia](concurrency.md).

@@ -1,9 +1,10 @@
 @extends('layouts.institutional')
 @section('title', 'Bandeja de árboles')
 @include('forestry.assets')
+@include('reports.assets')
 @section('content')
     <div class="page-heading forestry-heading"><div><p class="eyebrow">{{ $organization->name }} · INVENTARIO FORESTAL</p><h1>Bandeja de árboles</h1><p class="muted">Consulta la identidad permanente y la ubicación de cada individuo.</p></div>
-        @if ($canCreate)<a class="button" href="{{ route('trees.create') }}">+ Registrar árbol</a>@endif
+        <div class="report-entry-actions">@can('reports.view')@if (empty($filters['trashed']))<a class="button secondary" href="{{ route('reports.index', array_merge(array_diff_key($filters, array_flip(['page', 'render_mode', 'term', 'format', 'trashed', 'include_deleted', 'include_voided_trees', 'tree_id'])), ['scope' => 'organization', 'report' => 'inventory'])) }}">Reportes y descargas</a>@endif @endcan @if ($canCreate)<a class="button" href="{{ route('trees.create') }}">+ Registrar árbol</a>@endif</div>
     </div>
     @if (($currentAccessMode ?? '') === 'department_read')<p class="forestry-readonly">Consulta departamental. Los registros se muestran en modo de lectura.</p>@endif
     <form method="GET" action="{{ route('trees.index') }}" class="panel forestry-panel filter-panel">

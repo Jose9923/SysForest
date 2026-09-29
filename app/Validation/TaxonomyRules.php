@@ -26,6 +26,6 @@ class TaxonomyRules
             $rules['is_primary'] = ['sometimes', 'boolean'];
         }
 
-        return $rules;
+        return $rules + VersionInput::rules($update);
     }
 }

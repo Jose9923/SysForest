@@ -44,6 +44,21 @@ class ClassificationRuleRepository
         return ClassificationRuleVersion::query()->with('maturityBands.maturityState')->where('code', $code)->firstOrFail();
     }
 
+    /** La captura mantiene disponibles la versión y sus estados hasta confirmar la inspección. */
+    public function findForCapture(string $code): ClassificationRuleVersion
+    {
+        $lock = DB::transactionLevel() > 0;
+        $query = ClassificationRuleVersion::query()->where('code', $code);
+        $version = ($lock ? $query->sharedLock() : $query)->firstOrFail();
+        if ($lock) {
+            $stateIds = $version->maturityBands()->pluck('maturity_state_id')->all();
+            MaturityState::query()->whereIn('id', $stateIds)->orderBy('id')->sharedLock()->get(['id']);
+        }
+
+        // Se cargan después de adquirir los bloqueos; una lectura previa podría traer active obsoleto.
+        return $version->load('maturityBands.maturityState');
+    }
+
     public function activeVersions(): Collection
     {
         return ClassificationRuleVersion::query()->whereNotNull('sealed_at')->where('active', true)

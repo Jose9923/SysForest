@@ -134,7 +134,7 @@ class DendrometryCalculationServiceTest extends TestCase
     public function test_invalid_measurement_is_rejected_before_loading_a_rule(): void
     {
         $rules = $this->createMock(ClassificationRuleRepository::class);
-        $rules->expects($this->never())->method('findByCode');
+        $rules->expects($this->never())->method('findForCapture');
         $classification = new ClassificationService($rules, new DecimalClassification());
         $service = new DendrometryCalculationService(new DendrometryArithmetic(), $classification, $rules);
         $this->expectException(ValidationException::class);
@@ -147,7 +147,7 @@ class DendrometryCalculationServiceTest extends TestCase
         $version = $this->version(self::VERSION_ID, '5', $active, $statesActive);
         $other = $this->version(self::OTHER_VERSION_ID, '10', true, true);
         $rules = $this->createMock(ClassificationRuleRepository::class);
-        $rules->method('findByCode')->with('EXCEL_V1')->willReturn($version);
+        $rules->method('findForCapture')->with('EXCEL_V1')->willReturn($version);
         $rules->method('findSealed')->willReturnCallback(fn (string $id) => match ($id) {
             self::VERSION_ID => $version,
             self::OTHER_VERSION_ID => $other,

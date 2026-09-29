@@ -7,7 +7,7 @@
     <div class="page-heading"><div><p class="eyebrow">TAXONOMÍA NACIONAL</p><h1>{{ $record ? 'Editar valor' : 'Crear valor' }}</h1><p class="muted">{{ $title }} · Los cambios se comparten entre organizaciones.</p></div></div>
     <form class="panel organization-form catalog-form" method="POST" action="{{ $record ? route('taxonomy.update', ['catalog' => $catalog, 'record' => $record->id]) : route('taxonomy.store', ['catalog' => $catalog]) }}">
         @csrf
-        @if ($record) @method('PUT') @endif
+        @if ($record) @method('PUT') <input type="hidden" name="lock_version" value="{{ old('lock_version', $record->lock_version) }}"> @endif
         <x-field name="code" label="Código estable" :value="$record?->code ?? ''" maxlength="80" pattern="[A-Z][A-Z0-9_]{1,79}" required :readonly="$record !== null" />
         <x-field :name="$nameColumn" :label="$catalog === 'common-names' ? 'Nombre común' : 'Nombre científico'" :value="$record?->getAttribute($nameColumn) ?? ''" maxlength="255" required />
         @if ($catalog === 'species')

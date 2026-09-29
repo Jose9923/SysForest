@@ -20,13 +20,13 @@ class EvidenceAuditService
     {
         return array_intersect_key($evidence->attributesToArray(), array_flip([
             'tree_id', 'tree_inspection_id', 'maintenance_id', 'evidence_type_id', 'caption', 'notes', 'captured_at',
-            'uploaded_by', 'updated_by', 'deleted_at', 'deleted_by', 'deletion_notes', 'lock_version',
+            'uploaded_by', 'updated_by', 'created_at', 'deleted_at', 'deleted_by', 'deletion_notes', 'lock_version',
         ]));
     }
 
     public function record(User $actor, Evidence $evidence, array $old, string $event): void
     {
-        $this->revisions->record(
+        $revision = $this->revisions->record(
             $evidence->organization_id,
             $evidence->id,
             (int) $actor->id,
@@ -35,6 +35,15 @@ class EvidenceAuditService
             $this->snapshot($evidence),
             $event
         );
-        $this->events->record($event, $actor, $evidence->organization_id, ['resource_id' => $evidence->id]);
+        $this->events->recordChange(
+            $event,
+            $actor,
+            $evidence->organization_id,
+            'evidence',
+            $evidence->id,
+            $old,
+            $this->snapshot($evidence),
+            ['resource_id' => $evidence->id, 'revision_id' => $revision->id]
+        );
     }
 }

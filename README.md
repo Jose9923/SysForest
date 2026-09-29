@@ -1,300 +1,91 @@
-# SYSFOREST — Fase 11
+# SYSFOREST
 
-**Inventario y gestión forestal inteligente.**
+Inventario y gestión forestal institucional con mapas y portal ciudadano. El proyecto está en **`/home/josev/SYSFOREST`, Ubuntu-24.04 WSL**; esa carpeta es la fuente de verdad.
 
-SYSFOREST incorpora inventarios institucionales, individuos forestales permanentes, ubicación PostGIS e inspecciones históricas con dasonomía, condiciones, fenología, fauna, evidencias fotográficas privadas y órdenes manuales de mantenimiento, sobre los catálogos, la autenticación y el territorio aprobados. La interfaz se renderiza con Blade. El piloto es la Institucion Educativa INEM Luis Lopez de Mesa, en Villavicencio, Meta, Colombia.
+SYSFOREST utiliza Laravel 13, PHP 8.4, PostgreSQL/PostGIS y Redis. Mantiene MVC con el flujo `Controller → Service → Repository → Model`; Blade renderiza la interfaz y las plantillas de reportes/PDF. CSV, Excel y GeoJSON reutilizan los servicios, repositorios y filtros. Los comentarios útiles y la documentación se escriben en español; el código PHP sigue PSR-12.
 
-El proyecto definitivo está en **`/home/josev/SYSFOREST`, dentro de Ubuntu-24.04 WSL**. Inventory, Tree, TreeInspection, Evidence y Maintenance están implementados. La Fase 10 incorpora el mapa general interno y la Fase 11 añade el portal público SIGAU con publicación explícita. La Fase 12 aún no se ha iniciado.
+## Inicio local
 
-El [reporte A–AN de Fase 11](docs/phase-11.md) documenta la entrega actual y sus verificaciones. El [reporte A–AL de Fase 10](docs/phase-10.md) conserva la evidencia histórica del mapa interno. Consulta la [arquitectura del mapa](docs/maps.md) y el [motor compartido de filtros](docs/map-filters.md). El [reporte de Fase 9](docs/phase-9.md) conserva su evidencia histórica. Consulta el contrato de [mantenimientos](docs/maintenances.md). El [reporte A–AN de Fase 8](docs/phase-8.md) conserva su evidencia histórica. Consulta [evidencias](docs/evidences.md) y [almacenamiento privado](docs/file-storage.md). El [reporte de Fase 7](docs/phase-7.md) conserva su evidencia histórica. Consulta [inspecciones](docs/inspections.md) y [dasonomía](docs/dendrometry.md) para sus contratos. El checkpoint de Fase 7 es **8fcb2d5**, validado con 752 pruebas y 3.207 aserciones; su [reporte histórico](docs/phase-7.md) permanece disponible. El cierre de Fase 8 es **f750f66**, validado nuevamente con 949 pruebas y 4.229 aserciones. El checkpoint aprobado de Fase 9 es **d71c3dd**, con 1.088 pruebas y 4.868 aserciones. El checkpoint aprobado de Fase 10 es **599728f**, con 1.251 pruebas PHP, 6.277 aserciones y 37 pruebas JavaScript. Los cambios actuales se conservan sin commit final en `codex/phase-11`. La [matriz de 94 campos del Excel](docs/excel-field-mapping.md) y la [trazabilidad de catálogos](docs/forestry-catalogs.md) conservan las fuentes. El [reporte de Fase 4](docs/phase-4.md) mantiene su evidencia histórica. Consulta [autenticación](docs/authentication.md), [autorización](docs/authorization.md), [recuperación e invitaciones](docs/account-recovery.md) y [aislamiento institucional](docs/multitenancy.md) para sus contratos. El cierre global de pruebas de Fase 4 se documenta en su reporte, no se deduce de los resultados focalizados de cada componente.
-
-## Entorno local
-
-Ejecuta estos comandos en la terminal **Ubuntu**, desde el proyecto:
+Ejecuta los comandos en Ubuntu, desde la carpeta del proyecto:
 
 ~~~bash
 cd /home/josev/SYSFOREST
-~~~
-
-Docker y Docker Compose deben estar disponibles para el usuario de Ubuntu. PHP, Composer, PostgreSQL y Redis se ejecutan en contenedores; el script de preparación necesita Bash y OpenSSL.
-
-| Componente | Configuración |
-| --- | --- |
-| Backend | Laravel 13 y PHP 8.4 FPM |
-| Web | Nginx 1.28 |
-| Base de datos | PostgreSQL 17 con PostGIS 3.5 |
-| Caché, navegación y colas | Redis 7.4 con persistencia AOF |
-| Identidad | JWT de acceso y sesiones revocables en PostgreSQL |
-| Correo local | SMTP interno y buzón de desarrollo Mailpit |
-| Interfaz | Blade, renderizado en servidor |
-
-## Preparación y arranque
-
-Comprueba el entorno y prepara la configuración:
-
-~~~bash
 docker version
 docker compose version
 bash bin/setup-env
 docker compose config --quiet
-~~~
-
-`setup-env` crea `.env` desde `.env.example` cuando no existe, completa secretos locales ausentes y conserva los valores ya configurados. En `APP_ENV=local` genera también `JWT_SECRET` y las contraseñas de las cuatro cuentas de desarrollo, sin mostrarlas. La configuración real permanece fuera de Git y del contexto de construcción.
-
-Construye la imagen e inicia los servicios:
-
-~~~bash
 docker compose build
 docker compose up -d
 docker compose ps -a
-~~~
-
-La imagen instala las dependencias fijadas en `composer.lock`. El primer arranque prepara los roles de PostgreSQL, las bases operativa/de pruebas, PostGIS y las migraciones. **Siete servicios continúan en ejecución; `db-init` e `init` deben terminar con código 0.**
-
-Si Docker devuelve `docker-credential-desktop.exe: exec format error`, el procedimiento para usar una configuración temporal destinada a imágenes públicas está en [el cierre de Fase 2](docs/phase-2.md#r-problemas-y-resoluciones).
-
-Carga el piloto territorial/institucional, los permisos, los catálogos y su inventario piloto:
-
-~~~bash
-docker compose exec app php artisan db:seed --class=DatabaseSeeder
-~~~
-
-`DatabaseSeeder` es idempotente: conserva las identidades del piloto y sincroniza cuatro roles y 44 permisos. Los seeders forestales agregan códigos ausentes y conservan IDs, nombres, orden y desactivaciones administrativas. Crea el inventario «Inventario Forestal Institucional - Piloto SysForest», con código PILOT-SYSFOREST, sin generar árboles ficticios ni cuentas de usuario.
-
-Para habilitar las cuatro cuentas de revisión local, ejecuta explícitamente:
-
-~~~bash
-docker compose exec app php artisan db:seed --class=DevelopmentIdentitySeeder
-~~~
-
-Este seeder acepta únicamente `local` o `testing`, exige las cuatro parejas de credenciales válidas y no restablece contraseñas de cuentas existentes. Las variables, los alcances y las condiciones de ejecución están en [cuentas de desarrollo](docs/development-accounts.md).
-
-Abre [iniciar sesión](http://localhost:8080/login), utiliza las credenciales de tu configuración local y entra a [organizaciones](http://localhost:8080/organizations). La creación de cuentas nuevas se realiza mediante invitaciones; no hay registro público abierto.
-
-## Identidad y permisos
-
-La identidad HTTP se valida mediante una cookie JWT **HttpOnly**. El token de acceso dura 10 minutos por defecto. La renovación utiliza un token opaco rotatorio, cuyo hash se persiste en PostgreSQL; la sesión autenticada tiene un vencimiento absoluto de 7 días por defecto. Renovar no prolonga ese vencimiento. Cerrar sesión, revocar una sesión, desactivar una cuenta o restablecer su contraseña afectan a las sesiones según las reglas documentadas en [autenticación](docs/authentication.md) y [recuperación](docs/account-recovery.md).
-
-Hay dos estados distintos:
-
-- La sesión de navegación de Laravel se guarda en **Redis**: mantiene CSRF y la selección `active_organization_id`. No acredita por sí sola la identidad del usuario.
-- La tabla **`auth_sessions` de PostgreSQL** mantiene la sesión autenticada, su propietario, expiración y revocación. Cada petición protegida comprueba el JWT y el estado actual de esa sesión y de la cuenta.
-
-El acceso institucional exige además correo verificado y permisos vigentes. Una membresía sin rol no habilita el contexto de trabajo.
-
-| Rol | Ámbito | Capacidades iniciales |
-| --- | --- | --- |
-| `SUPER_ADMIN` | Nacional | Permisos explícitos del catálogo; no requiere membresías artificiales. |
-| `DEPARTMENT_ADMIN` | Departamento asignado | Consulta de organizaciones y territorios de su ámbito. |
-| `ORGANIZATION_ADMIN` | Organización de su membresía | Gestión institucional, miembros, invitaciones y roles organizacionales autorizados. |
-| `OFFICIAL` | Organización de su membresía | Consulta institucional y territorial; sin administración de miembros. |
-
-La [matriz de autorización](docs/authorization.md#roles-y-permisos) y su [extensión forestal de ocho permisos](docs/multitenancy.md#operaciones-forestales-de-fase-6) es la referencia de cada operación. El perfil y las sesiones propias se protegen por identidad y propiedad. La administración global de usuarios exige autorización nacional.
-
-Al seleccionar una organización, `TenantContextService` determina el modo `organization`, `national` o `department_read`. Reconsulta cuenta, concesión, organización y membresía cuando corresponde. Un administrador nacional puede seleccionar una organización sin pertenecer a ella, y un administrador departamental conserva únicamente lectura. Las operaciones sobre recursos concretos también exigen que su organización coincida con la seleccionada.
-
-## Catálogos forestales nacionales
-
-Abre [Catálogos forestales](http://localhost:8080/admin/catalogs) después de iniciar sesión. No necesitas seleccionar una organización. SUPER_ADMIN puede crear valores, editar etiquetas, activar/desactivar y ordenar; DEPARTMENT_ADMIN, ORGANIZATION_ADMIN y OFFICIAL tienen consulta desde una asignación vigente. Los catálogos no llevan `organization_id`.
-
-Hay 16 tablas nacionales: emplazamientos, dos dimensiones de origen, hábitos, madurez, familias/especies/nombres comunes, categorías/condiciones, evidencia, mantenimiento, motivos de anulación, fauna y reglas versionadas con bandas. Se sembraron 23 condiciones físico-mecánicas y 42 fitosanitarias; las dos columnas de fenología del mismo bloque se implementan en TreeInspection desde Fase 7.
-
-La regla `EXCEL_V1` conserva intervalos exactos de 5 cm para DAP y 10 m para altura total, con cuatro estados Fustal. Sus parámetros y bandas están sellados: modificar una fórmula requiere otra versión, sin reescribir resultados históricos. BCMath trabaja con cadenas decimales y precisión de seis decimales; no redondea entradas antes de clasificar. La consulta de reglas de catálogo permanece disponible. Las inspecciones usan CAP/π con precisión interna ampliada, sin clasificar a partir del DAP redondeado; consulta el contrato de dasonomía.
-
-No hay rutas de borrado de catálogos. Los selectores de nuevos registros excluyen valores inactivos y las referencias anteriores se conservan. Los cambios se auditan con actor y sin tenant. Familias, especies y categorías tienen selectores Select2 locales; el servidor valida todas las relaciones.
-
-## Inventarios y árboles
-
-Después de iniciar sesión, selecciona una organización y abre [Inventarios](http://localhost:8080/inventories) o [Árboles](http://localhost:8080/trees). ORGANIZATION_ADMIN administra campañas, árboles, anulaciones y restauraciones; OFFICIAL crea y edita individuos de campañas activas; DEPARTMENT_ADMIN consulta el ámbito seleccionado de su departamento. SUPER_ADMIN mantiene selección institucional para operar, sin membresías artificiales.
-
-El mismo árbol participa en varias campañas mediante `inventory_trees`. El código se genera en backend usando una secuencia por organización. La ficha permite identidad/taxonomía, descripción de ubicación, coordenadas decimales o DMS, GPS opcional, estados e historiales. Leaflet previsualiza la validación del servidor; Select2 busca especies por nombres científicos y comunes. Un guardado obsoleto devuelve 409, conservando la edición anterior.
-
-«Anular» identifica un registro erróneo y conserva UUID/código; muerto, talado o retirado siguen siendo estados de individuos reales. La restauración conserva identidad y vínculos. Los formularios de identidad conservan esta separación; desde la ficha se inicia una inspección con sus mediciones y observaciones históricas.
-
-Consulta [dominio del árbol](docs/tree-domain.md), [georreferenciación](docs/georeferencing.md) y [Fase 6](docs/phase-6.md). Si el datum no fue informado, se conserva NULL y se declara la referencia de trabajo del mapa; no se infiere el datum del GPS. Esta fase no transforma coordenadas de otros datums.
-
-## Mapa general interno
-
-Abre [Mapa general](http://localhost:8080/map) con una sesión válida. Funcionarios y administradores institucionales utilizan su organización seleccionada; administradores departamentales consultan sus departamentos y SuperAdmin puede consultar el ámbito nacional sin crear un tenant artificial. Abrir una ficha concreta revalida permisos y conserva las políticas existentes.
-
-Puntos, Clusters y Mapa de calor utilizan `Tree.geometry` y comparten filtros con las bandejas. Los filtros de condición actual se aplican sobre la última inspección determinista; ALL exige todas las condiciones en esa visita. Los contadores distinguen total filtrado, árboles en el encuadre y árboles sin ubicación. El calor muestra densidad, no un índice de riesgo. Los límites de payload y contornos se anuncian en pantalla.
-
-La base inicial puede estar vacía: no se han creado árboles productivos de demostración. Configuración de mapas en `config/maps.php`; bibliotecas locales y controles responsive descritos en [maps.md](docs/maps.md). Ningún endpoint cartográfico interno se ofrece al público.
-
-## Portal público SIGAU
-
-Abre [Portal público](http://localhost:8080/portal), [Mapa público](http://localhost:8080/portal/map) o [Inventario público](http://localhost:8080/portal/trees) sin iniciar sesión. El ciudadano consulta árboles publicados, indicadores filtrados, fichas, inspecciones autorizadas, fotografías limpias de metadatos y resúmenes de mantenimientos ejecutados/verificados.
-
-La publicación es **privada por defecto**. Un administrador institucional selecciona su organización y entra a [Publicación ciudadana](http://localhost:8080/publication): autoriza la organización, una campaña activa fuera de Borrador y los árboles correspondientes. Inspecciones y fotografías necesitan autorización propia. Ocultar cualquier propietario retira sus dependientes en la siguiente consulta, incluso si una imagen estaba en caché. SUPER_ADMIN también requiere selección institucional; OFFICIAL y DEPARTMENT_ADMIN no publican.
-
-Las rutas `/api/public/v1/...` son independientes de las privadas y no resuelven JWT, usuarios ni tenant. Sus filtros usan códigos públicos y reutilizan el motor consolidado. Las fichas se identifican por código público de organización + código del árbol. No se publican notas internas, datos del personal ni archivos originales. La base operativa puede estar vacía y no recibe fixtures de prueba.
-
-Consulta [guía del portal](docs/public-portal.md), [política de datos públicos](docs/public-data-policy.md) y [reporte A–AN de Fase 11](docs/phase-11.md). Las exportaciones y los reportes finales corresponden a Fase 12 y todavía no están implementados.
-
-## Servicios
-
-| Servicio | Función y estado esperado |
-| --- | --- |
-| `postgres` | PostgreSQL/PostGIS persistente; continuo. |
-| `redis` | Caché, navegación y cola; continuo. |
-| `mailpit` | Recibe correos locales y permite revisarlos; continuo. |
-| `db-init` | Prepara roles, bases, PostGIS y permisos; termina en 0. |
-| `init` | Migra ambas bases con el rol migrador; termina en 0. |
-| `app` | PHP-FPM con el rol de aplicación; continuo. |
-| `queue` | Procesa trabajos Redis con `queue:work`; continuo. |
-| `scheduler` | Ejecuta `schedule:work`; continuo. |
-| `nginx` | Sirve `public` y envía PHP a FPM; continuo. |
-
-Los contenedores PHP incorporan un proceso init para gestionar señales. Es independiente del servicio `init` que ejecuta migraciones.
-
-Los puertos publicados quedan limitados al equipo local:
-
-| Acceso | Dirección |
-| --- | --- |
-| Aplicación e infraestructura | [localhost:8080](http://localhost:8080) |
-| Buzón Mailpit | [localhost:8025](http://localhost:8025) |
-
-PostgreSQL, Redis y PHP-FPM no publican puertos. El correo usa `mailpit:1025` dentro de Compose; SMTP no está publicado en el equipo. Mailpit captura los mensajes de revisión local. La configuración de entrega de correo y HTTPS de producción se resolverá antes del despliegue.
-
-## Configuración y secretos
-
-`.env.example` contiene nombres de variables y valores públicos de referencia. Configura los valores privados exclusivamente en `.env`.
-
-| Variables | Uso |
-| --- | --- |
-| `APP_URL`, `APP_PORT` | URL y puerto local; deben coincidir. `APP_URL` también interviene en los enlaces y el emisor JWT. |
-| `APP_UID`, `APP_GID` | Identidad Linux del usuario; se prepara con el usuario actual. |
-| `APP_KEY`, `JWT_SECRET` | Claves privadas de Laravel y firma JWT; no se publican ni se reutilizan como contraseñas. |
-| `JWT_TTL`, `AUTH_SESSION_TTL_MINUTES`, `JWT_AUDIENCE` | Vigencia de acceso, sesión autenticada y audiencia esperada. |
-| `SESSION_DRIVER`, `SESSION_LIFETIME` | Almacenamiento y duración de la navegación Laravel; distintos de la vigencia de `auth_sessions`. |
-| `SESSION_SECURE_COOKIE`, `SESSION_SAME_SITE` | Política de cookies. El HTTP local usa `false` y `lax`; HTTPS requiere cookies seguras. |
-| `DB_DATABASE`, `DB_TEST_DATABASE` | Bases separadas: `sysforest` y `sysforest_testing` inicialmente. |
-| `DB_USERNAME`, `DB_PASSWORD` | Cuenta de ejecución de Laravel, inicialmente `sysforest_app`. |
-| `DB_MIGRATOR_USERNAME`, `DB_MIGRATOR_PASSWORD` | Cuenta de cambios de esquema, inicialmente `sysforest_migrator`. |
-| `POSTGRES_USER`, `POSTGRES_PASSWORD` | Cuenta administrativa de preparación, inicialmente `sysforest_admin`. |
-| `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT` | `smtp`, `mailpit` y `1025` en el entorno local. |
-| `DEV_*_EMAIL`, `DEV_*_PASSWORD` | Cuatro cuentas opcionales, creadas solo al ejecutar el seeder de desarrollo. |
-| `AUTH_*_RATE_LIMIT` | Límites de intentos de inicio, renovación, recuperación e invitaciones. |
-
-Los valores de las contraseñas y claves se representan como campos vacíos o marcadores en los ejemplos; nunca como credenciales de acceso compartidas. No imprimas `docker compose config` sin `--quiet` en registros destinados a revisión.
-
-Laravel, el worker y el scheduler utilizan la cuenta de ejecución sin permisos de cambios de esquema. Compose monta los secretos privilegiados solo en los inicializadores que los necesitan; sus variables quedan vacías en los servicios PHP habituales.
-
-`setup-env` no rota valores existentes. Cambiar una contraseña en `.env` no modifica automáticamente la credencial de una base ya inicializada ni la de una cuenta ya creada.
-
-## Comprobaciones y pruebas
-
-Comprueba la disponibilidad de Laravel, PostgreSQL/PostGIS y Redis:
-
-~~~bash
 curl --fail --silent --show-error http://localhost:8080/health/ready
 ~~~
 
-La respuesta esperada es HTTP 200 con `{"status":"ok"}`; una dependencia no disponible produce HTTP 503 con un cuerpo genérico. `/up` mantiene la comprobación de vida de Laravel. La [página inicial](http://localhost:8080/) muestra el estado de infraestructura sin requerir inicio de sesión.
+`setup-env` crea `.env` y completa secretos locales ausentes sin imprimirlos ni reemplazar los existentes. PHP y Composer funcionan en contenedores. Se esperan siete servicios continuos saludables y dos inicializadores (`db-init`, `init`) terminados con código 0. La disponibilidad responde HTTP 200 con `{"status":"ok"}`.
 
-Despacha una tarea real de cola y consulta la programación:
+En una instalación **ya preparada**, basta `docker compose up -d` para arrancar. No hay que volver a sembrar datos en cada inicio.
 
-~~~bash
-docker compose exec app php artisan sysforest:probe-queue
-docker compose exec app php artisan schedule:list
-~~~
-
-La página inicial permite revisar la fecha de procesamiento de cola. El scheduler actualiza su comprobación cada minuto. Ver un proceso activo no demuestra que haya completado una tarea.
-
-Ejecuta la suite completa de forma serial sobre la base de pruebas:
+En una instalación local nueva, prepara el piloto y los catálogos explícitamente:
 
 ~~~bash
-docker compose exec app php artisan test --fail-on-warning
+docker compose exec -T app php artisan db:seed --class=DatabaseSeeder
 ~~~
 
-`phpunit.xml` fija `APP_ENV=testing`, `DB_DATABASE=sysforest_testing` y activa `SYSFOREST_RUN_INTEGRATION=1`. Se utiliza PostgreSQL/PostGIS real. `PostgresTestCase` verifica entorno, driver y nombre de base antes de abrir transacciones y revierte los fixtures. No ejecutes suites concurrentes contra la misma base de pruebas.
-
-Si modificas `DB_TEST_DATABASE`, actualiza también las entradas `DB_DATABASE` de `phpunit.xml` para que apunten a esa base separada. `composer test` limpia previamente la caché de configuración. Los resultados consolidados y las limitaciones se registran en [Fase 11](docs/phase-11.md); estos comandos describen el procedimiento, no un resultado ejecutado.
-
-Revisa el formato:
+Este seeder prepara el territorio, la institución piloto INEM de Villavicencio, los catálogos, cuatro roles, **49 permisos** y el inventario piloto. No genera árboles ficticios ni cuentas. Sincroniza la matriz de permisos de los roles, por lo que debe ejecutarse conscientemente. Para crear las cuatro cuentas opcionales de revisión local:
 
 ~~~bash
-docker compose exec app composer lint
+docker compose exec -T app php artisan db:seed --class=DevelopmentIdentitySeeder
 ~~~
 
-Para aplicar PSR-12 con un montaje escribible desde la raíz del proyecto:
+Las credenciales proceden exclusivamente de `.env`; consulta [cuentas de desarrollo](docs/development-accounts.md). Repetir ese seeder no cambia contraseñas existentes. Las cuentas normales se incorporan mediante invitaciones, sin registro público abierto.
 
-~~~bash
-docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/var/www/html" --workdir /var/www/html --entrypoint composer sysforest-app:local format
-~~~
+## Accesos
 
-## Operación y persistencia
+| Pantalla | Dirección local | Acceso |
+| --- | --- | --- |
+| Portal ciudadano | [Portal](http://localhost:8080/portal) | Anónimo; solo información publicada. |
+| Inicio de sesión | [Iniciar sesión](http://localhost:8080/login) | También disponible en la cabecera del portal. |
+| Organizaciones | [Organizaciones](http://localhost:8080/organizations) | Cuenta activa/verificada y alcance autorizado. |
+| Trabajo forestal | [Inventarios](http://localhost:8080/inventories), [Árboles](http://localhost:8080/trees) | Organización seleccionada y permiso por operación. |
+| Cartografía | [Mapa interno](http://localhost:8080/map), [Mapa público](http://localhost:8080/portal/map) | Alcance privado o universo publicado, respectivamente. |
+| Reportes | [Internos](http://localhost:8080/reports), [Públicos](http://localhost:8080/portal/reports) | Mismos filtros del universo correspondiente. |
+| Importaciones | [Importaciones](http://localhost:8080/imports) | SUPER_ADMIN, ORGANIZATION_ADMIN u OFFICIAL en una institución autorizada. |
+| Auditoría | [Auditoría privada](http://localhost:8080/audit) | SUPER_ADMIN nacional u ORGANIZATION_ADMIN institucional. |
+| Infraestructura | [Estado local](http://localhost:8080/) | Disponibilidad, cola y scheduler. |
+| Correo de revisión | [Mailpit](http://localhost:8025) | Buzón local; no envía mensajes al exterior por defecto. |
 
-Consulta estado, inicialización, procesos y migraciones:
+Solo se publican `127.0.0.1:8080` y `127.0.0.1:8025`. PostgreSQL, Redis, SMTP y PHP-FPM permanecen en la red de Compose.
 
-~~~bash
-docker compose ps -a
-docker compose logs --tail=100 db-init init
-docker compose logs --tail=100 app queue scheduler nginx mailpit
-docker compose exec app php artisan migrate:status
-~~~
+## Capacidades y límites
 
-Aplica migraciones incrementales con el rol autorizado:
+- Inventarios institucionales y árboles permanentes, vinculados a varias campañas mediante `inventory_trees`; ubicación PostGIS e historiales separados de las inspecciones.
+- Inspecciones con cálculo dasométrico, condiciones, fenología y fauna; evidencias privadas y órdenes manuales de mantenimiento.
+- Mapa Leaflet con puntos, agrupaciones y densidad; filtros compartidos y última inspección determinista.
+- Publicación explícita y privada por defecto. El portal no expone funcionarios, auditoría, notas internas ni originales fotográficos con metadatos.
+- Reportes Blade/PDF y exportación CSV, Excel y GeoJSON. Las descargas son síncronas y tienen límites configurados; no hay trabajos de exportación en cola.
+- Plantilla `SYSFOREST_IMPORT_V1` y confirmación atómica por lote, por defecto de hasta 100 filas y 5 MiB. Cada fila crea un árbol y una inspección; no actualiza individuos existentes ni importa fotografías.
+- Auditoría privada, historial protegido contra modificación/borrado y control de versiones que impide sobrescribir ediciones concurrentes.
 
-~~~bash
-docker compose run --rm init
-~~~
+La autenticación usa JWT de acceso en cookie HttpOnly y refresh opaco, rotatorio y revocable. `organization_id` delimita los datos institucionales en una base compartida. La selección de organización no concede permisos: cada operación revalida cuenta, asignaciones, alcance y recurso.
 
-El servicio `app` no tiene permisos para modificar el esquema. Cuando cambien el Dockerfile, las dependencias o la configuración de Compose, reconstruye y aplica los servicios:
+## Guías vigentes
 
-~~~bash
-docker compose build
-docker compose up -d
-~~~
+Con el entorno iniciado, ejecuta `bash bin/check` para comprobar PSR-12, JavaScript y PHP en serie. Los requisitos, resultados y límites del runner están en la [guía de pruebas](docs/testing.md).
 
-Tras cambios en clases que utiliza el worker:
-
-~~~bash
-docker compose exec app php artisan queue:restart
-~~~
-
-Para detener conservando datos, utiliza `docker compose stop`. `docker compose down` retira contenedores y red, manteniendo los volúmenes. Vuelve a arrancar con `docker compose up -d`. No uses `down -v` para una detención normal: elimina los volúmenes.
-
-| Volumen | Contenido |
+| Necesidad | Documento |
 | --- | --- |
-| `postgres_data` | Datos persistentes de PostgreSQL. |
-| `redis_data` | Persistencia AOF de Redis. |
-| `storage_data` | Almacenamiento de Laravel y archivos locales de la aplicación. |
-| `mailpit_data` | Buzón local de revisión. |
+| Revisar resultados, correcciones y pendientes de aceptación local | [Aceptación del piloto](docs/acceptance-local.md) |
+| Renovación de sesión, calendario de captura y cierre de mantenimiento | [Ajustes de usabilidad](docs/usability-fixes.md) |
+| Aprender el flujo de trabajo y resolver mensajes habituales | [Guía de uso](docs/user-guide.md) |
+| Arrancar, actualizar, diagnosticar y preparar una futura puesta en producción | [Operación](docs/operations.md) |
+| Ejecutar pruebas, PSR-12 y revisión responsive | [Pruebas](docs/testing.md) |
+| Conocer los 49 permisos y sus ámbitos | [Autorización](docs/authorization.md) y [multi-tenancy](docs/multitenancy.md) |
+| Identidad, sesiones, invitaciones y contraseñas | [Autenticación](docs/authentication.md), [recuperación](docs/account-recovery.md) |
+| Captura y trazabilidad forestal | [Árboles](docs/tree-domain.md), [inspecciones](docs/inspections.md), [dasonomía](docs/dendrometry.md), [coordenadas](docs/georeferencing.md) |
+| Fotos y órdenes de trabajo | [Evidencias](docs/evidences.md), [almacenamiento](docs/file-storage.md), [mantenimientos](docs/maintenances.md) |
+| Catálogos y correspondencia con el Excel original | [Catálogos](docs/forestry-catalogs.md), [94 variables](docs/excel-field-mapping.md) |
+| Mapas, filtros y privacidad | [Mapa](docs/maps.md), [filtros](docs/map-filters.md), [portal](docs/public-portal.md), [política pública](docs/public-data-policy.md) |
+| Formatos de salida y carga institucional | [Reportes](docs/reports-and-exports.md), [campos exportados](docs/exports-field-mapping.md), [importación](docs/import-export.md), [campos importados](docs/import-field-mapping.md) |
+| Auditoría y conflictos de edición | [Auditoría](docs/audit.md), [concurrencia](docs/concurrency.md) |
+| Estructura técnica | [Arquitectura](docs/architecture.md), [base de datos](docs/database.md) |
 
-Los volúmenes no sustituyen las copias de seguridad. Los enlaces de los correos locales son credenciales de acción: conserva el buzón de revisión privado. Las carpetas de código se montan como solo lectura en los servicios PHP; se editan en el proyecto WSL. Nginx expone únicamente `public`, no la raíz ni `.env`.
-
-## Documentación
-
-| Documento | Contenido |
-| --- | --- |
-| [Fase 6](docs/phase-6.md) | Reporte histórico A–AJ, pruebas, rollback y estado de servicios. |
-| [Fase 7](docs/phase-7.md) | Reporte histórico de inspecciones. |
-| [Fase 8](docs/phase-8.md) | Reporte histórico A–AN de evidencias. |
-| [Fase 9](docs/phase-9.md) | Reporte histórico de mantenimientos. |
-| [Fase 10](docs/phase-10.md) | Reporte histórico A–AL del mapa interno. |
-| [Fase 11](docs/phase-11.md) | Reporte A–AN del portal público y validaciones. |
-| [Portal público](docs/public-portal.md) | Rutas anónimas, filtros, API y operación. |
-| [Política pública](docs/public-data-policy.md) | Clasificación de campos, publicación y privacidad. |
-| [Mapa interno](docs/maps.md) | Endpoints, PostGIS, Leaflet, clusters, calor y seguridad. |
-| [Filtros compartidos](docs/map-filters.md) | DTO, última inspección, ANY/ALL, territorio y mantenimiento. |
-| [Mantenimientos](docs/maintenances.md) | Órdenes manuales, estados, responsables, auditoría y fotografías. |
-| [Evidencias](docs/evidences.md) | Propietarios, galerías, permisos y auditoría. |
-| [Almacenamiento](docs/file-storage.md) | Archivos privados, validación y recuperación. |
-| [Inspecciones](docs/inspections.md) | Historia, condiciones, fenología, fauna, filtros, auditoría y permisos. |
-| [Dasonomía](docs/dendrometry.md) | Fórmulas, unidades, precisiones y versiones de clasificación. |
-| [Dominio forestal](docs/tree-domain.md) | Identidad, campañas, estados, códigos y anulación. |
-| [Georreferenciación](docs/georeferencing.md) | PostGIS, Garmin, DMS y metadatos. |
-| [Fase 5](docs/phase-5.md) | Evidencia histórica de catálogos aprobados. |
-| [Catálogos forestales](docs/forestry-catalogs.md) | Valores, códigos, fuentes y discrepancias. |
-| [94 campos Excel](docs/excel-field-mapping.md) | Trazabilidad completa para las fases posteriores. |
-| [Fase 4](docs/phase-4.md) | Evidencia histórica de autenticación y autorización. |
-| [Autenticación](docs/authentication.md) | JWT, cookies, renovación y sesiones autenticadas. |
-| [Autorización](docs/authorization.md) | Cuatro roles; base de permisos y extensión forestal en multitenancy. |
-| [Recuperación e invitaciones](docs/account-recovery.md) | Verificación de correo, contraseñas, invitaciones y entrega local. |
-| [Cuentas de desarrollo](docs/development-accounts.md) | Variables y seeder explícito de revisión local. |
-| [Multi-tenancy](docs/multitenancy.md) | Selección, revalidación, consultas y aislamiento entre organizaciones. |
-| [Arquitectura](docs/architecture.md) y [modelo de datos](docs/database.md) | Diseño conceptual aprobado y módulos previstos. |
-| [Fase 2](docs/phase-2.md) y [Fase 3](docs/phase-3.md) | Evidencia histórica de infraestructura y fundamento institucional. |
-
-El flujo del código es `Controller → Service → Repository → Model`. Blade recibe datos preparados; no realiza consultas ni contiene reglas de negocio. Las capacidades actuales llegan hasta Fase 11; los diagramas conceptuales de módulos posteriores no implican que estén implementados.
+Los informes `docs/phase-*.md` conservan resultados históricos de cada entrega. El [cierre de Fase 15](docs/phase-15.md) registra su verificación completa histórica: 1806 pruebas PHP, 64 pruebas JavaScript y 577 archivos PSR-12; las cifras de una fase anterior no acreditan cambios posteriores. El esquema de Compose es local: todavía no representa un despliegue externo.

@@ -47,7 +47,7 @@ Una rotación válida comprueba el estado actual, consume el token anterior, cre
 
 Si el token ya fue consumido, la transacción revoca la familia con motivo refresh_reuse y registra el evento. La excepción de autenticación se lanza después del COMMIT: lanzarla dentro de la transacción desharía la revocación.
 
-La política es estricta y no concede un período de gracia. Si llegan dos refresh simultáneos con el mismo valor, uno puede rotar correctamente y el otro revoca la familia al detectar el reuso. Por ello también deja de funcionar el access recién emitido por el primero. El navegador debe coordinar un único intento de renovación a la vez; una renovación debe ser una acción explícita mediante POST protegido por CSRF, no un efecto secundario de todos los GET.
+La política es estricta y no concede un período de gracia. Si llegan dos refresh simultáneos con el mismo valor, uno puede rotar correctamente y el otro revoca la familia al detectar el reuso. Por ello también deja de funcionar el access recién emitido por el primero. El navegador debe coordinar un único intento de renovación a la vez; la renovación se realiza mediante un POST protegido por CSRF; los GET solo consultan su vigencia.
 
 ## Cookies y ciclo HTTP
 
@@ -60,6 +60,30 @@ Una vez verificado el token, SessionService comprueba la sesión y la cuenta act
 La sesión de Laravel conserva CSRF, mensajes y selección de organización del navegador; no sustituye al JWT como credencial. BindAuthenticatedSession elimina la selección anterior si cambia auth_session_id. La pérdida o el vencimiento de esa sesión de navegación no invalida por sí solo el refresh: el navegador puede obtener un nuevo formulario CSRF y renovar la sesión autenticada mientras PostgreSQL la considere vigente. Los formularios mantienen la protección CSRF, incluyendo login, refresh y logout. No se guardan access ni refresh en localStorage o sessionStorage, ni se incluyen en URLs.
 
 Una cuenta sin verificar puede iniciar una sesión limitada para completar su verificación. El middleware de verificación bloquea el área interna normal. La desactivación de una membresía elimina el acceso institucional correspondiente sin desactivar la cuenta ni sus otras membresías; la desactivación global del usuario bloquea todas sus sesiones.
+
+## Continuidad de formularios
+
+Las páginas institucionales incluyen un coordinador de sesión antes de los scripts de los módulos. Consulta la vigencia antes de enviar formularios, navegar mediante enlaces normales o iniciar `fetch` al mismo origen. Un temporizador anticipa el vencimiento en pestañas visibles; el envío vuelve a comprobarlo aunque la pestaña haya permanecido suspendida. Los archivos seleccionados permanecen en el DOM y en la cola de evidencias.
+
+| Ruta | Contrato |
+| --- | --- |
+| `GET /auth/session/status` | Consulta sin rotación ni revocación; devuelve `ready` o `renewal_required`, vencimientos, CSRF y un HMAC del contexto. Nunca devuelve access, refresh o UUID de sesión. |
+| `POST /auth/session/ensure` | Exige CSRF, `expected_context` y límite de solicitudes. Solo rota cuando es necesario y conserva el identificador de navegación, CSRF, organización y vencimiento absoluto de la misma familia. |
+
+Controller delega en `SessionContinuityService`, que utiliza los servicios y repositorios existentes de tokens y sesiones. Las cookies permanecen HttpOnly. El umbral de anticipación es el menor entre 60 segundos y un tercio del TTL de acceso. Si el access ya alcanza el vencimiento absoluto, no se rota para ganar tiempo inexistente.
+
+Las consultas de continuidad preservan los datos flash mediante `reflash()`: errores, valores anteriores y avisos se consumen en la siguiente navegación real. El cliente identifica estas consultas con `X-Requested-With: XMLHttpRequest` para que Laravel no sustituya la URL de retorno del formulario por la ruta JSON de estado.
+
+La coordinación usa Web Locks por origen y comparte una operación pendiente dentro de cada pestaña. Dentro del bloqueo vuelve a consultar el estado: la segunda pestaña observa las cookies recién renovadas antes de decidir si hace falta otra rotación. La espera del bloqueo tiene un máximo de 20 segundos y cada consulta de sesión, 15 segundos. No cambia la detección estricta de reutilización del servidor. Se requiere un navegador con Web Locks en contexto seguro, como HTTPS o localhost; si no está disponible, el aviso conserva el formulario y no intenta una rotación concurrente insegura.
+
+El HMAC depende de la familia y de la organización seleccionada; no autentica por sí mismo. Las escrituras HTML envían `_session_context`, `fetch` y la carga XHR de fotos envían `X-Session-Context`. El middleware compara el contexto antes del Controller, además de la autorización habitual. Un cambio de cuenta o institución en otra pestaña produce un conflicto y evita guardar con otro destino institucional.
+
+Una sesión revocada, vencida o sin su vínculo de navegación devuelve un aviso sin redirigir la página abierta. Iniciar sesión de nuevo crea otra familia: los formularios anteriores no se reenvían automáticamente bajo esa nueva identidad. Un problema transitorio de red admite una nueva comprobación manual. Ninguna escritura ya enviada se reintenta automáticamente. Cerrar sesión permanece disponible sin esperar renovación.
+
+La entrada directa en una URL, una recarga completa, JavaScript desactivado o un enlace abierto mediante controles propios del navegador siguen utilizando la recuperación manual existente si ya venció el acceso. Las páginas cargadas antes de esta actualización necesitan recargarse después de conservar cualquier trabajo pendiente.
+
+`SessionContinuityTest` comprueba cookies y CSRF reales, conservación de sesión y organización, expiración absoluta, revocación, reutilización, ausencia de secretos y rechazo de formularios de otro contexto. Las pruebas JavaScript ejecutan el coordinador real con transporte controlado: pestañas simultáneas, cancelación, red, plazos, conservación de archivos y ausencia de reenvíos.
+
 
 ## Auditoría y verificación
 

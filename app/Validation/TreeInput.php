@@ -39,6 +39,7 @@ class TreeInput
             'datum' => ['nullable', 'string', 'max:100'], 'accuracy_m' => ['nullable', 'numeric', 'min:0', 'max:999999.999'],
             'gps_brand' => ['nullable', 'string', 'max:100'], 'gps_model' => ['nullable', 'string', 'max:100'],
             'captured_at' => ['nullable', 'date'],
+            'captured_at_local' => ['nullable', 'string', 'max:30', 'date'],
             'location_change_type' => ['nullable', Rule::in(['correction', 'relocation', 'transplant'])],
             'location_reason' => ['nullable', 'string', 'max:2000'],
         ];

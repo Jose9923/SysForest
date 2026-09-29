@@ -33,7 +33,7 @@ class PublicExceptionRenderer
         }
         $response = $request->is('api/*') || $request->expectsJson()
             ? response()->json($data, $status)
-            : response()->view('public.error', $data + ['status' => $status, 'seo' => [
+            : response()->view('public.error', $data + ['status' => $status, 'validationErrors' => $data['errors'] ?? [], 'seo' => [
                 'title' => 'Consulta no disponible · SYSFOREST', 'description' => $message,
                 'canonical' => rtrim((string) config('app.url'), '/').'/portal',
             ]], $status);

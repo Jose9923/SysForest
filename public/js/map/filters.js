@@ -54,6 +54,7 @@ export class MapFilters {
                 cache: false,
             },
         });
+        this.document.defaultView?.SysforestSelect2Accessibility?.associate(select, this.$(select).data('select2'));
         if (search) this.$(select).on('select2:select', event => this.onSearch(event.params.data));
     }
     cancelLookups() { this.requests.forEach(request => request.cancel()); }

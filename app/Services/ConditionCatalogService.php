@@ -24,6 +24,8 @@ class ConditionCatalogService
         private CatalogAccessService $access,
         private UserRepository $users,
         private SecurityEventRepository $events,
+        private VersionedWriteService $versions,
+        private AuditSnapshotService $snapshots,
     ) {
     }
 
@@ -73,8 +75,8 @@ class ConditionCatalogService
                 $currentActor = $this->users->findForUpdate((int) $actor->id);
                 $this->access->authorizeManage($currentActor);
                 $record = $id === null ? null : $this->repository->find($catalog, $id, true);
-                $base = $record?->only(array_diff(array_keys(ConditionCatalogRules::for($catalog)), ['id', 'organization_id'])) ?? ['active' => true, 'sort_order' => 0];
-                $values = Validator::make(array_replace($base, $input), ConditionCatalogRules::for($catalog))->validate();
+                $base = $record?->only(array_diff(array_keys(ConditionCatalogRules::for($catalog)), ['id', 'organization_id', 'lock_version'])) ?? ['active' => true, 'sort_order' => 0];
+                $values = Validator::make(array_replace($base, $input), ConditionCatalogRules::for($catalog, $record !== null))->validate();
                 foreach (['code', 'assessment_type', 'condition_category_id'] as $immutable) {
                     if ($record !== null && array_key_exists($immutable, $values) && $values[$immutable] !== $record->getAttribute($immutable)) {
                         throw ValidationException::withMessages([$immutable => 'El código, ámbito y categoría originales deben conservarse. Crea una entrada distinta si cambia el significado.']);
@@ -84,15 +86,47 @@ class ConditionCatalogService
                 if ($catalog === ConditionCatalogKind::Items) {
                     $this->validateCategory($values, $record);
                 }
+                $auditBefore = $record === null ? [] : $this->snapshots->snapshot($record);
+                if ($record !== null) {
+                    $this->versions->advance($record, $values);
+                }
+                unset($values['lock_version']);
                 $before = $record?->only(['active', 'sort_order']);
                 $record = $record === null ? $this->repository->create($catalog, $values) : $this->repository->update($record, $values);
                 $metadata = ['catalog_key' => 'conditions.'.$catalog->value, 'resource_id' => $record->id, 'resource_code' => $record->code];
-                $this->events->record($before === null ? 'catalog.created' : 'catalog.updated', $currentActor, null, $metadata);
+                $this->events->recordChange(
+                    $before === null ? 'catalog.created' : 'catalog.updated',
+                    $currentActor,
+                    null,
+                    'catalog',
+                    $record->id,
+                    $auditBefore,
+                    $this->snapshots->snapshot($record),
+                    $metadata
+                );
                 if ($before !== null && $before['active'] !== $record->active) {
-                    $this->events->record($record->active ? 'catalog.activated' : 'catalog.deactivated', $currentActor, null, $metadata);
+                    $this->events->recordChange(
+                        $record->active ? 'catalog.activated' : 'catalog.deactivated',
+                        $currentActor,
+                        null,
+                        'catalog',
+                        $record->id,
+                        ['active' => $before['active']],
+                        ['active' => $record->active],
+                        $metadata
+                    );
                 }
                 if ($before !== null && $before['sort_order'] !== $record->sort_order) {
-                    $this->events->record('catalog.reordered', $currentActor, null, $metadata);
+                    $this->events->recordChange(
+                        'catalog.reordered',
+                        $currentActor,
+                        null,
+                        'catalog',
+                        $record->id,
+                        ['sort_order' => $before['sort_order']],
+                        ['sort_order' => $record->sort_order],
+                        $metadata
+                    );
                 }
 
                 return $record;

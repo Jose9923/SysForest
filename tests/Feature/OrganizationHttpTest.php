@@ -103,6 +103,7 @@ class OrganizationHttpTest extends PostgresTestCase
         $this->allowManagement($actor);
         $input = $this->organizationInput($pilot);
         $input['name'] = 'Nombre actualizado';
+        $input['lock_version'] = $pilot->fresh()->lock_version;
         $this->actingTenant($actor, $pilot)->put('/organizations/'.$pilot->id, $input)->assertRedirect(route('organizations.index'));
         $this->assertDatabaseHas('organizations', ['id' => $pilot->id, 'name' => 'Nombre actualizado', 'municipality_id' => $pilot->municipality_id]);
     }

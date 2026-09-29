@@ -86,13 +86,59 @@ class MaintenancePresentationTest extends MaintenanceTestCase
         $this->activateInspectionTenant();
         $order = $this->advance($order, 'executed', ['performed_date' => now()->toDateString(), 'result' => '0']);
         $adminView = $this->get(route('maintenances.show', $order->id))->assertOk()->assertDontSee('Sin resultado registrado.')
-            ->assertDontSee('Editar mantenimiento');
+            ->assertDontSee('Editar mantenimiento')->assertSee('Verificar y cerrar mantenimiento');
         $this->assertSame(1, $this->document($adminView->getContent())->query('//input[@name="status" and @value="verified"]')->length);
         $official = $this->maintenanceActor('OFFICIAL');
         $this->actingTenant($official, $this->organization);
         $officialView = $this->get(route('maintenances.show', $order->id))->assertOk()
-            ->assertDontSee('Acciones disponibles')->assertDontSee('Anular registro por error');
+            ->assertDontSee('Acciones disponibles')->assertDontSee('Anular registro por error')
+            ->assertSee('Pendiente de verificación administrativa')->assertSee('un administrador de la organización o superadministrador');
         $this->assertSame(0, $this->document($officialView->getContent())->query('//form/input[@name="status"]')->length);
+    }
+
+    public function test_next_action_is_visible_before_record_details_and_cancel_remains_secondary(): void
+    {
+        $order = $this->order(['assigned_to' => $this->admin->id]);
+        $this->actingTenant($this->admin, $this->organization);
+        $pending = $this->get(route('maintenances.show', $order->id))->assertOk()
+            ->assertSeeInOrder(['SEGUIMIENTO Y CIERRE', 'Asignar responsable', 'Datos de la intervención']);
+        $xpath = $this->document($pending->getContent());
+        $this->assertSame(1, $xpath->query('//details[@open]//input[@name="status" and @value="assigned"]')->length);
+        $this->assertSame(0, $xpath->query('//details[@open]//input[@name="status" and @value="cancelled"]')->length);
+        $this->activateInspectionTenant();
+        $order = $this->advance($order, 'assigned');
+        $order = $this->advance($order, 'in_progress');
+        $execution = $this->get(route('maintenances.show', $order->id))->assertOk()->assertSee('Registrar ejecución');
+        $xpath = $this->document($execution->getContent());
+        $this->assertSame(1, $xpath->query('//details[@open]//input[@name="performed_date" and @required]')->length);
+        $this->assertSame(1, $xpath->query('//details[@open]//textarea[@name="result" and @required]')->length);
+    }
+
+    public function test_verification_is_visible_for_admin_and_confirmed_closure_has_no_status_forms(): void
+    {
+        $order = $this->executedOrder();
+        $this->actingTenant($this->admin, $this->organization);
+        $before = $this->get(route('maintenances.show', $order->id))->assertOk()
+            ->assertSee('Revisa el resultado y confirma el cierre')->assertSee('Verificar y cerrar mantenimiento');
+        $this->assertSame(1, $this->document($before->getContent())->query('//details[@open]//input[@name="status" and @value="verified"]')->length);
+        $this->patch(route('maintenances.status', $order->id), [
+            'status' => 'verified', 'lock_version' => $order->lock_version,
+        ])->assertRedirect(route('maintenances.show', $order->id));
+        $after = $this->get(route('maintenances.show', $order->id))->assertOk()
+            ->assertSee('Mantenimiento cerrado y verificado')->assertSee('Ejecutado → Verificado')
+            ->assertDontSee('Verificar y cerrar mantenimiento')->assertDontSee('Acciones disponibles');
+        $this->assertSame(0, $this->document($after->getContent())->query('//form/input[@name="status"]')->length);
+        $this->assertSame('verified', $order->fresh()->status->value);
+    }
+
+    public function test_cancelled_order_is_not_presented_as_executed_and_verified(): void
+    {
+        $order = $this->advance($this->order(), 'cancelled', ['reason' => 'Intervención descartada.']);
+        $this->actingTenant($this->admin, $this->organization);
+        $response = $this->get(route('maintenances.show', $order->id))->assertOk()
+            ->assertSee('Mantenimiento cancelado')->assertSee('no acredita una intervención ejecutada y verificada')
+            ->assertDontSee('Mantenimiento cerrado y verificado');
+        $this->assertSame(0, $this->document($response->getContent())->query('//form/input[@name="status"]')->length);
     }
 
     public function test_edit_preserves_zero_and_inactive_type_but_new_form_does_not_offer_it(): void

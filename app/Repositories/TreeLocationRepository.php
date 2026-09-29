@@ -43,15 +43,16 @@ class TreeLocationRepository
         ?string $changeType,
         ?string $reason,
         bool $initial = false,
-    ): void {
+    ): string {
         $this->requireTransaction();
         $point = $coordinates === null ? 'NULL' : 'ST_SetSRID(ST_MakePoint(?, ?), 4326)';
         $pointBindings = $coordinates === null ? [] : $this->pointBindings($coordinates->latitude, $coordinates->longitude);
         $oldPoint = $initial ? 'NULL' : 'trees.geometry';
         $oldRaw = $initial ? 'NULL' : 'trees.coordinate_raw';
         $changedAt = now();
+        $historyId = (string) Str::uuid();
         $bindings = array_merge(
-            [(string) Str::uuid()],
+            [$historyId],
             $pointBindings,
             [
                 $coordinates?->raw,
@@ -80,6 +81,8 @@ class TreeLocationRepository
              WHERE organization_id = ? AND id = ? AND deleted_at IS NULL',
             array_merge($pointBindings, [$coordinates?->raw], $values, [$changedAt, $current->organization_id, $current->id]),
         );
+
+        return $historyId;
     }
 
     public function withinBoundingBox(

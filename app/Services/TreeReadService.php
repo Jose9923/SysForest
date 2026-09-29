@@ -23,7 +23,8 @@ class TreeReadService
         private EvidenceReadService $evidences,
         private TreeInspectionReadService $inspections,
         private MaintenanceReadService $maintenances,
-        private TreeFilterService $filters
+        private TreeFilterService $filters,
+        private TreeCaptureDateService $captureDates
     ) {
     }
 
@@ -95,6 +96,8 @@ class TreeReadService
         $availableInventories = $options['inventories']->reject(fn ($inventory) => in_array($inventory->id, $linkedIds, true));
 
         return ['options' => $options, 'statuses' => $statuses, 'availableInventories' => $availableInventories,
+            'captureDate' => ['input' => $this->captureDates->inputValue($tree?->captured_at),
+                'display' => $this->captureDates->displayValue($tree?->captured_at)],
             'canCreate' => Gate::forUser($actor)->allows('create', Tree::class),
             'canUpdate' => $tree ? Gate::forUser($actor)->allows('update', $tree) : $this->access->allows($actor, 'trees.update'),
             'canVoid' => $tree ? Gate::forUser($actor)->allows('void', $tree) : $this->access->allows($actor, 'trees.void'),

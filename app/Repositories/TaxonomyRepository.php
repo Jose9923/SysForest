@@ -39,7 +39,7 @@ class TaxonomyRepository
 
     public function create(TaxonomyCatalog $catalog, array $attributes): Model
     {
-        return $this->query($catalog)->create($attributes);
+        return $this->query($catalog)->create($attributes)->refresh();
     }
 
     public function update(Model $record, array $attributes): Model

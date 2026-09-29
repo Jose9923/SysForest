@@ -19,6 +19,14 @@ class BindAuthenticatedSession
             $request->session()->put('auth_session_id', $session->id);
         }
 
-        return $next($request);
+        $continuity = app(\App\Services\SessionContinuityService::class);
+        $continuity->assertRequestContext($request);
+        $request->attributes->set('session_continuity', $continuity->clientConfiguration($request));
+
+        try {
+            return $next($request);
+        } finally {
+            $request->attributes->remove('session_continuity');
+        }
     }
 }

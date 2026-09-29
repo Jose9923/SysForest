@@ -16,7 +16,7 @@ class SpeciesCommonName extends Model
 
     protected function casts(): array
     {
-        return ['active' => 'boolean', 'sort_order' => 'integer', 'is_primary' => 'boolean'];
+        return ['lock_version' => 'integer', 'active' => 'boolean', 'sort_order' => 'integer', 'is_primary' => 'boolean'];
     }
 
     public function species(): BelongsTo

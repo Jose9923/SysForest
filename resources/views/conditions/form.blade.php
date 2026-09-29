@@ -7,7 +7,7 @@
     <div class="page-heading"><div><p class="eyebrow">CONDICIONES FORESTALES NACIONALES</p><h1>{{ $record ? 'Editar valor' : 'Crear valor' }}</h1><p class="muted">{{ $title }} · La categoría conserva el órgano y el tipo de evaluación.</p></div></div>
     <form class="panel organization-form catalog-form" method="POST" action="{{ $record ? route('conditions.update', ['catalog' => $catalog, 'record' => $record->id]) : route('conditions.store', ['catalog' => $catalog]) }}">
         @csrf
-        @if ($record) @method('PUT') @endif
+        @if ($record) @method('PUT') <input type="hidden" name="lock_version" value="{{ old('lock_version', $record->lock_version) }}"> @endif
         <x-field name="code" label="Código estable" :value="$record?->code ?? ''" maxlength="80" pattern="[A-Z][A-Z0-9_]{1,79}" required :readonly="$record !== null" />
         <x-field name="name" label="Nombre en español" :value="$record?->name ?? ''" maxlength="255" required />
         <div class="field"><label for="assessment_type">Tipo de evaluación</label><select id="assessment_type" name="assessment_type" required @disabled($record !== null)><option value="physical_mechanical" @selected(old('assessment_type', $record?->assessment_type) === 'physical_mechanical')>Físico-mecánica</option><option value="phytosanitary" @selected(old('assessment_type', $record?->assessment_type) === 'phytosanitary')>Fitosanitaria</option></select>@if ($record)<input type="hidden" name="assessment_type" value="{{ $record->assessment_type }}">@endif @error('assessment_type')<span class="field-error">{{ $message }}</span>@enderror</div>

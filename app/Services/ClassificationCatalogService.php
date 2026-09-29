@@ -22,6 +22,8 @@ class ClassificationCatalogService
         private CatalogAccessService $access,
         private UserRepository $users,
         private SecurityEventRepository $events,
+        private VersionedWriteService $versions,
+        private AuditSnapshotService $snapshots,
     ) {
     }
 
@@ -67,17 +69,46 @@ class ClassificationCatalogService
             $this->access->authorizeManage($actor);
             $version = $this->rules->find($id, true);
             $data = Validator::make($input, ClassificationMetadataInput::rules())->validate();
+            $before = $this->snapshots->snapshot($version);
+            $this->versions->advance($version, $data);
             $data = array_intersect_key($data, array_flip(['name', 'description', 'active', 'sort_order']));
             $previousActive = $version->active;
             $previousOrder = $version->sort_order;
             $version = $this->rules->updateMetadata($version, $data);
             $metadata = ['catalog_key' => 'classification-rules', 'resource_id' => $version->id, 'rule_version' => $version->code];
-            $this->events->record('catalog.updated', $actor, null, $metadata);
+            $this->events->recordChange(
+                'catalog.updated',
+                $actor,
+                null,
+                'catalog',
+                $version->id,
+                $before,
+                $this->snapshots->snapshot($version),
+                $metadata
+            );
             if ($previousActive !== $version->active) {
-                $this->events->record($version->active ? 'catalog.activated' : 'catalog.deactivated', $actor, null, $metadata);
+                $this->events->recordChange(
+                    $version->active ? 'catalog.activated' : 'catalog.deactivated',
+                    $actor,
+                    null,
+                    'catalog',
+                    $version->id,
+                    ['active' => $previousActive],
+                    ['active' => $version->active],
+                    $metadata
+                );
             }
             if ($previousOrder !== $version->sort_order) {
-                $this->events->record('catalog.reordered', $actor, null, $metadata);
+                $this->events->recordChange(
+                    'catalog.reordered',
+                    $actor,
+                    null,
+                    'catalog',
+                    $version->id,
+                    ['sort_order' => $previousOrder],
+                    ['sort_order' => $version->sort_order],
+                    $metadata
+                );
             }
 
             return $version;

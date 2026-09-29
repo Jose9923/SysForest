@@ -29,7 +29,21 @@ class AppServiceProvider extends ServiceProvider
     {
         // El guard conserva identidad solo durante la petición validada por JWT.
         Auth::viaRequest('jwt-context', fn (Request $request) => null);
+        Gate::define('audit.view', fn (User $actor) => app(\App\Services\AuditAccessService::class)->canView($actor)
+            || app(\App\Services\AuditAccessService::class)->canViewNational($actor));
+        RateLimiter::for('audit.read', fn (Request $request) => Limit::perMinute(90)
+            ->by('audit:user:'.($request->user()?->id ?? $request->ip())));
         Gate::define('maps.view', fn (User $actor) => app(\App\Services\MapAccessService::class)->canView($actor));
+        foreach (['imports.view', 'imports.create'] as $permission) {
+            Gate::define($permission, fn (User $actor) => app(\App\Services\ImportAccessService::class)->allows($actor, $permission));
+        }
+        RateLimiter::for('imports.write', fn (Request $request) => Limit::perMinute(max(1, (int) config('imports.rate_limit', 6)))
+            ->by('imports:user:'.($request->user()?->id ?? hash('sha256', (string) $request->ip()))));
+        Gate::define('reports.view', fn (User $actor) => app(\App\Services\ReportAccessService::class)->canView($actor));
+        RateLimiter::for('reports.download', fn (Request $request) => Limit::perMinute(max(1, (int) config('reports.download_rate_private', 12)))
+            ->by('reports:user:'.($request->user()?->id ?? hash('sha256', (string) $request->ip()))));
+        RateLimiter::for('public.exports', fn (Request $request) => Limit::perMinute(max(1, (int) config('reports.download_rate_public', 6)))
+            ->by('public:exports:'.hash('sha256', (string) $request->ip())));
         Gate::define('publication.manage', fn (User $actor) => app(\App\Services\PublicationAccessService::class)->canManage($actor));
         Gate::policy(Organization::class, OrganizationPolicy::class);
         Gate::policy(\App\Models\Tree::class, \App\Policies\TreePolicy::class);
@@ -74,7 +88,10 @@ class AppServiceProvider extends ServiceProvider
         foreach (['login' => 10, 'refresh' => 30, 'password' => 5, 'invitation' => 20] as $name => $default) {
             RateLimiter::for('identity.'.$name, function (Request $request) use ($name, $default): array {
                 $limit = (int) config('security.'.$name.'_rate_limit', $default);
-                $key = hash('sha256', $request->ip().'|'.mb_strtolower((string) $request->input('email', '')));
+                // El límite se aplica antes del FormRequest: una entrada compuesta no debe producir un error 500.
+                $email = $request->input('email');
+                $email = is_string($email) ? mb_strtolower(trim($email)) : '';
+                $key = hash('sha256', $request->ip().'|'.$email);
 
                 return [
                     Limit::perMinute($limit)->by($name.':'.$key),

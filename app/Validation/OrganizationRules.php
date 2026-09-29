@@ -48,6 +48,6 @@ class OrganizationRules
             'deleted_at' => ['prohibited'],
             'created_by' => ['prohibited'],
             'updated_by' => ['prohibited'],
-        ];
+        ] + VersionInput::rules($exceptId !== null);
     }
 }

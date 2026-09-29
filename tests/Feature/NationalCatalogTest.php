@@ -52,7 +52,7 @@ class NationalCatalogTest extends PostgresTestCase
         $before = $this->catalogIdentities();
         $actor = $this->actor('SUPER_ADMIN');
         $placement = Placement::query()->where('code', 'PLC_PARK')->sole();
-        app(CatalogService::class)->update($actor, 'placements', $placement->id, $this->input([
+        app(CatalogService::class)->update($actor, 'placements', $placement->id, $this->input(['lock_version' => $placement->fresh()->lock_version,
             'code' => $placement->code, 'name' => 'Parque revisado', 'description' => 'Nota administrativa',
             'active' => false, 'sort_order' => 321,
         ]));
@@ -129,7 +129,7 @@ class NationalCatalogTest extends PostgresTestCase
         $this->get(route('catalogs.create', 'placements'))->assertForbidden();
         $this->get(route('catalogs.edit', ['placements', $placement->id]))->assertForbidden();
         $this->postJson(route('catalogs.store', 'placements'), $this->input(['_token' => $token]))->assertForbidden();
-        $this->putJson(route('catalogs.update', ['placements', $placement->id]), $this->input([
+        $this->putJson(route('catalogs.update', ['placements', $placement->id]), $this->input(['lock_version' => $placement->fresh()->lock_version,
             'code' => $placement->code, 'name' => 'Cambio no autorizado', '_token' => $token,
         ]))->assertForbidden();
 
@@ -152,7 +152,7 @@ class NationalCatalogTest extends PostgresTestCase
         }
 
         try {
-            $service->update($actor, 'placements', $placement->id, $this->input(['code' => $placement->code]));
+            $service->update($actor, 'placements', $placement->id, $this->input(['lock_version' => $placement->fresh()->lock_version, 'code' => $placement->code]));
             $this->fail('El servicio permitió editar un catálogo sin autorización nacional.');
         } catch (AuthorizationException) {
             $this->assertSame('Parque', $placement->fresh()->name);
@@ -174,14 +174,14 @@ class NationalCatalogTest extends PostgresTestCase
         $entry = Placement::query()->where('code', 'CAT_TEST')->sole();
         $this->get(route('catalogs.edit', ['placements', $entry->id]))->assertOk()->assertSee('CAT_TEST');
 
-        $this->put(route('catalogs.update', ['placements', $entry->id]), $this->input([
+        $this->put(route('catalogs.update', ['placements', $entry->id]), $this->input(['lock_version' => $entry->fresh()->lock_version,
             'name' => 'Valor corregido', 'active' => false, 'sort_order' => 77, '_token' => $token,
         ]))->assertRedirect(route('catalogs.index', 'placements'))->assertSessionHasNoErrors();
         $this->assertSame('Valor corregido', $entry->fresh()->name);
         $this->assertFalse($entry->fresh()->active);
         $this->assertSame(77, $entry->fresh()->sort_order);
 
-        $this->put(route('catalogs.update', ['placements', $entry->id]), $this->input(['_token' => $token]))
+        $this->put(route('catalogs.update', ['placements', $entry->id]), $this->input(['lock_version' => $entry->fresh()->lock_version, '_token' => $token]))
             ->assertRedirect(route('catalogs.index', 'placements'))->assertSessionHasNoErrors();
         $this->assertTrue($entry->fresh()->active);
     }
@@ -192,7 +192,7 @@ class NationalCatalogTest extends PostgresTestCase
         $entry = Placement::query()->where('code', 'PLC_PARK')->sole();
         $this->csrf();
         $this->post(route('catalogs.store', 'placements'), $this->input())->assertStatus(419);
-        $this->put(route('catalogs.update', ['placements', $entry->id]), $this->input([
+        $this->put(route('catalogs.update', ['placements', $entry->id]), $this->input(['lock_version' => $entry->fresh()->lock_version,
             'code' => $entry->code, '_token' => 'incorrecto',
         ]))->assertStatus(419);
 
@@ -243,13 +243,13 @@ class NationalCatalogTest extends PostgresTestCase
         $actor = $this->actor('SUPER_ADMIN');
         $service = app(CatalogService::class);
         $entry = $service->create($actor, 'placements', $this->input());
-        $service->update($actor, 'placements', $entry->id, $this->input(['active' => false]));
+        $service->update($actor, 'placements', $entry->id, $this->input(['lock_version' => $entry->fresh()->lock_version, 'active' => false]));
 
         $this->assertFalse($service->options($actor, 'placements')->contains('id', $entry->id));
         $historical = $service->historical($actor, 'placements', $entry->id);
         $this->assertSame($entry->id, $historical->id);
         $this->assertFalse($historical->active);
-        $service->update($actor, 'placements', $entry->id, $this->input());
+        $service->update($actor, 'placements', $entry->id, $this->input(['lock_version' => $entry->fresh()->lock_version]));
         $this->assertTrue($service->options($actor, 'placements')->contains('id', $entry->id));
     }
 
@@ -259,7 +259,7 @@ class NationalCatalogTest extends PostgresTestCase
         $service = app(CatalogService::class);
         $first = $service->create($actor, 'placements', $this->input(['code' => 'ORDER_FIRST', 'sort_order' => 80]));
         $second = $service->create($actor, 'placements', $this->input(['code' => 'ORDER_SECOND', 'sort_order' => 90]));
-        $service->update($actor, 'placements', $second->id, $this->input(['code' => 'ORDER_SECOND', 'sort_order' => 1]));
+        $service->update($actor, 'placements', $second->id, $this->input(['lock_version' => $second->fresh()->lock_version, 'code' => 'ORDER_SECOND', 'sort_order' => 1]));
         $ordered = $service->options($actor, 'placements')->whereIn('id', [$first->id, $second->id])->pluck('id')->all();
 
         $this->assertSame([$second->id, $first->id], $ordered);
@@ -284,7 +284,7 @@ class NationalCatalogTest extends PostgresTestCase
         $actor = $this->actor('SUPER_ADMIN');
         $entry = Placement::query()->where('code', 'PLC_PARK')->sole();
         $this->expectException(ValidationException::class);
-        app(CatalogService::class)->update($actor, 'placements', $entry->id, $this->input(['code' => 'OTHER_CODE']));
+        app(CatalogService::class)->update($actor, 'placements', $entry->id, $this->input(['lock_version' => $entry->fresh()->lock_version, 'code' => 'OTHER_CODE']));
     }
 
     public function test_database_protects_codes_when_the_service_is_bypassed(): void
@@ -401,8 +401,8 @@ class NationalCatalogTest extends PostgresTestCase
         try {
             $service = app(CatalogService::class);
             $entry = $service->create($actor, 'placements', $this->input());
-            $service->update($actor, 'placements', $entry->id, $this->input(['active' => false, 'sort_order' => 42]));
-            $service->update($actor, 'placements', $entry->id, $this->input(['active' => true, 'sort_order' => 42]));
+            $service->update($actor, 'placements', $entry->id, $this->input(['lock_version' => $entry->fresh()->lock_version, 'active' => false, 'sort_order' => 42]));
+            $service->update($actor, 'placements', $entry->id, $this->input(['lock_version' => $entry->fresh()->lock_version, 'active' => true, 'sort_order' => 42]));
             $events = SecurityEvent::query()->where('metadata->resource_id', $entry->id)->get();
 
             foreach (['catalog.created', 'catalog.updated', 'catalog.deactivated', 'catalog.activated', 'catalog.reordered'] as $event) {
@@ -423,7 +423,7 @@ class NationalCatalogTest extends PostgresTestCase
     public function test_catalog_creation_rolls_back_if_audit_persistence_fails(): void
     {
         $actor = $this->actor('SUPER_ADMIN');
-        $this->mock(SecurityEventRepository::class)->shouldReceive('record')->once()
+        $this->partialMock(SecurityEventRepository::class)->shouldReceive('record')->once()
             ->andThrow(new RuntimeException('Auditoría de prueba indisponible'));
 
         try {

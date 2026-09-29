@@ -26,7 +26,7 @@ class InspectionAuditService
             'phenology' => ['flowering_date', 'flowering_development', 'fruiting_date', 'fruiting_development'],
             'observations' => ['general_observations'],
         ];
-        $snapshot = [];
+        $snapshot = array_intersect_key($values, array_flip(['created_by', 'updated_by', 'created_at', 'lock_version']));
         foreach ($groups as $name => $fields) {
             $snapshot[$name] = array_intersect_key($values, array_flip($fields));
         }
@@ -40,7 +40,7 @@ class InspectionAuditService
 
     public function record(User $actor, TreeInspection $inspection, array $old, string $event): void
     {
-        $this->revisions->record(
+        $revision = $this->revisions->record(
             $inspection->organization_id,
             $inspection->id,
             (int) $actor->id,
@@ -49,6 +49,15 @@ class InspectionAuditService
             $this->snapshot($inspection),
             $event
         );
-        $this->events->record($event, $actor, $inspection->organization_id, ['resource_id' => $inspection->id]);
+        $this->events->recordChange(
+            $event,
+            $actor,
+            $inspection->organization_id,
+            'tree_inspection',
+            $inspection->id,
+            $old,
+            $this->snapshot($inspection),
+            ['resource_id' => $inspection->id, 'revision_id' => $revision->id]
+        );
     }
 }

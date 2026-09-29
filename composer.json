@@ -9,8 +9,10 @@
         "ext-bcmath": "*",
         "ext-pdo_pgsql": "*",
         "ext-redis": "*",
+        "dompdf/dompdf": "^3.1",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
+        "openspout/openspout": "^5.11",
         "php-open-source-saver/jwt-auth": "2.9.3"
     },
     "require-dev": {

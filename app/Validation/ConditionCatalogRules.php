@@ -24,6 +24,6 @@ class ConditionCatalogRules
             $rules['condition_category_id'] = [...$required, 'uuid'];
         }
 
-        return $rules;
+        return $rules + VersionInput::rules($update);
     }
 }

@@ -53,7 +53,8 @@
             tell('El mapa no pudo cargarse. Puedes conservar y guardar las coordenadas escritas.', true);
             return;
         }
-        const map = window.L.map(element, {scrollWheelZoom: false, worldCopyJump: true});
+        const map = window.L.map(element, {scrollWheelZoom: false, worldCopyJump: true, zoomControl: false});
+        window.L.control.zoom({zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar'}).addTo(map);
         const tiles = window.L.tileLayer(element.dataset.tileUrl, {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',

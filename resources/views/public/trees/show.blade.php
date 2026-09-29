@@ -1,8 +1,10 @@
 @extends('public.layout')
 @include('public.assets', ['mode' => 'tree'])
+@include('reports.assets')
 @section('content')
     <a class="public-back" href="{{ route('public.trees.index') }}">← Volver al inventario</a>
     <div class="public-tree-heading"><div><p class="eyebrow">FICHA PÚBLICA · {{ $tree['code'] }}</p><h1>{{ $tree['common_name'] ?? 'Árbol del inventario' }}</h1><p class="public-scientific"><em>{{ $tree['scientific_name'] ?? 'Especie no informada' }}</em></p><p class="muted">{{ $tree['municipality']['name'] ?? '' }}@if ($tree['department']['name'] ?? null) · {{ $tree['department']['name'] }}@endif</p></div><div class="public-tree-badges"><span class="pill">{{ $tree['status_label'] }}</span>@if ($tree['is_protected'])<span class="pill">Protegido</span>@endif @if ($tree['is_heritage'])<span class="pill">Patrimonial</span>@endif</div></div>
+    <div class="report-entry-actions" style="margin-top:18px"><a class="button secondary" href="{{ route('public.trees.pdf', ['organization' => $tree['organization']['code'], 'tree' => $tree['code']]) }}">Descargar ficha PDF</a></div>
     <nav class="public-section-nav" aria-label="Secciones de la ficha"><a href="#identidad">Identidad y ubicación</a><a href="#inspeccion">Última inspección publicada</a><a href="#historial">Historial</a><a href="#fotografias">Fotografías</a></nav>
     <div class="public-detail-grid" id="identidad"><section class="panel"><p class="eyebrow">IDENTIDAD DEL ÁRBOL</p><h2>Información general</h2><dl class="public-facts">
         @foreach (['code' => 'Código público', 'family' => 'Familia', 'growth_habit' => 'Hábito de crecimiento', 'establishment_origin' => 'Origen de establecimiento', 'biogeographic_origin' => 'Origen biogeográfico', 'placement' => 'Emplazamiento'] as $key => $label)<div><dt>{{ $label }}</dt><dd>{{ $tree[$key] ?? 'No informado' }}</dd></div>@endforeach

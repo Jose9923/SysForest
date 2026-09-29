@@ -1,8 +1,13 @@
 # SYSFOREST: acuerdos de implementación
 
-La Fase 10 fue aprobada y cerrada en el commit 599728f, tras verificar 1251 pruebas PHP, 6277 aserciones, 37 pruebas JavaScript y PSR-12 en 432 archivos. El usuario autorizó la Fase 11: portal público SIGAU, consulta anónima, mapa, filtros y ficha pública del árbol.
-Trabajar en codex/phase-11. No iniciar Fase 12, importaciones, exportaciones ni reportes finales.
-Conservar el checkpoint F10; dejar los cambios de Fase 11 sin commit final hasta entregar el reporte y recibir revisión.
+Los ajustes de usabilidad posteriores a la aceptación local incorporan continuidad de sesión en formularios, calendario del árbol en America/Bogota y orientación explícita para cerrar mantenimientos. La verificación y sus límites se registran en [docs/usability-fixes.md](docs/usability-fixes.md); no usar cifras de fases anteriores como validación de estos cambios. Se conservan permisos, vencimiento absoluto, aislamiento institucional y el contrato ISO de importación.
+
+La revisión de aceptación local del 28/09/2026 corrigió formato Texto de la plantilla XLSX, blancos inlineStr de editores y duplicación del access_log de Nginx. Regresión Import: 122 pruebas / 1697 aserciones; PSR-12 de cuatro archivos PHP aprobado. La instancia QA aislada fue retirada; el piloto principal sigue saludable. Hay pendientes explícitos de Excel de escritorio e importación en navegador por límites de las herramientas; no afirmar aceptación integral. Consulta docs/acceptance-local.md.
+
+La Fase 13 está completada y activada con aprobación expresa del usuario. Su regresión pasó 1668 pruebas PHP y 9898 aserciones, 59 pruebas JavaScript y PSR-12 en 552 archivos; el informe permanece en docs/phase-13.md.
+La Fase 14 está completada y activada; su regresión completa pasó 1803 pruebas PHP y 11104 aserciones, 59 pruebas JavaScript y PSR-12 en 576 archivos. Consulta docs/phase-14.md.
+La Fase 15 está completada: 1806 pruebas PHP y 11138 aserciones, 64 pruebas JavaScript y PSR-12 en 577 archivos; `bash bin/check` finalizó con código 0. Consulta docs/phase-15.md y docs/phase-15-files.txt.
+Se conservaron todos los cambios de Fases 12–14 y la arquitectura aprobada. La rama queda en codex/phase-15, sin commit final ni despliegue externo. Las guías vigentes están en docs/user-guide.md, docs/operations.md y docs/testing.md.
 La API pública usa proyecciones explícitas, publicación privada por defecto y el motor común de filtros. No depende de JWT, usuarios ni TenantContext. Nunca expone funcionarios, auditoría, textos internos ni archivos originales con metadatos.
 Consolidar el motor de filtros de árboles, última inspección determinista y ANY/ALL. El mapa amplio usa scopes explícitos de lectura sin ampliar TenantContext ni permisos de escritura. PostGIS es la fuente espacial; nunca insertar datos productivos ficticios para llenar el mapa.
 Los catálogos nacionales no llevan organization_id; solo SUPER_ADMIN administra, los demás roles consultan.

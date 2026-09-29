@@ -13,7 +13,7 @@
         <button class="button">Buscar</button>
     </form>
     <p class="catalog-note">{{ $records->total() }} valores. @if ($canManage)Editar permite cambiar descripción, estado y orden. Desactivar conserva las referencias históricas.@else Consulta de valores activos. La administración está reservada al administrador nacional.@endif</p>
-    <div class="panel catalog-scroll"><table class="catalog-table"><thead><tr><th>Nombre</th><th>Código</th><th>Categoría / ámbito</th><th>Orden</th><th>Estado</th>@if ($canManage)<th>Acciones</th>@endif</tr></thead><tbody>
+    <div class="panel catalog-scroll" tabindex="0" role="region" aria-label="Valores de {{ $title }}"><table class="catalog-table"><thead><tr><th scope="col">Nombre</th><th scope="col">Código</th><th scope="col">Categoría / ámbito</th><th scope="col">Orden</th><th scope="col">Estado</th>@if ($canManage)<th scope="col">Acciones</th>@endif</tr></thead><tbody>
     @forelse ($records as $entry)
         <tr><td>{{ $entry->name }}</td><td><code>{{ $entry->code }}</code></td><td>@if ($catalog === 'items'){{ $entry->category->name }}<br>@endif<span class="muted">{{ $entry->assessment_type === 'physical_mechanical' ? 'Físico-mecánica' : 'Fitosanitaria' }}</span></td><td>{{ $entry->sort_order }}</td><td><span class="pill {{ $entry->active ? '' : 'catalog-inactive' }}">{{ $entry->active ? 'Activo' : 'Inactivo' }}</span></td>@if ($canManage)<td><a class="button secondary" href="{{ route('conditions.edit', ['catalog' => $catalog, 'record' => $entry->id]) }}">Editar</a></td>@endif</tr>
     @empty

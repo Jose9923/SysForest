@@ -8,7 +8,7 @@ final class ClassificationMetadataInput
 {
     public static function rules(): array
     {
-        return array_replace(CatalogInput::rules(), [
+        return array_replace(CatalogInput::rules(true), [
             'code' => ['prohibited'], 'algorithm' => ['prohibited'],
             'diameter_step' => ['prohibited'], 'height_step' => ['prohibited'],
             'diameter_unit' => ['prohibited'], 'height_unit' => ['prohibited'],

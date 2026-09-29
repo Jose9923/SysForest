@@ -15,6 +15,8 @@ use App\Services\TokenService;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Tests\PostgresTestCase;
 
@@ -134,7 +136,19 @@ class RefreshTokenTest extends PostgresTestCase
         $workers = [];
 
         try {
-            $user = User::factory()->create();
+            // La auditoría es append-only y mantiene su FK al actor. Reutilizamos una
+            // identidad exclusiva de testing, sin roles; al terminar queda desactivada.
+            $user = User::query()->firstOrNew(
+                ['email' => 'refresh-concurrency@sysforest.test'],
+                ['name' => 'Fixture persistente de concurrencia refresh', 'password' => Hash::make(Str::random(64)), 'active' => false],
+            );
+            if (!$user->exists) {
+                $user->forceFill(['active' => false])->save();
+            }
+            $this->assertSame(0, $connection->table('national_role_assignments')->where('user_id', $user->id)->count());
+            $this->assertSame(0, $connection->table('department_role_assignments')->where('user_id', $user->id)->count());
+            $this->assertSame(0, $connection->table('organization_memberships')->where('user_id', $user->id)->count());
+            $user->forceFill(['active' => true, 'email_verified_at' => now(), 'password' => Hash::make('password')])->save();
             $pair = app(AuthService::class)->login($user->email, 'password');
             $connection->beginTransaction();
             $connection->table('users')->where('id', $user->id)->lockForUpdate()->first();
@@ -208,9 +222,11 @@ class RefreshTokenTest extends PostgresTestCase
                 }
             }
             if ($user !== null) {
-                $connection->table('security_events')->where('actor_user_id', $user->id)->delete();
                 $connection->table('auth_sessions')->where('user_id', $user->id)->delete();
-                $connection->table('users')->where('id', $user->id)->delete();
+                $connection->table('users')->where('id', $user->id)->update([
+                    'active' => false, 'email_verified_at' => null, 'remember_token' => null,
+                    'password' => Hash::make(Str::random(64)),
+                ]);
             }
             DB::setDefaultConnection($original);
             DB::purge('auth_concurrency');

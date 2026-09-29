@@ -15,7 +15,7 @@ use App\Repositories\SecurityEventRepository;
 
 class PublicationAuditService
 {
-    public function __construct(private PublicationRepository $records, private SecurityEventRepository $events)
+    public function __construct(private PublicationRepository $records, private SecurityEventRepository $events, private AuditSnapshotService $snapshots)
     {
     }
 
@@ -35,12 +35,16 @@ class PublicationAuditService
 
     public function record(User $actor, Organization|Inventory|Tree|TreeInspection|Evidence $record, array $old): void
     {
-        $this->records->recordRevision($record, (int) $actor->id, $old, $this->snapshot($record));
+        $revision = $this->records->recordRevision($record, (int) $actor->id, $old, $this->snapshot($record));
         $this->events->record(
             'publication.changed',
             $actor,
             $record instanceof Organization ? $record->id : $record->organization_id,
-            ['resource_id' => $record->id]
+            ['resource_id' => $record->id, 'revision_id' => $revision->id],
+            $this->snapshots->type($record),
+            $record->id,
+            $old,
+            $this->snapshot($record)
         );
     }
 }

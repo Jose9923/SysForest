@@ -28,6 +28,13 @@ class ShareTenantContext
                     $request->session()->forget('active_organization_id');
                 }
             }
+            // Una membresía revocada puede haber retirado la institución después del vínculo de identidad.
+            // El documento debe llevar el contexto final que realmente recibirá su próximo formulario.
+            $continuity = $request->attributes->get('session_continuity');
+            if (is_array($continuity)) {
+                $continuity['context'] = app(\App\Services\SessionContinuityService::class)->context($request);
+                $request->attributes->set('session_continuity', $continuity);
+            }
             View::share('activeOrganization', $organization);
             View::share('currentAccessMode', $context->isActive() ? $context->accessMode() : null);
 

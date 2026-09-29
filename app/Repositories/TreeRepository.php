@@ -41,6 +41,12 @@ class TreeRepository
         return $tree->load(self::RELATIONS);
     }
 
+    /** La anulación conserva la identidad y, por tanto, también reserva su código. */
+    public function codeExists(string $organizationId, string $code): bool
+    {
+        return Tree::withTrashed()->where('organization_id', $organizationId)->where('code', $code)->exists();
+    }
+
     public function paginate(string $organizationId, array $filters): LengthAwarePaginator
     {
         $criteria = TreeFilterDTO::fromValidated($filters);

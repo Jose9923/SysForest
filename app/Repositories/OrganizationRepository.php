@@ -65,7 +65,7 @@ class OrganizationRepository
 
     public function create(array $attributes): Organization
     {
-        return Organization::query()->create($attributes);
+        return Organization::query()->create($attributes)->refresh();
     }
 
     public function update(Organization $organization, array $attributes): Organization

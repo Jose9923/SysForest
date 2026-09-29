@@ -54,7 +54,14 @@ class TreeSpatialTest extends PostgresTestCase
         $this->assertSame('decimal', $history->new_metadata['coordinate_format']);
         $this->assertDatabaseHas('security_events', ['event' => 'tree.location_changed', 'actor_user_id' => $this->actor->id, 'organization_id' => $tree->organization_id]);
         $event = DB::table('security_events')->where('event', 'tree.location_changed')->where('metadata->resource_id', $tree->id)->sole();
-        $this->assertSame(['resource_id' => $tree->id, 'resource_code' => $tree->code], json_decode($event->metadata, true, flags: JSON_THROW_ON_ERROR));
+        $metadata = json_decode($event->metadata, true, flags: JSON_THROW_ON_ERROR);
+        $expected = ['resource_id' => $tree->id, 'resource_code' => $tree->code,
+            'revision_id' => $history->id, 'reason' => null, 'change_type' => null];
+        ksort($metadata);
+        ksort($expected);
+        $this->assertSame($expected, $metadata);
+        $this->assertSame('tree', $event->resource_type);
+        $this->assertSame($tree->id, $event->resource_id);
     }
 
     public function test_dms_source_and_explicit_datum_and_capture_metadata_are_preserved(): void

@@ -17,6 +17,7 @@
             <a href="{{ route('public.home') }}" @if (request()->routeIs('public.home')) aria-current="page" @endif>Inicio</a>
             <a href="{{ route('public.map') }}" @if (request()->routeIs('public.map')) aria-current="page" @endif>Mapa</a>
             <a href="{{ route('public.trees.index') }}" @if (request()->routeIs('public.trees.*')) aria-current="page" @endif>Inventario</a>
+            <a href="{{ route('public.reports.index') }}" @if (request()->routeIs('public.reports.*')) aria-current="page" @endif>Reportes</a>
             <a href="{{ route('public.home') }}#acerca">Acerca del SIGAU</a>
             <a class="public-login" href="{{ route('login') }}">Iniciar sesión</a>
         </nav>

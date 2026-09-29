@@ -24,9 +24,18 @@ class TreeStatusService
         if (!$initial && $previous === $status) {
             return false;
         }
-        $this->history->record($tree, $actor, $initial ? null : $previous, $status, $reason);
+        $history = $this->history->record($tree, $actor, $initial ? null : $previous, $status, $reason);
         $this->trees->update($tree, ['current_status' => $status]);
-        $this->events->record('tree.status_changed', $actor, $tree->organization_id, ['resource_id' => $tree->id, 'resource_code' => $tree->code]);
+        $this->events->recordChange(
+            'tree.status_changed',
+            $actor,
+            $tree->organization_id,
+            'tree',
+            $tree->id,
+            $initial ? [] : ['current_status' => $previous],
+            ['current_status' => $status],
+            ['resource_id' => $tree->id, 'resource_code' => $tree->code, 'revision_id' => $history->id, 'reason' => $reason]
+        );
 
         return true;
     }

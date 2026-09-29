@@ -86,13 +86,12 @@ class MaintenanceReadService
         foreach ($this->workflow->allowedTransitions($maintenance) as $destination) {
             $ability = $destination === 'verified' ? 'verify' : 'transition';
             if (Gate::forUser($actor)->allows($ability, $maintenance)) {
-                $actions[] = [
-                    'status' => $destination,
-                    'label' => MaintenanceStatus::from($destination)->label(),
-                    'needsSchedule' => $destination === 'scheduled',
-                    'needsAssignee' => $destination === 'assigned',
-                    'needsResult' => $destination === 'executed',
-                ];
+                $action = $this->transitionAction($maintenance, $destination);
+                if ($action['isPrimary']) {
+                    array_unshift($actions, $action);
+                } else {
+                    $actions[] = $action;
+                }
             }
         }
         $statusHistory = $maintenance->statusHistories->map(fn ($entry) => [
@@ -110,11 +109,73 @@ class MaintenanceReadService
             'maintenance' => $maintenance, 'record' => $this->record($maintenance),
             'options' => $this->references->options($maintenance->organization_id),
             'transitionActions' => $actions, 'statusHistory' => $statusHistory, 'revisions' => $revisions,
+            'progressGuide' => $this->progressGuide($maintenance, $actions),
             'canUpdate' => Gate::forUser($actor)->allows('update', $maintenance),
             'canVoid' => Gate::forUser($actor)->allows('void', $maintenance),
             'canRestore' => Gate::forUser($actor)->allows('restore', $maintenance),
             'maintenanceEvidenceGallery' => $this->evidences->gallery($actor, $maintenance),
         ];
+    }
+
+    /** Orienta el siguiente paso sin ampliar las transiciones autorizadas por el flujo y la política. */
+    private function transitionAction(Maintenance $maintenance, string $destination): array
+    {
+        $primary = match ($maintenance->status) {
+            MaintenanceStatus::Pending, MaintenanceStatus::Scheduled => 'assigned',
+            MaintenanceStatus::Assigned => 'in_progress',
+            MaintenanceStatus::InProgress => 'executed',
+            MaintenanceStatus::Executed => 'verified',
+            default => null,
+        };
+        [$label, $description] = match ($destination) {
+            'scheduled' => ['Programar fecha', 'Elige la fecha prevista para la intervención. Al programar se retira la asignación actual de responsable.'],
+            'assigned' => ['Asignar responsable', 'Selecciona la persona que realizará la intervención. Después podrás registrar el inicio del trabajo.'],
+            'in_progress' => ['Iniciar ejecución', 'Confirma que el responsable ha comenzado el trabajo. El siguiente paso será registrar la fecha y el resultado.'],
+            'executed' => ['Registrar ejecución', 'Indica cuándo terminó el trabajo y describe el resultado. La orden quedará Ejecutada, pendiente de verificación administrativa.'],
+            'verified' => ['Verificar y cerrar mantenimiento', 'Revisa la fecha, el resultado y las evidencias. Al confirmar, la orden quedará Verificada y su seguimiento estará cerrado.'],
+            'cancelled' => ['Cancelar trabajo', 'Utiliza esta opción si la intervención no se realizará. Explica el motivo; se conservará el historial.'],
+        };
+
+        return [
+            'status' => $destination, 'label' => $label, 'description' => $description,
+            'isPrimary' => $destination === $primary,
+            'needsSchedule' => $destination === 'scheduled',
+            'needsAssignee' => $destination === 'assigned',
+            'needsResult' => $destination === 'executed',
+            'needsReason' => $destination === 'cancelled',
+            'isDestructive' => $destination === 'cancelled',
+        ];
+    }
+
+    /** Distingue ejecución y cierre administrativo, incluso cuando el perfil solo puede consultar. */
+    private function progressGuide(Maintenance $maintenance, array $actions): array
+    {
+        if ($maintenance->trashed() || $maintenance->tree->trashed()) {
+            return ['title' => 'Seguimiento conservado para consulta',
+                'description' => 'El registro o su árbol está anulado. No hay cambios de estado disponibles.'];
+        }
+        if ($maintenance->status === MaintenanceStatus::Verified) {
+            return ['title' => 'Mantenimiento cerrado y verificado',
+                'description' => 'La ejecución fue revisada y confirmada. El resultado, las evidencias y el historial permanecen disponibles.'];
+        }
+        if ($maintenance->status === MaintenanceStatus::Cancelled) {
+            return ['title' => 'Mantenimiento cancelado',
+                'description' => 'El seguimiento terminó por cancelación. Esta orden no acredita una intervención ejecutada y verificada.'];
+        }
+        if ($maintenance->status === MaintenanceStatus::Executed) {
+            return count($actions) > 0
+                ? ['title' => 'Revisa el resultado y confirma el cierre',
+                    'description' => 'El trabajo ya está registrado como Ejecutado. Comprueba la fecha, el resultado y las evidencias antes de verificar y cerrar.']
+                : ['title' => 'Pendiente de verificación administrativa',
+                    'description' => 'La ejecución está registrada. Para cerrar el mantenimiento, un administrador de la organización o superadministrador debe revisar el resultado y verificarlo.'];
+        }
+        if (count($actions) === 0) {
+            return ['title' => 'Seguimiento de la intervención',
+                'description' => 'Tu perfil no dispone de cambios de estado para esta intervención. El cierre requiere registrar la ejecución y su posterior verificación administrativa.'];
+        }
+
+        return ['title' => 'Siguiente paso: '.$actions[0]['label'],
+            'description' => 'Para completar el mantenimiento: asigna un responsable, inicia la ejecución, registra fecha y resultado y solicita la verificación administrativa.'];
     }
 
     public function treeSummary(User $actor, Tree $tree): array

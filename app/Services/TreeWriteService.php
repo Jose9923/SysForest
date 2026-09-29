@@ -19,13 +19,13 @@ use App\Validation\TreeInput;
 /** Orden de bloqueo compartido: actor, contexto institucional y recurso. Protege también llamadas desde jobs. */
 class TreeWriteService
 {
-    public function __construct(private ForestryAccessService $access, private UserRepository $users, private TreeRepository $trees)
+    public function __construct(private ForestryAccessService $access, private UserRepository $users, private TreeRepository $trees, private AuditSnapshotService $snapshots, private \App\Repositories\SecurityEventRepository $events)
     {
     }
 
-    public function run(User $actor, string $id, string $ability, mixed $version, Closure $operation, bool $withTrashed = false): Tree
+    public function run(User $actor, string $id, string $ability, mixed $version, Closure $operation, bool $withTrashed = false, ?string $event = 'tree.updated'): Tree
     {
-        return DB::transaction(function () use ($actor, $id, $ability, $version, $operation, $withTrashed): Tree {
+        return DB::transaction(function () use ($actor, $id, $ability, $version, $operation, $withTrashed, $event): Tree {
             $actor = $this->users->findForUpdate((int) $actor->id);
             $organization = $this->access->organization($actor, true);
             $tree = $this->trees->findForTenant($organization->id, $id, true, $withTrashed);
@@ -39,10 +39,25 @@ class TreeWriteService
             if ((int) $tree->lock_version !== $version) {
                 throw new StaleRecordException();
             }
+            $before = $this->snapshots->snapshot($tree);
             $operation($tree, $actor);
             $this->trees->update($tree, ['updated_by' => $actor->id, 'lock_version' => $version + 1]);
 
-            return $this->trees->findForTenant($organization->id, $id, false, true);
+            $updated = $this->trees->findForTenant($organization->id, $id, false, true);
+            if ($event !== null) {
+                $this->events->recordChange(
+                    $event,
+                    $actor,
+                    $organization->id,
+                    'tree',
+                    $tree->id,
+                    $before,
+                    $this->snapshots->snapshot($updated),
+                    ['resource_id' => $tree->id, 'resource_code' => $tree->code]
+                );
+            }
+
+            return $updated;
         }, 3);
     }
 }

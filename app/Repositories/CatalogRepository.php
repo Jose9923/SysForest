@@ -59,7 +59,7 @@ class CatalogRepository
 
     public function create(CatalogDefinition $catalog, array $data): CatalogEntry
     {
-        return $this->query($catalog)->create($data);
+        return $this->query($catalog)->create($data)->refresh();
     }
 
     public function update(CatalogEntry $entry, array $data): CatalogEntry

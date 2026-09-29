@@ -21,6 +21,20 @@ class OrganizationSequenceRepository
         return $this->nextValue($organizationId, 'tree');
     }
 
+    /** Adelanta la secuencia sin reducirla; serializa importaciones con las capturas manuales. */
+    public function reserveTreeAtLeast(string $organizationId, int $minimum): int
+    {
+        if (DB::transactionLevel() < 1 || $minimum < 0) {
+            throw new LogicException('La reserva de códigos importados requiere una transacción y un mínimo no negativo.');
+        }
+        $row = DB::selectOne(
+            "INSERT INTO organization_sequences (organization_id, name, value, created_at, updated_at) VALUES (?, 'tree', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ON CONFLICT (organization_id, name) DO UPDATE SET value = GREATEST(organization_sequences.value, EXCLUDED.value), updated_at = CURRENT_TIMESTAMP RETURNING value",
+            [$organizationId, $minimum],
+        );
+
+        return (int) $row->value;
+    }
+
     private function nextValue(string $organizationId, string $name): int
     {
         if (DB::transactionLevel() < 1) {

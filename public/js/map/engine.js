@@ -3,6 +3,7 @@ import {LatestRequest, debounce, requestUrl} from './api.js';
 import {MapFilters} from './filters.js';
 import {MapLayers} from './layers.js';
 import {treePopupContent} from './popup-content.js';
+import {updateReportLinks} from '../reports/links.js';
 
 export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKeys = FILTER_KEYS, fixedScope = null, createRequest = () => new LatestRequest(), onFiltersChanged = () => {}, publicMode = false} = {}) {
     if (!root) return;
@@ -77,6 +78,7 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
             });
             root.querySelector('[data-map-filter-count]').textContent = String(filterCount(filters, filterKeys));
             area.hidden = !area.childNodes.length;
+            updateReportLinks(root, filters, {origin, isPublic: publicMode, filterKeys});
             onFiltersChanged(filters);
         };
         const refresh = async () => {

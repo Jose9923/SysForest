@@ -1,7 +1,6 @@
 @php
     $coordinateRecord = $coordinateRecord ?? null;
     $coordinatePrefix = $coordinatePrefix ?? 'tree';
-    $capturedValue = $coordinateRecord?->captured_at?->format('Y-m-d\TH:i:s.uP') ?? '';
 @endphp
 <div class="form-grid">
     <div class="field wide"><label for="{{ $coordinatePrefix }}-coordinate-raw">Coordenadas originales</label>
@@ -22,7 +21,8 @@
     <div class="field"><label for="{{ $coordinatePrefix }}-model">Modelo del GPS</label><input id="{{ $coordinatePrefix }}-model" name="gps_model" maxlength="100" value="{{ old('gps_model', $coordinateRecord?->gps_model) }}" placeholder="No informado">
         @error('gps_model')<span class="field-error">{{ $message }}</span>@enderror
     </div>
-    <div class="field wide"><label for="{{ $coordinatePrefix }}-captured">Fecha y hora de captura (con zona horaria)</label><input id="{{ $coordinatePrefix }}-captured" name="captured_at" type="text" value="{{ old('captured_at', $capturedValue) }}" placeholder="2026-09-12T14:30:00-05:00" aria-describedby="{{ $coordinatePrefix }}-time-help"><p id="{{ $coordinatePrefix }}-time-help" class="field-hint">Formato ISO 8601: fecha, T, hora y zona. Colombia usa -05:00; +00:00 indica UTC. Conserva la lectura original si incluye segundos o fracciones.</p>
+    <div class="field wide"><label for="{{ $coordinatePrefix }}-captured">Fecha y hora de captura (hora de Colombia)</label><input id="{{ $coordinatePrefix }}-captured" name="captured_at_local" type="datetime-local" step="0.001" value="{{ old('captured_at_local', $captureDate['input']) }}" aria-describedby="{{ $coordinatePrefix }}-time-help {{ $coordinatePrefix }}-time-error" @if ($errors->has('captured_at_local')) aria-invalid="true" @endif><p id="{{ $coordinatePrefix }}-time-help" class="field-hint">Selecciona el día y la hora local en el calendario. Zona: America/Bogota. Déjala vacía si desconoces cuándo se capturó la ubicación.</p>
+        @error('captured_at_local')<span class="field-error" id="{{ $coordinatePrefix }}-time-error">{{ $message }}</span>@enderror
         @error('captured_at')<span class="field-error">{{ $message }}</span>@enderror
     </div>
 </div>

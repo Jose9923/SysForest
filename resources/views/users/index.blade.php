@@ -4,7 +4,7 @@
 @section('content')
     <div class="page-heading"><div><p class="eyebrow">ADMINISTRACIÓN NACIONAL</p><h1>Usuarios globales</h1><p class="muted">Consulta las cuentas de la plataforma y sus estados.</p></div></div>
     <section class="panel identity-panel" aria-label="Cuentas de usuario">
-        <div class="identity-table-wrap">
+        <div class="identity-table-wrap" tabindex="0" role="region" aria-label="Cuentas de usuario">
             <table class="identity-table"><thead><tr><th scope="col">Usuario</th><th scope="col">Cuenta global</th><th scope="col">Correo</th><th scope="col">Acción</th></tr></thead><tbody>
                 @forelse ($users as $user)
                     <tr>

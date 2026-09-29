@@ -2,9 +2,9 @@
 
 ## Estado y alcance
 
-Este documento conserva la arquitectura objetivo acordada para SYSFOREST. El desarrollo actual alcanza Fase 9: territorio, autenticación, catálogos, inventarios, árboles, inspecciones, evidencias y mantenimientos. La infraestructura de Fase 2 continúa como base. Los módulos de fases posteriores son diseño, no capacidades implementadas.
+Este documento conserva la arquitectura objetivo acordada para SYSFOREST. El desarrollo integrado alcanza Fase 13: territorio, autenticación, catálogos, inventarios, árboles, inspecciones, evidencias, mantenimientos, mapas, portal público, reportes/exportaciones y plantilla/importación Excel. La Fase 12 conserva sus resultados y limitaciones en [phase-12.md](phase-12.md). La Fase 13 está implementada; su cierre se registra en [phase-13.md](phase-13.md), con activación de permisos operativos completada tras aprobación explícita del usuario. La infraestructura de Fase 2 continúa como base. Los módulos de fases posteriores son diseño, no capacidades implementadas.
 
-La Fase 5 concreta los catálogos forestales nacionales, la taxonomía, las condiciones y las reglas versionadas de clasificación. Tree y TreeInspection se concretaron en Fases 6/7, fenología como campos de inspección, Evidence en Fase 8 y Maintenance en Fase 9. Mapas generales, portal público, reportes e importación conservan sus fases posteriores. La trazabilidad implementada se detalla en [catálogos forestales](forestry-catalogs.md) y en la [matriz de las 94 variables](excel-field-mapping.md).
+La Fase 5 concreta los catálogos forestales nacionales, la taxonomía, las condiciones y las reglas versionadas de clasificación. Tree y TreeInspection se concretaron en Fases 6/7, fenología como campos de inspección, Evidence en Fase 8 y Maintenance en Fase 9. El mapa general se implementó en Fase 10 y el portal público con publicación explícita en Fase 11. Fase 12 implementa reportes y exportaciones; Fase 13 incorpora la plantilla oficial, lotes y filas de importación con validación previa y confirmación completa. La trazabilidad implementada se detalla en [catálogos forestales](forestry-catalogs.md) y en la [matriz de las 94 variables](excel-field-mapping.md).
 
 SYSFOREST será una aplicación web para inventario y gestión del arbolado urbano, con un piloto en la Institucion Educativa INEM Luis Lopez de Mesa, municipio de Villavicencio, departamento del Meta, Colombia. El piloto no cambia la arquitectura territorial y municipal del producto.
 
@@ -34,6 +34,8 @@ Los controladores no consultan modelos ni construyen SQL. Los servicios no omite
 
 Los reportes se presentan mediante **vistas Blade**. El controlador solicita los resultados a un servicio de reportes, que utiliza repositorios con el mismo conjunto de filtros aplicado a tablas, mapas, indicadores y exportaciones. Cuando corresponda generar un PDF, su contenido procede de una plantilla Blade de reporte.
 
+En Fase 12, `ReportSelectionDTO` conserva el alcance de lectura y los filtros comunes. `ReportRepository` agrega y `ExportReadRepository` proyecta por lotes; `ExportDatasetService` limita el conjunto y `ExportService` coordina instantánea, archivo privado y revalidación. Excel/CSV conservan valores persistidos; GeoJSON proyecta solo columnas permitidas y geometría PostGIS. Los reportes públicos usan el mismo alcance `published` del portal, con proyector propio. Las descargas son síncronas, sin entidad de exportación ni jobs. [Contrato y límites](reports-and-exports.md); [trazabilidad de las 94 variables](exports-field-mapping.md).
+
 ## Organización del código
 
 La estructura se incorporará progresivamente, cuando la fase correspondiente necesite cada carpeta:
@@ -51,6 +53,7 @@ app/
   Domain/Forestry/
   Domain/Geospatial/
   DTOs/
+  Imports/
   Enums/
   Jobs/
   Mail/
@@ -62,6 +65,7 @@ resources/views/
   trees/
   inspections/
   reports/
+  imports/
   public/
   emails/
 database/migrations/
@@ -118,7 +122,13 @@ El portal público tiene layout, rutas y Resources propios, con una lista explí
 
 Las coordenadas decimales y DMS se normalizan a `POINT` SRID 4326, usando longitud como X y latitud como Y. Se preservan los metadatos del GPS cuando existan. PostGIS realiza filtros por bbox, radio, polígono y agregaciones espaciales, con índices GiST.
 
-La importación acepta la plantilla oficial de SYSFOREST, valida encabezados, catálogos, datos y coordenadas, presenta errores por fila y registra el lote. Los valores calculados se recalculan en backend. Una colisión inequívoca de código impide la importación; la resolución avanzada de duplicados queda fuera del MVP.
+La importación de Fase 13 sigue `ImportController → ImportService → Services especializados → Repositories → Models`. `ImportTemplateService` genera el XLSX con OpenSpout y opciones nacionales de `ImportCatalogRepository`; `ImportTemplateSchema` mantiene un contrato versionado de 110 columnas, las 94 variables originales y sus 65 condiciones. `XlsxPackageGuard` e `ImportWorkbookReader` validan estructura y límites OOXML sin extraer archivos, resolver entidades ni evaluar fórmulas. Los números permanecen como cadenas para no perder precisión.
+
+`ImportUploadService` crea exclusivamente una vista previa auditable. `ImportValidationService` y `ImportRowValidationService` reutilizan reglas forestales, coordenadas y catálogos vigentes; rechazan valores en columnas reservadas. `ImportConfirmationService` reautoriza, bloquea los recursos pertinentes, vuelve a validar y compara la proyección antes de escribir. `ImportRowWriteService` crea individuos, participaciones e inspecciones mediante los servicios existentes y reserva los códigos explícitos antes de asignar los automáticos. La transacción cubre todo el lote: no existe aceptación parcial de filas.
+
+El límite inicial es 100 filas por XLSX de hasta 5 MiB; la vista previa caduca a las 24 horas por defecto. Se conservan valores y errores en `import_rows`, con la identidad del archivo en `import_batches`, sin almacenar el XLSX original. La confirmación es idempotente por lote; un índice parcial impide confirmar el mismo SHA-256 dos veces en una organización. Cambios de reglas o datos de referencia requieren nueva revisión. Las colisiones inequívocas de código bloquean la operación y la resolución avanzada de duplicados queda fuera del MVP.
+
+La operación exige organización seleccionada y permisos explícitos, incluso para SUPER_ADMIN. Los permisos `imports.view`/`imports.create` están sincronizados y verificados en la base operativa para SUPER_ADMIN, ORGANIZATION_ADMIN y OFFICIAL, siempre dentro de la organización activa autorizada. El usuario aprobó expresamente la activación tras el bloqueo inicial de la revisión automática; `AuthorizationSeeder` completó esa operación. El alcance de lectura departamental permanece excluido del módulo. No se publica información de lotes o filas, y los árboles e inspecciones resultantes nacen privados.
 
 ## Ejecución local y progresión
 
@@ -127,3 +137,9 @@ Los seis servicios mínimos son `nginx`, `app`, `postgres`, `redis`, `queue` y `
 La Fase 2 debe comprobar la configuración Compose, la construcción y el arranque, la respuesta HTTP de Laravel, la disponibilidad de PostGIS, las conexiones a base y Redis y la ejecución de colas/scheduler. Los resultados realmente ejecutados se registran en la documentación de la fase; un procedimiento descrito no equivale a una prueba aprobada.
 
 Después continúan territorios y multi-tenancy; usuarios/JWT/permisos; catálogos; inventarios/árboles; inspecciones; evidencias; mantenimiento; mapas; portal público; reportes/exportaciones; importación; auditoría/seguridad/concurrencia; y refinamiento con pruebas y responsive. Las comprobaciones de seguridad relevantes se introducen con cada capacidad, sin esperar a la última fase.
+
+## Auditoría y concurrencia de Fase 14
+
+El lector privado mantiene `Controller → Service → Repository → datos → Blade`. La captura de cambios comparte la transacción del recurso y una proyección explícita por tipo; no serializa modelos completos. Se consolida el historial existente sin migrar ni fabricar snapshots antiguos. La autorización nacional o institucional se revalida después de leer.
+
+La edición administrativa incorpora `VersionInput` y `VersionedWriteService` sobre filas bloqueadas. Los repositorios mantienen las consultas y bloqueos de referencias. `SystemExceptionRenderer` sanitiza errores no cubiertos por renderers especializados y `SecureErrorResponses` protege sus cabeceras. Contratos completos: [auditoría](audit.md) y [concurrencia](concurrency.md).

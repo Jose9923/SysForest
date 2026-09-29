@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {File} from 'node:buffer';
 
 const application = readFileSync(new URL('../../public/js/evidences.js', import.meta.url), 'utf8');
 
@@ -72,12 +73,14 @@ class Card extends Element {
     }
 }
 
-function fixture() {
+function fixture(sessionContext = null) {
     const controls = Object.fromEntries(['files', 'camera-input', 'camera-button', 'queue', 'queue-section', 'count',
         'template', 'errors', 'submit', 'progress-panel', 'progress', 'progress-text', 'fallback'].map((name) => [name, new Element()]));
     controls.template.content = {firstElementChild: new Card()};
     const token = new Element();
     token.value = 'csrf-sintetico-sin-credencial';
+    const context = sessionContext === null ? null : new Element();
+    if (context) context.value = sessionContext;
     const form = new Element();
     form.action = 'https://sysforest.test/trees/test/evidences';
     form.dataset = {maxFiles: '3', maxSizeMb: '1', allowedMimes: 'image/jpeg,image/png,image/webp'};
@@ -90,7 +93,8 @@ function fixture() {
         '[data-upload-progress]': 'progress', '[data-upload-progress-text]': 'progress-text',
         '[data-upload-fallback]': 'fallback'
     };
-    form.querySelector = (selector) => selector === 'input[name="_token"]' ? token : controls[selectorNames[selector]];
+    form.querySelector = (selector) => selector === 'input[name="_token"]' ? token
+        : selector === 'input[name="_session_context"]' ? context : controls[selectorNames[selector]];
     form.querySelectorAll = () => [
         controls.files, controls['camera-input'], controls['camera-button'], controls.submit,
         ...controls.queue.children.flatMap((card) => [...Object.values(card.fields), card.parts.remove])
@@ -241,4 +245,34 @@ test('respuesta201 con redirect externo no navega ni vuelve a enviar imágenes y
     assert.equal(f.controls.submit.disabled, true);
     assert.match(f.controls.errors.textContent, /fueron guardadas/);
     assert.equal(f.revoked.length, 1);
+});
+
+test('XHR conserva el contexto verificado del formulario y un conflicto no elimina archivos ni reenvía', () => {
+    const context = 'a'.repeat(64);
+    const f = fixture(context);
+    f.pick(image('sesion-renovada.png'));
+    const card = f.controls.queue.children[0];
+    classify(card, 'tipo-individuo');
+    card.fields.caption.value = 'Descripción conservada al renovar';
+    f.send();
+    const request = f.requests[0];
+    assert.equal(request.headers['X-Session-Context'], context);
+    assert.equal(request.headers['X-CSRF-TOKEN'], 'csrf-sintetico-sin-credencial');
+    assert.equal(request.payload.get('items[0][file]').name, 'sesion-renovada.png');
+    assert.equal(request.payload.get('items[0][caption]'), 'Descripción conservada al renovar');
+    request.respond(409, {state: 'context_changed', message: 'La organización cambió.'});
+    assert.equal(f.requests.length, 1);
+    assert.equal(f.controls.queue.children.length, 1);
+    assert.equal(card.fields.caption.value, 'Descripción conservada al renovar');
+    assert.equal(f.revoked.length, 0);
+    assert.equal(f.redirects.length, 0);
+    assert.equal(f.controls.submit.disabled, false);
+});
+
+test('una página sin control de continuidad no inventa un encabezado de contexto', () => {
+    const f = fixture();
+    f.pick(image());
+    classify(f.controls.queue.children[0], 'tipo');
+    f.send();
+    assert.equal(f.requests[0].headers['X-Session-Context'], undefined);
 });

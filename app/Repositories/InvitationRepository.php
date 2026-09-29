@@ -12,7 +12,7 @@ class InvitationRepository
 {
     public function create(array $attributes): Invitation
     {
-        return Invitation::query()->create($attributes);
+        return Invitation::query()->create($attributes)->refresh();
     }
 
     public function findByTokenHash(string $hash): ?Invitation
@@ -37,10 +37,16 @@ class InvitationRepository
             ->where('organization_id', $organizationId)->lockForUpdate()->first();
     }
 
-    public function revokePending(string $organizationId, string $email): void
+    /** La sustitución bloquea las invitaciones previas para auditarlas individualmente en el servicio. */
+    public function pendingForAddress(string $organizationId, string $email): \Illuminate\Database\Eloquent\Collection
     {
-        Invitation::query()->where('organization_id', $organizationId)->where('email', $email)
-            ->whereNull('accepted_at')->whereNull('revoked_at')->update(['revoked_at' => now()]);
+        return Invitation::query()->where('organization_id', $organizationId)->where('email', $email)
+            ->whereNull('accepted_at')->whereNull('revoked_at')->orderBy('id')->lockForUpdate()->get();
+    }
+
+    public function revoke(Invitation $invitation): void
+    {
+        $invitation->forceFill(['revoked_at' => now()])->save();
     }
 
     public function consume(Invitation $invitation): void

@@ -22,7 +22,7 @@ class Organization extends Model
 
     protected function casts(): array
     {
-        return ['active' => 'boolean', 'is_public' => 'boolean', 'publication_version' => 'integer',
+        return ['lock_version' => 'integer', 'active' => 'boolean', 'is_public' => 'boolean', 'publication_version' => 'integer',
             'type' => OrganizationType::class, 'settings' => 'array'];
     }
 

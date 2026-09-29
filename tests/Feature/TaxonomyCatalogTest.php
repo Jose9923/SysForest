@@ -40,7 +40,7 @@ class TaxonomyCatalogTest extends PostgresTestCase
         $this->assertSame('Licania tomentosa (Benth.) Fritsch.', $species->scientific_name);
         $this->assertSame($family->id, $species->family_id);
         $this->assertSame('Oití', $species->commonNames->sole()->name);
-        $this->service->update($this->admin, 'families', $family->id, ['scientific_name' => 'FAMILIA EDITADA', 'active' => false, 'sort_order' => 432]);
+        $this->service->update($this->admin, 'families', $family->id, ['lock_version' => $family->fresh()->lock_version, 'scientific_name' => 'FAMILIA EDITADA', 'active' => false, 'sort_order' => 432]);
         $this->seed(TaxonomySeeder::class);
         $this->assertDatabaseCount('families', 8);
         $this->assertDatabaseCount('species', 10);
@@ -53,9 +53,9 @@ class TaxonomyCatalogTest extends PostgresTestCase
     public function test_admin_creates_edits_reorders_and_reactivates_without_a_tenant(): void
     {
         $family = $this->family();
-        $this->service->update($this->admin, 'families', $family->id, ['description' => 'Revisada', 'active' => false, 'sort_order' => 40]);
+        $this->service->update($this->admin, 'families', $family->id, ['lock_version' => $family->fresh()->lock_version, 'description' => 'Revisada', 'active' => false, 'sort_order' => 40]);
         $this->assertFalse($family->fresh()->active);
-        $this->service->update($this->admin, 'families', $family->id, ['active' => true]);
+        $this->service->update($this->admin, 'families', $family->id, ['lock_version' => $family->fresh()->lock_version, 'active' => true]);
         $this->assertTrue($family->fresh()->active);
         $this->assertSame('Revisada', $family->fresh()->description);
         $this->assertDatabaseMissing('organization_memberships', ['user_id' => $this->admin->id]);
@@ -88,7 +88,7 @@ class TaxonomyCatalogTest extends PostgresTestCase
     {
         $family = $this->family();
         foreach ([
-            fn () => $this->service->update($this->admin, 'families', $family->id, ['code' => 'FAMILY_OTHER']),
+            fn () => $this->service->update($this->admin, 'families', $family->id, ['lock_version' => $family->fresh()->lock_version, 'code' => 'FAMILY_OTHER']),
             fn () => $this->service->create($this->admin, 'families', ['code' => 'FAMILY_OTHER', 'scientific_name' => 'familia de prueba']),
             fn () => $this->service->create($this->admin, 'families', ['code' => 'FAMILY_TEST', 'scientific_name' => 'Otra familia']),
         ] as $operation) {
@@ -105,7 +105,7 @@ class TaxonomyCatalogTest extends PostgresTestCase
     {
         $family = $this->family();
         $species = $this->species($family);
-        $this->service->update($this->admin, 'families', $family->id, ['active' => false]);
+        $this->service->update($this->admin, 'families', $family->id, ['lock_version' => $family->fresh()->lock_version, 'active' => false]);
         foreach ([
             fn () => $this->service->create($this->admin, 'species', ['code' => 'SPECIES_DENIED', 'scientific_name' => 'Specimen secundum', 'family_id' => $family->id]),
             fn () => $this->service->create($this->admin, 'common-names', ['code' => 'COMMON_DENIED', 'name' => 'Árbol', 'species_id' => $species->id]),
@@ -117,7 +117,7 @@ class TaxonomyCatalogTest extends PostgresTestCase
                 $this->assertSame($family->id, $species->fresh()->family->id);
             }
         }
-        $this->service->update($this->admin, 'species', $species->id, ['description' => 'Referencia histórica conservada']);
+        $this->service->update($this->admin, 'species', $species->id, ['lock_version' => $species->fresh()->lock_version, 'description' => 'Referencia histórica conservada']);
         $this->assertSame('Referencia histórica conservada', $species->fresh()->description);
         $this->assertCount(0, app(TaxonomyRepository::class)->options(TaxonomyCatalog::Species));
     }
@@ -129,13 +129,13 @@ class TaxonomyCatalogTest extends PostgresTestCase
         $second = $this->service->create($this->admin, 'common-names', ['code' => 'COMMON_TWO', 'name' => 'Nombre dos', 'species_id' => $species->id]);
         $this->assertCount(2, $species->fresh()->commonNames);
         try {
-            $this->service->update($this->admin, 'common-names', $second->id, ['is_primary' => true]);
+            $this->service->update($this->admin, 'common-names', $second->id, ['lock_version' => $second->fresh()->lock_version, 'is_primary' => true]);
             $this->fail('Se permitieron dos nombres principales.');
         } catch (ValidationException) {
             $this->assertFalse($second->fresh()->is_primary);
         }
-        $this->service->update($this->admin, 'common-names', $first->id, ['is_primary' => false]);
-        $this->service->update($this->admin, 'common-names', $second->id, ['is_primary' => true]);
+        $this->service->update($this->admin, 'common-names', $first->id, ['lock_version' => $first->fresh()->lock_version, 'is_primary' => false]);
+        $this->service->update($this->admin, 'common-names', $second->id, ['lock_version' => $second->fresh()->lock_version, 'is_primary' => true]);
         $this->assertTrue($second->fresh()->is_primary);
     }
 
@@ -172,10 +172,10 @@ class TaxonomyCatalogTest extends PostgresTestCase
     {
         $a = $this->family();
         $b = $this->service->create($this->admin, 'families', ['code' => 'FAMILY_BEFORE', 'scientific_name' => 'Otra familia', 'sort_order' => 1]);
-        $this->service->update($this->admin, 'families', $a->id, ['sort_order' => 9]);
+        $this->service->update($this->admin, 'families', $a->id, ['lock_version' => $a->fresh()->lock_version, 'sort_order' => 9]);
         $results = $this->service->index($this->admin, 'families', ['q' => 'familia']);
         $this->assertSame([$b->id, $a->id], $results['records']->getCollection()->modelKeys());
-        $this->service->update($this->admin, 'families', $a->id, ['active' => false]);
+        $this->service->update($this->admin, 'families', $a->id, ['lock_version' => $a->fresh()->lock_version, 'active' => false]);
         $this->assertSame([$b->id], app(TaxonomyRepository::class)->options(TaxonomyCatalog::Families)->modelKeys());
     }
 
@@ -186,7 +186,7 @@ class TaxonomyCatalogTest extends PostgresTestCase
         $family = Family::query()->where('code', 'FAMILY_HTTP')->sole();
         $this->get('/admin/catalogs/taxonomy/families')->assertOk()->assertDontSee('<script>alert(1)</script>', false)->assertSee('&lt;script&gt;', false);
         $this->get('/admin/catalogs/taxonomy/families/'.$family->id.'/edit')->assertOk();
-        $this->put('/admin/catalogs/taxonomy/families/'.$family->id, ['active' => false, 'sort_order' => 12])->assertRedirect();
+        $this->put('/admin/catalogs/taxonomy/families/'.$family->id, ['lock_version' => $family->fresh()->lock_version, 'active' => false, 'sort_order' => 12])->assertRedirect();
         $this->assertFalse($family->fresh()->active);
         $this->get('/admin/catalogs/taxonomy/users')->assertNotFound();
         $this->delete('/admin/catalogs/taxonomy/families/'.$family->id)->assertStatus(405);
@@ -199,7 +199,7 @@ class TaxonomyCatalogTest extends PostgresTestCase
         $this->member($actor, $this->pilot());
         $this->actingAs($actor)->get('/admin/catalogs/taxonomy/families')->assertOk()->assertDontSee('+ Crear valor');
         $this->get('/admin/catalogs/taxonomy/families/create')->assertForbidden();
-        $this->putJson('/admin/catalogs/taxonomy/families/'.$family->id, ['active' => false])->assertForbidden();
+        $this->putJson('/admin/catalogs/taxonomy/families/'.$family->id, ['lock_version' => $family->fresh()->lock_version, 'active' => false])->assertForbidden();
         $this->assertTrue($family->fresh()->active);
     }
 

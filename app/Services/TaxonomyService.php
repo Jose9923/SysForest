@@ -24,6 +24,8 @@ class TaxonomyService
         private CatalogAccessService $access,
         private UserRepository $users,
         private SecurityEventRepository $events,
+        private VersionedWriteService $versions,
+        private AuditSnapshotService $snapshots,
     ) {
     }
 
@@ -71,22 +73,54 @@ class TaxonomyService
                 $currentActor = $this->users->findForUpdate((int) $actor->id);
                 $this->access->authorizeManage($currentActor);
                 $record = $id === null ? null : $this->repository->find($catalog, $id, true);
-                $base = $record?->only(array_diff(array_keys(TaxonomyRules::for($catalog)), ['id', 'organization_id'])) ?? ['active' => true, 'sort_order' => 0];
-                $values = Validator::make(array_replace($base, $input), TaxonomyRules::for($catalog))->validate();
+                $base = $record?->only(array_diff(array_keys(TaxonomyRules::for($catalog)), ['id', 'organization_id', 'lock_version'])) ?? ['active' => true, 'sort_order' => 0];
+                $values = Validator::make(array_replace($base, $input), TaxonomyRules::for($catalog, $record !== null))->validate();
                 if ($record !== null && $values['code'] !== $record->code) {
                     throw ValidationException::withMessages(['code' => 'El código es estable y no puede cambiarse.']);
                 }
                 $values[$catalog->nameColumn()] = trim($values[$catalog->nameColumn()]);
                 $this->validateParent($catalog, $values, $record);
+                $auditBefore = $record === null ? [] : $this->snapshots->snapshot($record);
+                if ($record !== null) {
+                    $this->versions->advance($record, $values);
+                }
+                unset($values['lock_version']);
                 $before = $record?->only(['active', 'sort_order']);
                 $record = $record === null ? $this->repository->create($catalog, $values) : $this->repository->update($record, $values);
                 $metadata = ['catalog_key' => 'taxonomy.'.$catalog->value, 'resource_id' => $record->id, 'resource_code' => $record->code];
-                $this->events->record($before === null ? 'catalog.created' : 'catalog.updated', $currentActor, null, $metadata);
+                $this->events->recordChange(
+                    $before === null ? 'catalog.created' : 'catalog.updated',
+                    $currentActor,
+                    null,
+                    'catalog',
+                    $record->id,
+                    $auditBefore,
+                    $this->snapshots->snapshot($record),
+                    $metadata
+                );
                 if ($before !== null && $before['active'] !== $record->active) {
-                    $this->events->record($record->active ? 'catalog.activated' : 'catalog.deactivated', $currentActor, null, $metadata);
+                    $this->events->recordChange(
+                        $record->active ? 'catalog.activated' : 'catalog.deactivated',
+                        $currentActor,
+                        null,
+                        'catalog',
+                        $record->id,
+                        ['active' => $before['active']],
+                        ['active' => $record->active],
+                        $metadata
+                    );
                 }
                 if ($before !== null && $before['sort_order'] !== $record->sort_order) {
-                    $this->events->record('catalog.reordered', $currentActor, null, $metadata);
+                    $this->events->recordChange(
+                        'catalog.reordered',
+                        $currentActor,
+                        null,
+                        'catalog',
+                        $record->id,
+                        ['sort_order' => $before['sort_order']],
+                        ['sort_order' => $record->sort_order],
+                        $metadata
+                    );
                 }
 
                 return $record;

@@ -51,7 +51,7 @@ class DendrometryCalculationService
     private function resolveVersion(?string $versionId): ClassificationRuleVersion
     {
         try {
-            $version = $versionId === null ? $this->rules->findByCode('EXCEL_V1') : $this->rules->findSealed($versionId);
+            $version = $versionId === null ? $this->rules->findForCapture('EXCEL_V1') : $this->rules->findSealed($versionId);
         } catch (ModelNotFoundException) {
             throw ValidationException::withMessages(['classification_rule_version_id' => 'No está disponible la versión de clasificación requerida.']);
         }

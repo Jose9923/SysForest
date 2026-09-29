@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\SecureErrorResponses::class);
         // La evidencia textual del GPS se conserva; el parser normaliza una copia para interpretar.
         $middleware->trimStrings(except: ['coordinate_raw', 'flowering_development', 'fruiting_development', 'fauna_observations', 'general_observations']);
         $middleware->alias([
@@ -30,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\PublicExceptionRenderer::class)->render($exception, $request));
+        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\ReportExceptionRenderer::class)->render($exception, $request));
+        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\ImportExceptionRenderer::class)->render($exception, $request));
         $exceptions->render(function (Throwable $exception, Request $request) {
             if (!$request->is('evidences/*', 'trees/*/evidences*', 'inspections/*/evidences*', 'maintenances/*/evidences*')
                 || $exception instanceof \Illuminate\Validation\ValidationException
@@ -110,4 +113,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return redirect()->route($request->cookie(config('security.refresh_cookie')) ? 'auth.renew' : 'login');
         });
+        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\SystemExceptionRenderer::class)->render($exception, $request));
+        $exceptions->respond(fn (\Symfony\Component\HttpFoundation\Response $response) => app(\App\Http\SystemExceptionRenderer::class)->secure($response));
     })->create();

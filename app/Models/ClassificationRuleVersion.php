@@ -22,6 +22,7 @@ class ClassificationRuleVersion extends Model
             'height_step' => 'decimal:6',
             'active' => 'boolean',
             'sort_order' => 'integer',
+            'lock_version' => 'integer',
             'sealed_at' => 'immutable_datetime',
         ];
     }

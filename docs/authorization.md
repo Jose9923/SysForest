@@ -2,7 +2,7 @@
 
 ## Alcance
 
-La Fase 4 utiliza RBAC con permisos persistidos y asignaciones nacionales, departamentales y organizacionales. Un usuario es global y conserva su identificador BIGINT. Las nuevas entidades de autorización utilizan UUID; la relación de roles y permisos tiene clave primaria compuesta.
+SYSFOREST utiliza RBAC con permisos persistidos y asignaciones nacionales, departamentales y organizacionales. Un usuario es global y conserva su identificador BIGINT. Las nuevas entidades de autorización utilizan UUID; la relación de roles y permisos tiene clave primaria compuesta.
 
 La autenticación establece quién realiza la petición y comprueba su sesión. La autorización decide qué puede hacer sobre un ámbito concreto. Un JWT válido, una membresía o una selección de organización no conceden permisos por sí solos.
 
@@ -17,13 +17,19 @@ Los cuatro roles tienen ámbito fijo:
 | ORGANIZATION_ADMIN | Una membresía de una organización |
 | OFFICIAL | Una membresía de una organización |
 
-La matriz vigente contiene 20 permisos: los 18 de Fase 4 y dos de catálogos incorporados en Fase 5. En la tabla, **N** significa concesión nacional, **D** el departamento asignado y **O** la organización de la membresía autorizada. El guion indica ausencia del permiso.
+La matriz vigente contiene **49 permisos**, definidos en `database/seeders/AuthorizationSeeder.php`. En la tabla, **N** significa concesión nacional, **D** el departamento asignado y **O** la organización de la membresía autorizada. El guion indica ausencia del permiso. La concesión no sustituye los requisitos del recurso, estado y organización activa.
 
 | Permiso | SUPER_ADMIN | DEPARTMENT_ADMIN | ORGANIZATION_ADMIN | OFFICIAL |
 | --- | --- | --- | --- | --- |
 | organizations.view | N | D | O | O |
 | organizations.create | N | — | — | — |
 | organizations.manage | N | — | O | — |
+| publication.manage | N | — | O | — |
+| imports.view | N | — | O | O |
+| imports.create | N | — | O | O |
+| audit.view | N | — | O | — |
+| reports.view | N | D | O | O |
+| reports.export | N | D | O | O |
 | memberships.view | N | — | O | — |
 | memberships.create | N | — | O | — |
 | memberships.update | N | — | O | — |
@@ -41,6 +47,29 @@ La matriz vigente contiene 20 permisos: los 18 de Fase 4 y dos de catálogos inc
 | sessions.revoke | N | — | — | — |
 | catalogs.view | Consulta | Consulta | Consulta | Consulta |
 | catalogs.manage | N | — | — | — |
+| inventories.view | N | D | O | O |
+| inventories.create | N | — | O | — |
+| inventories.update | N | — | O | — |
+| trees.view | N | D | O | O |
+| trees.create | N | — | O | O |
+| trees.update | N | — | O | O |
+| trees.void | N | — | O | — |
+| trees.restore | N | — | O | — |
+| inspections.view | N | D | O | O |
+| inspections.create | N | — | O | O |
+| inspections.update | N | — | O | O |
+| evidences.view | N | D | O | O |
+| evidences.create | N | — | O | O |
+| evidences.update | N | — | O | O |
+| evidences.delete | N | — | O | O |
+| evidences.restore | N | — | O | — |
+| maintenances.view | N | D | O | O |
+| maintenances.create | N | — | O | O |
+| maintenances.update | N | — | O | O |
+| maintenances.transition | N | — | O | O |
+| maintenances.verify | N | — | O | — |
+| maintenances.void | N | — | O | — |
+| maintenances.restore | N | — | O | — |
 
 `catalogs.view` consulta valores nacionales compartidos, pero exige una asignación vigente dentro de su ámbito: cuenta activa/verificada, rol y permiso; además departamento/país activos o membresía/organización activas según corresponda. No exige seleccionar tenant ni convierte el permiso de lectura local en escritura nacional. `catalogs.manage` se comprueba exclusivamente con `allowsNational`.
 
@@ -56,7 +85,9 @@ Para sembrar exclusivamente el catálogo en un entorno autorizado:
 docker compose exec app php artisan db:seed --class=AuthorizationSeeder
 ~~~
 
-Los permisos de inventarios, árboles, inspecciones y otros módulos forestales se incorporarán en sus fases correspondientes.
+Las escrituras forestales, publicación e importaciones requieren seleccionar y revalidar una organización, también para SUPER_ADMIN. Mapa y reportes utilizan un alcance de lectura explícito nacional, departamental o institucional; no convierten ese alcance en permiso de escritura. `audit.view` admite alcance nacional o institucional administrativo, nunca lectura departamental. El portal anónimo aplica su propia proyección publicada y no obtiene estos permisos privados.
+
+La matriz de concesiones iniciales no es un listado de botones: los Services añaden condiciones de estado, propiedad, versión y referencias vigentes. Por ejemplo, importar exige permisos de importación y las capacidades forestales necesarias para crear el árbol y su inspección.
 
 ## Integridad relacional
 
@@ -213,4 +244,8 @@ docker compose exec app php artisan test --filter=AuthorizationTest
 
 AuthorizationTest verifica idempotencia, rechazo SQL de scopes incompatibles y membresías cruzadas, unicidad del rol por miembro, fechas coherentes, acceso nacional sin membresías artificiales, lectura departamental, permisos distintos entre organizaciones, revocación, cuenta desactivada/no verificada, IDOR y rechazo de escaladas de privilegio.
 
-Resultado de la ejecución focalizada: **23 pruebas aprobadas, 58 aserciones**. Este resultado corresponde únicamente a AuthorizationTest y no expresa el total de la aplicación.
+El [informe de Fase 4](phase-4.md) conserva la ejecución histórica inicial de autorización. Para acreditar el estado actual, ejecuta la suite correspondiente y consulta el informe de la entrega verificada; no se deduce el total de la aplicación de una prueba focalizada.
+
+## Consulta privada de auditoría (Fase 14)
+
+`audit.view` se asigna a SUPER_ADMIN en alcance nacional y ORGANIZATION_ADMIN en su organización autorizada. OFFICIAL y DEPARTMENT_ADMIN no lo reciben. Seleccionar una institución no concede el permiso, y `department_read` no habilita auditoría institucional. El acceso se revalida antes y después de leer; un UUID ajeno no permite acceder al detalle. Las rutas `/audit` y `/audit/{source}/{entry}` son privadas y de solo lectura. La activación operativa y sus resultados se registran en [Fase 14](phase-14.md).

@@ -1,8 +1,9 @@
 @extends('public.layout')
 @include('public.assets', ['mode' => 'list'])
+@include('reports.assets')
 @section('content')
     <section class="general-map" data-public-list>
-        <div class="page-heading"><div><p class="eyebrow">CONSULTA CIUDADANA</p><h1>Inventario del arbolado</h1><p class="muted">Árboles e información forestal publicados por las organizaciones participantes.</p></div><a class="button secondary" href="{{ $mapUrl }}" data-public-map-link>Ver en el mapa</a></div>
+        <div class="page-heading"><div><p class="eyebrow">CONSULTA CIUDADANA</p><h1>Inventario del arbolado</h1><p class="muted">Árboles e información forestal publicados por las organizaciones participantes.</p></div><div class="report-entry-actions"><a class="button secondary" href="{{ $mapUrl }}" data-public-map-link>Ver en el mapa</a><a class="button secondary" href="{{ route('public.reports.index', array_merge(array_diff_key($filters, array_flip(['page', 'render_mode', 'term', 'format', 'trashed', 'include_deleted', 'include_voided_trees', 'tree_id'])), ['report' => 'inventory'])) }}">Descargar resultados</a></div></div>
         @include('public.indicators')
         <div class="map-layout public-list-layout">
             @include('maps.filters', ['publicMap' => true, 'publicList' => true, 'filterAction' => route('public.trees.index'), 'filterTitle' => 'Filtrar inventario', 'filterHidden' => ['sort' => $filters['sort'] ?? 'code', 'direction' => $filters['direction'] ?? 'asc']])

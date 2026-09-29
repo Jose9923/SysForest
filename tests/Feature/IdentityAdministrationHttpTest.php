@@ -138,7 +138,7 @@ class IdentityAdministrationHttpTest extends PostgresTestCase
         $admin = User::factory()->create();
         $this->allowNationalManagement($admin);
         $this->actingAs($admin)->get('/administration/organizations/'.$organization->id.'/edit')->assertOk();
-        $this->put('/administration/organizations/'.$organization->id, $this->organizationInput($organization))->assertRedirect(route('organizations.index'));
+        $this->put('/administration/organizations/'.$organization->id, ['lock_version' => $organization->fresh()->lock_version] + $this->organizationInput($organization))->assertRedirect(route('organizations.index'));
         $this->assertTrue($organization->fresh()->active);
         $this->assertDatabaseMissing('organization_memberships', ['user_id' => $admin->id]);
     }

@@ -52,7 +52,7 @@
     @if (isset($invitations))
         <section class="panel identity-panel" style="margin-top: 28px" aria-labelledby="invitations-heading">
             <div class="identity-section-heading"><div><h2 id="invitations-heading">Invitaciones enviadas</h2><p class="muted">Consulta el correo de destino y la fecha de vencimiento.</p></div></div>
-            <div class="identity-table-wrap">
+            <div class="identity-table-wrap" tabindex="0" role="region" aria-label="Invitaciones enviadas">
                 <table class="identity-table"><thead><tr><th scope="col">Correo</th><th scope="col">Estado</th><th scope="col">Vencimiento</th></tr></thead><tbody>
                     @forelse ($invitations as $invitation)
                         <tr><td>{{ $invitation->email }}</td><td>{{ $invitation->accepted_at ? 'Aceptada' : ($invitation->revoked_at ? 'Revocada' : 'Enviada') }}</td><td>{{ $invitation->expires_at?->format('d/m/Y H:i') ?? 'No registrado' }}</td></tr>

@@ -25,6 +25,7 @@ class InventoryService
         private ForestryAccessService $access,
         private UserRepository $users,
         private SecurityEventRepository $events,
+        private AuditSnapshotService $snapshots,
     ) {
     }
 
@@ -95,6 +96,7 @@ class InventoryService
                 if ($this->inventories->codeExists($organization->id, $data['code'], $id)) {
                     throw ValidationException::withMessages(['code' => 'El código ya existe en esta organización.']);
                 }
+                $before = $inventory === null ? [] : $this->snapshots->snapshot($inventory);
                 unset($data['organization_id'], $data['created_by'], $data['updated_by'], $data['created_at'], $data['updated_at'], $data['id']);
                 if ($inventory === null) {
                     unset($data['lock_version']);
@@ -112,9 +114,18 @@ class InventoryService
                         array_merge($data, ['updated_by' => $actor->id]),
                     ) ?? throw new StaleRecordException();
                 }
-                $this->events->record($id === null ? 'inventory.created' : 'inventory.updated', $actor, $organization->id, [
-                    'resource_id' => $inventory->id, 'resource_code' => $inventory->code,
-                ]);
+                $this->events->recordChange(
+                    $id === null ? 'inventory.created' : 'inventory.updated',
+                    $actor,
+                    $organization->id,
+                    'inventory',
+                    $inventory->id,
+                    $before,
+                    $this->snapshots->snapshot($inventory),
+                    [
+                        'resource_id' => $inventory->id, 'resource_code' => $inventory->code,
+                    ]
+                );
 
                 return $inventory;
             }, 3);

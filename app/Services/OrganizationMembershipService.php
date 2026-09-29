@@ -30,6 +30,7 @@ class OrganizationMembershipService
         private PermissionService $permissions,
         private SecurityEventRepository $events,
         private SecurityMailService $mail,
+        private AuditSnapshotService $snapshots,
     ) {
     }
 
@@ -70,9 +71,18 @@ class OrganizationMembershipService
                     'active' => true, 'joined_at' => now(), 'left_at' => null,
                 ]);
                 $this->assignments->grantOrganization($membership, 'OFFICIAL');
-                $this->events->record('membership.created', $actor, $organization->id, [
-                    'membership_id' => $membership->id, 'target_user_id' => $user->id, 'role_name' => 'OFFICIAL',
-                ]);
+                $this->events->recordChange(
+                    'membership.created',
+                    $actor,
+                    $organization->id,
+                    'organization_membership',
+                    $membership->id,
+                    [],
+                    $this->snapshots->snapshot($membership) + ['role_name' => 'OFFICIAL'],
+                    [
+                        'membership_id' => $membership->id, 'target_user_id' => $user->id, 'role_name' => 'OFFICIAL',
+                    ]
+                );
                 $this->mail->send('membership_activated', $user, ['organization' => $organization->name]);
 
                 return $this->memberships->findForTenant($organization->id, $membership->id);
@@ -114,6 +124,7 @@ class OrganizationMembershipService
                 Gate::forUser($actor)->authorize($newActive ? 'activate' : 'deactivate', $membership);
             }
             $assignment = $this->assignments->organizationRole($membership);
+            $before = $this->snapshots->snapshot($membership) + ['role_name' => $assignment?->role?->name];
             $roleChanged = isset($attributes['role']) && ($assignment === null || !$assignment->active
                 || $assignment->revoked_at !== null || $assignment->role->name !== $attributes['role']);
             if ($roleChanged) {
@@ -127,16 +138,35 @@ class OrganizationMembershipService
                     'active' => $newActive, 'joined_at' => $membership->joined_at ?? now(),
                     'left_at' => $newActive ? null : now(),
                 ]);
-                $this->events->record($newActive ? 'membership.activated' : 'membership.deactivated', $actor, $organization->id, [
-                    'membership_id' => $membership->id, 'target_user_id' => $user->id,
-                ]);
+                $this->events->recordChange(
+                    $newActive ? 'membership.activated' : 'membership.deactivated',
+                    $actor,
+                    $organization->id,
+                    'organization_membership',
+                    $membership->id,
+                    $before,
+                    $this->snapshots->snapshot($membership) + ['role_name' => $assignment?->role?->name],
+                    [
+                        'membership_id' => $membership->id, 'target_user_id' => $user->id,
+                    ]
+                );
                 $this->mail->send($newActive ? 'membership_activated' : 'membership_deactivated', $user, ['organization' => $organization->name]);
             }
             if ($roleChanged) {
+                $beforeRole = $this->snapshots->snapshot($membership) + ['role_name' => $assignment?->role?->name];
                 $this->assignments->grantOrganization($membership, $attributes['role']);
-                $this->events->record('membership.role_changed', $actor, $organization->id, [
-                    'membership_id' => $membership->id, 'target_user_id' => $user->id, 'role_name' => $attributes['role'],
-                ]);
+                $this->events->recordChange(
+                    'membership.role_changed',
+                    $actor,
+                    $organization->id,
+                    'organization_membership',
+                    $membership->id,
+                    $beforeRole,
+                    $this->snapshots->snapshot($membership) + ['role_name' => $attributes['role']],
+                    [
+                        'membership_id' => $membership->id, 'target_user_id' => $user->id, 'role_name' => $attributes['role'],
+                    ]
+                );
             }
 
             return $this->memberships->findForTenant($organization->id, $membership->id);

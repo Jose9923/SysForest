@@ -25,6 +25,8 @@ class CatalogService
         private CatalogAccessService $access,
         private UserRepository $users,
         private SecurityEventRepository $events,
+        private VersionedWriteService $versions,
+        private AuditSnapshotService $snapshots,
     ) {
     }
 
@@ -91,7 +93,7 @@ class CatalogService
                 $actor = $this->users->findForUpdate((int) $actor->id);
                 $this->access->authorizeManage($actor);
                 $entry = $id ? $this->entries->find($catalog, $id, true) : null;
-                $data = Validator::make($input, CatalogInput::rules())->validate();
+                $data = Validator::make($input, CatalogInput::rules($entry !== null))->validate();
                 $data['name'] = trim($data['name']);
                 unset($data['organization_id']);
                 if ($entry && $entry->code !== $data['code']) {
@@ -100,16 +102,48 @@ class CatalogService
                 if ($this->entries->codeExists($catalog, $data['code'], $id)) {
                     throw ValidationException::withMessages(['code' => 'El código ya existe en este catálogo.']);
                 }
+                $before = $entry === null ? [] : $this->snapshots->snapshot($entry);
+                if ($entry !== null) {
+                    $this->versions->advance($entry, $data);
+                }
+                unset($data['lock_version']);
                 $previousActive = $entry?->active;
                 $previousOrder = $entry?->sort_order;
                 $entry = $entry ? $this->entries->update($entry, $data) : $this->entries->create($catalog, $data);
                 $metadata = ['catalog_key' => $catalog->key, 'resource_id' => $entry->id, 'resource_code' => $entry->code];
-                $this->events->record($id ? 'catalog.updated' : 'catalog.created', $actor, null, $metadata);
+                $this->events->recordChange(
+                    $id ? 'catalog.updated' : 'catalog.created',
+                    $actor,
+                    null,
+                    'catalog',
+                    $entry->id,
+                    $before,
+                    $this->snapshots->snapshot($entry),
+                    $metadata
+                );
                 if ($id && $previousActive !== $entry->active) {
-                    $this->events->record($entry->active ? 'catalog.activated' : 'catalog.deactivated', $actor, null, $metadata);
+                    $this->events->recordChange(
+                        $entry->active ? 'catalog.activated' : 'catalog.deactivated',
+                        $actor,
+                        null,
+                        'catalog',
+                        $entry->id,
+                        ['active' => $previousActive],
+                        ['active' => $entry->active],
+                        $metadata
+                    );
                 }
                 if ($id && $previousOrder !== $entry->sort_order) {
-                    $this->events->record('catalog.reordered', $actor, null, $metadata);
+                    $this->events->recordChange(
+                        'catalog.reordered',
+                        $actor,
+                        null,
+                        'catalog',
+                        $entry->id,
+                        ['sort_order' => $previousOrder],
+                        ['sort_order' => $entry->sort_order],
+                        $metadata
+                    );
                 }
 
                 return $entry;

@@ -28,29 +28,51 @@ class TreeService
         private TreeStatusService $statuses,
         private TreeLocationService $locations,
         private TreeWriteService $writes,
-        private SecurityEventRepository $events
+        private SecurityEventRepository $events,
+        private AuditSnapshotService $snapshots
     ) {
     }
 
     /** Identidad, consecutivo, campañas y ambos historiales se confirman o revierten juntos. */
     public function create(User $actor, array $input): Tree
     {
-        return DB::transaction(function () use ($actor, $input): Tree {
+        return $this->createWithCode($actor, $input);
+    }
+
+    /** La plantilla puede conservar un código oficial validado sin ampliar el contrato HTTP habitual. */
+    public function createImported(User $actor, array $input, ?string $code = null): Tree
+    {
+        return $this->createWithCode($actor, $input, $code);
+    }
+
+    private function createWithCode(User $actor, array $input, ?string $code = null): Tree
+    {
+        return DB::transaction(function () use ($actor, $input, $code): Tree {
             $actor = $this->users->findForUpdate((int) $actor->id);
             $organization = $this->access->organization($actor, true);
             Gate::forUser($actor)->authorize('create', Tree::class);
             $data = Validator::make($input, TreeInput::rules(), TreeInput::messages())->validate();
             $this->relations->validateCatalogs($data);
             $tree = $this->trees->create(array_merge($this->attributes($data), [
-                'organization_id' => $organization->id, 'code' => $this->codes->next($organization),
+                'organization_id' => $organization->id, 'code' => $code === null ? $this->codes->next($organization) : $this->codes->imported($organization, $code),
                 'created_by' => $actor->id, 'updated_by' => $actor->id, 'current_status' => $data['current_status'], 'lock_version' => 1,
             ]));
             $this->relations->include($tree, $actor, $data['inventory_ids']);
             $this->statuses->apply($tree, $actor, $data['current_status'], $data['reason'] ?? null, true);
             $this->locations->apply($tree, $actor, $data, true);
-            $this->events->record('tree.created', $actor, $organization->id, ['resource_id' => $tree->id, 'resource_code' => $tree->code]);
+            $tree = $this->trees->findForTenant($organization->id, $tree->id);
+            $this->events->recordChange(
+                'tree.created',
+                $actor,
+                $organization->id,
+                'tree',
+                $tree->id,
+                [],
+                $this->snapshots->snapshot($tree),
+                ['resource_id' => $tree->id, 'resource_code' => $tree->code]
+            );
 
-            return $this->trees->findForTenant($organization->id, $tree->id);
+            return $tree;
         }, 3);
     }
 
@@ -65,7 +87,6 @@ class TreeService
                 $this->statuses->apply($tree, $actor, $data['current_status'], $data['reason'] ?? null);
             }
             $this->locations->apply($tree, $actor, $data);
-            $this->events->record('tree.updated', $actor, $tree->organization_id, ['resource_id' => $tree->id, 'resource_code' => $tree->code]);
         });
     }
 
@@ -75,8 +96,7 @@ class TreeService
             $data = Validator::make($input, ['inventory_ids' => ['required', 'array', 'min:1', 'max:50'],
                 'inventory_ids.*' => ['required', 'uuid', 'distinct'], 'notes' => ['nullable', 'string', 'max:2000']], TreeInput::messages())->validate();
             $this->relations->include($tree, $actor, $data['inventory_ids'], $data['notes'] ?? null);
-            $this->events->record('tree.inventory_included', $actor, $tree->organization_id, ['resource_id' => $tree->id, 'resource_code' => $tree->code]);
-        });
+        }, false, 'tree.inventory_included');
     }
 
     private function attributes(array $data): array

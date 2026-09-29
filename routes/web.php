@@ -6,6 +6,7 @@ use App\Http\Controllers as C;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/public.php';
+require __DIR__.'/public-reports.php';
 
 // Disponibilidad técnica independiente de Redis y de las sesiones de usuario.
 Route::withoutMiddleware('web')->group(function (): void {
@@ -17,6 +18,8 @@ Route::middleware('identity.headers')->group(function (): void {
     Route::get('/login', [C\LoginController::class, 'create'])->name('login');
     Route::post('/login', [C\LoginController::class, 'store'])->middleware('throttle:identity.login')->name('login.store');
     Route::post('/logout', C\LogoutController::class)->name('logout');
+    Route::get('/auth/session/status', [C\SessionContinuityController::class, 'status'])->name('auth.session.status');
+    Route::post('/auth/session/ensure', [C\SessionContinuityController::class, 'ensure'])->middleware('throttle:identity.refresh')->name('auth.session.ensure');
     Route::get('/auth/renew', [C\RefreshController::class, 'create'])->name('auth.renew');
     Route::post('/auth/refresh', [C\RefreshController::class, 'store'])->middleware('throttle:identity.refresh')->name('auth.refresh');
     Route::get('/forgot-password', [C\PasswordResetController::class, 'create'])->name('password.request');
@@ -39,6 +42,8 @@ Route::middleware('identity.headers')->group(function (): void {
         Route::middleware(['identity.verified', 'tenant.share'])->group(function (): void {
             require __DIR__.'/catalogs.php';
             require __DIR__.'/maps.php';
+            require __DIR__.'/reports.php';
+            require __DIR__.'/audit.php';
             Route::get('/territories', C\TerritoryController::class)->name('territories.index');
             Route::post('/active-organization', C\TenantSelectionController::class)->name('tenant.select');
             Route::get('/organizations', [C\OrganizationController::class, 'index'])->name('organizations.index');
@@ -52,6 +57,7 @@ Route::middleware('identity.headers')->group(function (): void {
             Route::post('/users/{user}/roles', [C\UserController::class, 'roles'])->whereNumber('user')->name('users.roles');
             Route::middleware('tenant.context')->group(function (): void {
                 require __DIR__.'/forestry.php';
+                require __DIR__.'/imports.php';
                 require __DIR__.'/publication.php';
                 Route::get('/organizations/{organization}', [C\OrganizationController::class, 'show'])->whereUuid('organization')->name('organizations.show');
                 Route::get('/organizations/{organization}/edit', [C\OrganizationController::class, 'edit'])->whereUuid('organization')->name('organizations.edit');
