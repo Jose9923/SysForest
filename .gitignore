@@ -3,6 +3,7 @@
 !/.env.example
 /docker/secrets/
 /vendor/
+/database/seeders/data/private-restrepo/
 /node_modules/
 /public/build/
 /public/hot

@@ -1,5 +1,7 @@
 # Carga de Plan de Ornato de Restrepo 2025
 
+**Recuperación local del 02/10/2026:** el Excel original se recuperó de Descargas y se integró la carga en `--seed` para el entorno local. La instancia recuperada tiene sus propios UUID y artefactos normalizados; los identificadores y respaldos del informe histórico siguiente no son los de esta base. Consulta la [integración y verificación actual](restrepo-ornato-seed.md#verificación-de-la-recuperación-del-02102026).
+
 **Actualización posterior:** la clasificación inicial fue corregida por solicitud del usuario: 65 Muertos, 1.897 En observación y 892 Activos. Las inspecciones y filas importadas permanecen intactas. Consulta [criterio, motivos y conciliación](restrepo-status-review.md). Las cantidades de revisión de este informe describen la situación original de carga.
 
 La carga quedó completada en el piloto local el 28 de septiembre de 2026: **2.854 árboles y 2.854 inspecciones**, organizados en 29 lotes confirmados. Se reutilizaron los Services, Repositories, validaciones, permisos, transacciones por lote y auditoría de SYSFOREST. La organización, campaña, árboles e inspecciones permanecen privados.

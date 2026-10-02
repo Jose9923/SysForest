@@ -8,7 +8,7 @@ Por solicitud expresa del usuario, la contraseña local predeterminada es **`pas
 
 Ambos seeders solo admiten `APP_ENV=local` o `APP_ENV=testing`; rechazan los demás entornos antes de modificar datos, incluso con `--force`. Esta excepción de desarrollo no modifica la política de contraseñas de los formularios de invitación o recuperación.
 
-`DatabaseSeeder` incorpora territorios, organización piloto, catálogos y autorizaciones. **No ejecuta estos seeders de cuentas ni contraseñas automáticamente**. Las cuentas normales se incorporan mediante invitaciones; no existe registro público abierto.
+`DatabaseSeeder` incorpora territorios, organización piloto, catálogos y autorizaciones. Por solicitud expresa del 02/10/2026, en `APP_ENV=local` ejecuta también `DevelopmentIdentitySeeder` (incluido el restablecimiento de contraseñas), `RestrepoOrnatoSeeder` y `RestrepoOrnatoImportSeeder`. Esto aplica a `db:seed` y `migrate --seed`; en otros entornos no añade esas llamadas. La carga requiere el [paquete privado de Ornato](restrepo-ornato-seed.md#integración-local-con---seed). Las cuentas normales se incorporan mediante invitaciones; no existe registro público abierto.
 
 | Perfil preparado por DevelopmentIdentitySeeder | Correo local | Alcance |
 | --- | --- | --- |
@@ -57,3 +57,9 @@ Una segunda ejecución informó cero actualizaciones y cinco cuentas sin cambios
 La revisión de código comprobó las restricciones de consola y entorno, el cast de hash, el bloqueo de usuarios dentro de la transacción, la invalidación de enlaces de recuperación, la revocación de sesiones y la auditoría sin contraseñas ni hashes. También comprobó que las cuentas que ya usan la clave predeterminada se omiten y que la política de contraseñas web permanece intacta.
 
 A petición del usuario no se crean ni se ejecutan pruebas automatizadas.
+
+## Integración local de `--seed` del 02/10/2026
+
+Se verificó `DatabaseSeeder` con Pint PSR-12 y `php -l`, ambos correctos. La ejecución manual de `php artisan db:seed --no-interaction` terminó con código 0 e incluyó las cuentas y la preparación de Restrepo. Las cuatro contraseñas ya coincidían y Restrepo informó cero altas en la repetición. No se ejecutaron suites automatizadas.
+
+La base de este equipo tenía cero árboles. Inicialmente no se encontró el JSON normalizado ni el manifiesto privado de corrección de estados. Después el usuario indicó la ubicación del Excel en Descargas; su huella coincide con el original y permitió reconstruir la carga revisada. La integración posterior y sus límites están documentados en [carga local de Ornato](restrepo-ornato-seed.md#integración-local-con---seed).

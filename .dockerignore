@@ -5,6 +5,7 @@
 docker/secrets
 vendor
 node_modules
+database/seeders/data/private-restrepo
 storage/logs/*
 storage/framework/cache/*
 storage/framework/sessions/*

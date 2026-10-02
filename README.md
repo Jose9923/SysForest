@@ -30,7 +30,17 @@ En una instalación local nueva, prepara el piloto y los catálogos explícitame
 docker compose exec -T app php artisan db:seed --class=DatabaseSeeder
 ~~~
 
-Este seeder prepara el catálogo territorial de Colombia (32 departamentos, Bogotá D.C. y 1.104 opciones municipales), la institución piloto INEM de Villavicencio, los catálogos, cuatro roles, **49 permisos** y el inventario piloto. No genera árboles ficticios ni cuentas. Sincroniza la matriz de permisos de los roles, por lo que debe ejecutarse conscientemente. Para crear las cuatro cuentas opcionales de revisión local:
+Este seeder prepara el catálogo territorial de Colombia (32 departamentos, Bogotá D.C. y 1.104 opciones municipales), la institución piloto INEM de Villavicencio, los catálogos, cuatro roles, **49 permisos** y el inventario piloto. Sincroniza la matriz de permisos de los roles, por lo que debe ejecutarse conscientemente. En `APP_ENV=local`, `db:seed` y `migrate --seed` incluyen además las cuatro cuentas de desarrollo, la preparación de Restrepo y la carga autorizada de **2.854 árboles e inspecciones en 29 lotes**, con su revisión de estados. No generan árboles ficticios. Requieren el paquete privado de Ornato, excluido de Git y de las imágenes; consulta [carga local de Ornato](docs/restrepo-ornato-seed.md#integración-local-con---seed).
+
+Para aplicar migraciones pendientes y ejecutar todos los seeders locales:
+
+~~~bash
+docker compose exec -T app php artisan migrate --seed --no-interaction
+~~~
+
+La repetición reconoce los lotes completados y los historiales de la corrección, sin duplicarlos ni revertir estados modificados posteriormente. Un archivo ausente o con huella distinta detiene la siembra; no se cambia la partición para eludir importaciones anteriores.
+
+Para ejecutar únicamente la preparación de cuentas:
 
 ~~~bash
 docker compose exec -T app php artisan db:seed --class=DevelopmentIdentitySeeder --no-interaction
