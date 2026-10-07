@@ -225,7 +225,7 @@ class PreparedInventoryImportService
     /** Un hash repetido solo se reutiliza si las filas, campaña y resultado conservan exactamente su identidad. */
     private function assertExistingBatch(ImportBatch $batch, array $source, string $inventoryId): void
     {
-        if ($batch->inventory_id !== $inventoryId || $batch->schema_version !== ImportTemplateSchema::VERSION
+        if ($batch->inventory_id !== $inventoryId || !in_array($batch->schema_version, [ImportTemplateSchema::VERSION, ImportTemplateSchema::LEGACY_VERSION], true)
             || $batch->file_sha256 !== $source['hash'] || $batch->file_name !== $source['name']
             || $batch->file_size !== $source['size'] || $batch->total_rows !== count($source['sources'])
             || ($batch->status === ImportBatchStatus::Completed && $batch->imported_rows !== $batch->total_rows)

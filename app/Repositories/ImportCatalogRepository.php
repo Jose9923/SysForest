@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Imports\ImportCatalogSelection;
 use App\Models\BiogeographicOrigin;
 use App\Models\Condition;
 use App\Models\ClassificationRuleVersion;
@@ -20,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use LogicException;
 
-/** Resuelve códigos nacionales exactos; nunca crea catálogos a partir del archivo. */
+/** Resuelve códigos y selecciones nacionales exactos; nunca confía en catálogos del archivo. */
 class ImportCatalogRepository
 {
     private const MODELS = [
@@ -42,9 +43,14 @@ class ImportCatalogRepository
         if ($lock && DB::transactionLevel() < 1) {
             throw new LogicException('Bloquear catálogos requiere una transacción.');
         }
-        $query = self::MODELS[$field]::query()->where('code', $code);
+        $selection = ImportCatalogSelection::parse($code);
+        $query = self::MODELS[$field]::query()->where('code', $selection['code'] ?? $code);
         $record = ($lock ? $query->sharedLock() : $query)->first();
         if ($record === null || ! $record->active || ! $this->parentAvailable($record, $lock)) {
+            return null;
+        }
+        $label = $field === 'species_code' ? $record->scientific_name : $record->name;
+        if ($selection !== null && $selection['label'] !== $label) {
             return null;
         }
 
@@ -83,7 +89,11 @@ class ImportCatalogRepository
             foreach ($query->get() as $record) {
                 $details = match ($field) {
                     'species_code' => 'Familia: '.$record->family->scientific_name.'; nombres comunes: '.$record->commonNames->pluck('name')->implode(' | '),
-                    'condition' => $record->assessment_type.'; '.$record->category->name,
+                    'condition' => match ($record->assessment_type) {
+                        'physical_mechanical' => 'Física y mecánica',
+                        'phytosanitary' => 'Fitosanitaria',
+                        default => 'Evaluación sin clasificación reconocida',
+                    }.'; órgano o categoría: '.$record->category->name,
                     default => '',
                 };
                 $result[] = ['catalog' => $field, 'code' => $record->code,

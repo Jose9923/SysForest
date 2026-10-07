@@ -17,7 +17,7 @@ enum TreeStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Active => 'Activo',
+            self::Active => 'Sano',
             self::UnderObservation => 'En observación',
             self::Dead => 'Muerto',
             self::Felled => 'Talado',

@@ -82,7 +82,7 @@ La escritura bloquea primero al actor vigente, después el contexto instituciona
 
 | Estado del individuo | Valor |
 | --- | --- |
-| Activo | active |
+| Sano | active |
 | En observación | under_observation |
 | Muerto | dead |
 | Talado | felled |

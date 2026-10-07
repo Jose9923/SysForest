@@ -47,7 +47,7 @@ class ImportConfirmationService
             if ($batch->status !== ImportBatchStatus::Ready) {
                 throw new HttpException(409, 'Este lote no está listo para confirmar. Corrige el archivo y crea una nueva vista previa.');
             }
-            if ($batch->expires_at->isPast() || $batch->schema_version !== ImportTemplateSchema::VERSION) {
+            if ($batch->expires_at->isPast() || !in_array($batch->schema_version, [ImportTemplateSchema::VERSION, ImportTemplateSchema::LEGACY_VERSION], true)) {
                 return $this->cancelLocked($actor, $batch, 'La vista previa caducó o cambió la plantilla oficial. Carga nuevamente el archivo.');
             }
             if ($this->batches->sourceWasImported($organization->id, $batch->file_sha256)) {

@@ -1,6 +1,6 @@
 # Plantilla e importación Excel de SYSFOREST
 
-La Fase 13 incorpora la plantilla oficial `SYSFOREST_IMPORT_V1` y un flujo institucional de revisión y confirmación. Cada fila válida crea un **árbol nuevo**, lo vincula al inventario seleccionado mediante `inventory_trees` y registra su primera inspección. La carga inicial no crea árboles ni consume consecutivos.
+La plantilla oficial en español `SYSFOREST_IMPORT_V2_ES` conserva la captura forestal incorporada en Fase 13 y un flujo institucional de revisión y confirmación. Cada fila válida crea un **árbol nuevo**, lo vincula al inventario seleccionado mediante `inventory_trees` y registra su primera inspección. La carga inicial no crea árboles ni consume consecutivos.
 
 La documentación de reportes y exportaciones de Fase 12 permanece en [reportes y exportaciones](reports-and-exports.md) y en [su matriz de campos](exports-field-mapping.md). Un archivo exportado no sustituye la plantilla de importación: son contratos distintos. La correspondencia de las 110 columnas de entrada con las 94 variables del instrumento original se detalla en [trazabilidad de importación](import-field-mapping.md).
 
@@ -19,20 +19,43 @@ Puede cancelarse un lote pendiente o con errores. Cancelarlo conserva el archivo
 
 ## Contrato de la plantilla
 
-El libro contiene exactamente cuatro hojas visibles en este orden:
+La versión actual contiene exactamente once hojas visibles en este orden:
 
 | Hoja | Función |
 | --- | --- |
-| `Datos` | Encabezados técnicos exactos y 110 columnas en orden fijo. Es la única hoja para ingresar registros. |
-| `Diccionario` | Etiqueta española, grupo, modo, tipo, obligatoriedad, referencia original e instrucción de cada columna. |
-| `Catalogos` | Códigos y nombres de las referencias disponibles; se copian códigos, no etiquetas. |
-| `Instrucciones` | Identificador de versión y guía de diligenciamiento. La primera fila identifica `SYSFOREST_IMPORT_V1`. |
+| `Datos` | 110 encabezados en español, en orden fijo. Es la única hoja para ingresar registros, desde la fila 2. |
+| `Guía de campos` | Explicación, obligatoriedad, formato, ejemplos y catálogo correspondiente de cada campo. |
+| `Estados` | Códigos de estado del árbol; `active` corresponde a **Sano**. |
+| `Especies` | Códigos, nombres científicos, familia y nombres comunes disponibles. |
+| `Emplazamientos` | Códigos y nombres de emplazamiento. |
+| `Hábitos de crecimiento` | Códigos y nombres de hábito. |
+| `Origen de establecimiento` | Códigos de establecimiento, independientes del origen biogeográfico. |
+| `Origen biogeográfico` | Códigos de procedencia biogeográfica. |
+| `Fauna` | Categorías disponibles; se pueden separar varios códigos con `\|`. |
+| `Condiciones` | Condiciones disponibles por evaluación y órgano. En Datos se marca `1`, `0` o vacío en su columna correspondiente. |
+| `Instrucciones` | Guía general. Su primera fila identifica `SYSFOREST_IMPORT_V2_ES`. |
+
+Los códigos de catálogo son identificadores exactos y no se traducen. Las listas desplegables muestran el nombre seguido del código entre corchetes, por ejemplo `Sano [active]`. Se conservan también las entradas con solo el código. La aplicación los resuelve contra los catálogos vigentes. Los encabezados sí están en español y se transforman internamente a las mismas claves técnicas del esquema forestal.
+
+Se mantiene compatible la plantilla anterior `SYSFOREST_IMPORT_V1`, con sus cuatro hojas exactas `Datos`, `Diccionario`, `Catalogos` e `Instrucciones` y sus encabezados técnicos originales. No mezcle hojas, encabezados ni versiones de ambos formatos. Las vistas previas V1 vigentes siguen siendo confirmables y los bloques preparados por consola conservan su versión e identidad.
 
 Las filas completamente vacías se omiten. El lector no recorta un archivo que supere los límites: lo rechaza completo. Cambiar encabezados, añadir columnas con datos, agregar hojas o alterar la versión requiere corregir el libro. Las columnas grises se conservan por trazabilidad y deben permanecer vacías.
 
-Los catálogos incluidos en Excel son una ayuda de captura. Editar esa hoja no crea, modifica ni autoriza referencias nacionales; cada código se resuelve nuevamente contra la base al cargar y confirmar. También deben seguir disponibles los padres correspondientes, como familia o categoría de condición.
+Los catálogos incluidos en Excel son una ayuda de captura. Editar esas hojas no crea, modifica ni autoriza referencias nacionales; cada código se resuelve nuevamente contra la base al cargar y confirmar. También deben seguir disponibles los padres correspondientes, como familia o categoría de condición.
 
-No se aceptan archivos `.xls`, `.xlsm`, CSV ni libros arbitrarios; tampoco macros, imágenes, comentarios, objetos incrustados, celdas combinadas, hipervínculos, conexiones externas, libros cifrados o fórmulas. Una fórmula en `Datos` se informa como error de su fila y nunca se evalúa, aunque Excel haya guardado un resultado calculado. Los errores de estructura del libro impiden crear una vista previa utilizable.
+No se aceptan archivos `.xls`, `.xlsm`, CSV ni libros arbitrarios; tampoco macros, imágenes, comentarios, objetos incrustados, celdas combinadas, hipervínculos, conexiones externas, libros cifrados o fórmulas en celdas. Las listas oficiales usan únicamente referencias a rangos internos del mismo libro, sin cálculos en las celdas ni macros. Una fórmula en `Datos` se informa como error de su fila y nunca se evalúa, aunque Excel haya guardado un resultado calculado. Los errores de estructura del libro impiden crear una vista previa utilizable.
+
+## Listas desplegables
+
+La plantilla incluye listas en **Emplazamiento, Código de especie, Hábito de crecimiento, Origen de establecimiento, Origen biogeográfico, Estado actual y Fauna asociada**, para las filas 2 a 101 con el límite predeterminado de 100 registros. Las listas consultan la columna **Opción en lista** de la hoja correspondiente mediante rangos internos con nombre. Un catálogo sin opciones vigentes no genera una lista vacía ni una referencia inválida.
+
+Las opciones tienen la forma `Nombre [código]`. Al importar, el servidor valida que código y nombre correspondan a la referencia vigente y que esta y su catálogo padre estén disponibles. Se conserva el texto seleccionado en la auditoría y se normaliza a las mismas referencias de dominio. Si un nombre cambió después de descargar, actualiza la plantilla o utiliza el código vigente. Las etiquetas de Excel nunca sustituyen a la base de datos como autoridad.
+
+Las listas de catálogos son ayudas de selección y permiten escribir códigos exactos manualmente. El servidor valida todas las entradas incluso si se pegan valores o se elimina la validación de Excel. No hace falta añadir macros ni fórmulas en las celdas. El formato de hojas y encabezados sigue siendo V2 y se conservan las plantillas anteriores sin listas.
+
+**Fauna asociada**: elegir una opción selecciona una categoría y reemplaza el contenido anterior. Para varias categorías, escribe sus códigos separados por `|` (por ejemplo, `FAU_BIRDS|FAU_INSECTS` si ambos siguen vigentes). El servidor rechaza categorías repetidas, incluso si se combina un código con una selección que representa la misma categoría.
+
+**Protegido, Patrimonial y las 65 condiciones** tienen listas `0`/`1`. En las condiciones, `1` selecciona y `0` o vacío no seleccionan; una celda vacía no acredita ausencia examinada. Las columnas grises calculadas o reservadas permanecen vacías y no tienen listas.
 
 ## Identidad, códigos y duplicados
 
@@ -78,7 +101,7 @@ Una confirmación repetida de un lote `completed`, después de reautorizar al ac
 | `completed` | Todas las filas fueron importadas; resultado inmutable. |
 | `cancelled` | No se importó ninguna fila; historial conservado. |
 
-La vista previa tiene una vigencia configurable, de 24 horas por defecto. Al intentar confirmar una revisión vencida o de otra versión de plantilla, el servicio cancela ese lote y solicita cargar nuevamente el archivo. La caducidad no elimina automáticamente el historial.
+La vista previa tiene una vigencia configurable, de 24 horas por defecto. Al intentar confirmar una revisión vencida o de una versión de plantilla no admitida, el servicio cancela ese lote y solicita cargar nuevamente el archivo. La caducidad no elimina automáticamente el historial.
 
 ## Acceso institucional y privacidad
 
@@ -96,7 +119,7 @@ La colaboración no se limita al creador del lote: otro usuario actualmente auto
 
 Los repositorios resuelven UUID junto con `organization_id`. Las claves foráneas compuestas enlazan lote, inventario, fila, árbol e inspección dentro de la misma institución. La base también comprueba que la inspección importada corresponda al árbol registrado. Los formularios no permiten sustituir institución, autores, ruta de almacenamiento o filas normalizadas desde la confirmación.
 
-El archivo subido se lee desde el temporal de PHP y no se conserva como original en el almacenamiento de la aplicación. El lote guarda nombre, tamaño, SHA-256, versión, autores, fechas, contadores y estado. Cada fila guarda valores leídos, errores de lectura, valores normalizados, errores de dominio y referencias creadas. La identidad y los valores originales son inmutables; los lotes finalizados y sus filas quedan protegidos frente a cambios y borrados.
+El archivo subido se lee desde el temporal de PHP y no se conserva como original en el almacenamiento de la aplicación. El lote guarda nombre, tamaño, SHA-256, versión del esquema normalizado, autores, fechas, contadores y estado. Las nuevas cargas XLSX V1 y V2 se normalizan al esquema vigente; los bloques preparados por consola conservan V1. Cada fila guarda valores leídos, errores de lectura, valores normalizados, errores de dominio y referencias creadas. La identidad y los valores originales son inmutables; los lotes finalizados y sus filas quedan protegidos frente a cambios y borrados.
 
 La auditoría registra `import.preview_created`, `import.preview_revalidated`, `import.completed` e `import.cancelled`, además de los eventos emitidos por los servicios forestales reutilizados. La plantilla descargable se prepara como archivo temporal privado y se elimina al enviarse; utiliza `ExportFileRepository` y su limpieza de temporales ya descrita en Fase 12.
 

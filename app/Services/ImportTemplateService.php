@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\TreeStatus;
+use App\Imports\ImportCatalogSelection;
 use App\Imports\ImportTemplateSchema;
 use App\Repositories\ImportCatalogRepository;
 use DOMDocument;
 use OpenSpout\Common\Entity\Cell\StringCell;
 use OpenSpout\Common\Entity\Row;
+use OpenSpout\Common\Entity\Style\CellAlignment;
+use OpenSpout\Common\Entity\Style\CellVerticalAlignment;
 use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Writer\XLSX\Entity\SheetView;
 use OpenSpout\Writer\XLSX\Options;
@@ -21,8 +24,11 @@ use ZipArchive;
 /** Produce una plantilla vacía; los catálogos son ayudas y se revalidan al cargar y confirmar. */
 final class ImportTemplateService
 {
-    public function __construct(private ImportTemplateSchema $schema, private ImportCatalogRepository $catalogs)
-    {
+    public function __construct(
+        private ImportTemplateSchema $schema,
+        private ImportCatalogRepository $catalogs,
+        private ImportTemplateDropdownService $dropdowns,
+    ) {
     }
 
     public function write(string $path): void
@@ -32,59 +38,114 @@ final class ImportTemplateService
             || file_exists($workspace) || is_link($workspace) || !mkdir($workspace, 0700)) {
             throw new RuntimeException('No fue posible preparar el espacio privado de la plantilla.');
         }
-        $text = new Style(format: '@');
-        $wrapped = new Style(shouldWrapText: true, format: '@');
-        $reserved = new Style(fontColor: '65736C', backgroundColor: 'EDF0EE', format: '@');
-        $header = new Style(fontBold: true, fontColor: 'FFFFFF', backgroundColor: '246447', shouldWrapText: true, format: '@');
+        $text = new Style(cellAlignment: CellAlignment::LEFT, cellVerticalAlignment: CellVerticalAlignment::CENTER, format: '@');
+        $wrapped = new Style(cellAlignment: CellAlignment::LEFT, cellVerticalAlignment: CellVerticalAlignment::CENTER, shouldWrapText: true, format: '@');
+        $alternate = new Style(backgroundColor: 'F2F7F4', cellAlignment: CellAlignment::LEFT, cellVerticalAlignment: CellVerticalAlignment::CENTER, shouldWrapText: true, format: '@');
+        $reserved = new Style(fontColor: '65736C', backgroundColor: 'EDF0EE', cellAlignment: CellAlignment::LEFT, cellVerticalAlignment: CellVerticalAlignment::CENTER, format: '@');
+        $reservedHeader = new Style(fontBold: true, fontColor: 'FFFFFF', backgroundColor: '697970', cellAlignment: CellAlignment::LEFT, cellVerticalAlignment: CellVerticalAlignment::CENTER, shouldWrapText: true, format: '@');
+        $header = new Style(fontBold: true, fontColor: 'FFFFFF', backgroundColor: '246447', cellAlignment: CellAlignment::LEFT, cellVerticalAlignment: CellVerticalAlignment::CENTER, shouldWrapText: true, format: '@');
+        $catalogCounts = [];
         $writer = new Writer(new Options(
             // OpenSpout exporta el estilo cero como General: Texto debe registrarse por separado.
             FALLBACK_STYLE: new Style(),
             DEFAULT_COLUMN_WIDTH: 24,
             tempFolder: $workspace,
-            properties: new Properties(title: 'SYSFOREST · Plantilla oficial de importación', application: 'SYSFOREST', creator: 'SYSFOREST', language: 'es'),
+            properties: new Properties(title: 'SYSFOREST · Plantilla oficial de importación en español', application: 'SYSFOREST', creator: 'SYSFOREST', language: 'es'),
         ));
         try {
             $writer->openToFile($path);
             $sheet = $writer->getCurrentSheet()->setName('Datos')->setSheetView(new SheetView(freezeRow: 2, freezeColumn: 'C'));
-            $writer->addRow($this->row($this->schema->headers(), $header, 64));
+            $headerCells = [];
             $emptyCells = [];
-            foreach (array_values($this->schema->columns()) as $index => $column) {
-                $sheet->setColumnWidth($column['group'] === 'Condiciones' ? 30 : 25, $index + 1);
-                $emptyCells[] = new StringCell('', $column['mode'] === 'input' ? $text : $reserved);
+            foreach (array_keys($this->schema->columns()) as $index => $key) {
+                $column = $this->schema->columns()[$key];
+                $catalog = in_array($column['type'], ['catalog', 'catalog_list'], true);
+                $sheet->setColumnWidth($key === 'species_code' ? 52 : ($catalog ? 40 : ($column['group'] === 'Condiciones' ? 32 : 27)), $index + 1);
+                $headerCells[] = new StringCell($column['label'], $column['mode'] === 'input' ? $header : $reservedHeader);
+                $emptyCells[] = new StringCell('', $column['mode'] === 'input' ? ($catalog ? $wrapped : $text) : $reserved);
             }
+            $writer->addRow(new Row($headerCells, height: 72));
             for ($row = 0; $row < (int) config('imports.max_rows', 100); $row++) {
-                $writer->addRow(new Row($emptyCells));
+                $writer->addRow(new Row($emptyCells, height: 40));
             }
 
-            $sheet = $writer->addNewSheetAndMakeItCurrent()->setName('Diccionario')->setSheetView(new SheetView(freezeRow: 2));
-            $sheet->setColumnWidth(34, 1, 2);
-            $sheet->setColumnWidth(20, 3, 4, 5, 6, 7);
-            $sheet->setColumnWidth(90, 8);
-            $writer->addRow($this->row(['Columna técnica', 'Etiqueta', 'Grupo', 'Modo', 'Tipo', 'Obligatorio', 'Fuente original', 'Instrucción'], $header, 32));
+            $sheet = $writer->addNewSheetAndMakeItCurrent()->setName('Guía de campos')->setSheetView(new SheetView(freezeRow: 2, freezeColumn: 'B'));
+            $sheet->setColumnWidth(38, 1);
+            $sheet->setColumnWidth(18, 2);
+            $sheet->setColumnWidth(14, 3);
+            $sheet->setColumnWidth(26, 4);
+            $sheet->setColumnWidth(28, 5);
+            $sheet->setColumnWidth(70, 6);
+            $sheet->setColumnWidth(34, 7);
+            $sheet->setColumnWidth(30, 8);
+            $writer->addRow($this->row(['Campo en Datos', 'Grupo', 'Obligatorio', 'Cómo diligenciar', 'Formato de entrada', 'Explicación del campo', 'Ejemplo orientativo', 'Hoja de catálogo'], $header, 36));
+            $catalogSheets = $this->schema->catalogSheets();
+            $index = 0;
             foreach ($this->schema->columns() as $key => $column) {
-                $writer->addRow($this->row([$key, $column['label'], $column['group'], $column['mode'], $column['type'],
-                    $column['required'] ? 'Sí' : 'No', $column['source'] ?? '', $column['description']], $wrapped, 52));
+                $catalog = str_starts_with($key, 'condition_') ? 'Condiciones' : ($catalogSheets[$key] ?? '');
+                $mode = match ($column['mode']) {
+                    'backend' => 'Dejar vacío · lo completa SYSFOREST',
+                    'evidence' => 'Dejar vacío · cargar después en Evidencias',
+                    default => 'Diligenciar en Datos',
+                };
+                $writer->addRow($this->row([
+                    $column['label'], $column['group'], $column['required'] ? 'Sí' : 'No', $mode,
+                    $this->formatLabel($column), $column['description'], $this->example($key, $column), $catalog,
+                ], $index++ % 2 === 0 ? $wrapped : $alternate, 76));
             }
 
-            $sheet = $writer->addNewSheetAndMakeItCurrent()->setName('Catalogos')->setSheetView(new SheetView(freezeRow: 2));
-            $sheet->setColumnWidth(28, 1);
-            $sheet->setColumnWidth(60, 2);
-            $sheet->setColumnWidth(45, 3);
-            $sheet->setColumnWidth(85, 4);
-            $writer->addRow($this->row(['Catálogo', 'Código', 'Nombre', 'Detalle'], $header, 32));
-            foreach (TreeStatus::cases() as $status) {
-                $writer->addRow($this->row(['current_status', $status->value, $status->label(), 'Estado actual del individuo.'], $text, 24));
-            }
-            foreach ($this->catalogs->templateOptions() as $option) {
-                $writer->addRow($this->row([$option['catalog'], $option['code'], $option['label'], $option['details']], $wrapped, 48));
+            $options = $this->catalogs->templateOptions();
+            foreach ($catalogSheets as $field => $name) {
+                $sheet = $writer->addNewSheetAndMakeItCurrent()->setName($name)->setSheetView(new SheetView(freezeRow: 2));
+                $sheet->setColumnWidth(36, 1);
+                $sheet->setColumnWidth(44, 2);
+                $sheet->setColumnWidth(78, 3);
+                $sheet->setColumnWidth(52, 4);
+                $sheet->setColumnWidth(66, 5);
+                $condition = $field === 'condition';
+                $writer->addRow($this->row(
+                    $condition
+                        ? ['Código de referencia', 'Condición', 'Evaluación y órgano', 'Columna en Datos', 'Cómo diligenciar']
+                        : ['Código para copiar', 'Nombre', 'Información adicional', 'Campo en Datos', 'Opción en lista'],
+                    $header,
+                    36,
+                ));
+                $index = 0;
+                if ($field === 'current_status') {
+                    foreach (TreeStatus::cases() as $status) {
+                        $writer->addRow($this->row([$status->value, $status->label(), 'Seleccione la opción en Datos o copie el código de esta fila.', 'Estado actual', ImportCatalogSelection::label($status->value, $status->label())], $index++ % 2 === 0 ? $wrapped : $alternate, 48));
+                    }
+                    $catalogCounts[$field] = $index;
+                    continue;
+                }
+                foreach ($options as $option) {
+                    if ($option['catalog'] !== $field) {
+                        continue;
+                    }
+                    if ($condition) {
+                        $column = $this->schema->columns()['condition_'.$option['code']] ?? null;
+                        $values = [$option['code'], $option['label'], $option['details'], $column['label'] ?? 'Sin columna en esta plantilla',
+                            $column === null ? 'Referencia de catálogo; esta plantilla no permite importarla.' : 'En la columna indicada escriba 1 para seleccionar; 0 o vacío no seleccionan. No escriba el código de referencia.'];
+                    } else {
+                        $values = [$option['code'], $option['label'], $option['details'], $this->schema->columns()[$field]['label'], ImportCatalogSelection::label($option['code'], $option['label'])];
+                    }
+                    $writer->addRow($this->row($values, $index++ % 2 === 0 ? $wrapped : $alternate, $condition ? 72 : 60));
+                }
+                if ($index === 0) {
+                    $writer->addRow($this->row(['', 'No hay opciones vigentes en este catálogo.', 'Solicite la revisión del catálogo antes de diligenciar este campo. No hay una lista desplegable disponible.', '', ''], $wrapped, 60));
+                }
+                if (!$condition) {
+                    $catalogCounts[$field] = $index;
+                }
             }
 
-            $sheet = $writer->addNewSheetAndMakeItCurrent()->setName('Instrucciones');
+            $sheet = $writer->addNewSheetAndMakeItCurrent()->setName('Instrucciones')->setSheetView(new SheetView(freezeRow: 2));
             $sheet->setColumnWidth(34, 1);
             $sheet->setColumnWidth(125, 2);
             $writer->addRow($this->row(['Versión', ImportTemplateSchema::VERSION], $header, 36));
+            $index = 0;
             foreach ($this->instructions() as $label => $description) {
-                $writer->addRow($this->row([$label, $description], $wrapped, 56));
+                $writer->addRow($this->row([$label, $description], $index++ % 2 === 0 ? $wrapped : $alternate, 72));
             }
         } finally {
             try {
@@ -96,6 +157,7 @@ final class ImportTemplateService
             }
         }
         $this->removeEmptyAnnotations($path);
+        $this->dropdowns->apply($path, $catalogCounts);
     }
 
     /** OpenSpout emite VML y comentarios vacíos por hoja; retirarlos evita introducir objetos en el contrato. */
@@ -166,22 +228,76 @@ final class ImportTemplateService
         return new Row(array_map(static fn (string $value) => new StringCell($value, $style), $values), height: $height);
     }
 
+    private function formatLabel(array $column): string
+    {
+        if ($column['mode'] !== 'input') {
+            return 'Celda vacía, sin fórmulas';
+        }
+
+        return match ($column['type']) {
+            'catalog' => 'Lista desplegable o código vigente',
+            'catalog_list' => 'Lista para una categoría; códigos con | para varias',
+            'boolean' => 'Lista: 1, 0 o vacío',
+            'integer' => 'Número entero escrito como texto',
+            'decimal' => 'Número decimal como texto, con punto',
+            'date' => 'Texto: AAAA-MM-DD',
+            'datetime' => 'Texto: fecha y hora con zona horaria',
+            default => 'Texto',
+        };
+    }
+
+    private function example(string $key, array $column): string
+    {
+        if ($column['mode'] !== 'input') {
+            return 'Dejar vacío';
+        }
+        if ($column['type'] === 'catalog' || $column['type'] === 'catalog_list') {
+            return $key === 'current_status' ? 'Sano [active]' : 'Elegir una opción de la lista en Datos';
+        }
+        if ($column['type'] === 'boolean') {
+            return '1';
+        }
+
+        return match ($key) {
+            'code' => 'Dejar vacío para generar el código',
+            'external_number' => '000123',
+            'coordinate_raw' => '4.154, -73.633',
+            'number_of_stems' => '1',
+            'form_factor' => '0.65',
+            'cap_cm' => '120.5',
+            'total_height_m' => '12.5',
+            'commercial_height_m' => '8',
+            'crown_x_m', 'crown_y_m' => '4.2',
+            'accuracy_m' => '3.5',
+            'inspection_date', 'flowering_date', 'fruiting_date' => '2026-01-31',
+            'captured_at' => '2026-01-31T10:30:00-05:00',
+            'datum' => 'WGS84 (solo si corresponde)',
+            'location_description' => 'Costado norte del parque',
+            default => 'Describir únicamente lo observado o conocido',
+        };
+    }
+
     private function instructions(): array
     {
         return [
-            'Uso' => 'Complete solo Datos desde la fila 2. Cada fila crea un individuo nuevo y una inspección en el inventario elegido en la pantalla. No se actualizan individuos existentes.',
-            'Estructura' => 'No cambie encabezados ni su orden, nombres de hojas ni la versión. No agregue hojas, fórmulas, macros, enlaces externos, imágenes u objetos.',
+            'Por dónde empezar' => 'Lea estas instrucciones y la Guía de campos. Diligencie únicamente la hoja Datos desde la fila 2. Los ejemplos de la guía solo explican el formato: no son datos que deba copiar a su inventario.',
+            'Qué crea cada fila' => 'Cada fila crea un árbol nuevo y su inspección en el inventario elegido en la pantalla. La importación no edita árboles existentes. No vuelva a cargar un lote ya confirmado para actualizarlo.',
+            'Hojas de catálogo' => 'Estados, Especies, Emplazamientos, Hábitos de crecimiento, Origen de establecimiento, Origen biogeográfico, Fauna y Condiciones contienen las referencias disponibles al descargar. Consulte la hoja indicada en la Guía de campos.',
+            'Estructura del archivo' => 'Conserve los encabezados en español, su orden, las listas, los nombres de las hojas y la versión. No agregue hojas, fórmulas en las celdas, macros, enlaces externos, imágenes u objetos. Las referencias internas de las listas ya vienen configuradas. Guarde como libro de Excel (.xlsx).',
             'Organización e inventario' => 'Se seleccionan en SYSFOREST. No añada identificadores institucionales al archivo. Los registros se crean privados.',
-            'Códigos' => 'code vacío genera código. Un código informado debe respetar el prefijo actual de la organización y un sufijo canónico de al menos seis dígitos; cualquier colisión bloquea el lote. external_number conserva el número legado y no determina coincidencias.',
-            'Catálogos' => 'Copie los códigos de Catalogos, no las etiquetas. Los códigos se revalidan frente al catálogo vigente. fauna_category_codes admite varios códigos separados por |.',
-            'Fechas y números' => 'Conserve formato Texto. Fechas AAAA-MM-DD. Decimales con punto, sin separadores de miles ni notación científica. Se conservan valores exactos; no se redondean entradas inválidas.',
-            'Campos obligatorios' => 'current_status e inspection_date. Consulte Diccionario. La ausencia de mediciones no se reemplaza por cero.',
-            'Columnas grises' => 'Deben quedar vacías. Nombre común, científico y familia se obtienen de species_code. Los derivados forestales y madurez se recalculan en backend. Las fotografías se gestionan en Evidencias después de importar.',
-            'Condiciones' => 'Las 65 columnas condition_ aceptan 1, 0 o vacío. 1 selecciona; 0/vacío no seleccionan y no acreditan una ausencia examinada. Se conserva cada órgano y tipo de evaluación.',
-            'Coordenadas' => 'coordinate_raw acepta latitud, longitud decimal o DMS. Declare el datum cuando se conozca. La posición normalizada se guarda en PostGIS SRID 4326.',
-            'Validación y confirmación' => 'Primero cargue y revise los errores por fila. La previsualización no crea árboles. Confirme solo un lote válido; la confirmación revalida permisos, inventario y catálogos y se ejecuta en una transacción completa.',
-            'Límites' => 'Máximo '.config('imports.max_rows', 100).' filas con datos y '.config('imports.max_upload_kb', 5120).' KiB. No se truncan filas. Las filas totalmente vacías se omiten.',
-            'Privacidad' => 'El archivo se utiliza para una operación institucional. No incluya contraseñas ni información ajena al inventario. Las URLs no se consultan ni descargan.',
+            'Código del árbol' => 'Deje Código SYSFOREST vacío para generar el código. Si lo indica, debe usar el prefijo vigente de la organización y un sufijo de al menos seis dígitos, sin ceros adicionales. Un código repetido bloquea todo el lote. N. ÁRBOL / número legado conserva el identificador previo y no se usa para buscar coincidencias.',
+            'Cómo usar los catálogos' => 'En Datos, abra la lista de cada campo de catálogo y seleccione Nombre [código]. También puede escribir el código exacto de la hoja de catálogo; no escriba solo el nombre. Las opciones son una ayuda: SYSFOREST revalida los códigos vigentes al cargar y confirmar.',
+            'Fauna asociada' => 'La lista permite elegir una categoría; cada nueva elección reemplaza el contenido, no acumula selecciones. Para varias categorías, escriba sus códigos exactos separados por | y sin repetir. Si no tiene información, deje el campo vacío.',
+            'Campos obligatorios' => 'Estado actual y Fecha de inspección deben estar diligenciados en cada fila. Puede seleccionar Sano [active] en la lista del estado del árbol. Las filas vacías no requieren ninguna selección. La ausencia de mediciones no se reemplaza por cero.',
+            'Fechas y números' => 'Conserve el formato Texto de las celdas. Escriba las fechas como AAAA-MM-DD. Use punto decimal, sin separadores de miles ni notación científica. SYSFOREST conserva los valores exactos y no redondea entradas inválidas.',
+            'Columnas grises' => 'Deben quedar vacías. SYSFOREST obtiene el nombre común, el nombre científico y la familia a partir del Código de especie, y calcula las medidas derivadas y la madurez con las reglas forestales vigentes. Las fotografías se cargan después en Evidencias.',
+            'Condiciones del árbol' => 'Las 65 columnas de condiciones se distinguen por evaluación y órgano. Elija 1 para seleccionar; 0 o vacío no seleccionan y no acreditan que se haya examinado la ausencia. La hoja Condiciones señala la columna correspondiente: no copie sus códigos en Datos.',
+            'Protegido y Patrimonial' => 'Use sus listas para elegir 1 (sí) o 0 (no). Un campo vacío se considera 0. No modifique las columnas grises para intentar completar un dato que SYSFOREST calcula.',
+            'Alcance de las listas' => 'Las listas cubren las '.config('imports.max_rows', 100).' filas disponibles de Datos. Las hojas de catálogo contienen opciones vigentes al descargar; un catálogo vacío no muestra lista. Volver a elegir una opción reemplaza la anterior. No se usan macros ni selección múltiple automática.',
+            'Coordenadas' => 'Georreferenciación (coordenadas) admite latitud, longitud en grados decimales o en grados, minutos y segundos. Declare el datum solo cuando lo conozca; SYSFOREST no infiere ni transforma automáticamente otros sistemas de referencia.',
+            'Validar y confirmar' => 'Cargue el archivo y revise los errores por fila. La previsualización no crea árboles. Confirme únicamente un lote válido: SYSFOREST vuelve a verificar permisos, inventario y catálogos antes de guardar el lote completo.',
+            'Límites' => 'Máximo '.config('imports.max_rows', 100).' filas con datos y '.config('imports.max_upload_kb', 5120).' KiB por archivo. Las filas totalmente vacías se omiten y las que exceden el límite se rechazan; nunca se truncan.',
+            'Privacidad' => 'No incluya contraseñas ni información ajena al inventario. No pegue fotografías ni enlaces para descargarlas. Las hojas de catálogo son de consulta y no actualizan los catálogos de SYSFOREST.',
         ];
     }
 }

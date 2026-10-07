@@ -62,7 +62,7 @@ class ImportService
             $this->templates->write($path);
             $this->access->authorize($actor);
 
-            return response()->download($path, 'sysforest-plantilla-oficial-v1.xlsx', [
+            return response()->download($path, 'sysforest-plantilla-oficial-v2-es.xlsx', [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff',
             ])->deleteFileAfterSend(true);

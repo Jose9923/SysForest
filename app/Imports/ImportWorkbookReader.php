@@ -16,7 +16,7 @@ final class ImportWorkbookReader
 {
     private const NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
     private const REL_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
-    private const SHEETS = ['Datos', 'Diccionario', 'Catalogos', 'Instrucciones'];
+    private const LEGACY_SHEETS = ['Datos', 'Diccionario', 'Catalogos', 'Instrucciones'];
 
     public function __construct(private ImportTemplateSchema $schema, private XlsxPackageGuard $guard)
     {
@@ -29,11 +29,19 @@ final class ImportWorkbookReader
         $sheets = $this->sheets($entries);
         $strings = isset($entries['xl/sharedStrings.xml']) ? $this->sharedStrings($entries['xl/sharedStrings.xml']) : [];
         $instructions = iterator_to_array($this->rows($entries[$sheets['Instrucciones']], $strings, 100), false);
+        $version = $instructions[0]['cells'][1]['value'] ?? null;
         if (($instructions[0]['number'] ?? null) !== 1 || ($instructions[0]['cells'][0]['value'] ?? null) !== 'Versión'
-            || ($instructions[0]['cells'][1]['value'] ?? null) !== ImportTemplateSchema::VERSION) {
-            $this->fail('La versión de la plantilla no es compatible. Descargue SYSFOREST_IMPORT_V1.');
+            || !in_array($version, [ImportTemplateSchema::VERSION, ImportTemplateSchema::LEGACY_VERSION], true)) {
+            $this->fail('La versión de la plantilla no es compatible. Descargue la plantilla oficial vigente.');
         }
-        foreach (['Diccionario', 'Catalogos', 'Instrucciones'] as $name) {
+        $legacy = $version === ImportTemplateSchema::LEGACY_VERSION;
+        if (array_keys($sheets) !== ($legacy ? self::LEGACY_SHEETS : $this->schema->sheetNames())) {
+            $this->fail('Las hojas del libro no corresponden a la versión declarada. Descargue la plantilla oficial y conserve su estructura.');
+        }
+        foreach (array_keys($sheets) as $name) {
+            if ($name === 'Datos') {
+                continue;
+            }
             foreach ($this->rows($entries[$sheets[$name]], $strings, 100000) as $row) {
                 foreach ($row['cells'] as $cell) {
                     if ($cell['error'] !== null) {
@@ -43,7 +51,8 @@ final class ImportWorkbookReader
             }
         }
         $result = [];
-        $headers = $this->schema->headers();
+        $keys = $this->schema->headers();
+        $headers = $legacy ? $keys : $this->schema->templateHeaders();
         $columns = $this->schema->columns();
         $headerFound = false;
         foreach ($this->rows($entries[$sheets['Datos']], $strings, 10000) as $row) {
@@ -65,16 +74,16 @@ final class ImportWorkbookReader
             if (count($result) >= (int) config('imports.max_rows', 100)) {
                 $this->fail('El libro supera el máximo de '.config('imports.max_rows', 100).' filas con datos. No se importó ninguna fila.');
             }
-            $values = array_fill_keys($headers, null);
+            $values = array_fill_keys($keys, null);
             $errors = [];
             foreach ($row['cells'] as $index => $cell) {
-                if (!isset($headers[$index])) {
+                if (!isset($keys[$index])) {
                     if ($cell['value'] !== '' || $cell['error'] !== null) {
                         $errors['_row'][] = 'La fila contiene datos fuera de las columnas oficiales.';
                     }
                     continue;
                 }
-                $key = $headers[$index];
+                $key = $keys[$index];
                 $values[$key] = $cell['value'] === '' ? null : $cell['value'];
                 if ($cell['error'] !== null) {
                     $errors[$key][] = $cell['error'];
@@ -112,17 +121,19 @@ final class ImportWorkbookReader
             $this->fail('El libro no utiliza el formato OOXML oficial.');
         }
         $sheets = [];
+        $officialSheets = $this->schema->sheetNames();
+        $allowedSheets = array_unique([...self::LEGACY_SHEETS, ...$officialSheets]);
         foreach ($document->getElementsByTagNameNS(self::NS, 'sheet') as $sheet) {
             $name = $sheet->getAttribute('name');
             $target = $targets[$sheet->getAttributeNS(self::REL_NS, 'id')] ?? null;
-            if (!in_array($name, self::SHEETS, true) || isset($sheets[$name]) || $target === null
+            if (!in_array($name, $allowedSheets, true) || isset($sheets[$name]) || $target === null
                 || !str_ends_with($target['type'], '/worksheet') || !isset($entries[$target['path']])
                 || in_array($target['path'], $sheets, true) || !in_array($sheet->getAttribute('state'), ['', 'visible'], true)) {
-                $this->fail('El libro debe contener exactamente las cuatro hojas visibles de la plantilla oficial.');
+                $this->fail('El libro debe contener exactamente las hojas visibles de una versión oficial de la plantilla.');
             }
             $sheets[$name] = $target['path'];
         }
-        if (array_keys($sheets) !== self::SHEETS) {
+        if (array_keys($sheets) !== self::LEGACY_SHEETS && array_keys($sheets) !== $officialSheets) {
             $this->fail('No cambie los nombres ni el orden de las hojas oficiales.');
         }
         $worksheetPaths = array_keys(array_filter($entries, static fn (string $bytes, string $name) => str_starts_with($name, 'xl/worksheets/'), ARRAY_FILTER_USE_BOTH));

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\InventoryStatus;
+use App\Enums\TreeStatus;
+use App\Imports\ImportCatalogSelection;
 use App\Imports\ImportTemplateSchema;
 use App\Models\Inventory;
 use App\Models\Organization;
@@ -111,6 +113,13 @@ class ImportRowValidationService
                 continue;
             }
             // Las observaciones conservan sus espacios; los tokens no admiten equivalencias silenciosas.
+            if ($field === 'current_status' && $value !== null) {
+                $selection = ImportCatalogSelection::parse($value);
+                $status = $selection === null ? null : TreeStatus::tryFrom($selection['code']);
+                if ($status !== null && $selection['label'] === $status->label()) {
+                    $value = $status->value;
+                }
+            }
             if (in_array($field, ['is_protected', 'is_heritage'], true) || str_starts_with($field, 'condition_')) {
                 if ($value !== null && ! in_array($value, ['0', '1'], true)) {
                     $errors[$field][] = 'Usa exclusivamente 0 o 1; una celda vacía no selecciona esta opción.';
@@ -135,7 +144,7 @@ class ImportRowValidationService
         }
         $id = $this->catalogs->resolve($field, $code, $lock);
         if ($id === null) {
-            $errors[$field][] = 'El código no existe o no está disponible en su catálogo. Usa el código exacto de la hoja Catálogos.';
+            $errors[$field][] = 'La selección no coincide con una opción vigente del catálogo. Usa la lista desplegable o el código exacto de la hoja correspondiente.';
         }
 
         return $id;
@@ -163,6 +172,13 @@ class ImportRowValidationService
         if ($codes === null) {
             return [];
         }
+        // Una etiqueta puede contener |; resolver primero la selección completa evita dividir su nombre.
+        if (ImportCatalogSelection::parse($codes) !== null) {
+            $selected = $this->catalogs->resolve('fauna_category_codes', $codes, $lock);
+            if ($selected !== null) {
+                return [$selected];
+            }
+        }
         $items = explode('|', $codes);
         if (count($items) > 100 || count(array_unique($items)) !== count($items) || in_array('', $items, true)) {
             $errors['fauna_category_codes'][] = 'Indica como máximo 100 códigos distintos separados por |, sin segmentos vacíos.';
@@ -174,6 +190,10 @@ class ImportRowValidationService
             if ($id !== null) {
                 $ids[] = $id;
             }
+        }
+        if (count(array_unique($ids)) !== count($ids)) {
+            $errors['fauna_category_codes'][] = 'No repitas una categoría de fauna, aunque combines su código con su selección de la lista.';
+            return [];
         }
         return $ids;
     }

@@ -39,7 +39,7 @@ Un individuo puede participar en varias campañas sin duplicar su identidad. **A
 
 El estado actual y las condiciones de una inspección son datos distintos:
 
-- **Activo**: estado operativo del individuo; no certifica que esté sano ni sustituye la revisión de sus inspecciones.
+- **Sano**: estado general del árbol; consulta sus inspecciones para ver las condiciones y observaciones registradas.
 - **En observación**: requiere revisión o seguimiento por plagas, señales de enfermedad o daños estructurales registrados.
 - **Muerto**: el individuo se reporta muerto. Una rama muerta aislada, la muerte descendente o un proceso de deterioro no acreditan por sí solos la muerte del árbol completo.
 
@@ -64,8 +64,8 @@ No se generan intervenciones automáticas por el simple hecho de detectar una co
 
 ## Importar Excel
 
-1. Selecciona la organización y abre **Importaciones**. Descarga la plantilla oficial desde el módulo.
-2. Completa únicamente la hoja **Datos**, desde la fila 2, sin modificar encabezados ni orden. Usa códigos de catálogo, fechas como texto `AAAA-MM-DD` y decimales con punto. Conserva vacías las columnas reservadas para derivados y fotografías.
+1. Selecciona la organización y abre **Importaciones**. Descarga la plantilla oficial en español desde el módulo. Incluye **Guía de campos**, **Instrucciones** y hojas separadas de estados, especies, emplazamientos, hábitos, orígenes, fauna y condiciones. Las plantillas V1 anteriores siguen siendo compatibles.
+2. Completa únicamente la hoja **Datos**, desde la fila 2, sin modificar encabezados ni orden. Elige opciones de las listas desplegables de catálogos (nombre y código), o escribe los códigos exactos. Protegido, Patrimonial y condiciones tienen listas 0/1. En Fauna el desplegable elige una categoría; para varias escribe los códigos separados por `|`. Usa fechas como texto `AAAA-MM-DD` y decimales con punto. Conserva vacías las columnas reservadas para derivados y fotografías.
 3. Selecciona la campaña y carga el XLSX. El límite predeterminado es 100 filas y 5 MiB. No se admiten fórmulas, macros ni formatos arbitrarios.
 4. Revisa la vista previa: filas, errores, referencias y resultados calculados. La carga todavía no crea árboles. Un lote inválido requiere corregir el archivo y cargar uno nuevo.
 5. Confirma solo cuando toda la revisión sea correcta. El servidor revalida y crea árboles, participaciones e inspecciones en una transacción. Si una referencia o cálculo cambió, exige revisar la vista previa actualizada antes de confirmar nuevamente.

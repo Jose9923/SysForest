@@ -180,7 +180,8 @@ class ImportUploadService
             $batch = $this->batches->create([
                 'id' => $id, 'organization_id' => $organization->id, 'inventory_id' => $inventory->id,
                 'code' => 'IMP-'.now()->format('Ymd').'-'.strtoupper(substr(str_replace('-', '', $id), -12)),
-                'schema_version' => ImportTemplateSchema::VERSION, 'file_name' => $name, 'file_sha256' => $hash,
+                // Las celdas XLSX se normalizan al contrato vigente; el contrato CLI conserva su versión.
+                'schema_version' => $reusePrepared ? ImportTemplateSchema::LEGACY_VERSION : ImportTemplateSchema::VERSION, 'file_name' => $name, 'file_sha256' => $hash,
                 'file_size' => $size, 'status' => $invalid ? ImportBatchStatus::Invalid : ImportBatchStatus::Ready,
                 'total_rows' => count($results), 'valid_rows' => count($results) - $invalid,
                 'invalid_rows' => $invalid, 'imported_rows' => 0, 'lock_version' => 1, 'created_by' => $actor->id,
