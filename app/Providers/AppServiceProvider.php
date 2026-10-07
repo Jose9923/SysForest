@@ -82,6 +82,14 @@ class AppServiceProvider extends ServiceProvider
                 ->by('public:'.$surface.':'.hash('sha256', (string) $request->ip())));
         }
 
+        RateLimiter::for('mobile.read', fn (Request $request) => Limit::perMinute(90)
+            ->by('mobile:read:'.($request->user()?->id ?? $request->ip())));
+        RateLimiter::for('mobile.write', fn (Request $request) => Limit::perMinute(30)
+            ->by('mobile:write:'.($request->user()?->id ?? $request->ip())));
+
+        RateLimiter::for('mobile.sync', fn (Request $request) => Limit::perMinute(20)
+            ->by('mobile:sync:'.($request->user()?->id ?? $request->ip())));
+
         RateLimiter::for('maps.read', fn (Request $request) => Limit::perMinute((int) config('maps.rate_limit', 180))
             ->by('map:'.($request->user()?->id ?? $request->ip())));
 

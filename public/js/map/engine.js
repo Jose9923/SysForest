@@ -1,7 +1,8 @@
-import {cleanFilters, filterCount, readUrlState, shareableUrl, viewportBounds, pointLatLng, validBounds, territoryNotice, FILTER_KEYS} from './state.js';
+import {cleanFilters, filterCount, filterParams, sameOriginUrl, readUrlState, shareableUrl, viewportBounds, pointLatLng, validBounds, territoryNotice, FILTER_KEYS} from './state.js';
 import {LatestRequest, debounce, requestUrl} from './api.js';
 import {MapFilters} from './filters.js';
 import {MapLayers} from './layers.js';
+import {MapTools} from './tools.js';
 import {treePopupContent} from './popup-content.js';
 import {updateReportLinks} from '../reports/links.js';
 
@@ -28,6 +29,7 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
         let suppressMove = false;
         let extentBounds = null;
         let territoryLayer = null;
+        let tools = null;
         let epoch = 0;
         const viewportRequest = createRequest();
         const extentRequest = createRequest();
@@ -38,6 +40,11 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
         config.base_layers.forEach((base, index) => {
             const layer = L.tileLayer(base.url, {attribution: base.attribution, maxNativeZoom: base.max_zoom || 19, maxZoom: 20, noWrap: true, referrerPolicy: 'origin'});
             bases[base.name] = layer;
+            layer.on('add', () => {
+                const notice = root.querySelector('[data-map-base-notice]');
+                if (notice) { notice.textContent = base.notice || ''; notice.hidden = !base.notice; }
+                root.querySelector('[data-map-tile-notice]').hidden = true;
+            });
             if (!index) layer.addTo(map);
             layer.on('tileerror', () => { root.querySelector('[data-map-tile-notice]').hidden = false; });
         });
@@ -64,6 +71,7 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
             root.querySelectorAll('[name="render_mode"]').forEach(input => { input.checked = input.value === mode; });
             root.querySelector('[data-map-status-legend]').hidden = mode === 'heat';
             root.querySelector('[data-map-heat-legend]').hidden = mode !== 'heat';
+            tools?.setMode(mode);
         };
         const updateUrl = (replace = false) => {
             const url = shareableUrl(window.location.href, filters, mode, filterKeys);
@@ -79,6 +87,11 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
             root.querySelector('[data-map-filter-count]').textContent = String(filterCount(filters, filterKeys));
             area.hidden = !area.childNodes.length;
             updateReportLinks(root, filters, {origin, isPublic: publicMode, filterKeys});
+            if (!publicMode) root.querySelectorAll('[data-map-analytics-link]').forEach(link => {
+                const url = sameOriginUrl(link.dataset.mapAnalyticsLink, origin);
+                url.search = filterParams(filters, filterKeys).toString();
+                link.href = `${url.pathname}${url.search}`;
+            });
             onFiltersChanged(filters);
         };
         const refresh = async () => {
@@ -99,7 +112,7 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
                 root.querySelector('[data-map-empty]').hidden = displayed !== 0;
                 root.querySelector('[data-map-empty]').textContent = Number(meta.total) === 0 ? 'No hay árboles que coincidan con los filtros.' : Number(meta.georeferenced) === 0 ? 'Los árboles encontrados todavía no tienen ubicación registrada.' : 'No hay árboles visibles en este encuadre. Amplía o restablece la vista.';
                 let message = mode === 'heat' ? 'Densidad de árboles en el encuadre; no representa riesgo ni estado sanitario.' : mode === 'clusters' ? 'Agrupaciones de árboles. Activa una agrupación para explorarla.' : `${formatter.format(displayed)} puntos mostrados en este encuadre.`;
-                if (meta.truncated) message += ` Se alcanzó el límite de ${formatter.format(config.limits.max_points)} puntos; acerca el mapa o usa Clusters.`;
+                if (meta.truncated) message += ` Se alcanzó el límite de ${formatter.format(config.limits.max_points)} puntos; acerca el mapa o usa Agrupaciones.`;
                 else if (meta.aggregation && meta.aggregation !== 'none' && meta.aggregation !== 'points') message += ' Los datos se muestran agrupados; los contadores representan árboles.';
                 if (bounds.fullWorld) message += ' El encuadre atraviesa el borde mundial: la consulta abarca todas las longitudes.';
                 announce(message);
@@ -172,6 +185,13 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
                 }
             },
         });
+        if (!publicMode && root.querySelector('[data-map-stage]')) {
+            tools = new MapTools({root, map, L, onMode: nextMode => {
+                const input = root.querySelector(`[name="render_mode"][value="${nextMode}"]`);
+                if (input) { input.checked = true; input.dispatchEvent(new Event('change')); }
+            }});
+            tools.initialize();
+        }
         controls.initialize(); controls.sync(filters); applyModeControls(); updateChips(); updateUrl(true);
         root.querySelectorAll('[name="render_mode"]').forEach(input => input.addEventListener('change', () => {
             if (!input.checked) return;
@@ -197,7 +217,8 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
             }
             mode = state.mode; apply(state.filters, {fromHistory: true});
         });
-        window.addEventListener('pagehide', () => { debouncedRefresh.cancel(); viewportRequest.cancel(); extentRequest.cancel(); controls.cancelLookups(); layers.clear(); });
+        window.addEventListener('pagehide', () => { debouncedRefresh.cancel(); viewportRequest.cancel(); extentRequest.cancel(); controls.cancelLookups(); layers.clear(); tools?.destroy(); });
+        window.addEventListener('pageshow', event => { if (event.persisted) window.location.reload(); });
         if (window.ResizeObserver) new ResizeObserver(() => map.invalidateSize({pan: false})).observe(root.querySelector('[data-map-canvas]'));
         loadExtent();
     } catch (error) { announce(error.message || 'No se pudo iniciar el mapa. Recarga la página.', true); }

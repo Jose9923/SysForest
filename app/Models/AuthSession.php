@@ -13,7 +13,7 @@ class AuthSession extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['user_id', 'expires_at', 'last_used_at', 'revoked_at', 'revocation_reason'];
+    protected $fillable = ['user_id', 'client_type', 'organization_id', 'expires_at', 'last_used_at', 'revoked_at', 'revocation_reason'];
 
     protected function casts(): array
     {

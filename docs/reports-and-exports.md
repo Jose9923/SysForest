@@ -157,3 +157,7 @@ Las pruebas históricas de proyección verificaron las 94 fuentes/65 condiciones
 Las suites automatizadas se retiraron por solicitud del usuario. Los resultados descritos aquí son históricos; consulta [la verificación vigente](testing.md) para formato, sintaxis y revisión manual.
 
 El alcance histórico de esta fase no implementa importación, una definición de zonas, dashboards nuevos ni distribución de exportaciones mediante correo o cola.
+
+## Tablero incorporado el 07/10/2026
+
+La [guía de cartografía, diagramas y gráficas](cartography-and-analytics.md) describe `/analytics` y `/api/v1/analytics`, que reutilizan los permisos y filtros de reportes. Incluye tablas paginadas, CSV/PNG locales, enlaces Excel del catálogo, comparación de inventarios y una serie por meses con registros, con la advertencia de fechas de referencia importadas. El alcance histórico de Fase 12 permanece como antecedente.

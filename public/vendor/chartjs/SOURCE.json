@@ -1,0 +1,24 @@
+{
+  "name": "Chart.js",
+  "version": "4.5.1",
+  "license": "MIT",
+  "official_repository": "https://github.com/chartjs/Chart.js",
+  "official_documentation": "https://www.chartjs.org/docs/4.5.1/",
+  "registry_metadata": "https://registry.npmjs.org/chart.js/4.5.1",
+  "tarball": "https://registry.npmjs.org/chart.js/-/chart.js-4.5.1.tgz",
+  "tarball_integrity": "sha512-GIjfiT9dbmHRiYi6Nl2yFCq7kkwdkp1W/lp2J99rX0yo9tgJGn3lKQATztIjb5tVtevcBtIdICNWqlq5+E8/Pw==",
+  "verified_at": "2026-10-07",
+  "files": [
+    {
+      "path": "chart.umd.min.js",
+      "archive_member": "package/dist/chart.umd.min.js",
+      "sha256": "48444a82d4edcb5bec0f1965faacdde18d9c17db3063d042abada2f705c9f54a"
+    },
+    {
+      "path": "LICENSE.md",
+      "archive_member": "package/LICENSE.md",
+      "sha256": "41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce"
+    }
+  ],
+  "note": "Distribución UMD oficial conservada sin modificaciones. Global Chart. Integridad SHA-512 del paquete verificada contra npm; archivos locales, sin CDN en ejecución."
+}

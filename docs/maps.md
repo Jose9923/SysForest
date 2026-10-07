@@ -178,3 +178,7 @@ Estos comandos no implican que las suites se hayan ejecutado nuevamente al redac
 La pertenencia institucional a un municipio no certifica que un punto caiga dentro de un polígono oficial. Se conservan los límites de [georreferenciación](georeferencing.md), [inspecciones](inspections.md) y [mantenimientos](maintenances.md). El mapa no añade notificaciones de mantenimiento, reglas de fenología o multirramificación, anulación de inspecciones, importaciones, exportaciones ni informes finales. Tampoco cambia la deuda documentada de fijación de dependencia JWT.
 
 No hay geometrías territoriales inventadas ni descarga nacional de individuos. Fase 11 ya reutiliza la selección compartida para el alcance publicado. Las exportaciones y reportes futuros aún requieren alcance, proyección y aprobación propios; no se implementan como parte del portal.
+
+## Ampliación cartográfica del 07/10/2026
+
+La [guía vigente de cartografía y analíticas](cartography-and-analytics.md) documenta los espacios operativo y territorial, herramientas de medición y ubicación, capas GeoJSON locales y las bases adicionales OpenTopoMap y NASA Blue Marble histórico de 2004. Amplía el alcance descrito en las fases anteriores y conserva sus permisos, filtros y límites de lectura.

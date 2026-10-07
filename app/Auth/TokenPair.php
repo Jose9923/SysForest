@@ -18,7 +18,7 @@ final readonly class TokenPair implements JsonSerializable
     ) {
     }
 
-    /** Los secretos solo salen mediante AuthCookies, nunca al serializar el resultado. */
+    /** Los secretos solo salen mediante AuthCookies o el servicio móvil explícito, nunca al serializar el resultado. */
     public function jsonSerialize(): array
     {
         return ['session_id' => $this->session->id, 'user_id' => $this->user->id];

@@ -43,6 +43,9 @@ class AuthenticateJwtCookie
 
                 $claims = $this->tokens->decode($access);
                 $session = $this->sessions->authenticate($claims['sid'], (int) $claims['sub']);
+                if ($session->client_type !== 'web') {
+                    throw new AuthenticationException('No fue posible autenticar la solicitud.');
+                }
             } catch (AuthenticationException $exception) {
                 if (! $optional) {
                     throw $exception;

@@ -43,6 +43,7 @@ Route::middleware('identity.headers')->group(function (): void {
             require __DIR__.'/catalogs.php';
             require __DIR__.'/maps.php';
             require __DIR__.'/reports.php';
+            require __DIR__.'/analytics.php';
             require __DIR__.'/audit.php';
             Route::get('/territories', C\TerritoryController::class)->name('territories.index');
             Route::post('/active-organization', C\TenantSelectionController::class)->name('tenant.select');

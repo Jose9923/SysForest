@@ -26,10 +26,11 @@ class AuthService
         private readonly RefreshTokenRepository $refreshTokens,
         private readonly TokenService $tokens,
         private readonly SecurityEventRepository $events,
+        private readonly TenantContextService $tenants,
     ) {
     }
 
-    public function login(string $email, #[\SensitiveParameter] string $password): TokenPair
+    public function login(string $email, #[\SensitiveParameter] string $password, ?string $mobileOrganizationId = null): TokenPair
     {
         $candidate = $this->users->findByEmail(Str::lower(trim($email)));
 
@@ -40,7 +41,7 @@ class AuthService
         }
 
         try {
-            $pair = DB::transaction(function () use ($candidate, $email, $password): ?TokenPair {
+            $pair = DB::transaction(function () use ($candidate, $email, $password, $mobileOrganizationId): ?TokenPair {
                 // El bloqueo de usuario serializa login frente a cambio de contraseña/desactivación.
                 $user = $this->users->findForUpdate((int) $candidate->id);
                 $valid = Hash::check($password, $user->password);
@@ -55,8 +56,15 @@ class AuthService
                     $user = $this->users->update($user, ['password' => Hash::make($password)]);
                 }
 
+                if ($mobileOrganizationId !== null) {
+                    // Solo una organización autorizada queda incorporada a la sesión móvil firmada.
+                    $this->tenants->run($user, $mobileOrganizationId, fn () => $this->tenants->assertCurrentAccess($user, true));
+                }
+
                 $session = $this->sessions->create([
                     'user_id' => $user->id,
+                    'client_type' => $mobileOrganizationId === null ? 'web' : 'mobile',
+                    'organization_id' => $mobileOrganizationId,
                     'expires_at' => now()->addMinutes((int) config('security.session_ttl_minutes')),
                     'last_used_at' => now(),
                 ]);

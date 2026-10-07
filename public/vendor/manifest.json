@@ -28,5 +28,17 @@
     "path": "public/vendor/select2/LICENSE.md",
     "source": "https://raw.githubusercontent.com/select2/select2/4.0.13/LICENSE.md",
     "sha256": "4ee0cbc51370afde358652a0f977972053729ed578b6a42f5e2a037d114f0b39"
+  },
+  {
+    "path": "public/vendor/chartjs/chart.umd.min.js",
+    "source": "https://registry.npmjs.org/chart.js/-/chart.js-4.5.1.tgz",
+    "archive_member": "package/dist/chart.umd.min.js",
+    "sha256": "48444a82d4edcb5bec0f1965faacdde18d9c17db3063d042abada2f705c9f54a"
+  },
+  {
+    "path": "public/vendor/chartjs/LICENSE.md",
+    "source": "https://registry.npmjs.org/chart.js/-/chart.js-4.5.1.tgz",
+    "archive_member": "package/LICENSE.md",
+    "sha256": "41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce"
   }
 ]
