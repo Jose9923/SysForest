@@ -15,7 +15,7 @@ class MapOptionRepository
     public const FIELDS = [
         'department_id' => 'departments', 'municipality_id' => 'municipalities',
         'organization_id' => 'organizations', 'inventory_id' => 'inventories',
-        'species_id' => 'species', 'family_id' => 'families', 'placement_id' => 'placements',
+        'species_id' => 'species', 'family_id' => 'families', 'common_name_id' => 'common_names', 'placement_id' => 'placements',
         'growth_habit_id' => 'growth_habits', 'establishment_origin_id' => 'establishment_origins',
         'biogeographic_origin_id' => 'biogeographic_origins', 'maturity_state_id' => 'maturity_states',
         'physical_condition_ids' => 'physical_conditions', 'phytosanitary_condition_ids' => 'phytosanitary_conditions',
@@ -23,7 +23,8 @@ class MapOptionRepository
     ];
 
     private const CATALOGS = [
-        'species' => M\Species::class, 'families' => M\Family::class, 'placements' => M\Placement::class,
+        'species' => M\Species::class, 'families' => M\Family::class, 'common_names' => M\SpeciesCommonName::class,
+        'placements' => M\Placement::class,
         'growth_habits' => M\GrowthHabit::class, 'establishment_origins' => M\EstablishmentOrigin::class,
         'biogeographic_origins' => M\BiogeographicOrigin::class, 'maturity_states' => M\MaturityState::class,
         'physical_conditions' => M\Condition::class, 'phytosanitary_conditions' => M\Condition::class,
@@ -86,6 +87,20 @@ class MapOptionRepository
         abort_unless(isset(self::CATALOGS[$kind]), 404);
         $model = self::CATALOGS[$kind];
         $query = $model::query();
+        if ($kind === 'species') {
+            $query->with(['commonNames' => fn ($names) => $names->orderByDesc('is_primary')->orderBy('name')->orderBy('id')]);
+            if (!empty($filters['family_id'])) {
+                $query->where('family_id', $filters['family_id']);
+            }
+        } elseif ($kind === 'common_names') {
+            $query->with('species:id,scientific_name');
+            if (!empty($filters['species_id'])) {
+                $query->where('species_id', $filters['species_id']);
+            }
+            if (!empty($filters['family_id'])) {
+                $query->whereHas('species', fn (Builder $species) => $species->where('family_id', $filters['family_id']));
+            }
+        }
         if (in_array($kind, ['physical_conditions', 'phytosanitary_conditions'], true)) {
             $query->where('assessment_type', $kind === 'physical_conditions' ? 'physical_mechanical' : 'phytosanitary')
                 ->with('category:id,name');
@@ -103,9 +118,7 @@ class MapOptionRepository
     {
         $query = $this->query($kind, $scope, $filters);
         $name = in_array($kind, ['species', 'families'], true) ? 'scientific_name' : 'name';
-        if ($term !== '') {
-            $query->where($name, 'ilike', '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term).'%');
-        }
+        $this->search($query, $kind, $term);
         $records = $query->orderBy($name)->orderBy('id')->offset(($page - 1) * 30)->limit(31)->get();
 
         return ['results' => $records->take(30)->map(fn ($record) => $this->label($record, $kind))->values()->all(),
@@ -120,7 +133,10 @@ class MapOptionRepository
                 continue;
             }
             $ids = is_array($filters[$field]) ? $filters[$field] : [$filters[$field]];
-            $options[$field] = $this->query($kind, $scope, $filters)->whereKey($ids)->get()
+            // La cascada limita opciones nuevas, no oculta criterios históricos o incompatibles ya seleccionados.
+            $criteria = in_array($kind, ['species', 'common_names'], true)
+                ? array_diff_key($filters, array_flip(['family_id', 'species_id'])) : $filters;
+            $options[$field] = $this->query($kind, $scope, $criteria)->whereKey($ids)->get()
                 ->map(fn ($record) => $this->label($record, $kind))->values()->all();
         }
 
@@ -207,16 +223,47 @@ class MapOptionRepository
         return $filters;
     }
 
-    private function label($record, string $kind): array
+    /** Los alias son alternativas de búsqueda; EXISTS evita multiplicar especies que coinciden varias veces. */
+    public function search(Builder $query, string $kind, string $term): void
+    {
+        if ($term === '') {
+            return;
+        }
+        $name = in_array($kind, ['species', 'families'], true) ? 'scientific_name' : 'name';
+        $pattern = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term).'%';
+        $query->where(function (Builder $matches) use ($kind, $name, $pattern): void {
+            $matches->where($name, 'ilike', $pattern);
+            if ($kind === 'species') {
+                $matches->orWhereHas('commonNames', fn (Builder $names) => $names->where('name', 'ilike', $pattern));
+            } elseif ($kind === 'common_names') {
+                $matches->orWhereHas('species', fn (Builder $species) => $species->where('scientific_name', 'ilike', $pattern));
+            }
+        });
+    }
+
+    /** Texto compartido por opciones privadas y públicas; la identidad se proyecta por separado. */
+    public function optionText($record, string $kind): string
     {
         $text = in_array($kind, ['species', 'families'], true) ? $record->scientific_name : $record->name;
-        if (in_array($kind, ['physical_conditions', 'phytosanitary_conditions'], true)) {
+        if ($kind === 'common_names') {
+            $text .= ' · '.$record->getRelation('species')->scientific_name;
+        } elseif ($kind === 'species') {
+            $names = $record->getRelation('commonNames')->pluck('name')->unique()->implode(', ');
+            if ($names !== '') {
+                $text .= ' · '.$names;
+            }
+        } elseif (in_array($kind, ['physical_conditions', 'phytosanitary_conditions'], true)) {
             $text = $record->getRelation('category')->name.' · '.$text;
         }
         if (isset($record->active) && !$record->active) {
             $text .= ' (inactivo)';
         }
 
-        return ['id' => (string) $record->id, 'text' => $text];
+        return $text;
+    }
+
+    private function label($record, string $kind): array
+    {
+        return ['id' => (string) $record->id, 'text' => $this->optionText($record, $kind)];
     }
 }

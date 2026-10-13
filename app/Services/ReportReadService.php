@@ -62,7 +62,7 @@ class ReportReadService
 
     public function inventoryColumns(bool $public): array
     {
-        $visible = ['code', 'common_name', 'scientific_name', 'municipality', 'organization',
+        $visible = ['code', 'common_names', 'scientific_name', 'municipality', 'organization',
             'placement', 'current_status_label', 'latest_inspection_date'];
 
         return array_values(array_filter($this->schema->columns($public), fn ($column) => in_array($column['key'], $visible, true)));
@@ -139,9 +139,9 @@ class ReportReadService
 
     private function applied(array $values, array $selected): array
     {
-        $labels = ['q' => 'Búsqueda', 'code' => 'Código', 'common_name' => 'Nombre común', 'scientific_name' => 'Nombre científico',
+        $labels = ['q' => 'Búsqueda', 'code' => 'Código', 'common_name' => 'Nombre común (texto)', 'scientific_name' => 'Nombre científico (texto)',
             'department_id' => 'Departamento', 'municipality_id' => 'Municipio', 'organization_id' => 'Organización', 'inventory_id' => 'Inventario',
-            'species_id' => 'Especie', 'family_id' => 'Familia', 'placement_id' => 'Emplazamiento', 'growth_habit_id' => 'Hábito',
+            'species_id' => 'Nombre científico', 'common_name_id' => 'Nombre común', 'family_id' => 'Familia', 'placement_id' => 'Emplazamiento', 'growth_habit_id' => 'Hábito',
             'establishment_origin_id' => 'Origen de establecimiento', 'biogeographic_origin_id' => 'Origen biogeográfico',
             'maturity_state_id' => 'Madurez', 'current_status' => 'Estado del árbol', 'date_from' => 'Desde', 'date_to' => 'Hasta',
             'is_protected' => 'Protegido', 'is_heritage' => 'Patrimonial', 'diameter_class_number' => 'Clase diamétrica',

@@ -10,6 +10,7 @@ use App\Models\EstablishmentOrigin;
 use App\Models\GrowthHabit;
 use App\Models\Placement;
 use App\Models\Species;
+use App\Models\SpeciesCommonName;
 use App\Models\Tree;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -55,6 +56,16 @@ class TreeCatalogRepository
         }
 
         return true;
+    }
+
+    /** Incluye referencias inactivas para consultar registros históricos sin habilitarlas en captura. */
+    public function filterOptions(): array
+    {
+        return [
+            'species' => Species::query()->with(['family', 'commonNames'])->orderBy('scientific_name')->get(),
+            'common_names' => SpeciesCommonName::query()->with('species')->orderBy('name')->orderBy('id')->get(),
+            'placements' => Placement::query()->orderBy('sort_order')->orderBy('name')->get(),
+        ];
     }
 
     public function options(?Tree $tree = null): array

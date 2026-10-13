@@ -99,6 +99,10 @@ class TreeInspectionRepository
             $query->whereHas('tree', fn (Builder $tree) => $tree->where('species_id', $filters['species_id']));
         }
 
+        if (!empty($filters['common_name_id'])) {
+            $query->whereHas('tree.species.commonNames', fn (Builder $name) => $name->whereKey($filters['common_name_id']));
+        }
+
         return $this->ordered($query)->paginate(20)->withQueryString();
     }
 

@@ -6,11 +6,19 @@
         </div></details>
         <details class="map-filter-group"><summary>Identidad y taxonomía</summary><div class="map-fields">
             <div class="field"><label for="map-q">Buscar en el arbolado</label><input id="map-q" name="q" data-filter-label="Búsqueda" maxlength="150" value="{{ $initialFilters['q'] ?? '' }}" placeholder="{{ ($publicMap ?? false) ? 'Código o nombre de especie' : 'Código, nombre o ubicación' }}"></div>
-            @foreach (['code' => 'Código del árbol', 'common_name' => 'Nombre común', 'scientific_name' => 'Nombre científico'] as $field => $label)
-                <div class="field"><label for="map-filter-{{ $field }}">{{ $label }}</label><input id="map-filter-{{ $field }}" name="{{ $field }}" data-filter-label="{{ $label }}" maxlength="150" value="{{ $initialFilters[$field] ?? '' }}"></div>
-            @endforeach
+            <div class="field"><label for="map-filter-code">Código del árbol</label><input id="map-filter-code" name="code" data-filter-label="Código del árbol" maxlength="150" value="{{ $initialFilters['code'] ?? '' }}"></div>
             @include('maps.select', ['field' => 'family_id', 'label' => 'Familia', 'kind' => 'families'])
-            @include('maps.select', ['field' => 'species_id', 'label' => 'Especie', 'kind' => 'species'])
+            @include('maps.select', ['field' => 'species_id', 'label' => 'Nombre científico', 'kind' => 'species'])
+            @include('maps.select', ['field' => 'common_name_id', 'label' => 'Nombre común', 'kind' => 'common_names'])
+            <p class="map-hint">Una especie puede tener varios nombres comunes. Puedes encontrar sus árboles con cualquiera de ellos. El nombre científico distingue especies que comparten un nombre común.</p>
+            @foreach (['common_name' => 'Nombre común', 'scientific_name' => 'Nombre científico'] as $field => $label)
+                <input type="hidden" name="{{ $field }}" data-filter-label="{{ $label }} · búsqueda anterior" value="{{ $initialFilters[$field] ?? '' }}">
+                <div class="map-hint" data-taxonomy-legacy="{{ $field }}" @if (trim((string) ($initialFilters[$field] ?? '')) === '') hidden @endif>
+                    <strong>{{ $label }} · búsqueda anterior:</strong> <span data-taxonomy-legacy-value>{{ $initialFilters[$field] ?? '' }}</span>.
+                    Se conserva la coincidencia por texto de este enlace. Selecciona una opción del catálogo para reemplazarla.
+                    <button class="button secondary" type="button" data-taxonomy-legacy-clear="{{ $field }}">Quitar búsqueda anterior de {{ mb_strtolower($label) }}</button>
+                </div>
+            @endforeach
         </div></details>
         <details class="map-filter-group"><summary>Origen, ubicación y estado</summary><div class="map-fields">
             @include('maps.select', ['field' => 'placement_id', 'label' => 'Emplazamiento', 'kind' => 'placements'])

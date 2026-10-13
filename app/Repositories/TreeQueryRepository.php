@@ -100,6 +100,9 @@ class TreeQueryRepository
         if ($filters->has('family_id')) {
             $query->whereHas('species', fn (Builder $species) => $species->where('family_id', $filters->get('family_id')));
         }
+        if ($filters->has('common_name_id')) {
+            $query->whereHas('species.commonNames', fn (Builder $names) => $names->whereKey($filters->get('common_name_id')));
+        }
         if ($filters->has('scientific_name')) {
             $query->whereHas('species', fn (Builder $species) => $species->where('scientific_name', 'ilike', $this->literalSearch($filters->get('scientific_name'))));
         }

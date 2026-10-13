@@ -13,7 +13,8 @@ export function treePopupContent(properties, {document, inspectionLabel = 'Últi
     const title = document.createElement('h3');
     title.textContent = properties.code || 'Árbol';
     box.append(title);
-    box.append(paragraph(document, 'Nombre común', properties.common_name));
+    const commonNames = Array.isArray(properties.common_names) ? properties.common_names.join(', ') : properties.common_name;
+    box.append(paragraph(document, 'Nombres comunes', commonNames));
     box.append(paragraph(document, 'Nombre científico', properties.scientific_name));
     box.append(paragraph(document, 'Estado', properties.status_label));
     box.append(paragraph(document, 'Emplazamiento', properties.placement));

@@ -5,13 +5,15 @@ const CASCADES = Object.freeze({
     department_id: ['municipality_id', 'organization_id', 'inventory_id'],
     municipality_id: ['organization_id', 'inventory_id'],
     organization_id: ['inventory_id'],
-    family_id: ['species_id'],
+    family_id: ['species_id', 'common_name_id'],
+    species_id: ['common_name_id'],
 });
 
 export class MapFilters {
     constructor({form, config, getAppliedFilters, onApply, onSearch, onError, document, origin, $, filterKeys = FILTER_KEYS, createRequest = () => new LatestRequest()}) {
         Object.assign(this, {form, config, getAppliedFilters, onApply, onSearch, onError, document, origin, $, filterKeys, createRequest});
         this.requests = [];
+        this.optionRequests = new Map();
         this.synchronizing = false;
     }
     initialize() {
@@ -24,11 +26,33 @@ export class MapFilters {
                 this.synchronizing = true;
                 descendants.forEach(name => {
                     const field = this.form.elements.namedItem(name);
-                    if (field) this.$(field).val(null).trigger('change.select2');
+                    if (field) {
+                        this.optionRequests.get(field)?.cancel();
+                        const control = this.$(field);
+                        control.val(null).trigger('change.select2');
+                        if (control.hasClass('select2-hidden-accessible')) control.select2('close');
+                    }
                 });
                 this.synchronizing = false;
             });
         });
+        Object.entries({common_name_id: 'common_name', species_id: 'scientific_name'}).forEach(([catalog, legacy]) => {
+            const select = this.form.elements.namedItem(catalog);
+            if (select) this.$(select).on('change.taxonomyLegacy', () => {
+                if (this.synchronizing || !select.value) return;
+                const field = this.form.elements.namedItem(legacy);
+                if (field) field.value = '';
+                this.updateLegacyNotices();
+            });
+        });
+        this.form.querySelectorAll('[data-taxonomy-legacy-clear]').forEach(button => {
+            button.addEventListener('click', () => {
+                const field = this.form.elements.namedItem(button.dataset.taxonomyLegacyClear);
+                if (field) field.value = '';
+                this.updateLegacyNotices();
+            });
+        });
+        this.updateLegacyNotices();
         const search = this.document.querySelector('[data-map-search]');
         if (search) this.remoteSelect(search, true);
     }
@@ -36,6 +60,7 @@ export class MapFilters {
     remoteSelect(select, search = false) {
         const request = this.createRequest();
         this.requests.push(request);
+        this.optionRequests.set(select, request);
         const endpoint = search ? this.config.endpoints.search : `${this.config.endpoints.options.replace(/\/$/, '')}/${select.dataset.mapOptions}`;
         this.$(select).select2({
             width: '100%', language: 'es', placeholder: select.dataset.placeholder || 'Todos',
@@ -77,6 +102,16 @@ export class MapFilters {
             } else element.value = value;
         }
         this.synchronizing = false;
+        this.updateLegacyNotices();
+    }
+    updateLegacyNotices() {
+        this.form.querySelectorAll('[data-taxonomy-legacy]').forEach(notice => {
+            const field = this.form.elements.namedItem(notice.dataset.taxonomyLegacy);
+            const value = typeof field?.value === 'string' ? field.value.trim() : '';
+            notice.hidden = value === '';
+            const output = notice.querySelector('[data-taxonomy-legacy-value]');
+            if (output) output.textContent = value;
+        });
     }
     resetSearch() { this.$('[data-map-search]').val(null).trigger('change.select2'); }
     describe(filters) {

@@ -36,6 +36,7 @@ Los nombres de parámetros terminados en `_id` se conservan para reutilizar la i
 | `organization_id` y organización de la URL | `Organization.public_code`, reservado e inmutable. |
 | `inventory_id` | `ORGANIZATION_PUBLIC_CODE~INVENTORY_CODE`. |
 | Especie, familia y demás referencias nacionales | `code` del catálogo correspondiente; por ejemplo `SPECIES_LICANIA_TOMENTOSA`. |
+| `common_name_id` | `SpeciesCommonName.code`, obtenido de `options/common_names`; no es el texto del nombre ni un UUID. |
 | `physical_condition_ids[]`, `phytosanitary_condition_ids[]` | Códigos de condiciones del grupo correspondiente. |
 | Árbol en una URL | Par `organization.public_code` + `Tree.code`. |
 | `id` de una entidad GeoJSON pública | `ORGANIZATION_PUBLIC_CODE~TREE_CODE`. |
@@ -43,7 +44,7 @@ Los nombres de parámetros terminados en `_id` se conservan para reutilizar la i
 
 Los ejemplos describen formatos, no garantizan que exista una institución o árbol publicado. Publicar catálogos nacionales no publica automáticamente individuos. Las opciones permiten referencias de catálogo inactivas para consultar historia y las señalan como tales; no habilitan nuevas capturas con esos valores.
 
-`GET /api/public/v1/options/{kind}` acepta estos tipos: `departments`, `municipalities`, `organizations`, `inventories`, `species`, `families`, `placements`, `growth_habits`, `establishment_origins`, `biogeographic_origins`, `maturity_states`, `physical_conditions`, `phytosanitary_conditions` y `maintenance_types`. Devuelve hasta 30 resultados con `{id: código, text: etiqueta}` y `pagination.more`. Los territorios se limitan a la jerarquía activa de organizaciones publicadas; los inventarios cumplen su propia política de publicación.
+`GET /api/public/v1/options/{kind}` acepta estos tipos: `departments`, `municipalities`, `organizations`, `inventories`, `species`, `families`, `common_names`, `placements`, `growth_habits`, `establishment_origins`, `biogeographic_origins`, `maturity_states`, `physical_conditions`, `phytosanitary_conditions` y `maintenance_types`. Devuelve hasta 30 resultados con `{id: código, text: etiqueta}` y `pagination.more`. Los territorios se limitan a la jerarquía activa de organizaciones publicadas; los inventarios cumplen su propia política de publicación.
 
 ## Filtros admitidos
 
@@ -58,7 +59,7 @@ Los ejemplos describen formatos, no garantizan que exista una institución o ár
 | Grupo | Claves / valores |
 | --- | --- |
 | Texto | `q`, `code`, `common_name`, `scientific_name`: hasta 150 caracteres. |
-| Taxonomía | `species_id`, `family_id`: códigos de catálogo. |
+| Taxonomía | `species_id`, `family_id`, `common_name_id`: códigos del catálogo correspondiente. |
 | Características permanentes | `placement_id`, `growth_habit_id`, `establishment_origin_id`, `biogeographic_origin_id`: códigos; `is_protected`, `is_heritage`: booleanos. |
 | Estado | `current_status`: `active`, `under_observation`, `dead`, `felled`, `transplanted`, `removed`, `replaced`. |
 | Territorio y campaña | `department_id`, `municipality_id`, `organization_id`, `inventory_id`: códigos con los formatos anteriores. |
@@ -76,6 +77,16 @@ Los ejemplos describen formatos, no garantizan que exista una institución o ár
 No se admiten `scope`, `tree_id`, `trashed`, `include_deleted`, `include_voided_trees`, `maintenance_priority` ni `has_pending_maintenance`, ni siquiera con un valor falso. Tampoco se admiten estados pendientes, programados, asignados, en proceso o cancelados como filtros públicos. Los booleanos `false`, `0` y `"0"` se conservan como criterios explícitos; vacío o `null` no añade un filtro.
 
 Las referencias territoriales se resuelven en orden país/departamento/municipio/organización/campaña cuando corresponda. Las referencias de catálogo de un grupo incorrecto se rechazan; las condiciones inactivas conservadas en observaciones históricas siguen siendo consultables.
+
+## Nombres comunes y selección de especie · 13/10/2026
+
+La interfaz ofrece selectores buscables para **Nombre científico** (`species_id`) y **Nombre común** (`common_name_id`). `GET /api/public/v1/options/common_names` permite buscar por `term` el nombre común o el científico asociado; entrega `id` igual al código del nombre y una etiqueta `nombre común · nombre científico`. `options/species` busca también cualquiera de los nombres comunes e incluye todos en su etiqueta. Se mantienen la paginación de 30 opciones, referencias históricas inactivas y códigos públicos; no se incorporan UUID a las respuestas.
+
+Una especie puede tener varios nombres comunes y un principal. Elegir cualquiera de sus nombres selecciona los mismos árboles de esa especie, sin duplicar filas ni indicadores. Si dos especies comparten el mismo texto común, son opciones separadas con su nombre científico. Los filtros `family_id`, `species_id` y `common_name_id` se combinan con AND; referencias válidas incompatibles devuelven cero resultados. La cascada limita las nuevas opciones a familia/especie seleccionadas, pero la resolución de códigos y etiquetas conserva los criterios recibidos sin ampliar la consulta.
+
+Los parámetros de texto `common_name` y `scientific_name` siguen aceptándose para compatibilidad con enlaces y clientes anteriores. Buscan coincidencia parcial y se combinan con los demás filtros. La interfaz señala las búsquedas antiguas y permite quitarlas; elegir un catálogo sustituye el texto equivalente. Cambiar familia limpia la especie y el nombre común seleccionados; cambiar especie limpia el nombre común.
+
+Las respuestas de tabla y ficha públicas incorporan `common_names: string[]`; los puntos GeoJSON lo incluyen en `properties.common_names`. El arreglo contiene todos los nombres de la especie, principal primero y después nombre e ID como desempate. `common_name` sigue disponible como principal o primer nombre de ese orden si no hay principal. Si no existen nombres, se entrega `common_names=[]` y `common_name=null`. Se reutilizan relaciones precargadas, sin consultas por cada árbol. La lista, los popups y la información general de la ficha muestran todos; el encabezado de la ficha mantiene el principal. Es una ampliación de la proyección de catálogos, sin exponer identificadores internos ni cambiar la cadena de publicación.
 
 ## Última visita, campañas y mantenimiento
 

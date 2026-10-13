@@ -19,7 +19,7 @@ class MapTreeResource extends JsonResource
     {
         $species = $this->resource->getRelation('species');
         $placement = $this->resource->getRelation('placement');
-        $commonName = $species?->getRelation('commonNames')->first()?->name;
+        $commonNames = $species?->getRelation('commonNames')->pluck('name')->values()->all() ?? [];
 
         return [
             'type' => 'Feature',
@@ -28,7 +28,8 @@ class MapTreeResource extends JsonResource
                 : ['type' => 'Point', 'coordinates' => [(float) $this->longitude, (float) $this->latitude]],
             'properties' => [
                 'kind' => 'tree', 'id' => $this->id, 'code' => $this->code,
-                'common_name' => $commonName, 'scientific_name' => $species?->scientific_name,
+                'common_name' => $commonNames[0] ?? null, 'common_names' => $commonNames,
+                'scientific_name' => $species?->scientific_name,
                 'status' => $this->current_status->value, 'status_label' => $this->current_status->label(),
                 'placement' => $placement?->name,
                 'latest_inspection' => $this->includeInspection && $this->latest_inspection_date !== null

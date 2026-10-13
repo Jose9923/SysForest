@@ -37,6 +37,7 @@ Las tablas siguientes describen el contrato institucional. Todas las claves son 
 | `common_name` | Texto, hasta 150 | Coincidencia parcial en cualquiera de los nombres comunes de Species; no solo en el principal. |
 | `tree_id` | UUID | Individuo exacto, incluso si aún no tiene una inspección. |
 | `species_id`, `family_id` | UUID | Especie exacta o familia de la especie. Family permanece normalizada; no se agrega una columna familiar a Tree. |
+| `common_name_id` | UUID | Nombre común exacto de `species_common_names`, principal o secundario. Selecciona los árboles de su especie mediante `EXISTS`, sin duplicarlos. |
 | `placement_id`, `growth_habit_id` | UUID | Emplazamiento o hábito del individuo. |
 | `establishment_origin_id` | UUID | Origen de establecimiento, independiente del origen biogeográfico. |
 | `biogeographic_origin_id` | UUID | Origen biogeográfico, sin inferir cómo se estableció el árbol. |
@@ -50,6 +51,18 @@ Las tablas siguientes describen el contrato institucional. Todas las claves son 
 La participación en un inventario usa `EXISTS`; pertenecer a dos campañas no duplica el árbol ni infla conteos. En estas consultas no se exige que la campaña permanezca activa: una campaña cerrada conserva sus participaciones. `inventory_id` en el listado de árboles y el mapa **no** exige que la última inspección se haya registrado dentro de esa campaña.
 
 Las referencias taxonómicas y de catálogo inactivas conservan su capacidad de búsqueda histórica. Las opciones AJAX las identifican como inactivas. Esto no habilita su selección en una nueva captura: las reglas de escritura de cada dominio permanecen vigentes. Las organizaciones y los territorios inactivos se excluyen del alcance de lectura del motor.
+
+## Nombres comunes y selectores de taxonomía · 13/10/2026
+
+`Species` conserva varios `SpeciesCommonName` mediante `commonNames()`, con un máximo de un nombre principal. El árbol referencia una especie y hereda sus nombres; no se guardan copias de esos nombres en cada individuo ni se convierte cada alias en una especie distinta. Un mismo texto común puede identificar especies diferentes: la etiqueta de la opción incluye el nombre científico para distinguirlas.
+
+Los formularios de consulta usan selectores buscables: **Nombre científico** envía `species_id` y **Nombre común** envía `common_name_id`. El motor común lleva los mismos criterios a mapas, bandejas, reportes y análisis. Los selectores AJAX comparten `MapOptionRepository`: `species` busca nombre científico o cualquiera de sus nombres comunes; `common_names` busca el nombre común o el científico asociado. Las opciones de especies incluyen todos sus nombres; las de nombres comunes muestran `nombre · nombre científico`. La consulta usa `EXISTS`, por lo que varios alias coincidentes no repiten especies ni árboles, ni inflan indicadores.
+
+Familia, especie y nombre común se combinan con **AND**. Criterios existentes pero incompatibles producen cero resultados; no se ignora uno para ampliar la búsqueda. La cascada de opciones limita especies por familia y nombres comunes por familia/especie. Al cambiar familia se limpian especie y nombre común; al cambiar especie se limpia el nombre común. La recuperación de etiquetas seleccionadas conserva criterios históricos, aunque sean incompatibles entre sí.
+
+Las claves de texto `common_name` y `scientific_name` siguen aceptando coincidencia parcial para conservar URLs y clientes anteriores. Los formularios muestran un aviso cuando llega una búsqueda antigua y permiten quitarla. Seleccionar una opción del catálogo reemplaza su criterio de texto equivalente; no se convierte silenciosamente un texto ambiguo en la primera especie encontrada.
+
+Las proyecciones de puntos privadas y públicas entregan `common_names` como arreglo de textos con todos los nombres registrados, ordenados por principal, nombre e ID. Se conserva `common_name` como nombre principal —o el primero de ese orden si no hay principal— por compatibilidad. Sin nombres: `common_names=[]` y `common_name=null`. El popup, las fichas y los listados muestran todos los nombres; el título público puede conservar el principal. La tabla de reportes usa `common_names`; las exportaciones conservan también la columna del principal. Estas lecturas mantienen las referencias históricas de catálogo inactivas y no habilitan su uso en nuevas capturas.
 
 ## Última inspección y ANY/ALL
 
@@ -141,7 +154,7 @@ Las diferencias públicas son explícitas:
 - `inventory_id` exige publicación de la campaña seleccionada dentro del mismo `EXISTS` de participación. No redefine la última visita.
 - El `EXISTS` de mantenimiento restringe `executed|verified` en la misma orden que satisface tipo y estado. La consulta pública no ofrece prioridad ni pendientes.
 - Se rechazan `scope`, `tree_id`, papelera e inclusión de anulados, campos desconocidos y estados de mantenimiento no publicables.
-- El orden admite `code`, `common_name`, `scientific_name`, `municipality` y `latest_inspection_date`, con `asc|desc`; las páginas públicas admiten 1..1000. El nombre común mostrado y ordenado prioriza el principal, después nombre e ID; el orden de relaciones del mapa privado se conserva.
+- El orden admite `code`, `common_name`, `scientific_name`, `municipality` y `latest_inspection_date`, con `asc|desc`; las páginas públicas admiten 1..1000. El orden por nombre común prioriza el principal, después nombre e ID; las relaciones y proyecciones de ambos mapas conservan ese mismo orden y entregan todos los nombres en `common_names`.
 
 `PublicTreeRepository` compone el motor común para tabla, indicadores, ficha e historiales. `PublicMapService` usa el mismo `MapTreeRepository` para puntos, clusters, calor, extensión y búsqueda. El radio se aplica también a tabla e indicadores; la caja limita el dibujo. La geometría, precisión de parámetros, unidades métricas, ausencia de punto y límites de transporte mantienen las reglas espaciales anteriores.
 
@@ -156,3 +169,20 @@ El motor compartido pasó `TreeFilterEngineTest`: **27 pruebas y 239 aserciones*
 `PublicTreeEngineTest` y `PublicPortalPerformanceTest` verifican el alcance publicado y su reutilización espacial. Los resultados de Fase 11 se documentan por separado; no se suman ni sustituyen las cifras históricas anteriores.
 
 Se conservan las deudas previas: certificación del levantamiento, transformaciones de datum, altitud, corrección diferencial y validación territorial avanzada. La pertenencia institucional a un municipio no certifica que el punto esté dentro de su polígono. No se añaden geometrías territoriales de ejemplo, inferencias ambientales, importación ni reportes finales. Véanse [georeferencing.md](georeferencing.md), [tree-domain.md](tree-domain.md) y [maintenances.md](maintenances.md).
+
+
+## Revisión de selectores y nombres comunes · 13/10/2026
+
+Los filtros de árboles, inspecciones, mapas, tablero analítico, reportes y listado público usan selectores con búsqueda para nombre científico y nombre común. La especie acota las opciones de nombres comunes; en los formularios remotos, la familia acota también las especies. Los filtros locales incluyen referencias inactivas para consultar historia; esto no habilita referencias inactivas en la captura de nuevos árboles. Las búsquedas generales, códigos, fechas y rangos mantienen sus tipos apropiados.
+
+La especie conserva varios nombres comunes, uno de ellos principal. La consulta exacta por cualquier alias utiliza `EXISTS`, combina criterios con AND y no multiplica árboles ni inspecciones. Las tablas de árboles, inspecciones y reportes, los popups y el portal muestran todos los nombres disponibles. La API móvil ya entrega los alias activos y permite buscar la especie por un nombre secundario; no cambia su contrato de captura.
+
+Verificación actual, independiente de las cifras históricas anteriores:
+
+- `bash bin/check` terminó con código 0: formato PSR-12, sintaxis JavaScript y sintaxis de 550 archivos PHP. No se ejecutaron ni recrearon suites automatizadas.
+- 21 comprobaciones manuales de backend y 22 de integración, realizadas fuera del repositorio fuente sobre datos existentes en transacciones PostgreSQL de solo lectura. Los alias Palma y Palma Botella de Roystonea regia devolvieron los mismos 137 árboles y 137 inspecciones; se comprobaron intersecciones incompatibles, ausencia de duplicados, búsquedas literales y códigos públicos.
+- El XLSX temporal generado y releído conservó 137 filas, ambos nombres y el criterio legible. Los enlaces de CSV, Excel, GeoJSON y PDF conservaron `common_name_id`. El temporal se eliminó después de su lectura.
+- Revisión en navegador de cascada científico/nombre común, selección de ambos alias, reportes, gráficos, mapa y consulta pública. El mapa conservó 137 árboles totales, 136 con punto y 1 sin ubicación; el portal filtró Samán mediante su código público, conservando solo el árbol publicado elegible. Se revisó el desplegable en ventana estrecha.
+- Proyección manual de 2.852 puntos, 154 con varios nombres, sin consultas adicionales desde Resources. Contratos de proyección pública comprobados también con modelos en memoria: arreglo completo, campo principal compatible, especie ausente y ausencia de UUID interno.
+
+Límites: no había nombres comunes inactivos en los datos locales para ejercitar ese caso histórico. Se revisó que los filtros no imponen actividad y que captura conserva su validación anterior; no se crearon datos ficticios ni se modificaron registros forestales.

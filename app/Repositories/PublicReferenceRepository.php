@@ -32,7 +32,7 @@ class PublicReferenceRepository
                 }
                 $resolved[$field] = array_map(fn (string $code) => (string) $records->get($code)->id, $value);
             } else {
-                $query = $this->query($kind, $criteria);
+                $query = $this->query($kind, $criteria, false);
                 $this->byCode($query, $kind, $value, $field);
                 $record = $query->first();
                 if ($record === null) {
@@ -51,9 +51,7 @@ class PublicReferenceRepository
         abort_unless(in_array($kind, MapOptionRepository::FIELDS, true), 404);
         $query = $this->query($kind, $filters->trees->values());
         $name = in_array($kind, ['species', 'families'], true) ? 'scientific_name' : 'name';
-        if ($term !== '') {
-            $query->where($name, 'ilike', '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term).'%');
-        }
+        $this->options->search($query, $kind, $term);
         $records = $query->orderBy($name)->orderBy('id')->offset((max(1, min(1000, $page)) - 1) * 30)->limit(31)->get();
 
         return ['results' => $records->take(30)->map(fn ($record) => $this->label($record, $kind))->values()->all(),
@@ -68,7 +66,7 @@ class PublicReferenceRepository
             if ($value === null || $value === '' || $value === []) {
                 continue;
             }
-            $selected[$field] = $this->query($kind, $filters->trees->values())
+            $selected[$field] = $this->query($kind, $filters->trees->values(), false)
                 ->whereKey(is_array($value) ? $value : [$value])->get()
                 ->map(fn ($record) => $this->label($record, $kind))->values()->all();
         }
@@ -76,11 +74,16 @@ class PublicReferenceRepository
         return $selected;
     }
 
-    private function query(string $kind, array $filters): Builder
+    private function query(string $kind, array $filters, bool $taxonomyCascade = true): Builder
     {
-        // Durante la resolución solo se pasan referencias ya convertidas a UUID.
+        // Los códigos se resuelven sin cascada taxonómica: criterios válidos incompatibles seleccionan cero árboles.
+        // El alcance territorial se conserva incluso al recuperar etiquetas seleccionadas.
+        $fields = ['department_id', 'municipality_id', 'organization_id'];
+        if ($taxonomyCascade) {
+            $fields = [...$fields, 'family_id', 'species_id'];
+        }
         $criteria = array_filter(
-            array_intersect_key($filters, array_flip(['department_id', 'municipality_id', 'organization_id'])),
+            array_intersect_key($filters, array_flip($fields)),
             fn ($value) => is_string($value) && \Illuminate\Support\Str::isUuid($value)
         );
         $query = $this->options->query($kind, TreeReadScope::published(), $criteria);
@@ -122,15 +125,7 @@ class PublicReferenceRepository
             'inventories' => $record->organization->public_code.'~'.$record->code,
             default => $record->code,
         };
-        $text = in_array($kind, ['species', 'families'], true) ? $record->scientific_name : $record->name;
-        if (in_array($kind, ['physical_conditions', 'phytosanitary_conditions'], true)) {
-            $text = $record->category->name.' · '.$text;
-        }
-        if (isset($record->active) && !$record->active) {
-            $text .= ' (inactivo)';
-        }
-
-        return ['id' => (string) $code, 'text' => $text];
+        return ['id' => (string) $code, 'text' => $this->options->optionText($record, $kind)];
     }
 
     private function unavailable(string $field): never

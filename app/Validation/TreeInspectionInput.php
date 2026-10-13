@@ -40,7 +40,7 @@ class TreeInspectionInput
         $rules = ['condition_mode' => ['nullable', 'in:any,all'],
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date_format:Y-m-d']];
-        foreach (['inventory_id', 'species_id', 'maturity_state_id', 'tree_id'] as $field) {
+        foreach (['inventory_id', 'species_id', 'common_name_id', 'maturity_state_id', 'tree_id'] as $field) {
             $rules[$field] = ['nullable', 'uuid'];
         }
         foreach (['diameter_class_number', 'height_class_number'] as $field) {

@@ -45,6 +45,7 @@ class TreeReadService
         }
 
         $view = $this->shared($actor);
+        $view['options'] = array_replace($view['options'], $this->catalogs->filterOptions());
         $view['options']['inventories'] = $this->inventories->options($organization->id, false);
 
         return array_merge($view, ['organization' => $organization, 'filters' => $filters,

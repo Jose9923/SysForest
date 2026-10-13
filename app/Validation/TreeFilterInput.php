@@ -25,7 +25,7 @@ class TreeFilterInput
             'maintenance_priority' => ['nullable', Rule::enum(MaintenancePriority::class)],
         ];
         foreach (['department_id', 'municipality_id', 'organization_id', 'inventory_id', 'tree_id',
-            'species_id', 'family_id', 'placement_id', 'growth_habit_id', 'establishment_origin_id',
+            'species_id', 'family_id', 'common_name_id', 'placement_id', 'growth_habit_id', 'establishment_origin_id',
             'biogeographic_origin_id', 'maintenance_type_id'] as $key) {
             $rules[$key] = ['nullable', 'uuid'];
         }

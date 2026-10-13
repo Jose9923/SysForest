@@ -14,6 +14,7 @@ class PublicTreeMapResource extends JsonResource
     {
         $species = $this->resource->getRelation('species');
         $organization = $this->resource->getRelation('organization');
+        $commonNames = $species?->getRelation('commonNames')->pluck('name')->values()->all() ?? [];
 
         return [
             'type' => 'Feature',
@@ -22,7 +23,7 @@ class PublicTreeMapResource extends JsonResource
                 : ['type' => 'Point', 'coordinates' => [(float) $this->longitude, (float) $this->latitude]],
             'properties' => [
                 'kind' => 'tree', 'code' => $this->code,
-                'common_name' => $species?->getRelation('commonNames')->first()?->name,
+                'common_name' => $commonNames[0] ?? null, 'common_names' => $commonNames,
                 'scientific_name' => $species?->scientific_name,
                 'status' => $this->current_status->value, 'status_label' => $this->current_status->label(),
                 'placement' => $this->resource->getRelation('placement')?->name,

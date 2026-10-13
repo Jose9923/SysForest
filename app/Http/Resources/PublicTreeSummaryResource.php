@@ -22,6 +22,7 @@ class PublicTreeSummaryResource extends JsonResource
         return [
             'code' => $this->code,
             'common_name' => $feature['properties']['common_name'],
+            'common_names' => $feature['properties']['common_names'],
             'scientific_name' => $species?->scientific_name,
             'family' => $species?->getRelation('family')?->scientific_name,
             'growth_habit' => $this->resource->getRelation('growthHabit')?->name,
