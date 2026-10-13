@@ -5,14 +5,16 @@
 @endpush
 @section('content')
     <div class="audit-page">
+        @if ($storageNotice ?? null)<p class="panel" role="status">{{ $storageNotice }}</p>@endif
         <a class="back-link" href="{{ $back_url }}">← Volver a auditoría</a>
-        <div class="page-heading"><div><p class="eyebrow">{{ $scope->kind === 'national' ? 'AUDITORÍA NACIONAL' : $scope->organizationName }}</p><h1>{{ $entry['event_label'] }}</h1><p class="muted">{{ $entry['resource_label'] }}</p></div><span class="pill">Registro de solo lectura</span></div>
+        <div class="page-heading"><div><p class="eyebrow">{{ $scope->label() }}</p><h1>{{ $entry['event_label'] }}</h1><p class="muted">{{ $entry['resource_label'] }}</p></div><span class="pill">Registro de solo lectura</span></div>
         <section class="panel audit-summary" aria-labelledby="audit-summary-title">
             <h2 id="audit-summary-title">Detalle de la operación</h2>
             <dl class="audit-facts">
                 <div><dt>Fecha y hora · UTC</dt><dd>{{ $entry['occurred_at'] }}</dd></div>
                 <div><dt>Usuario</dt><dd>{{ $entry['actor_name'] ?? 'No registrado' }}</dd></div>
                 <div><dt>Organización</dt><dd>{{ $entry['organization_name'] ?? 'Sin organización' }}</dd></div>
+                <div><dt>Módulo</dt><dd>{{ $entry['module_label'] }}</dd></div>
                 <div><dt>Acción</dt><dd>{{ $entry['event_label'] }}<span class="audit-id">{{ $entry['event'] }}</span></dd></div>
                 <div><dt>Tipo de registro</dt><dd>{{ $entry['resource_label'] }}</dd></div>
                 <div><dt>Identificador del registro</dt><dd class="audit-id">{{ $entry['resource_id'] ?? 'No registrado' }}</dd></div>

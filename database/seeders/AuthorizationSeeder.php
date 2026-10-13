@@ -77,9 +77,9 @@ class AuthorizationSeeder extends Seeder
             // Catálogo explícito: ningún rol obtiene automáticamente permisos añadidos en otras fases.
             $matrix = [
                 'SUPER_ADMIN' => ['national', array_keys($catalog)],
-                'DEPARTMENT_ADMIN' => ['department', ['reports.view', 'reports.export', 'organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'inspections.view', 'evidences.view', 'maintenances.view']],
+                'DEPARTMENT_ADMIN' => ['department', ['audit.view', 'reports.view', 'reports.export', 'organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'inspections.view', 'evidences.view', 'maintenances.view']],
                 'ORGANIZATION_ADMIN' => ['organization', [
-                    'audit.view', 'imports.view', 'imports.create', 'reports.view', 'reports.export',
+                    'imports.view', 'imports.create', 'reports.view', 'reports.export',
                     'organizations.view', 'organizations.manage', 'publication.manage', 'memberships.view', 'memberships.create',
                     'memberships.update', 'memberships.activate', 'memberships.deactivate', 'users.view',
                     'users.invite', 'territories.view', 'roles.assign-organization', 'catalogs.view',

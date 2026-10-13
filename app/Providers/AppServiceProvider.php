@@ -33,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
             || app(\App\Services\AuditAccessService::class)->canViewNational($actor));
         RateLimiter::for('audit.read', fn (Request $request) => Limit::perMinute(90)
             ->by('audit:user:'.($request->user()?->id ?? $request->ip())));
+        RateLimiter::for('audit.export', fn (Request $request) => Limit::perMinute(max(1, (int) config('audit.export_rate_limit', 6)))
+            ->by('audit:export:user:'.($request->user()?->id ?? hash('sha256', (string) $request->ip()))));
         Gate::define('maps.view', fn (User $actor) => app(\App\Services\MapAccessService::class)->canView($actor));
         foreach (['imports.view', 'imports.create'] as $permission) {
             Gate::define($permission, fn (User $actor) => app(\App\Services\ImportAccessService::class)->allows($actor, $permission));

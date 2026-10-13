@@ -4,6 +4,8 @@ x-php-environment: &php-environment
   # env_file carga .env; estas anulaciones impiden heredar credenciales privilegiadas.
   POSTGRES_PASSWORD: ""
   DB_MIGRATOR_PASSWORD: ""
+  MONGO_ROOT_USERNAME: ""
+  MONGO_ROOT_PASSWORD: ""
   DB_CONNECTION: pgsql
   DB_HOST: postgres
   DB_PORT: 5432
@@ -64,6 +66,32 @@ services:
       timeout: 5s
       retries: 20
       start_period: 20s
+    networks:
+      - backend
+
+  mongodb:
+    image: mongo:8.0.30-noble
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-sysforest_mongo_admin}
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+      AUDIT_MONGO_DATABASE: ${AUDIT_MONGO_DATABASE:-sysforest_audit}
+      AUDIT_MONGO_COLLECTION: ${AUDIT_MONGO_COLLECTION:-activity_logs}
+      AUDIT_MONGO_USERNAME: ${AUDIT_MONGO_USERNAME:-sysforest_audit_app}
+      AUDIT_MONGO_PASSWORD_FILE: /run/secrets/audit_mongo_password
+    secrets:
+      - mongo_root_password
+      - audit_mongo_password
+    volumes:
+      - mongo_data:/data/db
+      - ./docker/mongo/bootstrap.js:/docker-entrypoint-initdb.d/10-audit.js:ro
+      - ./docker/mongo/healthcheck.js:/opt/sysforest/mongo-healthcheck.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--norc", "--file", "/opt/sysforest/mongo-healthcheck.js"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     networks:
       - backend
 
@@ -204,6 +232,7 @@ services:
 
 volumes:
   postgres_data:
+  mongo_data:
   redis_data:
   storage_data:
   mailpit_data:
@@ -217,3 +246,7 @@ secrets:
     environment: POSTGRES_PASSWORD
   migrator_password:
     environment: DB_MIGRATOR_PASSWORD
+  mongo_root_password:
+    environment: MONGO_ROOT_PASSWORD
+  audit_mongo_password:
+    environment: AUDIT_MONGO_PASSWORD

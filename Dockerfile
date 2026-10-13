@@ -4,16 +4,17 @@ FROM php:8.4-fpm-bookworm AS base
 ARG APP_UID=1000
 ARG APP_GID=1000
 ARG PHPREDIS_VERSION=6.3.0
+ARG MONGODB_VERSION=2.5.3
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        git unzip libfcgi-bin libpq-dev libicu-dev libonig-dev libzip-dev \
+        git unzip libfcgi-bin libpq-dev libicu-dev libonig-dev libzip-dev libssl-dev \
         libpng-dev libjpeg62-turbo-dev libfreetype6-dev libwebp-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_pgsql intl mbstring zip gd exif bcmath pcntl opcache \
-    && pecl install "redis-${PHPREDIS_VERSION}" \
-    && docker-php-ext-enable redis \
+    && pecl install "redis-${PHPREDIS_VERSION}" "mongodb-${MONGODB_VERSION}" \
+    && docker-php-ext-enable redis mongodb \
     && groupadd --gid "${APP_GID}" sysforest \
     && useradd --uid "${APP_UID}" --gid sysforest --create-home --shell /bin/bash sysforest \
     && rm -rf /var/lib/apt/lists/* /tmp/pear

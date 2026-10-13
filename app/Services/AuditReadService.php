@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\User;
+use App\Auditing\AuditCatalog;
 use App\Repositories\AuditReadRepository;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Str;
@@ -28,11 +29,15 @@ class AuditReadService
         $entries->through(fn (object $record) => $this->presentation->row($record) + [
             'detail_url' => route('audit.show', ['source' => $record->source, 'entry' => $record->id, 'scope' => $scope->kind]),
         ])->appends($filters);
-        $organizations = $scope->kind === 'national' ? $this->records->organizations() : collect();
+        $organizations = $this->records->organizations($scope);
+        $options = $this->records->options($scope);
+        $eventOptions = $options['events']->mapWithKeys(fn (string $event): array => [$event => AuditCatalog::moduleLabel($event).' · '.AuditCatalog::eventLabel($event).' ('.$event.')']);
         $this->access->reauthorize($actor, $scope);
 
-        return compact('scope', 'filters', 'entries', 'organizations') + [
-            'canViewNational' => $this->access->canViewNational($actor), 'resourceTypes' => AuditPresentationService::TYPES,
+        return compact('scope', 'filters', 'entries', 'organizations', 'eventOptions') + [
+            'userOptions' => $options['users'], 'moduleOptions' => AuditCatalog::modules(),
+            'exportLimit' => max(1, min(50000, (int) config('audit.max_export_rows', 50000))),
+            'storageNotice' => $this->records->notice(), 'canViewNational' => $this->access->canViewNational($actor), 'resourceTypes' => AuditPresentationService::TYPES,
         ];
     }
 
@@ -51,6 +56,6 @@ class AuditReadService
         $entry = $this->presentation->detail($record);
         $this->access->reauthorize($actor, $scope);
 
-        return compact('scope', 'entry') + ['back_url' => route('audit.index', ['scope' => $scope->kind])];
+        return compact('scope', 'entry') + ['storageNotice' => $this->records->notice(), 'back_url' => route('audit.index', ['scope' => $scope->kind])];
     }
 }

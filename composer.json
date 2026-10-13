@@ -7,11 +7,13 @@
     "require": {
         "php": "~8.4.0",
         "ext-bcmath": "*",
+        "ext-mongodb": "^2.5",
         "ext-pdo_pgsql": "*",
         "ext-redis": "*",
         "dompdf/dompdf": "^3.1",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
+        "mongodb/mongodb": "^2.3",
         "openspout/openspout": "^5.11",
         "php-open-source-saver/jwt-auth": "2.9.3"
     },

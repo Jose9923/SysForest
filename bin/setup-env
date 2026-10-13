@@ -16,12 +16,13 @@ if [[ ! -f .env ]]; then
     sed -i "s|^APP_GID=.*|APP_GID=$(id -g)|" .env
     printf '%s\n' '.env creado con claves aleatorias. Los valores no se muestran.'
 else
-    printf '%s\n' '.env ya existe; se conserva sin cambios.'
+    printf '%s\n' '.env ya existe; se conservan sus valores y se completan claves nuevas.'
 fi
 
 # Conserva las credenciales anteriores al trasladar su origen a .env.
 # No se ejecuta .env como código de shell ni se imprimen sus valores.
-for secret_spec in POSTGRES_PASSWORD:postgres_password DB_MIGRATOR_PASSWORD:migrator_password; do
+for secret_spec in POSTGRES_PASSWORD:postgres_password DB_MIGRATOR_PASSWORD:migrator_password \
+    MONGO_ROOT_PASSWORD:mongo_root_password AUDIT_MONGO_PASSWORD:audit_mongo_password; do
     secret_variable="${secret_spec%%:*}"
     secret_file="docker/secrets/${secret_spec#*:}"
     if grep -qE "^${secret_variable}=.+" .env; then
@@ -40,6 +41,20 @@ for secret_spec in POSTGRES_PASSWORD:postgres_password DB_MIGRATOR_PASSWORD:migr
         sed -i "s|^${secret_variable}=.*|${secret_variable}=${secret_value}|" .env
     else
         printf '\n%s=%s\n' "$secret_variable" "$secret_value" >> .env
+    fi
+done
+
+# Añade la configuración de auditoría sin reemplazar decisiones ni credenciales existentes.
+for audit_setting in \
+    'AUDIT_STORE=mongodb' \
+    'AUDIT_MONGO_URI=mongodb://mongodb:27017' \
+    'AUDIT_MONGO_DATABASE=sysforest_audit' \
+    'AUDIT_MONGO_COLLECTION=activity_logs' \
+    'AUDIT_MONGO_USERNAME=sysforest_audit_app' \
+    'MONGO_ROOT_USERNAME=sysforest_mongo_admin'; do
+    audit_variable="${audit_setting%%=*}"
+    if ! grep -qE "^${audit_variable}=" .env; then
+        printf '\n%s\n' "$audit_setting" >> .env
     fi
 done
 

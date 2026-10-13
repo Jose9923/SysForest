@@ -30,6 +30,7 @@ Los nombres siguientes corresponden al proyecto Compose predeterminado `sysfores
 | Servicio | Contenedor | Estado esperado y función |
 | --- | --- | --- |
 | `postgres` | `sysforest-postgres-1` | Saludable; PostgreSQL 17/PostGIS 3.5 persistente. |
+| `mongodb` | `sysforest-mongodb-1` | Saludable; MongoDB 8.0 para consulta privada de auditoría. |
 | `redis` | `sysforest-redis-1` | Saludable; Redis 7.4 para caché, navegación y cola. |
 | `mailpit` | `sysforest-mailpit-1` | Saludable; SMTP y buzón de revisión local. |
 | `app` | `sysforest-app-1` | Saludable; PHP-FPM y Laravel. |
@@ -39,11 +40,12 @@ Los nombres siguientes corresponden al proyecto Compose predeterminado `sysfores
 | `db-init` | `sysforest-db-init-1` | Terminado con código 0; preparación privilegiada de PostgreSQL. |
 | `init` | `sysforest-init-1` | Terminado con código 0; migraciones con el rol migrador. |
 
-Solo Nginx (`127.0.0.1:8080`, configurable con `APP_PORT`) y Mailpit (`127.0.0.1:8025`) publican puertos. PostgreSQL, Redis, FPM y SMTP (`mailpit:1025`) permanecen internos. El correo local se captura en Mailpit; sus enlaces de verificación, invitación y recuperación son credenciales de acción y el buzón debe permanecer privado.
+Solo Nginx (`127.0.0.1:8080`, configurable con `APP_PORT`) y Mailpit (`127.0.0.1:8025`) publican puertos. PostgreSQL, MongoDB, Redis, FPM y SMTP (`mailpit:1025`) permanecen internos. El correo local se captura en Mailpit; sus enlaces de verificación, invitación y recuperación son credenciales de acción y el buzón debe permanecer privado.
 
 | Volumen lógico de Compose | Contenido |
 | --- | --- |
-| `postgres_data` | Base operativa, base de pruebas e historiales. |
+| `postgres_data` | Base operativa, base de pruebas, historiales y recibos de auditoría. |
+| `mongo_data` | Proyección privada de auditoría, usuarios e índices de MongoDB. |
 | `redis_data` | Persistencia AOF de Redis. |
 | `storage_data` | Archivos de aplicación, evidencias privadas, derivados y temporales. |
 | `mailpit_data` | Mensajes del buzón local. |
@@ -72,9 +74,52 @@ Para comprobar que el worker **procesa** una tarea técnica, despáchala y revis
 docker compose exec -T app php artisan sysforest:probe-queue
 ~~~
 
-El scheduler ejecuta `sysforest:probe-scheduler` cada minuto y `sysforest:cleanup-report-downloads` cada hora, ambos sin solapamiento. Espera al siguiente minuto y comprueba que avanza su fecha en Estado local. El healthcheck de un proceso activo no acredita por sí solo el procesamiento de una tarea.
+El scheduler ejecuta `sysforest:probe-scheduler` cada minuto y `sysforest:cleanup-report-downloads` cada hora, ambos sin solapamiento. Con `AUDIT_STORE=mongodb`, también entrega la auditoría cada diez segundos mediante `sysforest:audit-sync`, sin solapamiento. Espera al siguiente minuto y comprueba que avanza su fecha en Estado local. El healthcheck de un proceso activo no acredita por sí solo el procesamiento de una tarea.
 
 Los registros pueden contener datos de operación: revisa y redacta información sensible antes de compartirlos. Nginx omite query strings y referers para evitar registrar tokens de enlaces. Los errores HTTP generales no muestran SQL ni rutas internas, incluso si se activara debug; la configuración de referencia mantiene `APP_DEBUG=false`.
+
+## Auditoría en MongoDB
+
+La auditoría se confirma primero junto con la operación en PostgreSQL. MongoDB recibe después una proyección privada y sirve `/audit` cuando está al día. Si la entrega está pendiente, falta cobertura por conteo o MongoDB falla, la pantalla consulta el historial SQL y muestra un aviso. `/health/ready` conserva sus comprobaciones de PostgreSQL/PostGIS y Redis: no acredita la disponibilidad de MongoDB ni detiene operaciones por una caída del almacenamiento de consulta.
+
+`bash bin/setup-env` añade las variables nuevas que falten y genera `MONGO_ROOT_PASSWORD` y `AUDIT_MONGO_PASSWORD` sin mostrar sus valores. Conserva secretos y decisiones existentes, incluido un `AUDIT_STORE` explícito. La configuración de referencia habilita `AUDIT_STORE=mongodb`; `AUDIT_STORE=postgres` suspende la entrega y mantiene la consulta SQL. Los valores de conexión están en `config/audit.php` y `.env.example`. No incluyas contraseñas en argumentos de terminal ni copies URI con credenciales a registros compartidos.
+
+El usuario `sysforest_audit_app` tiene únicamente `find` e `insert` sobre `sysforest_audit.activity_logs`. La aplicación no puede actualizar ni borrar documentos. MongoDB recibe su credencial administrativa mediante un secreto; Compose anula las variables administrativas heredadas por los servicios PHP. El servicio permanece en la red interna, sin puerto publicado.
+
+El inicializador `docker/mongo/bootstrap.js` configura usuarios, validador estricto e índices solo cuando MongoDB arranca sobre un volumen nuevo. Una modificación de usuario, contraseña, validador o índice sobre un volumen existente requiere actualizar la base con credenciales administrativas y coordinar sus consumidores; editar `.env`, reconstruir la imagen o reiniciar el contenedor no ejecuta de nuevo ese inicializador. `setup-env` no rota claves ya creadas.
+
+Después de reconstruir la imagen y aplicar las migraciones incrementales mediante `init`, se puede iniciar y comprobar la entrega:
+
+~~~bash
+docker compose up -d mongodb app queue scheduler nginx
+docker compose exec -T app php artisan sysforest:audit-status
+docker compose exec -T app php artisan sysforest:audit-sync
+docker compose exec -T app php artisan sysforest:audit-status
+~~~
+
+El primer `audit-status` puede terminar con código distinto de cero mientras existan pendientes. Muestra el destino, el número de entradas canónicas de origen, pendientes, última confirmación UTC, disponibilidad y conteo canónico de MongoDB; no imprime documentos ni secretos. Cuando MongoDB está habilitado, devuelve error si no está disponible, los conteos no coinciden o quedan pendientes. Un estado correcto no constituye una verificación criptográfica de todo el contenido.
+
+La entrega normal incluye el historial anterior que aún no tenga recibo. Procesa hasta diez lotes por llamada; `AUDIT_BATCH_SIZE` permite configurar entre 1 y 1000 entradas por lote, con 500 por defecto. Se puede ampliar una ejecución con `--max-batches=100`, o dejar que el scheduler continúe en las siguientes ejecuciones. La tabla `audit_deliveries` guarda únicamente la fuente, UUID y fecha de confirmación. El reintento verifica la identidad `source:id` y el hash del documento antes de confirmar: no crea otra copia del mismo registro.
+
+Si la conexión falla, los registros SQL y los pendientes se conservan. Comprueba el estado del servicio y la configuración sin publicar sus secretos, restablece MongoDB y vuelve a ejecutar `audit-sync` o espera al scheduler. Los avisos de entrega omiten excepciones del driver porque pueden contener credenciales o datos privados.
+
+### Recuperación del almacenamiento de consulta
+
+Un MongoDB restaurado puede carecer de documentos que PostgreSQL ya marcó como entregados. En ese caso no basta con la sincronización normal: ejecuta la reproducción del historial. Conserva PostgreSQL y sus recibos; no vacíes tablas ni elimines triggers para forzar otra entrega.
+
+1. Recupera MongoDB desde una copia compatible o prepara un volumen nuevo mediante el inicializador, conservando las credenciales de los consumidores. Este paso debe realizarse en el destino de recuperación previsto, sin borrar volúmenes operativos.
+2. Con PostgreSQL disponible y `AUDIT_STORE=mongodb`, ejecuta la reproducción completa con un límite suficiente:
+
+   ~~~bash
+   docker compose exec -T app php artisan sysforest:audit-sync --replay --max-batches=100000
+   docker compose exec -T app php artisan sysforest:audit-status
+   ~~~
+
+3. Comprueba que no quedan pendientes, que los conteos canónicos coinciden y que `/audit` permite consultar el detalle y el alcance institucional esperado. Conserva el resultado en el informe de recuperación.
+
+`--replay` empieza desde el principio en cada llamada y verifica también registros con recibo. Tiene un máximo de 100000 lotes; si alcanza el límite antes de terminar, devuelve error e informa que la recuperación es parcial. Aumentar el límite vuelve a recorrer lo anterior de forma idempotente. Un conflicto de hash requiere investigar la versión de la proyección y el documento de destino; no se resuelve sobrescribiendo automáticamente el historial. No hay TTL ni borrado automático de auditoría.
+
+La descripción del modelo, fuentes y controles está en [Auditoría privada](audit.md). Este procedimiento documenta la recuperación prevista; su existencia no acredita un ensayo integral de restauración.
 
 ## Actualizaciones y cambios de configuración
 
@@ -123,7 +168,7 @@ docker compose up -d
 
 `stop` conserva contenedores y volúmenes. `docker compose down` elimina contenedores y red, pero conserva los volúmenes; `down -v` elimina también los volúmenes y no es una detención normal.
 
-Los volúmenes no son una estrategia de copias. Una recuperación completa debe coordinar la base PostgreSQL con los archivos privados de `storage_data`, la versión del código/`composer.lock` y las claves necesarias para leer los datos cifrados. Copiar solamente el directorio del repositorio no conserva árboles, auditoría ni fotografías. Las copias deben preservar permisos y quedar fuera de `public`.
+Los volúmenes no son una estrategia de copias. Una recuperación completa debe coordinar la base PostgreSQL con los archivos privados de `storage_data`, la versión del código/`composer.lock` y las claves necesarias para leer los datos cifrados. Incluye MongoDB y sus credenciales en el plan de respaldo o reserva el tiempo y espacio para reconstruir su proyección desde el historial SQL mediante `audit-sync --replay`; conservar únicamente MongoDB no recupera los datos de negocio ni las relaciones de autorización. Copiar solamente el directorio del repositorio no conserva árboles, auditoría ni fotografías. Las copias deben preservar permisos y quedar fuera de `public`.
 
 Antes de considerar listo un procedimiento de respaldo, prueba su restauración en un entorno separado, con SMTP externo deshabilitado y sin reutilizar puertos ni volúmenes operativos. Comprueba PostGIS, migraciones, cuentas/ámbitos, integridad de auditoría y referencias a fotos. Define también el tratamiento de colas para evitar reprocesar trabajos restaurados. No se entrega aquí un script de respaldo automático ni se afirma haber realizado un ensayo integral de recuperación.
 
@@ -149,6 +194,7 @@ Estas decisiones requieren un entorno y requisitos de operación concretos. La d
 | `db-init` o `init` termina con error | Revisa únicamente sus logs y variables requeridas sin publicar secretos. No sustituyas migraciones incrementales por un borrado de base. |
 | `docker-credential-desktop.exe: exec format error` | Consulta la resolución local documentada en [Fase 2](phase-2.md#r-problemas-y-resoluciones). |
 | Nginx devuelve 502/503 | Comprueba `app`, PostgreSQL y Redis y revisa `/health/ready`. |
+| Auditoría muestra un aviso de respaldo | Ejecuta `sysforest:audit-status`; comprueba pendientes, cobertura y disponibilidad de MongoDB. Después de restaurarlo, usa `audit-sync --replay`. |
 | El worker está saludable pero la sonda no avanza | Revisa logs de `queue`, conexión Redis y despacho; distingue proceso activo de trabajo completado. |
 | El correo no aparece en una bandeja externa | La configuración local lo entrega a Mailpit en el puerto 8025. |
 | Cambié una clave de desarrollo y no puedo entrar | El seeder conserva contraseñas existentes; utiliza el flujo de recuperación/cambio de contraseña. |

@@ -123,7 +123,7 @@ class AuditPresentationService
         'category_ids' => 'Categorías de fauna (identificadores)',
     ];
 
-    public function __construct(private AuditSnapshotService $snapshots)
+    public function __construct(private \App\Auditing\AuditRecordProjection $snapshots)
     {
     }
 
@@ -131,6 +131,9 @@ class AuditPresentationService
     {
         return [
             'id' => $record->id, 'source' => $record->source,
+            'user_id' => $record->actor_user_id === null ? null : (string) $record->actor_user_id,
+            'module' => \App\Auditing\AuditCatalog::moduleFor($record->event),
+            'module_label' => \App\Auditing\AuditCatalog::moduleLabel($record->event),
             'occurred_at' => CarbonImmutable::parse($record->occurred_at)->utc()->format('Y-m-d H:i:s.u'),
             'event' => $record->event, 'event_label' => $this->eventLabel($record->event),
             'resource_type' => $record->resource_type,
@@ -153,12 +156,13 @@ class AuditPresentationService
                 continue;
             }
             $changes[] = ['label' => implode(' · ', array_map($this->label(...), explode('.', $key))),
-                'before' => array_key_exists($key, $old) ? $this->value($old[$key]) : 'Sin dato previo',
-                'after' => array_key_exists($key, $new) ? $this->value($new[$key]) : 'Sin dato posterior'];
+                'before' => array_key_exists($key, $old) ? $this->snapshotValue($key, $old[$key]) : 'Sin dato previo',
+                'after' => array_key_exists($key, $new) ? $this->snapshotValue($key, $new[$key]) : 'Sin dato posterior'];
         }
         $metadata = array_intersect_key($this->decode($record->metadata) ?? [], array_flip([
             'reason', 'change_type', 'catalog_key', 'resource_code', 'rule_version', 'role_name', 'target_user_id', 'revision_id',
         ]));
+        ksort($metadata);
         $context = $this->decode($record->context) ?? [];
         $requestId = $context['request_id'] ?? null;
 
@@ -179,28 +183,7 @@ class AuditPresentationService
 
     private function safeSnapshot(string $type, mixed $raw, string $source): ?array
     {
-        $values = $this->decode($raw);
-        if ($values === null || !in_array($type, $this->snapshots->types(), true)) {
-            return null;
-        }
-        $safe = $this->snapshots->sanitize($type, $values);
-        if ($source === 'locations') {
-            $location = $values['location'] ?? null;
-            if (is_array($location) && ($location['type'] ?? null) === 'Point'
-                && is_array($location['coordinates'] ?? null) && count($location['coordinates']) === 2
-                && is_numeric($location['coordinates'][0]) && is_numeric($location['coordinates'][1])) {
-                $safe['location'] = ['type' => 'Point', 'coordinates' => $location['coordinates']];
-            }
-            $safe['location_metadata'] = array_filter(
-                array_intersect_key(
-                    (array) ($values['location_metadata'] ?? []),
-                    array_flip(['datum', 'accuracy_m', 'gps_brand', 'gps_model', 'captured_at', 'coordinate_format'])
-                ),
-                fn ($value) => is_scalar($value) || $value === null
-            );
-        }
-
-        return $safe;
+        return $this->snapshots->snapshot($type, $raw, $source);
     }
 
     private function flatten(array $values, string $prefix = ''): array
@@ -223,6 +206,15 @@ class AuditPresentationService
         $decoded = is_string($value) ? json_decode($value, true) : $value;
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    private function snapshotValue(string $key, mixed $value): string
+    {
+        if ($key === 'current_status' && is_string($value)) {
+            return \App\Enums\TreeStatus::tryFrom($value)?->label() ?? $this->value($value);
+        }
+
+        return $this->value($value);
     }
 
     private function value(mixed $value): string
@@ -251,12 +243,6 @@ class AuditPresentationService
 
     private function eventLabel(string $event): string
     {
-        $actions = ['created' => 'Creación', 'updated' => 'Actualización', 'voided' => 'Anulación', 'restored' => 'Restauración',
-            'deleted' => 'Anulación', 'status_changed' => 'Cambio de estado', 'location_changed' => 'Cambio de ubicación',
-            'changed' => 'Cambio', 'assigned' => 'Asignación', 'revoked' => 'Revocación', 'accepted' => 'Aceptación',
-            'confirmed' => 'Confirmación', 'cancelled' => 'Cancelación', 'validated' => 'Validación'];
-        $parts = explode('.', $event);
-
-        return $actions[end($parts)] ?? $event;
+        return \App\Auditing\AuditCatalog::eventLabel($event);
     }
 }

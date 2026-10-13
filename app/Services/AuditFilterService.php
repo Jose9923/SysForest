@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTOs\AuditScope;
+use App\Auditing\AuditCatalog;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -13,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 /** Los mismos filtros tipados se aplican a todas las fuentes del historial privado. */
 class AuditFilterService
 {
-    public const KEYS = ['scope', 'organization_id', 'actor', 'event', 'resource_type', 'resource_id', 'date_from', 'date_to', 'page'];
+    public const KEYS = ['scope', 'organization_id', 'actor', 'user_id', 'module', 'event', 'resource_type', 'resource_id', 'date_from', 'date_to', 'page'];
 
     public function validate(array $input): array
     {
@@ -23,8 +24,10 @@ class AuditFilterService
         }
 
         $values = Validator::make($input, [
-            'scope' => ['nullable', Rule::in(['national', 'organization'])],
+            'scope' => ['nullable', Rule::in(['national', 'department', 'organization'])],
             'organization_id' => ['nullable', 'uuid'],
+            'user_id' => ['nullable', 'integer', 'min:1', 'max:9223372036854775807'],
+            'module' => ['nullable', Rule::in(array_keys(AuditCatalog::modules()))],
             'actor' => ['nullable', 'string', 'max:120'],
             'event' => ['nullable', 'string', 'max:80', 'regex:/\A[a-z][a-z0-9_.]{2,79}\z/D'],
             'resource_type' => ['nullable', Rule::in(array_keys(AuditPresentationService::TYPES))],
@@ -42,6 +45,9 @@ class AuditFilterService
             'integer' => 'La página debe ser un número entero.',
             'in' => 'El alcance solicitado no está disponible.',
         ])->validate();
+        if (isset($values['user_id'])) {
+            $values['user_id'] = (string) $values['user_id'];
+        }
         if (isset($values['resource_id'])) {
             $id = $values['resource_id'];
             if (!\Illuminate\Support\Str::isUuid($id) && preg_match('/\A[1-9][0-9]{0,19}\z/D', $id) !== 1) {
@@ -56,7 +62,11 @@ class AuditFilterService
     public function resolve(array $input, AuditScope $scope): array
     {
         $values = $this->validate($input);
-        if ($scope->kind !== 'national' && !empty($values['organization_id'])
+        if ($scope->kind === 'department' && !empty($values['organization_id'])
+            && !in_array($values['organization_id'], $scope->organizationIds, true)) {
+            throw ValidationException::withMessages(['organization_id' => 'Selecciona una institución de tus departamentos autorizados.']);
+        }
+        if ($scope->kind === 'organization' && !empty($values['organization_id'])
             && $values['organization_id'] !== $scope->organizationId) {
             throw ValidationException::withMessages(['organization_id' => 'La consulta está limitada a la organización seleccionada.']);
         }

@@ -54,3 +54,14 @@
     .audit-page .pagination { flex-wrap: wrap; gap: 12px; }
     .audit-page .pagination .button { padding-inline: 12px; }
 }
+
+.audit-advanced { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+.audit-advanced summary { cursor: pointer; font-weight: 600; color: var(--green-dark); }
+.audit-advanced[open] .audit-filter-grid { margin-top: 18px; }
+.audit-actions { flex-wrap: wrap; }
+.audit-export-help { margin-top: 16px; max-width: 800px; line-height: 1.6; }
+
+.audit-filter-grid .field { min-width: 0; }
+.audit-filter-grid input, .audit-filter-grid select { min-width: 0; max-width: 100%; }
+.audit-filter-grid .select2-container { max-width: 100%; }
+@media (max-width: 700px) { .audit-filter-grid { grid-template-columns: minmax(0, 1fr); } }
