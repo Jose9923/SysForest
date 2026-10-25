@@ -14,11 +14,14 @@ class AuditPresentationService
         'national_role_assignment' => 'Rol nacional', 'department_role_assignment' => 'Rol departamental',
         'organization_role_assignment' => 'Rol institucional', 'invitation' => 'Invitación',
         'inventory' => 'Inventario', 'inventory_tree' => 'Participación en inventario', 'tree' => 'Individuo forestal',
-        'tree_inspection' => 'Inspección', 'evidence' => 'Evidencia fotográfica', 'maintenance' => 'Mantenimiento',
+        'carbon_profile' => 'Referencia institucional de carbono', 'tree_inspection' => 'Inspección', 'evidence' => 'Evidencia fotográfica', 'maintenance' => 'Mantenimiento',
         'import_batch' => 'Lote de importación', 'catalog' => 'Catálogo', 'security_event' => 'Evento de seguridad',
     ];
 
     private const LABELS = [
+        'carbon' => 'Carbono aéreo almacenado', 'estimate_id' => 'Estimación (identificador)',
+        'profile_id' => 'Referencia institucional (versión)', 'method_version' => 'Versión del método de carbono',
+        'biomass_kg' => 'Biomasa aérea seca (kg)', 'carbon_kg' => 'Carbono aéreo (kg C)', 'co2_kg' => 'CO₂ correspondiente al stock (kg)',
         'name' => 'Nombre', 'active' => 'Activo', 'code' => 'Código', 'description' => 'Descripción',
         'lock_version' => 'Versión de edición', 'publication_version' => 'Versión de publicación', 'is_public' => 'Publicado',
         'status' => 'Estado', 'current_status' => 'Estado del individuo', 'coordinate_raw' => 'Coordenada original',
@@ -210,6 +213,13 @@ class AuditPresentationService
 
     private function snapshotValue(string $key, mixed $value): string
     {
+        $attribute = str_contains($key, '.') ? substr($key, strrpos($key, '.') + 1) : $key;
+        if (in_array($attribute, ['description', 'general_observations', 'observations', 'reason'], true) && is_string($value)) {
+            return \App\Support\ExcelReferencePresentation::text($value);
+        }
+        if ($key === 'configuration_json' && is_string($value)) {
+            return \App\Support\ExcelReferencePresentation::configuration($value);
+        }
         if ($key === 'current_status' && is_string($value)) {
             return \App\Enums\TreeStatus::tryFrom($value)?->label() ?? $this->value($value);
         }
@@ -228,6 +238,9 @@ class AuditPresentationService
 
     private function metadataValue(string $key, mixed $value): string
     {
+        if ($key === 'reason' && is_string($value)) {
+            return \App\Support\ExcelReferencePresentation::text($value);
+        }
         if ($key === 'change_type') {
             return $value === null ? 'Captura inicial'
                 : (is_string($value) ? \App\Enums\LocationChangeType::tryFrom($value)?->label() : null) ?? 'No registrado';

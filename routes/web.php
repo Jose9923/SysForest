@@ -58,6 +58,8 @@ Route::middleware('identity.headers')->group(function (): void {
             Route::post('/users/{user}/roles', [C\UserController::class, 'roles'])->whereNumber('user')->name('users.roles');
             Route::middleware('tenant.context')->group(function (): void {
                 require __DIR__.'/forestry.php';
+                require __DIR__.'/risk.php';
+                require __DIR__.'/carbon.php';
                 require __DIR__.'/imports.php';
                 require __DIR__.'/publication.php';
                 Route::get('/organizations/{organization}', [C\OrganizationController::class, 'show'])->whereUuid('organization')->name('organizations.show');

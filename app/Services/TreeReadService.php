@@ -49,7 +49,8 @@ class TreeReadService
         $view['options']['inventories'] = $this->inventories->options($organization->id, false);
 
         return array_merge($view, ['organization' => $organization, 'filters' => $filters,
-            'trees' => $this->trees->paginate($organization->id, $filters)]);
+            'canViewRisk' => $this->access->allows($actor, 'inspections.view'),
+            'trees' => $this->trees->paginate($organization->id, $filters, $this->access->allows($actor, 'inspections.view'))]);
     }
 
     public function form(User $actor, ?string $id = null): array

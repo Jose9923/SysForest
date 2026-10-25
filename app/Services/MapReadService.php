@@ -50,6 +50,7 @@ class MapReadService
                     'national' => 'Consulta nacional', 'department' => 'Consulta departamental', default => 'Organización seleccionada',
                 }],
                 'base_layers' => config('maps.base_layers'), 'legend' => $legend,
+                'risk_legend' => array_map(fn ($priority) => ['label' => $priority->label(), 'color' => $priority->color()], \App\Enums\RiskPriority::cases()),
                 'heat_gradient' => config('maps.heat_gradient'),
                 'default_view' => config('maps.default_view'),
                 'limits' => ['max_points' => (int) config('maps.max_points'), 'debounce_ms' => (int) config('maps.debounce_ms'),

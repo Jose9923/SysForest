@@ -15,6 +15,8 @@ class AuditCatalog
         'catalogs' => ['Catálogos forestales', ['catalog', 'taxonomy', 'classification']],
         'inventories' => ['Inventarios', ['inventory', 'inventory_tree']],
         'trees' => ['Árboles', ['tree']],
+        'carbon' => ['Carbono almacenado', ['carbon']],
+        'risk' => ['Gestión del riesgo', ['risk']],
         'inspections' => ['Inspecciones', ['inspection']],
         'evidences' => ['Fotografías y evidencias', ['evidence']],
         'maintenances' => ['Mantenimientos', ['maintenance']],
@@ -60,6 +62,9 @@ class AuditCatalog
     public static function eventLabel(string $event): string
     {
         $specific = [
+            'carbon.references.seeded' => 'Precarga de referencias bibliográficas de carbono',
+            'carbon.profile.published' => 'Publicación de referencia de carbono',
+            'carbon.estimates.refreshed' => 'Actualización de estimaciones de carbono',
             'auth.login.succeeded' => 'Inicio de sesión', 'auth.login.failed' => 'Inicio de sesión fallido',
             'auth.session.revoked' => 'Cierre o revocación de sesión', 'auth.refresh.reused' => 'Reutilización de credencial detectada',
             'password.changed' => 'Cambio de contraseña', 'password.reset' => 'Restablecimiento de contraseña',

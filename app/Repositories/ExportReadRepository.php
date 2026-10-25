@@ -33,7 +33,7 @@ class ExportReadRepository
         'dap_m', 'radius_m', 'basal_area_m2', 'commercial_volume_m3', 'total_volume_m3',
         'diameter_class_number', 'height_class_number', 'flowering_date', 'fruiting_date'];
 
-    private const PRIVATE_INSPECTION_FIELDS = ['classification_rule_version_id', 'calculation_rule_version',
+    private const PRIVATE_INSPECTION_FIELDS = ['lock_version', 'classification_rule_version_id', 'calculation_rule_version',
         'flowering_development', 'fruiting_development', 'fauna_observations', 'general_observations'];
 
     public function __construct(
@@ -191,6 +191,8 @@ class ExportReadRepository
         if (!$selection->isPublic()) {
             $fields = array_merge($fields, self::PRIVATE_INSPECTION_FIELDS);
             $relations[] = 'classificationRuleVersion:id,code';
+            $relations[] = 'riskEvaluation.methodology';
+            $relations[] = 'carbonEstimate';
         }
         $query = TreeInspection::query()->select($fields)->with($relations)
             ->where(function (Builder $query) use ($selected): void {

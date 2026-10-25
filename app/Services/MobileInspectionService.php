@@ -70,7 +70,7 @@ class MobileInspectionService
             } catch (ModelNotFoundException) {
                 throw ValidationException::withMessages(['inventory_id' => 'El árbol debe pertenecer a este inventario antes de registrar la visita.']);
             }
-            $inspection = $this->writes->create($actor, $tree->id, $data['inspection'] + ['inventory_tree_id' => $participation->id]);
+            $inspection = $this->writes->create($actor, $tree->id, $data['inspection'] + ['inventory_tree_id' => $participation->id], 'mobile');
 
             return ['tree_id' => $tree->id, 'data' => $this->projection($inspection)];
         }, function (User $actor, string $organizationId) use ($treeId, $data): void {
@@ -84,7 +84,7 @@ class MobileInspectionService
         $data = Validator::make($input, MobileMutationInput::inspectionUpdate(), MobileMutationInput::messages())->validate();
 
         return $this->mutations->run($actor, 'inspection.update', $id, 'inspections.update', $data, function (User $actor) use ($id, $data): array {
-            $inspection = $this->writes->update($actor, $id, ['lock_version' => $data['lock_version']] + $data['changes']);
+            $inspection = $this->writes->update($actor, $id, ['lock_version' => $data['lock_version']] + $data['changes'], 'mobile');
 
             return ['tree_id' => $inspection->tree_id, 'data' => $this->projection($inspection)];
         }, function (User $actor, string $organizationId) use ($id): void {

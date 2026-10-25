@@ -1,8 +1,6 @@
 # syntax=docker/dockerfile:1
 FROM php:8.4-fpm-bookworm AS base
 
-ARG APP_UID=1000
-ARG APP_GID=1000
 ARG PHPREDIS_VERSION=6.3.0
 ARG MONGODB_VERSION=2.5.3
 
@@ -13,11 +11,17 @@ RUN apt-get update \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_pgsql intl mbstring zip gd exif bcmath pcntl opcache \
-    && pecl install "redis-${PHPREDIS_VERSION}" "mongodb-${MONGODB_VERSION}" \
+    && MAKEFLAGS="-j2" pecl install "redis-${PHPREDIS_VERSION}" "mongodb-${MONGODB_VERSION}" \
     && docker-php-ext-enable redis mongodb \
-    && groupadd --gid "${APP_GID}" sysforest \
-    && useradd --uid "${APP_UID}" --gid sysforest --create-home --shell /bin/bash sysforest \
     && rm -rf /var/lib/apt/lists/* /tmp/pear
+
+# Las extensiones no dependen de la identidad local y conservan su caché al cambiarla.
+ARG APP_UID=1000
+ARG APP_GID=1000
+RUN test "${APP_UID}" -gt 0 && test "${APP_GID}" -gt 0 \
+    || { echo 'APP_UID y APP_GID deben ser positivos; usa el UID/GID de tu usuario local.' >&2; exit 1; }
+RUN groupadd --gid "${APP_GID}" sysforest \
+    && useradd --uid "${APP_UID}" --gid sysforest --create-home --shell /bin/bash sysforest
 
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-sysforest.ini

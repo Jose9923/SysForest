@@ -51,9 +51,12 @@ export class MapLayers {
         const dot = this.document.createElement('span');
         dot.className = 'map-tree-dot';
         dot.style.backgroundColor = colorFor(properties.status, this.legend);
+        if (properties.risk && /^#[0-9a-f]{6}$/i.test(properties.risk.color || '')) {
+            dot.style.boxShadow = `0 0 0 3px ${properties.risk.color}`;
+        }
         dot.setAttribute('aria-hidden', 'true');
         const icon = this.L.divIcon({className: 'map-tree-marker', html: dot, iconSize: [26, 26], iconAnchor: [13, 13]});
-        return this.L.marker(pointLatLng(feature), {icon, keyboard: true, title: `${properties.code || 'Árbol'} · ${properties.status_label || 'Estado no informado'}`, riseOnHover: true})
+        return this.L.marker(pointLatLng(feature), {icon, keyboard: true, title: `${properties.code || 'Árbol'} · ${properties.status_label || 'Estado no informado'}${properties.risk ? ' · Prioridad fitosanitaria: ' + properties.risk.label : ''}`, riseOnHover: true})
             .bindPopup(() => this.popupRenderer(properties, this), {maxWidth: 310, minWidth: 220});
     }
     clusterMarker(feature, count, callback) {

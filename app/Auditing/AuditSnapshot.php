@@ -22,7 +22,9 @@ class AuditSnapshot
         'inventory' => ['code', 'name', 'description', 'starts_at', 'ends_at', 'status', 'active', 'created_by', 'updated_by', 'created_at', 'lock_version', 'is_public', 'publication_version'],
         'inventory_tree' => ['inventory_id', 'tree_id', 'included_by', 'included_at', 'notes'],
         'tree' => ['code', 'external_number', 'location_description', 'placement_id', 'species_id', 'growth_habit_id', 'establishment_origin_id', 'biogeographic_origin_id', 'is_protected', 'is_heritage', 'current_status', 'coordinate_raw', 'coordinate_format', 'latitude', 'longitude', 'datum', 'accuracy_m', 'gps_brand', 'gps_model', 'captured_at', 'created_by', 'updated_by', 'created_at', 'lock_version', 'deleted_at', 'deleted_by', 'deletion_reason_id', 'deletion_notes', 'restored_by', 'restored_at', 'is_public', 'publication_version'],
-        'tree_inspection' => ['context', 'measurements', 'calculations', 'phenology', 'observations', 'conditions', 'fauna', 'created_by', 'updated_by', 'created_at', 'lock_version', 'is_public', 'publication_version'],
+        'carbon_profile' => ['configuration_json'],
+        'risk_methodology' => ['version', 'name', 'configuration_json'],
+        'tree_inspection' => ['carbon', 'risk', 'context', 'measurements', 'calculations', 'phenology', 'observations', 'conditions', 'fauna', 'created_by', 'updated_by', 'created_at', 'lock_version', 'is_public', 'publication_version'],
         'evidence' => ['tree_id', 'tree_inspection_id', 'maintenance_id', 'evidence_type_id', 'caption', 'notes', 'captured_at', 'uploaded_by', 'updated_by', 'created_at', 'deleted_at', 'deleted_by', 'deletion_notes', 'lock_version', 'is_public', 'publication_version', 'public_id', 'public_caption'],
         'maintenance' => ['tree_id', 'code', 'maintenance_type_id', 'status', 'priority', 'scheduled_date', 'performed_date', 'assigned_to', 'notes', 'result', 'created_by', 'updated_by', 'created_at', 'lock_version', 'deleted_at', 'deleted_by', 'deletion_notes'],
         'import_batch' => ['inventory_id', 'code', 'schema_version', 'file_sha256', 'file_size', 'status', 'total_rows', 'valid_rows', 'invalid_rows', 'imported_rows', 'lock_version', 'created_by', 'created_at', 'expires_at', 'confirmed_by', 'confirmed_at', 'cancelled_by', 'cancelled_at'],
@@ -30,6 +32,8 @@ class AuditSnapshot
     ];
 
     private const GROUPS = [
+        'carbon' => ['estimate_id', 'profile_id', 'status', 'method_version', 'biomass_kg', 'carbon_kg', 'co2_kg'],
+        'risk' => ['evaluation_id', 'methodology_id', 'priority', 'suggested_priority', 'status', 'confirmed_by', 'confirmed_at'],
         'context' => ['tree_id', 'inventory_tree_id', 'inspection_date'],
         'measurements' => ['cap_cm', 'number_of_stems', 'form_factor', 'total_height_m', 'commercial_height_m', 'crown_x_m', 'crown_y_m'],
         'calculations' => ['dap_m', 'radius_m', 'basal_area_m2', 'commercial_volume_m3', 'total_volume_m3', 'diameter_class_number', 'height_class_number', 'maturity_state_id', 'classification_rule_version_id', 'calculation_rule_version'],

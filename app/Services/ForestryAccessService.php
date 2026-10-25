@@ -12,7 +12,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 class ForestryAccessService
 {
     private const PERMISSIONS = [
-        'inventories.view', 'inventories.create', 'inventories.update',
+        'carbon.manage', 'risk.view', 'risk.manage', 'inventories.view', 'inventories.create', 'inventories.update',
         'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore',
         'inspections.view', 'inspections.create', 'inspections.update',
         'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'evidences.restore',
@@ -44,7 +44,7 @@ class ForestryAccessService
         }
 
         if ($this->context->accessMode() === 'department_read') {
-            return in_array($permission, ['inventories.view', 'trees.view', 'inspections.view', 'evidences.view', 'maintenances.view'], true)
+            return in_array($permission, ['risk.view', 'inventories.view', 'trees.view', 'inspections.view', 'evidences.view', 'maintenances.view'], true)
                 && $this->permissions->allowsDepartment($actor, $permission, $organization->municipality->department_id);
         }
 

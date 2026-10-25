@@ -1,0 +1,412 @@
+{
+  "code": "PGF-1.0",
+  "matrix": [
+    [
+      1,
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      2,
+      2
+    ],
+    [
+      2,
+      2,
+      2,
+      3
+    ],
+    [
+      3,
+      3,
+      3,
+      4
+    ],
+    [
+      4,
+      4,
+      4,
+      4
+    ]
+  ],
+  "conditions": {
+    "PHT_ROOT_VISIBLE_ROOTS": {
+      "column": "AU",
+      "label": "Raices visibles",
+      "component": "PHT_ROOT",
+      "weight": 1,
+      "minimum": 0
+    },
+    "PHT_ROOT_TWISTED_ROOTS": {
+      "column": "AV",
+      "label": "Raices retorcidas",
+      "component": "PHT_ROOT",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_ROOT_PRUNED_BY_WORKS": {
+      "column": "AW",
+      "label": "Podas por acción de obras",
+      "component": "PHT_ROOT",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_STEM_HEALTHY": {
+      "column": "AX",
+      "label": "Sano",
+      "component": "PHT_STEM",
+      "weight": 0,
+      "minimum": 0
+    },
+    "PHT_STEM_GALLS_OR_TUMORS": {
+      "column": "AY",
+      "label": "Agallas o tumores",
+      "component": "PHT_STEM",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_STEM_FUNGI": {
+      "column": "AZ",
+      "label": "Hongos",
+      "component": "PHT_STEM",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_STEM_ROT": {
+      "column": "BA",
+      "label": "Pudrición",
+      "component": "PHT_STEM",
+      "weight": 3,
+      "minimum": 0
+    },
+    "PHT_STEM_NECROSIS": {
+      "column": "BB",
+      "label": "Necrosis",
+      "component": "PHT_STEM",
+      "weight": 3,
+      "minimum": 0
+    },
+    "PHT_STEM_CAVITY_UNDER_30": {
+      "column": "BC",
+      "label": "Oquedad media < 30%",
+      "component": "PHT_STEM",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_STEM_CAVITY_OVER_30": {
+      "column": "BD",
+      "label": "Oquedad grande > 30%",
+      "component": "PHT_STEM",
+      "weight": 3,
+      "minimum": 0
+    },
+    "PHT_STEM_GIRDLING": {
+      "column": "BE",
+      "label": "Anillamiento",
+      "component": "PHT_STEM",
+      "weight": 3,
+      "minimum": 0
+    },
+    "PHT_STEM_CONSTRICTING_ELEMENTS": {
+      "column": "BF",
+      "label": "Elementos de estrangulamiento",
+      "component": "PHT_STEM",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_STEM_PARASITIC_HEMIPARASITIC_EPIPHYTES": {
+      "column": "BG",
+      "label": "Epífitas parásitas o hemiparasitas",
+      "component": "PHT_STEM",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_STEM_VINE": {
+      "column": "BH",
+      "label": "Bejuco o liana",
+      "component": "PHT_STEM",
+      "weight": 1,
+      "minimum": 0
+    },
+    "PHT_STEM_STRANGLER": {
+      "column": "BI",
+      "label": "Matapalo",
+      "component": "PHT_STEM",
+      "weight": 3,
+      "minimum": 0
+    },
+    "PHT_STEM_TERMITES": {
+      "column": "BJ",
+      "label": "Termitas o comején",
+      "component": "PHT_STEM",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_STEM_INSECT_HOST": {
+      "column": "BK",
+      "label": "Hospedero insectos",
+      "component": "PHT_STEM",
+      "weight": 1,
+      "minimum": 0
+    },
+    "PHT_BRANCH_ROT": {
+      "column": "BL",
+      "label": "Podridas",
+      "component": "PHT_BRANCH",
+      "weight": 3,
+      "minimum": 0
+    },
+    "PHT_BRANCH_FUNGI": {
+      "column": "BM",
+      "label": "Hongos",
+      "component": "PHT_BRANCH",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_BRANCH_PARASITIC_HEMIPARASITIC_EPIPHYTES": {
+      "column": "BN",
+      "label": "Epífitas parásitas o hemiparasitas",
+      "component": "PHT_BRANCH",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_BRANCH_DEAD": {
+      "column": "BO",
+      "label": "Muertas",
+      "component": "PHT_BRANCH",
+      "weight": 3,
+      "minimum": 0
+    },
+    "PHT_FOLIAGE_SCANT": {
+      "column": "BP",
+      "label": "Escaso",
+      "component": "PHT_FOLIAGE",
+      "weight": 1,
+      "minimum": 0
+    },
+    "PHT_FOLIAGE_ABUNDANT": {
+      "column": "BQ",
+      "label": "Abundante",
+      "component": "PHT_FOLIAGE",
+      "weight": 0,
+      "minimum": 0
+    },
+    "PHT_FOLIAGE_HEALTHY": {
+      "column": "BR",
+      "label": "Sano",
+      "component": "PHT_FOLIAGE",
+      "weight": 0,
+      "minimum": 0
+    },
+    "PHT_FOLIAGE_CHLOROSIS": {
+      "column": "BS",
+      "label": "Clorosis",
+      "component": "PHT_FOLIAGE",
+      "weight": 1,
+      "minimum": 0
+    },
+    "PHT_FOLIAGE_CURLING": {
+      "column": "BT",
+      "label": "Entorchamiento",
+      "component": "PHT_FOLIAGE",
+      "weight": 1,
+      "minimum": 0
+    },
+    "PHT_FOLIAGE_WILTING": {
+      "column": "BU",
+      "label": "Marchitamiento",
+      "component": "PHT_FOLIAGE",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_FOLIAGE_LOCALIZED_ROT": {
+      "column": "BV",
+      "label": "Pudrición localizada",
+      "component": "PHT_FOLIAGE",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_FOLIAGE_PARASITIC_HEMIPARASITIC_EPIPHYTES": {
+      "column": "BW",
+      "label": "Epífitas parásitas o hemiparasitas",
+      "component": "PHT_FOLIAGE",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_FOLIAGE_ABNORMAL_LEAF_ABSCISSION": {
+      "column": "BX",
+      "label": "Absición foliar anormal - No desfoliación genetica",
+      "component": "PHT_FOLIAGE",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_FLOWER_FRUIT_SCANT": {
+      "column": "BY",
+      "label": "Escasa",
+      "component": "PHT_FLOWER_FRUIT",
+      "weight": 0,
+      "minimum": 0
+    },
+    "PHT_FLOWER_FRUIT_ABUNDANT": {
+      "column": "BZ",
+      "label": "Abundante",
+      "component": "PHT_FLOWER_FRUIT",
+      "weight": 0,
+      "minimum": 0
+    },
+    "PHT_FLOWER_FRUIT_HEALTHY": {
+      "column": "CA",
+      "label": "Sana",
+      "component": "PHT_FLOWER_FRUIT",
+      "weight": 0,
+      "minimum": 0
+    },
+    "PHT_FLOWER_FRUIT_LOCAL_OR_GENERAL_ROT": {
+      "column": "CB",
+      "label": "Pudrición localizada o general",
+      "component": "PHT_FLOWER_FRUIT",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_FLOWER_FRUIT_WILTING_BEFORE_POLLINATION_DURING_FRUITING": {
+      "column": "CC",
+      "label": "Marchitamiento antes de polinización - En fructificación",
+      "component": "PHT_FLOWER_FRUIT",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_FLOWER_FRUIT_ABNORMAL_FLOWER_FRUIT_ABSCISSION": {
+      "column": "CD",
+      "label": "Absición anormal de flores y/o frutos",
+      "component": "PHT_FLOWER_FRUIT",
+      "weight": 2,
+      "minimum": 0
+    },
+    "PHT_GENERAL_HEALTHY": {
+      "column": "CG",
+      "label": "Sano",
+      "component": "PHT_GENERAL",
+      "weight": 0,
+      "minimum": 0
+    },
+    "PHT_GENERAL_DIEBACK": {
+      "column": "CH",
+      "label": "Muerte descendente",
+      "component": "PHT_GENERAL",
+      "weight": 4,
+      "minimum": 4
+    },
+    "PHT_GENERAL_DYING_OVER_50": {
+      "column": "CI",
+      "label": "Proceso de muerte > 50%",
+      "component": "PHT_GENERAL",
+      "weight": 4,
+      "minimum": 4
+    },
+    "PHT_GENERAL_DYING_UNDER_50": {
+      "column": "CJ",
+      "label": "Proceso de muerte < 50%",
+      "component": "PHT_GENERAL",
+      "weight": 3,
+      "minimum": 3
+    },
+    "PHT_GENERAL_BENIGN_INSECT_HOST": {
+      "column": "CK",
+      "label": "Hospedero insectos benignos - Avispas, abejas",
+      "component": "PHT_GENERAL",
+      "weight": 0,
+      "minimum": 0
+    },
+    "PHT_GENERAL_HARMFUL_INSECT_HOST": {
+      "column": "CL",
+      "label": "Hospedero insectos dañinos - Trozadores, perforadores",
+      "component": "PHT_GENERAL",
+      "weight": 3,
+      "minimum": 3
+    }
+  },
+  "conflicts": [
+    {
+      "left": "PHT_STEM_HEALTHY",
+      "right": [
+        "PHT_STEM_GALLS_OR_TUMORS",
+        "PHT_STEM_FUNGI",
+        "PHT_STEM_ROT",
+        "PHT_STEM_NECROSIS",
+        "PHT_STEM_CAVITY_UNDER_30",
+        "PHT_STEM_CAVITY_OVER_30",
+        "PHT_STEM_GIRDLING",
+        "PHT_STEM_CONSTRICTING_ELEMENTS",
+        "PHT_STEM_PARASITIC_HEMIPARASITIC_EPIPHYTES",
+        "PHT_STEM_VINE",
+        "PHT_STEM_STRANGLER",
+        "PHT_STEM_TERMITES",
+        "PHT_STEM_INSECT_HOST"
+      ]
+    },
+    {
+      "left": "PHT_FOLIAGE_HEALTHY",
+      "right": [
+        "PHT_FOLIAGE_CHLOROSIS",
+        "PHT_FOLIAGE_CURLING",
+        "PHT_FOLIAGE_WILTING",
+        "PHT_FOLIAGE_LOCALIZED_ROT",
+        "PHT_FOLIAGE_PARASITIC_HEMIPARASITIC_EPIPHYTES",
+        "PHT_FOLIAGE_ABNORMAL_LEAF_ABSCISSION"
+      ]
+    },
+    {
+      "left": "PHT_FLOWER_FRUIT_HEALTHY",
+      "right": [
+        "PHT_FLOWER_FRUIT_LOCAL_OR_GENERAL_ROT",
+        "PHT_FLOWER_FRUIT_WILTING_BEFORE_POLLINATION_DURING_FRUITING",
+        "PHT_FLOWER_FRUIT_ABNORMAL_FLOWER_FRUIT_ABSCISSION"
+      ]
+    },
+    {
+      "left": "PHT_FOLIAGE_SCANT",
+      "right": [
+        "PHT_FOLIAGE_ABUNDANT"
+      ]
+    },
+    {
+      "left": "PHT_FLOWER_FRUIT_SCANT",
+      "right": [
+        "PHT_FLOWER_FRUIT_ABUNDANT"
+      ]
+    },
+    {
+      "left": "PHT_GENERAL_DYING_OVER_50",
+      "right": [
+        "PHT_GENERAL_DYING_UNDER_50"
+      ]
+    },
+    {
+      "left": "PHT_GENERAL_HEALTHY",
+      "right": [
+        "PHT_GENERAL_DIEBACK",
+        "PHT_GENERAL_DYING_OVER_50",
+        "PHT_GENERAL_DYING_UNDER_50"
+      ]
+    }
+  ],
+  "warnings": [
+    {
+      "kind": "healthy_severe",
+      "condition": "PHT_GENERAL_HEALTHY",
+      "message": "Revisar coherencia del estado general."
+    },
+    {
+      "kind": "insect_unspecified",
+      "condition": "PHT_STEM_INSECT_HOST",
+      "unless": [
+        "PHT_GENERAL_BENIGN_INSECT_HOST",
+        "PHT_GENERAL_HARMFUL_INSECT_HOST"
+      ],
+      "message": "Revisar el tipo de insectos hospederos."
+    }
+  ]
+}

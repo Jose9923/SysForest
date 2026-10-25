@@ -29,6 +29,7 @@ class TreeService
         private TreeLocationService $locations,
         private TreeWriteService $writes,
         private SecurityEventRepository $events,
+        private CarbonEstimationService $carbon,
         private AuditSnapshotService $snapshots
     ) {
     }
@@ -87,6 +88,9 @@ class TreeService
                 $this->statuses->apply($tree, $actor, $data['current_status'], $data['reason'] ?? null);
             }
             $this->locations->apply($tree, $actor, $data);
+            if (array_key_exists('species_id', $data) || array_key_exists('growth_habit_id', $data)) {
+                $this->carbon->forTree($tree->organization_id, $tree->id);
+            }
         });
     }
 

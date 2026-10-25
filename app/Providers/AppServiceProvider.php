@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(TenantContext::class);
+        $this->app->scoped(\App\Services\HistoricalRiskImportScope::class);
     }
 
     public function boot(): void
@@ -53,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\App\Models\Evidence::class, \App\Policies\EvidencePolicy::class);
         Gate::policy(\App\Models\Maintenance::class, \App\Policies\MaintenancePolicy::class);
         Gate::policy(\App\Models\Inventory::class, \App\Policies\InventoryPolicy::class);
-        foreach (['inventories.view', 'inventories.create', 'inventories.update', 'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore', 'inspections.view', 'inspections.create', 'inspections.update', 'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'evidences.restore', 'maintenances.view', 'maintenances.create', 'maintenances.update', 'maintenances.transition', 'maintenances.verify', 'maintenances.void', 'maintenances.restore'] as $permission) {
+        foreach (['carbon.manage', 'risk.view', 'risk.manage', 'inventories.view', 'inventories.create', 'inventories.update', 'trees.view', 'trees.create', 'trees.update', 'trees.void', 'trees.restore', 'inspections.view', 'inspections.create', 'inspections.update', 'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'evidences.restore', 'maintenances.view', 'maintenances.create', 'maintenances.update', 'maintenances.transition', 'maintenances.verify', 'maintenances.void', 'maintenances.restore'] as $permission) {
             Gate::define($permission, fn (User $actor) => app(\App\Services\ForestryAccessService::class)->allows($actor, $permission));
         }
         Gate::policy(OrganizationMembership::class, OrganizationMembershipPolicy::class);

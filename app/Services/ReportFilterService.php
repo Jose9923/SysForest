@@ -47,6 +47,9 @@ class ReportFilterService
 
     public function forPublic(array $input, string $report = 'inventory'): ReportSelectionDTO
     {
+        if (in_array($report, ['risk', 'carbon', 'carbon_coverage'], true)) {
+            throw ValidationException::withMessages(['report' => 'Este reporte es exclusivamente privado.']);
+        }
         $definition = $this->catalog->get($report);
         if (!$definition['available']) {
             throw ValidationException::withMessages(['report' => $definition['notice']]);

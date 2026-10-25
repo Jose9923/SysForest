@@ -1,0 +1,59 @@
+/** Presenta resultados del servidor; no reproduce reglas forestales en el navegador. */
+(() => {
+    const box = document.querySelector('[data-risk-form]');
+    if (!box) return;
+    const form = box.closest('form');
+    const result = box.querySelector('[data-risk-result]');
+    const details = box.querySelector('[data-risk-details]');
+    const confirmed = box.querySelector('[data-risk-confirmed]');
+    const priority = box.querySelector('[name="risk_priority"]');
+    let sequence = 0;
+    let timer;
+    async function preview() {
+        const current = ++sequence;
+        confirmed.checked = false;
+        priority.setCustomValidity('Espera la sugerencia antes de confirmar.');
+        result.textContent = 'Consultando sugerencia…';
+        details.replaceChildren();
+        try {
+            const response = await fetch(box.dataset.previewUrl, {
+                method: 'POST', credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json', 'Accept': 'application/json',
+                    'X-CSRF-TOKEN': form.querySelector('[name="_token"]').value},
+                body: JSON.stringify({inspection_id: box.dataset.inspectionId || null,
+                    phytosanitary_condition_ids: [...form.querySelectorAll('[name="phytosanitary_condition_ids[]"]:checked')].map(input => input.value)}),
+            });
+            const data = await response.json();
+            if (current !== sequence) return;
+            if (!response.ok) throw new Error(data.message || 'No se pudo calcular. Revisa la sesión y vuelve a consultar.');
+            box.querySelector('[data-risk-methodology]').value = data.methodology_id || '';
+            confirmed.disabled = data.status !== 'valid';
+            priority.setCustomValidity(data.status === 'valid' ? '' : 'Corrige las condiciones incompatibles antes de guardar.');
+            result.textContent = data.status === 'valid'
+                ? `Sugerencia: ${data.priority_label} (${data.methodology_code}). Severidad máxima ${data.severity_max}; extensión ${data.extension_class} (${data.affected_component_count} componentes). ${data.management_message}`
+                : 'Inspección inconsistente: corrige las selecciones antes de guardar.';
+            const components = {PHT_ROOT: 'Sistema radicular', PHT_STEM: 'Fuste o estípite', PHT_BRANCH: 'Ramas', PHT_FOLIAGE: 'Follaje', PHT_FLOWER_FRUIT: 'Flores y frutos'};
+            for (const message of [...data.errors, ...data.warnings,
+                ...data.affected_components.map(key => `Componente afectado: ${components[key] || key}.`),
+                ...data.determinants.map(item => `Determinante: ${item.display_label || item.label} (peso ${item.weight}).`),
+                ...data.overrides.map(item => `Prevalencia: ${item.label}, mínimo ${item.minimum}.`)]) {
+                const li = document.createElement('li'); li.textContent = message; details.append(li);
+            }
+        } catch (error) {
+            if (current !== sequence) return;
+            confirmed.disabled = true;
+            priority.setCustomValidity('Actualiza la sugerencia antes de guardar.');
+            result.textContent = error.message;
+        }
+    }
+    form.addEventListener('change', event => {
+        if (event.target.name === 'phytosanitary_condition_ids[]') {
+            ++sequence;
+            confirmed.checked = false;
+            clearTimeout(timer); timer = setTimeout(preview, 250);
+        }
+        if (event.target.name === 'risk_priority') confirmed.checked = false;
+    });
+    box.querySelector('[data-risk-preview]').addEventListener('click', preview);
+    preview();
+})();

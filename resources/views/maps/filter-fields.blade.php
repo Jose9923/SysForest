@@ -32,6 +32,7 @@
         </div></details>
         @if ($mapConfig['can_inspect'])
             <details class="map-filter-group"><summary>{{ ($publicMap ?? false) ? 'Última inspección publicada' : 'Última inspección' }}</summary><div class="map-fields">
+                @unless ($publicMap ?? false)@include('risk.filter')@endunless
                 <p class="map-hint">{{ ($publicMap ?? false) ? 'Se consulta la inspección publicada más reciente de cada árbol.' : 'Se consulta la inspección más reciente de cada árbol.' }} Todas las condiciones se evalúan sobre esa misma inspección.</p>
                 <div class="field"><label for="map-date-from">Inspección desde</label><input id="map-date-from" name="date_from" type="date" data-filter-label="Inspección desde" value="{{ $initialFilters['date_from'] ?? '' }}"></div>
                 <div class="field"><label for="map-date-to">Inspección hasta</label><input id="map-date-to" name="date_to" type="date" data-filter-label="Inspección hasta" value="{{ $initialFilters['date_to'] ?? '' }}"></div>

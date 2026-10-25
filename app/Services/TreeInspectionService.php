@@ -31,12 +31,14 @@ class TreeInspectionService
         private InspectionFaunaService $fauna,
         private PhenologyService $phenology,
         private InspectionAuditService $audit,
+        private RiskEvaluationService $risk,
+        private CarbonEstimationService $carbon,
     ) {
     }
 
-    public function create(User $actor, string $treeId, array $input): TreeInspection
+    public function create(User $actor, string $treeId, array $input, string $origin = 'web'): TreeInspection
     {
-        return DB::transaction(function () use ($actor, $treeId, $input): TreeInspection {
+        return DB::transaction(function () use ($actor, $treeId, $input, $origin): TreeInspection {
             $actor = $this->users->findForUpdate((int) $actor->id);
             $organization = $this->access->organization($actor, true);
             $tree = $this->trees->findForTenant($organization->id, $treeId, true);
@@ -50,15 +52,17 @@ class TreeInspectionService
             $this->conditions->apply($inspection, $data);
             $this->fauna->apply($inspection, $data['fauna_category_ids'] ?? []);
             $inspection = $this->inspections->findForTenant($organization->id, $inspection->id);
+            $this->risk->record($inspection, $actor, $data, $origin);
+            $this->carbon->record($inspection);
             $this->audit->record($actor, $inspection, [], 'inspection.created');
 
             return $inspection;
         }, 3);
     }
 
-    public function update(User $actor, string $id, array $input): TreeInspection
+    public function update(User $actor, string $id, array $input, string $origin = 'web'): TreeInspection
     {
-        return DB::transaction(function () use ($actor, $id, $input): TreeInspection {
+        return DB::transaction(function () use ($actor, $id, $input, $origin): TreeInspection {
             // Mantiene el orden actor → organización → árbol → inspección entre todas las escrituras.
             $actor = $this->users->findForUpdate((int) $actor->id);
             $organization = $this->access->organization($actor, true);
@@ -72,6 +76,13 @@ class TreeInspectionService
             }
             $input = array_replace($this->currentInput($inspection), $input);
             $data = Validator::make($input, TreeInspectionInput::rules(true), TreeInspectionInput::messages())->validate();
+            $data['general_observations'] = \App\Support\ExcelReferencePresentation::preserveObservations(
+                $inspection->general_observations,
+                $data['general_observations'] ?? null
+            );
+            if (mb_strlen($data['general_observations'] ?? '') > 20000) {
+                throw ValidationException::withMessages(['general_observations' => 'Reduce la extensión de las observaciones antes de guardar.']);
+            }
             if ($inspection->calculation_rule_version !== \App\Domain\Forestry\DendrometryArithmetic::VERSION) {
                 throw ValidationException::withMessages(['calculation_rule_version' => 'La corrección requiere el algoritmo original de esta inspección, que no está disponible.']);
             }
@@ -81,6 +92,8 @@ class TreeInspectionService
             $this->conditions->apply($updated, $data, $inspection);
             $this->fauna->apply($updated, $data['fauna_category_ids'], $inspection);
             $updated = $this->inspections->findForTenant($organization->id, $id);
+            $this->risk->record($updated, $actor, $data, $origin);
+            $this->carbon->record($updated);
             $this->audit->record($actor, $updated, $old, 'inspection.updated');
 
             return $updated;

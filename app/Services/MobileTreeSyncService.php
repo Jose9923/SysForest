@@ -96,7 +96,7 @@ class MobileTreeSyncService
             $tree = $this->trees->create($actor, array_merge($data['tree'], ['inventory_ids' => [$inventoryId]]));
             $participation = $this->receipts->participation($organization->id, $inventoryId, $tree->id);
             $inspection = isset($data['inspection'])
-                ? $this->inspections->create($actor, $tree->id, array_merge($data['inspection'], ['inventory_tree_id' => $participation->id]))
+                ? $this->inspections->create($actor, $tree->id, array_merge($data['inspection'], ['inventory_tree_id' => $participation->id]), 'mobile')
                 : null;
             $result = ['tree_id' => $tree->id, 'tree_code' => $tree->code,
                 'inventory_tree_id' => $participation->id, 'inspection_id' => $inspection?->id,
@@ -121,6 +121,9 @@ class MobileTreeSyncService
         $treeRules['captured_at'] = ['nullable', 'date', 'regex:/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})\z/D'];
         $inspectionRules = TreeInspectionInput::rules();
         $inspectionRules['inventory_tree_id'] = ['prohibited'];
+        foreach (['risk_priority', 'risk_confirmed', 'risk_methodology_id'] as $field) {
+            unset($inspectionRules[$field]);
+        }
         foreach ([$treeRules, $inspectionRules] as $index => $fieldRules) {
             foreach ($fieldRules as $field => $constraints) {
                 if (in_array('prohibited', $constraints, true)) {

@@ -16,6 +16,9 @@ class TreeInspectionInput
         $rules = DendrometryInput::rules() + [
             'inspection_date' => [$updating ? 'sometimes' : 'required', 'date_format:Y-m-d'],
             'inventory_tree_id' => ['nullable', 'uuid'],
+            'risk_priority' => ['nullable', 'integer', 'between:1,4'],
+            'risk_confirmed' => ['nullable', 'boolean'],
+            'risk_methodology_id' => ['nullable', 'uuid'],
             'lock_version' => $updating ? ['required', 'integer', 'min:1', 'max:2147483646'] : ['prohibited'],
         ];
         foreach (self::TEXT_FIELDS as $field) {
@@ -37,7 +40,8 @@ class TreeInspectionInput
 
     public static function filters(): array
     {
-        $rules = ['condition_mode' => ['nullable', 'in:any,all'],
+        $rules = ['risk_priority' => ['nullable', 'in:1,2,3,4,pending,inconsistent,unevaluated'],
+            'condition_mode' => ['nullable', 'in:any,all'],
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date_format:Y-m-d']];
         foreach (['inventory_id', 'species_id', 'common_name_id', 'maturity_state_id', 'tree_id'] as $field) {

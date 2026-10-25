@@ -69,6 +69,9 @@ class ClassificationCatalogService
             $this->access->authorizeManage($actor);
             $version = $this->rules->find($id, true);
             $data = Validator::make($input, ClassificationMetadataInput::rules())->validate();
+            if (array_key_exists('description', $data)) {
+                $data['description'] = \App\Support\ExcelReferencePresentation::preserveDescription($version->description, $data['description']);
+            }
             $before = $this->snapshots->snapshot($version);
             $this->versions->advance($version, $data);
             $data = array_intersect_key($data, array_flip(['name', 'description', 'active', 'sort_order']));

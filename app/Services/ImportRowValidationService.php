@@ -33,6 +33,9 @@ class ImportRowValidationService
         private TreeLocationService $locations,
         private DendrometryCalculationService $calculations,
         private PhenologyService $phenology,
+        private \App\Repositories\RiskRepository $risks,
+        private RiskMethodologyService $riskMethods,
+        private \App\Domain\Forestry\PhytosanitaryRisk $riskCalculator,
     ) {
     }
 
@@ -82,6 +85,17 @@ class ImportRowValidationService
             $inspection = array_replace($inspection, DendrometryInput::validate($inspection), $this->phenology->normalize($inspection));
             $derived = $this->calculations->calculate($inspection);
         }, $errors);
+
+        $method = $this->risks->active($organization->id);
+        $risk = $this->riskCalculator->evaluate(
+            $method?->configuration ?? $this->riskMethods->template(),
+            $this->risks->selectedCodes($inspection['phytosanitary_condition_ids'] ?? [])
+        );
+        if (!app(HistoricalRiskImportScope::class)->matches($organization->id, $inventory->id)) {
+            foreach ($risk['errors'] as $message) {
+                $errors['phytosanitary_condition_ids'][] = $message;
+            }
+        }
 
         return ['tree' => $tree, 'inspection' => $inspection, 'requested_code' => $code,
             'calculations' => $derived, 'errors' => $this->uniqueErrors($errors)];

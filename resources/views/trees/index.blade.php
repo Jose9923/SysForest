@@ -9,6 +9,7 @@
     @if (($currentAccessMode ?? '') === 'department_read')<p class="forestry-readonly">Consulta departamental. Los registros se muestran en modo de lectura.</p>@endif
     <form method="GET" action="{{ route('trees.index') }}" class="panel forestry-panel filter-panel">
         <div class="forestry-filters">
+            @if ($canViewRisk)@include('risk.filter')@endif
             <div class="field search-field"><label for="tree-q">Buscar árbol</label><input id="tree-q" name="q" value="{{ $filters['q'] ?? '' }}" maxlength="150" placeholder="Código, número anterior, especie o ubicación"></div>
             <div class="field"><label for="tree-inventory">Inventario</label><select class="catalog-select" id="tree-inventory" name="inventory_id"><option value="">Todos los inventarios</option>@foreach ($options['inventories'] as $option)<option value="{{ $option->id }}" @selected(($filters['inventory_id'] ?? '') === $option->id)>{{ $option->code }} · {{ $option->name }}</option>@endforeach</select></div>
             @include('forestry.taxonomy-filters', ['filterPrefix' => 'tree'])
@@ -27,7 +28,7 @@
     <section class="panel forestry-table-panel" aria-label="Resultados de árboles">
         <div class="forestry-table-summary"><strong>{{ $trees->total() }} {{ $trees->total() === 1 ? 'árbol encontrado' : 'árboles encontrados' }}</strong><span class="muted">{{ ($filters['trashed'] ?? '') === 'only' ? 'Registros anulados' : 'Fichas permanentes de la organización' }}</span></div>
         @if ($trees->isNotEmpty())
-            <div class="forestry-table-wrap"><table class="forestry-table"><thead><tr><th scope="col">Código</th><th scope="col">Nombre común</th><th scope="col">Nombre científico</th><th scope="col">Emplazamiento</th><th scope="col">Ubicación</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead><tbody>
+            <div class="forestry-table-wrap"><table class="forestry-table"><thead><tr><th scope="col">Código</th><th scope="col">Nombre común</th><th scope="col">Nombre científico</th><th scope="col">Emplazamiento</th><th scope="col">Ubicación</th><th scope="col">Estado</th>@if ($canViewRisk)<th scope="col">Prioridad fitosanitaria</th>@endif<th scope="col">Acciones</th></tr></thead><tbody>
                 @foreach ($trees as $entry)
                     @php($statusValue = $entry->current_status instanceof \BackedEnum ? $entry->current_status->value : $entry->current_status)
                     <tr>
@@ -37,6 +38,7 @@
                         <td data-label="Emplazamiento"><span>{{ $entry->placement?->name ?? 'No informado' }}</span></td>
                         <td data-label="Ubicación"><span>{{ $entry->location_description ?: 'No informada' }}</span></td>
                         <td data-label="Estado"><div class="forestry-flags"><span class="pill">{{ $statuses[$statusValue] ?? $statusValue }}</span>@if ($entry->trashed())<span class="pill danger">Anulado</span>@endif @if ($entry->is_protected)<span class="pill neutral">Protegido</span>@endif @if ($entry->is_heritage)<span class="pill warning">Patrimonial</span>@endif</div></td>
+                        @if ($canViewRisk)<td data-label="Prioridad fitosanitaria">{{ $entry->risk_priority !== null ? \App\Enums\RiskPriority::from((int) $entry->risk_priority)->label() : ($entry->risk_evaluation_id === null ? 'Sin evaluar' : ((json_decode($entry->risk_result, true)['status'] ?? '') === 'inconsistent' ? 'Inconsistente' : 'Pendiente de confirmación')) }}</td>@endif
                         <td data-label="Acciones"><div class="row-actions"><a href="{{ route('trees.show', $entry->id) }}" aria-label="Ver árbol {{ $entry->code }}">Ver ficha</a>@if (!$entry->trashed()) @can('update', $entry)<a href="{{ route('trees.edit', $entry->id) }}" aria-label="Editar árbol {{ $entry->code }}">Editar</a>@endcan @endif</div></td>
                     </tr>
                 @endforeach

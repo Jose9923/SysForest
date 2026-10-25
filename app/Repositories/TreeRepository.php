@@ -47,10 +47,13 @@ class TreeRepository
         return Tree::withTrashed()->where('organization_id', $organizationId)->where('code', $code)->exists();
     }
 
-    public function paginate(string $organizationId, array $filters): LengthAwarePaginator
+    public function paginate(string $organizationId, array $filters, bool $includeRisk = false): LengthAwarePaginator
     {
         $criteria = TreeFilterDTO::fromValidated($filters);
         $query = $this->queries->query(TreeReadScope::organization($organizationId), $criteria)->with(self::RELATIONS);
+        if ($includeRisk) {
+            $query->addSelect('latest_inspection.risk_priority', 'latest_inspection.risk_result', 'latest_inspection.risk_evaluation_id');
+        }
 
         return $this->queries->ordered($query, $criteria)->paginate(20)->withQueryString();
     }

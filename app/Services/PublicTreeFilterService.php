@@ -19,7 +19,7 @@ use Illuminate\Validation\ValidationException;
 class PublicTreeFilterService
 {
     public const SORTS = ['code', 'common_name', 'scientific_name', 'municipality', 'latest_inspection_date'];
-    private const EXCLUDED = ['scope', 'trashed', 'include_deleted', 'include_voided_trees', 'tree_id',
+    private const EXCLUDED = ['risk_priority', 'scope', 'trashed', 'include_deleted', 'include_voided_trees', 'tree_id',
         'maintenance_priority', 'has_pending_maintenance'];
 
     public function __construct(private TreeFilterService $trees, private PublicReferenceRepository $references)

@@ -56,7 +56,8 @@ class ImportRowWriteService
         }
         $inspectionInput = $validated['inspection'];
         $inspectionInput['inventory_tree_id'] = $participation;
-        $inspection = $this->inspections->create($actor, $tree->id, $inspectionInput);
+        $origin = app(HistoricalRiskImportScope::class)->matches($inventory->organization_id, $inventory->id) ? 'historical' : 'import';
+        $inspection = $this->inspections->create($actor, $tree->id, $inspectionInput, $origin);
 
         return ['tree' => $tree, 'inspection' => $inspection];
     }

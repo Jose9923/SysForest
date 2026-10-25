@@ -42,7 +42,7 @@ class AnalyticsReadService
             $export = $this->canReport($actor, $selection, 'species', true);
             $summary = $this->analytics->summary($selection, $inspections);
             $charts = [];
-            $keys = ['states', 'species', 'families', 'diameter_classes', 'height_classes',
+            $keys = ['carbon', 'carbon_coverage', 'risk', 'states', 'species', 'families', 'diameter_classes', 'height_classes',
                 'phytosanitary_conditions', 'physical_conditions', 'inspections', 'maintenances'];
             if ($selection->scope->kind !== 'organization') {
                 $keys = [...$keys, 'organizations', 'municipalities'];
@@ -109,7 +109,9 @@ class AnalyticsReadService
     {
         $definition = $this->catalog->get($key);
         $data = $this->reports->aggregate($selection, $key);
-        $metric = $key === 'maintenances' ? 'orders' : 'trees';
+        $metric = match ($key) {
+            'maintenances' => 'orders', 'carbon' => 'co2_kg', default => 'trees'
+        };
         $rows = $data['rows'];
         $labels = fn ($row) => match ($key) {
             'diameter_classes', 'height_classes' => $row['rule_version'].' · '.$row['group'],

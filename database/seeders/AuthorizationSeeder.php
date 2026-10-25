@@ -18,6 +18,9 @@ class AuthorizationSeeder extends Seeder
 
         DB::transaction(function () use ($permissions, $roles): void {
             $catalog = [
+                'risk.view' => 'Consultar gestión de riesgo privada en el alcance autorizado.',
+                'carbon.manage' => 'Parametrizar referencias de carbono propias de la entidad.',
+                'risk.manage' => 'Parametrizar versiones de riesgo de la institución seleccionada.',
                 'organizations.view' => 'Consultar organizaciones dentro del alcance autorizado.',
                 'organizations.create' => 'Crear una organización desde la administración nacional.',
                 'organizations.manage' => 'Modificar la configuración institucional autorizada.',
@@ -77,8 +80,9 @@ class AuthorizationSeeder extends Seeder
             // Catálogo explícito: ningún rol obtiene automáticamente permisos añadidos en otras fases.
             $matrix = [
                 'SUPER_ADMIN' => ['national', array_keys($catalog)],
-                'DEPARTMENT_ADMIN' => ['department', ['audit.view', 'reports.view', 'reports.export', 'organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'inspections.view', 'evidences.view', 'maintenances.view']],
+                'DEPARTMENT_ADMIN' => ['department', ['risk.view', 'audit.view', 'reports.view', 'reports.export', 'organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'inspections.view', 'evidences.view', 'maintenances.view']],
                 'ORGANIZATION_ADMIN' => ['organization', [
+                    'risk.view', 'risk.manage', 'carbon.manage',
                     'imports.view', 'imports.create', 'reports.view', 'reports.export',
                     'organizations.view', 'organizations.manage', 'publication.manage', 'memberships.view', 'memberships.create',
                     'memberships.update', 'memberships.activate', 'memberships.deactivate', 'users.view',
@@ -89,7 +93,7 @@ class AuthorizationSeeder extends Seeder
                     'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'evidences.restore',
                     'maintenances.view', 'maintenances.create', 'maintenances.update', 'maintenances.transition', 'maintenances.verify', 'maintenances.void', 'maintenances.restore',
                 ]],
-                'OFFICIAL' => ['organization', ['imports.view', 'imports.create', 'reports.view', 'reports.export', 'organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'trees.create', 'trees.update', 'inspections.view', 'inspections.create', 'inspections.update', 'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'maintenances.view', 'maintenances.create', 'maintenances.update', 'maintenances.transition']],
+                'OFFICIAL' => ['organization', ['risk.view', 'imports.view', 'imports.create', 'reports.view', 'reports.export', 'organizations.view', 'territories.view', 'catalogs.view', 'inventories.view', 'trees.view', 'trees.create', 'trees.update', 'inspections.view', 'inspections.create', 'inspections.update', 'evidences.view', 'evidences.create', 'evidences.update', 'evidences.delete', 'maintenances.view', 'maintenances.create', 'maintenances.update', 'maintenances.transition']],
             ];
 
             foreach ($matrix as $name => [$scope, $codes]) {

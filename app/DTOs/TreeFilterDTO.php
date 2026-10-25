@@ -46,7 +46,7 @@ final readonly class TreeFilterDTO
 
     public function hasInspectionFilters(): bool
     {
-        foreach (['date_from', 'date_to', 'maturity_state_id', 'diameter_class_number', 'height_class_number',
+        foreach (['risk_priority', 'date_from', 'date_to', 'maturity_state_id', 'diameter_class_number', 'height_class_number',
             'physical_condition_ids', 'phytosanitary_condition_ids', 'cap_cm_min', 'cap_cm_max',
             'dap_m_min', 'dap_m_max', 'total_height_m_min', 'total_height_m_max'] as $key) {
             if ($this->has($key)) {

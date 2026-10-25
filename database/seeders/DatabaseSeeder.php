@@ -24,5 +24,6 @@ class DatabaseSeeder extends Seeder
         if (app()->environment('local')) {
             $this->call([DevelopmentIdentitySeeder::class, RestrepoOrnatoSeeder::class, RestrepoOrnatoImportSeeder::class]);
         }
+        $this->call([RiskMethodologySeeder::class, RiskHistoricalEvaluationSeeder::class, CarbonSpeciesReferenceSeeder::class, CarbonEstimationSeeder::class]);
     }
 }

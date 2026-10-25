@@ -76,11 +76,11 @@
                     $from = $entry->from_status instanceof \BackedEnum ? $entry->from_status->value : $entry->from_status;
                     $to = $entry->to_status instanceof \BackedEnum ? $entry->to_status->value : $entry->to_status;
                 @endphp
-                <li><time datetime="{{ $entry->changed_at?->toIso8601String() }}">{{ $entry->changed_at?->format('d/m/Y H:i') }}</time><strong>{{ $from ? ($statuses[$from] ?? $from).' → ' : 'Registro inicial → ' }}{{ $statuses[$to] ?? $to }}</strong>@if ($entry->reason)<p>{{ $entry->reason }}</p>@endif<small>{{ $entry->changedBy?->name ?? 'Responsable no disponible' }}</small></li>
+                <li><time datetime="{{ $entry->changed_at?->toIso8601String() }}">{{ $entry->changed_at?->format('d/m/Y H:i') }}</time><strong>{{ $from ? ($statuses[$from] ?? $from).' → ' : 'Registro inicial → ' }}{{ $statuses[$to] ?? $to }}</strong>@if ($entry->reason)<p>{{ \App\Support\ExcelReferencePresentation::text($entry->reason) }}</p>@endif<small>{{ $entry->changedBy?->name ?? 'Responsable no disponible' }}</small></li>
             @empty<li><p>Sin cambios de estado registrados.</p></li>@endforelse</ol></section>
             <section class="panel forestry-panel"><span class="section-kicker">HISTORIAL</span><h2>Cambios de ubicación</h2><ol class="history-list">@forelse ($tree->locationHistories as $entry)
                 @php($changeValue = $entry->change_type instanceof \BackedEnum ? $entry->change_type->value : $entry->change_type)
-                <li><time datetime="{{ $entry->changed_at?->toIso8601String() }}">{{ $entry->changed_at?->format('d/m/Y H:i') }}</time><strong>{{ $locationLabels[$changeValue] ?? 'Ubicación inicial' }}</strong><p>Antes: {{ $entry->old_coordinate_raw ?: 'Sin coordenadas' }}</p><p>Después: {{ $entry->new_coordinate_raw ?: 'Sin coordenadas' }}</p>@if ($entry->reason)<p>{{ $entry->reason }}</p>@endif<small>{{ $entry->changedBy?->name ?? 'Responsable no disponible' }}</small></li>
+                <li><time datetime="{{ $entry->changed_at?->toIso8601String() }}">{{ $entry->changed_at?->format('d/m/Y H:i') }}</time><strong>{{ $locationLabels[$changeValue] ?? 'Ubicación inicial' }}</strong><p>Antes: {{ $entry->old_coordinate_raw ?: 'Sin coordenadas' }}</p><p>Después: {{ $entry->new_coordinate_raw ?: 'Sin coordenadas' }}</p>@if ($entry->reason)<p>{{ \App\Support\ExcelReferencePresentation::text($entry->reason) }}</p>@endif<small>{{ $entry->changedBy?->name ?? 'Responsable no disponible' }}</small></li>
             @empty<li><p>Sin cambios de ubicación registrados.</p></li>@endforelse</ol></section>
         </div>
         @if ($canVoid && !$tree->trashed())

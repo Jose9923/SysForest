@@ -30,6 +30,17 @@ class InspectionAuditService
         foreach ($groups as $name => $fields) {
             $snapshot[$name] = array_intersect_key($values, array_flip($fields));
         }
+        $evaluation = $inspection->riskEvaluation;
+        $snapshot['risk'] = $evaluation ? ['evaluation_id' => $evaluation->id, 'methodology_id' => $evaluation->methodology_id,
+            'priority' => $evaluation->priority, 'suggested_priority' => $evaluation->result['priority'],
+            'status' => $evaluation->result['status'], 'confirmed_by' => $evaluation->confirmed_by,
+            'confirmed_at' => $evaluation->confirmed_at?->toIso8601String()] : [];
+        $carbon = \App\Support\CarbonPresentation::current($inspection);
+        if ($carbon !== null) {
+            $snapshot['carbon'] = ['estimate_id' => $carbon->id, 'profile_id' => $carbon->profile_id,
+                'status' => $carbon->status, 'method_version' => $carbon->method_version,
+                'biomass_kg' => $carbon->biomass_kg, 'carbon_kg' => $carbon->carbon_kg, 'co2_kg' => $carbon->co2_kg];
+        }
         $snapshot['conditions'] = $inspection->conditions->modelKeys();
         sort($snapshot['conditions']);
         $snapshot['fauna'] = ['category_ids' => $inspection->faunaCategories->modelKeys(), 'observations' => $inspection->fauna_observations];

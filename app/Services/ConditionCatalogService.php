@@ -86,6 +86,9 @@ class ConditionCatalogService
                 if ($catalog === ConditionCatalogKind::Items) {
                     $this->validateCategory($values, $record);
                 }
+                if ($record !== null && array_key_exists('description', $values)) {
+                    $values['description'] = \App\Support\ExcelReferencePresentation::preserveDescription($record->description, $values['description']);
+                }
                 $auditBefore = $record === null ? [] : $this->snapshots->snapshot($record);
                 if ($record !== null) {
                     $this->versions->advance($record, $values);

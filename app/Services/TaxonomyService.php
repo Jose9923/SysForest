@@ -80,6 +80,9 @@ class TaxonomyService
                 }
                 $values[$catalog->nameColumn()] = trim($values[$catalog->nameColumn()]);
                 $this->validateParent($catalog, $values, $record);
+                if ($record !== null && array_key_exists('description', $values)) {
+                    $values['description'] = \App\Support\ExcelReferencePresentation::preserveDescription($record->description, $values['description']);
+                }
                 $auditBefore = $record === null ? [] : $this->snapshots->snapshot($record);
                 if ($record !== null) {
                     $this->versions->advance($record, $values);

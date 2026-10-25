@@ -60,6 +60,8 @@ class MapTreeRepository
         return $this->query($scope, $filters, true)->whereNotNull('trees.geometry')
             ->select(['trees.id', 'trees.code', 'trees.species_id', 'trees.placement_id', 'trees.current_status'])
             ->selectRaw('ST_X(trees.geometry) AS longitude, ST_Y(trees.geometry) AS latitude, latest_inspection.inspection_date AS latest_inspection_date')
+            ->when($scope->kind !== 'published', fn (Builder $query) => $query
+                ->addSelect('latest_inspection.carbon_validation_status', 'latest_inspection.carbon_status', 'latest_inspection.carbon_carbon_kg', 'latest_inspection.carbon_co2_kg', 'latest_inspection.risk_priority', 'latest_inspection.risk_result', 'latest_inspection.risk_evaluation_id'))
             ->with(['species:id,scientific_name',
                 'species.commonNames' => fn ($names) => $names->select('id', 'species_id', 'name', 'is_primary')
                     ->orderByDesc('is_primary')
@@ -81,6 +83,8 @@ class MapTreeRepository
                     ->orWhereHas('commonNames', fn (Builder $names) => $names->where('name', 'ilike', $term))))
             ->select(['trees.id', 'trees.code', 'trees.species_id', 'trees.placement_id', 'trees.current_status'])
             ->selectRaw('ST_X(trees.geometry) AS longitude, ST_Y(trees.geometry) AS latitude, NULL AS latest_inspection_date')
+            ->when($scope->kind !== 'published', fn (Builder $query) => $query
+                ->addSelect('latest_inspection.carbon_validation_status', 'latest_inspection.carbon_status', 'latest_inspection.carbon_carbon_kg', 'latest_inspection.carbon_co2_kg', 'latest_inspection.risk_priority', 'latest_inspection.risk_result', 'latest_inspection.risk_evaluation_id'))
             ->with(['species:id,scientific_name',
                 'species.commonNames' => fn ($names) => $names->select('id', 'species_id', 'name', 'is_primary')
                     ->orderByDesc('is_primary')

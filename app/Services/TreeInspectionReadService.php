@@ -32,6 +32,9 @@ class TreeInspectionReadService
         private InventoryRepository $inventories,
         private EvidenceReadService $evidences,
         private TreeFilterService $treeFilters,
+        private RiskMethodologyService $riskMethods,
+        private \App\Repositories\RiskRepository $risks,
+        private \App\Repositories\CarbonRepository $carbon,
     ) {
     }
 
@@ -58,6 +61,7 @@ class TreeInspectionReadService
         Gate::forUser($actor)->authorize($inspection ? 'update' : 'create', $inspection ?? [TreeInspection::class, $tree]);
 
         return ['organization' => $organization, 'tree' => $tree, 'inspection' => $inspection,
+            'riskMethodology' => $this->riskMethods->initialize($organization->id),
             'options' => ['conditionCategories' => $this->conditions->options($inspection)->groupBy('assessment_type'),
                 'faunaCategories' => $this->fauna->options($inspection),
                 'inventoryTrees' => $this->inspections->inventoryOptionsForTree($organization->id, $tree->id)],
@@ -82,6 +86,8 @@ class TreeInspectionReadService
         return ['organization' => $this->access->organization($actor), 'tree' => $inspection->tree,
             'inspection' => $inspection, 'canUpdate' => Gate::forUser($actor)->allows('update', $inspection),
             'selectedConditionGroups' => $inspection->conditions->groupBy('assessment_type')->map(fn ($items) => $items->groupBy('condition_category_id')),
+            'carbonHistory' => $this->carbon->history($inspection->organization_id, $inspection->id),
+            'riskHistory' => $this->risks->history($inspection->organization_id, $inspection->id),
             'revisions' => $this->revisions->forInspection($inspection->organization_id, $inspection->id),
             'inspectionEvidenceGallery' => $this->evidences->gallery($actor, $inspection)];
     }

@@ -3,6 +3,18 @@ import {treePopupContent} from './popup-content.js';
 
 export function treePopup(properties, {document, csrf, origin}) {
     const box = treePopupContent(properties, {document});
+    if (properties.carbon) {
+        const carbon = document.createElement('p');
+        carbon.textContent = properties.carbon.co2_kg == null
+            ? `Carbono aéreo: ${properties.carbon.status}`
+            : `Carbono aéreo: ${properties.carbon.carbon_kg} kg C · ${properties.carbon.co2_kg} kg CO₂ (stock estimado en la visita). ${properties.carbon.reference_status || ''}.${properties.carbon.included_in_live_stock ? '' : ' Excluido del stock vivo actual.'}`;
+        box.append(carbon);
+    }
+    if (properties.risk) {
+        const risk = document.createElement('p');
+        risk.textContent = `Prioridad fitosanitaria: ${properties.risk.label}`;
+        box.append(risk);
+    }
     if (properties.open_url) {
         try {
             const url = sameOriginUrl(properties.open_url, origin);

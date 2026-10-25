@@ -35,12 +35,52 @@ class InspectionQueryRepository
             $this->visibility->inspection($query);
         }
 
+        if ($scope?->kind !== 'published') {
+            $carbon = DB::table('carbon_estimates as ce')
+                ->whereColumn('ce.organization_id', 'tree_inspections.organization_id')
+                ->whereColumn('ce.inspection_id', 'tree_inspections.id')
+                ->whereColumn('ce.inspection_version', 'tree_inspections.lock_version')
+                ->whereRaw('ce.species_id IS NOT DISTINCT FROM trees.species_id')
+                ->whereRaw("ce.inputs->>'growth_habit_id' IS NOT DISTINCT FROM trees.growth_habit_id::text")
+                ->orderByDesc('ce.id')->limit(1);
+            $query->leftJoinLateral($carbon, 'visit_carbon')->addSelect(
+                DB::raw("visit_carbon.method->'profile'->>'validation_status' as carbon_validation_status"),
+                'visit_carbon.status as carbon_status',
+                'visit_carbon.biomass_kg as carbon_biomass_kg',
+                'visit_carbon.carbon_kg as carbon_carbon_kg',
+                'visit_carbon.co2_kg as carbon_co2_kg'
+            );
+            $query->leftJoin('risk_evaluations as visit_risk', fn ($join) => $join
+                ->on('visit_risk.inspection_id', '=', 'tree_inspections.id')
+                ->on('visit_risk.organization_id', '=', 'tree_inspections.organization_id')
+                ->on('visit_risk.inspection_version', '=', 'tree_inspections.lock_version'))
+                ->addSelect('visit_risk.priority as risk_priority', 'visit_risk.result as risk_result', 'visit_risk.id as risk_evaluation_id');
+        }
+
         return $this->ordered($query)->limit(1);
     }
 
     public function applyFilters(Builder $query, array $filters, string $alias = 'tree_inspections'): void
     {
         $this->requireAlias($alias);
+        if (!empty($filters['risk_priority'])) {
+            $value = (string) $filters['risk_priority'];
+            if ($alias === 'latest_inspection') {
+                $this->riskFilter($query, $value, $alias.'.risk_priority', $alias.'.risk_result', $alias.'.risk_evaluation_id');
+            } else {
+                if ($value === 'unevaluated') {
+                    $query->whereNotExists(fn ($risk) => $risk->selectRaw('1')->from('risk_evaluations as filtered_risk')
+                        ->whereColumn('filtered_risk.inspection_id', $alias.'.id')->whereColumn('filtered_risk.inspection_version', $alias.'.lock_version'));
+                } else {
+                    $query->whereExists(function ($risk) use ($alias, $value): void {
+                        $risk->selectRaw('1')->from('risk_evaluations as filtered_risk')
+                            ->whereColumn('filtered_risk.organization_id', $alias.'.organization_id')
+                            ->whereColumn('filtered_risk.inspection_id', $alias.'.id')->whereColumn('filtered_risk.inspection_version', $alias.'.lock_version');
+                        $this->riskFilter($risk, $value, 'filtered_risk.priority', 'filtered_risk.result', 'filtered_risk.id');
+                    });
+                }
+            }
+        }
         if (!empty($filters['tree_id'])) {
             $query->where($alias.'.tree_id', $filters['tree_id']);
         }
@@ -78,6 +118,19 @@ class InspectionQueryRepository
             } else {
                 $query->whereExists(fn (QueryBuilder $exists) => $conditions($exists)->selectRaw('1'));
             }
+        }
+    }
+
+    private function riskFilter($query, string $value, string $priority, string $result, string $id): void
+    {
+        if ($value === 'unevaluated') {
+            $query->whereNull($id);
+        } elseif ($value === 'inconsistent') {
+            $query->whereRaw("{$result}->>'status' = ?", ['inconsistent']);
+        } elseif ($value === 'pending') {
+            $query->whereNull($priority)->whereRaw("{$result}->>'status' = ?", ['valid']);
+        } else {
+            $query->where($priority, (int) $value);
         }
     }
 

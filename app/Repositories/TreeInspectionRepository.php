@@ -19,8 +19,8 @@ use LogicException;
 
 class TreeInspectionRepository
 {
-    private const RELATIONS = ['tree.species.family', 'tree.species.commonNames', 'inventoryTree.inventory',
-        'creator', 'updater', 'classificationRuleVersion', 'maturityState', 'conditions.category', 'faunaCategories'];
+    private const RELATIONS = ['tree.growthHabit', 'tree.species.family', 'tree.species.commonNames', 'inventoryTree.inventory',
+        'carbonEstimate', 'riskEvaluation.confirmer', 'riskEvaluation.methodology', 'creator', 'updater', 'classificationRuleVersion', 'maturityState', 'conditions.category', 'faunaCategories'];
     private const IMMUTABLE = ['id', 'organization_id', 'tree_id', 'created_by', 'created_at',
         'classification_rule_version_id', 'calculation_rule_version'];
 

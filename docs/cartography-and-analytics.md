@@ -86,3 +86,11 @@ Esta guía no atribuye pruebas automatizadas ni resultados de fases anteriores a
 - Navegador: gráficos, categorías, tabla de especies de 143 filas con paginación, filtros sin resultados, regreso desde reportes, mapa operativo/calor, OSM/OpenTopoMap, aviso NASA, medición por teclado, pantalla completa y carga/encuadre/retiro de una capa local. Archivo PNG descargado y abierto. Portal público sin errores de JavaScript.
 - Revisión visual a anchos de escritorio y 390 px, sin desbordamiento horizontal. No equivale a una prueba en un teléfono físico.
 - `view:cache`, `git diff --check` y `/health/ready` correctos. La geolocalización depende del permiso y la señal del dispositivo; no se concedió permiso de ubicación durante la revisión. No hubo cambios en árboles ni migraciones.
+
+### Etiqueta de clasificación — 25 de octubre de 2026
+
+Las gráficas de clases diamétricas y de altura, sus tablas y reportes presentan `EXCEL_V1` como **Clasificación forestal · versión 1**. La misma etiqueta se reutiliza en las exportaciones privadas de inventario y en la referencia visible de los catálogos de reglas. El identificador persistido, los parámetros, las agrupaciones y los resultados históricos se conservan; otras versiones mantienen su identificador hasta contar con una etiqueta definida.
+
+La comprobación de solo lectura confirmó ambas gráficas y sus tablas con la nueva etiqueta y la conservación del código en PostgreSQL. PSR-12 y sintaxis PHP aprobaron en los tres archivos PHP modificados; las vistas Blade compilaron correctamente. No se aplicaron migraciones, seeders ni cambios de datos.
+
+El tablero privado agrega carbono aéreo por especie y cobertura de cálculo según la última visita, sin sumar historiales ni convertir pendientes en ceros. Consulta [carbon-estimation.md](carbon-estimation.md) para método, configuración institucional y límites.

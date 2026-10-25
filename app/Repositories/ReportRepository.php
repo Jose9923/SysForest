@@ -39,6 +39,8 @@ class ReportRepository
             'families' => $this->families($selection),
             'habits' => $this->named($selection, 'growth_habits', 'growth_habit_id'),
             'states' => $this->states($selection),
+            'risk' => $this->risks($selection),
+            'carbon', 'carbon_coverage' => $this->carbon($selection, $report),
             'origins' => $this->origins($selection),
             'diameter_classes', 'height_classes' => $this->classes($selection, $report),
             'physical_conditions', 'phytosanitary_conditions' => $this->conditions($selection, $report),
@@ -76,6 +78,22 @@ class ReportRepository
         if ($report === 'organizations') {
             array_unshift($columns, $this->column('code', 'Código institucional'));
         }
+        if (in_array($report, ['carbon', 'carbon_coverage'], true)) {
+            $notices[] = 'Las referencias bibliográficas precargadas permiten cálculos preliminares y no acreditan revisión profesional local. El reporte identifica cuántos estimados incluidos usan esas referencias.';
+            $notices[] = 'Estimación preliminar de biomasa aérea con Chave (2014) y fracción de carbono IPCC 0,47. Requiere validación local; no incluye raíces ni suelo, ni representa captura anual o compensación de emisiones.';
+            $notices[] = 'Solo se agrega la última visita de cada árbol actualmente Sano, En observación o Trasplantado. Las densidades y los límites son institucionales. Los faltantes no equivalen a cero; pueden coexistir referencias históricas distintas.';
+            if ($report === 'carbon') {
+                $columns = [$this->column('group', 'Especie'), $this->column('trees', 'Individuos', 'integer'),
+                    $this->column('estimated', 'Estimados incluidos', 'integer'),
+                    $this->column('provisional', 'Con referencia bibliográfica provisional', 'integer'), $this->column('pending', 'Pendientes o excluidos', 'integer'),
+                    $this->column('biomass_kg', 'Biomasa aérea seca', 'decimal', 'kg'),
+                    $this->column('carbon_kg', 'Carbono aéreo almacenado', 'decimal', 'kg'),
+                    $this->column('co2_kg', 'CO₂ correspondiente al carbono aéreo', 'decimal', 'kg')];
+            }
+        }
+        if ($report === 'risk') {
+            $notices[] = 'Se muestra la decisión profesional de la última inspección; las sugerencias sin confirmar se cuentan aparte. Cada institución aplica su propia metodología y versión.';
+        }
         if ($report === 'inspections') {
             $notices[] = 'Este resumen considera únicamente la última inspección pertinente de cada individuo, no el número de visitas históricas.';
         }
@@ -94,6 +112,10 @@ class ReportRepository
             'latest_inspection.classification_rule_version_id', 'latest_inspection.diameter_class_number',
             'latest_inspection.height_class_number',
         ]);
+
+        if (!$selection->isPublic()) {
+            $query->addSelect('latest_inspection.carbon_validation_status', 'latest_inspection.carbon_status', 'latest_inspection.carbon_biomass_kg', 'latest_inspection.carbon_carbon_kg', 'latest_inspection.carbon_co2_kg', 'latest_inspection.risk_priority', 'latest_inspection.risk_result', 'latest_inspection.risk_evaluation_id');
+        }
 
         return DB::query()->fromSub($query, 'selected');
     }
@@ -116,6 +138,41 @@ class ReportRepository
             ->groupBy('families.id', 'families.scientific_name')->orderBy('families.scientific_name'));
     }
 
+    private function carbon(ReportSelectionDTO $selection, string $report): array
+    {
+        abort_if($selection->isPublic(), 404);
+        $live = "selected.current_status IN ('active', 'under_observation', 'transplanted')";
+        $included = "({$live} AND selected.carbon_status = 'estimated')";
+        if ($report === 'carbon_coverage') {
+            $expression = "CASE WHEN NOT ({$live}) THEN 'excluded_status' ELSE COALESCE(selected.carbon_status, 'unprocessed') END";
+            $rows = $this->rows($this->selected($selection)->selectRaw($expression.' AS "group", COUNT(*) AS trees')
+                ->groupByRaw($expression)->orderBy('group'));
+
+            return array_map(fn ($row) => array_replace($row, ['group' => \App\Support\CarbonPresentation::label($row['group'])]), $rows);
+        }
+
+        return $this->rows($this->selected($selection)->leftJoin('species', 'species.id', '=', 'selected.species_id')
+            ->selectRaw('COALESCE(species.scientific_name, ?) AS "group", COUNT(*) AS trees, '
+                ."COUNT(*) FILTER (WHERE {$included}) AS estimated, COUNT(*) FILTER (WHERE {$included} AND selected.carbon_validation_status = 'bibliographic') AS provisional, COUNT(*) FILTER (WHERE NOT COALESCE({$included}, FALSE)) AS pending, "
+                ."SUM(selected.carbon_biomass_kg) FILTER (WHERE {$included}) AS biomass_kg, "
+                ."SUM(selected.carbon_carbon_kg) FILTER (WHERE {$included}) AS carbon_kg, "
+                ."SUM(selected.carbon_co2_kg) FILTER (WHERE {$included}) AS co2_kg", ['Sin especie'])
+            ->groupBy('species.id', 'species.scientific_name')->orderBy('species.scientific_name'), ['trees', 'estimated', 'pending', 'provisional']);
+    }
+
+    private function risks(ReportSelectionDTO $selection): array
+    {
+        abort_if($selection->isPublic(), 404);
+        $expression = "CASE WHEN selected.risk_evaluation_id IS NULL THEN 'Sin evaluar' "
+            ."WHEN selected.risk_result->>'status' = 'inconsistent' THEN 'Inconsistente' "
+            ."WHEN selected.risk_priority IS NULL THEN 'Pendiente de confirmación' "
+            ."WHEN selected.risk_priority = 1 THEN 'Bajo' WHEN selected.risk_priority = 2 THEN 'Moderado' "
+            ."WHEN selected.risk_priority = 3 THEN 'Alto' ELSE 'Crítico' END";
+
+        return $this->rows($this->selected($selection)->selectRaw($expression.' AS "group", COUNT(DISTINCT selected.tree_id) AS trees')
+            ->groupByRaw($expression)->orderBy('group'));
+    }
+
     private function states(ReportSelectionDTO $selection): array
     {
         $rows = $this->rows($this->selected($selection)->selectRaw('selected.current_status AS "group", COUNT(DISTINCT selected.tree_id) AS trees')
@@ -136,10 +193,14 @@ class ReportRepository
     {
         $column = $report === 'diameter_classes' ? 'diameter_class_number' : 'height_class_number';
 
-        return $this->rows($this->selected($selection)
+        $rows = $this->rows($this->selected($selection)
             ->leftJoin('classification_rule_versions as rules', 'rules.id', '=', 'selected.classification_rule_version_id')
             ->selectRaw('COALESCE(rules.code, ?) AS rule_version, COALESCE(CAST(selected.'.$column.' AS text), ?) AS "group", COUNT(DISTINCT selected.tree_id) AS trees', ['Sin inspección', 'Sin dato'])
             ->groupBy('rules.id', 'rules.code', 'selected.'.$column)->orderBy('rules.code')->orderBy('selected.'.$column));
+
+        return array_map(fn (array $row): array => array_replace($row, [
+            'rule_version' => \App\Support\ClassificationVersionPresentation::label($row['rule_version']),
+        ]), $rows);
     }
 
     private function conditions(ReportSelectionDTO $selection, string $report): array

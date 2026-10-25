@@ -19,12 +19,12 @@ final class MobileMutationInput
 
     public static function inspectionUpdate(): array
     {
-        return self::updateEnvelope(self::editable(TreeInspectionInput::rules(true), ['lock_version', 'inventory_tree_id']));
+        return self::updateEnvelope(self::editable(TreeInspectionInput::rules(true), ['lock_version', 'inventory_tree_id', 'risk_priority', 'risk_confirmed', 'risk_methodology_id']));
     }
 
     public static function inspectionCreate(): array
     {
-        $fields = self::editable(TreeInspectionInput::rules(), ['inventory_tree_id']);
+        $fields = self::editable(TreeInspectionInput::rules(), ['inventory_tree_id', 'risk_priority', 'risk_confirmed', 'risk_methodology_id']);
 
         return ['operation_id' => ['required', 'uuid'], 'inventory_id' => ['required', 'uuid']]
             + self::nested('inspection', $fields);

@@ -3,7 +3,7 @@ export const FILTER_KEYS = Object.freeze([
     'scope', 'department_id', 'municipality_id', 'organization_id', 'inventory_id', 'q', 'code',
     'common_name', 'scientific_name', 'common_name_id', 'species_id', 'family_id', 'placement_id',
     'growth_habit_id', 'establishment_origin_id', 'biogeographic_origin_id', 'current_status',
-    'is_protected', 'is_heritage', 'date_from', 'date_to', 'maturity_state_id',
+    'risk_priority', 'is_protected', 'is_heritage', 'date_from', 'date_to', 'maturity_state_id',
     'diameter_class_number', 'height_class_number', 'physical_condition_ids',
     'phytosanitary_condition_ids', 'condition_mode', 'maintenance_type_id',
     'maintenance_status', 'maintenance_priority', 'has_pending_maintenance',

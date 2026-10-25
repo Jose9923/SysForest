@@ -22,7 +22,9 @@ La identidad, organización, Tree, autor original, fecha de creación y versione
 
 ## Condiciones y referencias históricas
 
-Se utilizan las 23 condiciones físicas y 42 fitosanitarias de Fase 5. La evaluación y órgano distinguen identidades que comparten nombre. No existen columnas booleanas por condición ni exclusiones automáticas entre Sano y otras selecciones. Una casilla sin marcar no significa ausencia evaluada.
+Se utilizan las 23 condiciones físicas y 42 fitosanitarias de Fase 5. La evaluación y órgano distinguen identidades que comparten nombre. No existen columnas booleanas por condición. Desde el 25/10/2026, la metodología de riesgo de cada institución valida contradicciones antes de guardar: bloquea las selecciones incompatibles, sin corregirlas automáticamente. Una casilla sin marcar no significa ausencia evaluada.
+
+La [gestión del riesgo](risk-management.md) conserva la sugerencia automática y la prioridad confirmada por el profesional, con su metodología institucional y sus revisiones. La confirmación web es obligatoria y un cambio de nivel respecto a la sugerencia requiere argumento en observaciones. Los históricos e importaciones quedan pendientes de decisión profesional; el estado operativo de Tree permanece independiente.
 
 Cada selección conserva inspection_id, condition_id, organization_id y created_at. Las selecciones retenidas conservan su fecha original. El servicio valida el tipo de evaluación, existencia y disponibilidad de condición y categoría. La misma condición no puede repetirse. Una referencia histórica desactivada continúa visible y puede conservarse al corregir la visita, pero no se admite como selección nueva. Al retirarla y volver a elegirla se aplica la disponibilidad actual.
 

@@ -102,6 +102,9 @@ class CatalogService
                 if ($this->entries->codeExists($catalog, $data['code'], $id)) {
                     throw ValidationException::withMessages(['code' => 'El código ya existe en este catálogo.']);
                 }
+                if ($entry !== null && array_key_exists('description', $data)) {
+                    $data['description'] = \App\Support\ExcelReferencePresentation::preserveDescription($entry->description, $data['description']);
+                }
                 $before = $entry === null ? [] : $this->snapshots->snapshot($entry);
                 if ($entry !== null) {
                     $this->versions->advance($entry, $data);

@@ -1,0 +1,8 @@
+@php($carbon = \App\Support\CarbonPresentation::current($carbonInspection))
+<section class="panel forestry-panel"><h2>Carbono aéreo almacenado</h2><p>{{ \App\Support\CarbonPresentation::label($carbon?->status) }}</p>
+@if ($carbon?->status === 'estimated')
+<p><strong>{{ \App\Support\CarbonPresentation::referenceLabel($carbon->method['profile']['validation_status'] ?? null) }}</strong>@if (($carbon->method['profile']['validation_status'] ?? '') === 'bibliographic') · Pendiente de revisión profesional del contexto local.@endif</p>
+<dl class="inspection-summary-measures"><div><dt>Biomasa aérea seca</dt><dd>{{ number_format((float) $carbon->biomass_kg, 2, ',', '.') }} kg</dd></div><div><dt>Carbono aéreo</dt><dd>{{ number_format((float) $carbon->carbon_kg, 2, ',', '.') }} kg C</dd></div><div><dt>CO₂ correspondiente al stock</dt><dd>{{ number_format((float) $carbon->co2_kg, 2, ',', '.') }} kg CO₂</dd></div></dl>
+<p>Visita del {{ $carbonInspection->inspection_date->format('d/m/Y') }}. Estimación preliminar; no representa captura anual.</p><details><summary>Referencia y mediciones usadas</summary><p>DAP: {{ $carbon->inputs['dap_m'] }} m · altura: {{ $carbon->inputs['total_height_m'] }} m · densidad básica: {{ $carbon->method['profile']['wood_density'] }} g/cm³.</p><p>{{ $carbon->method['profile']['reference'] }}</p><p>{{ $carbon->method['profile']['justification'] }}</p><p>Método: {{ $carbon->method_version }} · referencia institucional {{ $carbon->profile_id }}.</p></details>
+@endif
+<p>Los reportes suman solo la última visita de cada árbol actualmente Sano, En observación o Trasplantado; conservan aparte los pendientes y excluidos.</p><a href="{{ route('carbon.index') }}">Consultar método y referencias institucionales</a></section>

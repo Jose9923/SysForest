@@ -3,7 +3,7 @@
 @push('styles')<link rel="stylesheet" href="{{ asset('css/catalogs.css') }}">@endpush
 @section('content')
 <a class="back-link" href="{{ route('classification.index') }}">← Versiones de clasificación</a>
-<div class="page-heading"><div><p class="eyebrow">{{ $version->code }} · {{ $version->active ? 'ACTIVA' : 'INACTIVA' }}</p><h1>{{ $version->name }}</h1><p class="muted">{{ $version->description }}</p></div>@if ($canManage)<a class="button secondary" href="{{ route('classification.edit', $version->id) }}">Editar disponibilidad y nombre</a>@endif</div>
+<div class="page-heading"><div><p class="eyebrow">{{ \App\Support\ClassificationVersionPresentation::label($version->code) }} · {{ $version->active ? 'ACTIVA' : 'INACTIVA' }}</p><h1>{{ $version->name }}</h1><p class="muted">{{ \App\Support\ExcelReferencePresentation::text($version->description) }}</p></div>@if ($canManage)<a class="button secondary" href="{{ route('classification.edit', $version->id) }}">Editar disponibilidad y nombre</a>@endif</div>
 <div class="detail-grid">
     <section class="panel"><h2>Clases de diámetro y altura</h2><p>Para medidas positivas, cada clase incluye su límite superior y excluye el inferior.</p><dl class="details"><div><dt>Intervalo de diámetro</dt><dd>{{ $version->diameter_step }} {{ $version->diameter_unit }}</dd></div><div><dt>Intervalo de altura total</dt><dd>{{ $version->height_step }} {{ $version->height_unit }}</dd></div></dl>
         <hr><h3>Probar una medida</h3><p class="help">Usa punto decimal y hasta seis decimales. Esta consulta no registra una inspección.</p>

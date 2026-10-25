@@ -11,6 +11,8 @@
         @can('reports.view')<a class="{{ request()->is('analytics*') ? 'selected' : '' }}" href="{{ route('analytics.index') }}"><span aria-hidden="true">◴</span> Diagramas y gráficas</a>@endcan
         @can('reports.view')<a class="{{ request()->is('reports*') ? 'selected' : '' }}" href="{{ route('reports.index') }}"><span aria-hidden="true">▥</span> Reportes</a>@endcan
         @can('inspections.view')<a class="{{ request()->is('inspections*', 'trees/*/inspections*') ? 'selected' : '' }}" href="{{ route('inspections.index') }}"><span aria-hidden="true">▧</span> Inspecciones</a>@endcan
+        @can('inspections.view')<a class="{{ request()->is('carbon*') ? 'selected' : '' }}" href="{{ route('carbon.index') }}"><span aria-hidden="true">♧</span> Carbono almacenado</a>@endcan
+        @can('risk.view')<a class="{{ request()->is('risk*') ? 'selected' : '' }}" href="{{ route('risk.index') }}"><span aria-hidden="true">⚑</span> Gestión del riesgo</a>@endcan
         @can('maintenances.view')<a class="{{ request()->is('maintenances*', 'trees/*/maintenances*') ? 'selected' : '' }}" href="{{ route('maintenances.index') }}"><span aria-hidden="true">♧</span> Mantenimientos</a>@endcan
         @can('memberships.view')<a class="{{ request()->is('memberships*', 'invitations*') ? 'selected' : '' }}" href="{{ route('memberships.index') }}"><span aria-hidden="true">♧</span> Usuarios de organización</a>@endcan
         @can('users.view')<a class="{{ request()->is('users*') ? 'selected' : '' }}" href="{{ route('users.index') }}"><span aria-hidden="true">▤</span> Usuarios globales</a>@endcan

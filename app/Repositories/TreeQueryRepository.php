@@ -55,6 +55,9 @@ class TreeQueryRepository
         $inspectionFilters = $filters->values();
         // En este motor la campaña y tree_id pertenecen al individuo, incluso si aún no tiene visitas.
         unset($inspectionFilters['inventory_id'], $inspectionFilters['tree_id']);
+        if ($scope->kind === 'published') {
+            unset($inspectionFilters['risk_priority']);
+        }
         $this->inspections->applyFilters($query, $inspectionFilters, 'latest_inspection');
         $this->maintenanceFilters($query, $filters, $scope);
 

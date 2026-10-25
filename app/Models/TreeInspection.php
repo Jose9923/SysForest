@@ -34,6 +34,23 @@ class TreeInspection extends Model
         ];
     }
 
+    public function carbonEstimate(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(CarbonEstimate::class, 'inspection_id')->select('carbon_estimates.*')
+            ->join('tree_inspections as carbon_visit', 'carbon_visit.id', '=', 'carbon_estimates.inspection_id')
+            ->join('trees as carbon_tree', 'carbon_tree.id', '=', 'carbon_visit.tree_id')
+            ->whereColumn('carbon_estimates.organization_id', 'carbon_visit.organization_id')
+            ->whereColumn('carbon_estimates.inspection_version', 'carbon_visit.lock_version')
+            ->whereRaw('carbon_estimates.species_id IS NOT DISTINCT FROM carbon_tree.species_id')
+            ->whereRaw("carbon_estimates.inputs->>'growth_habit_id' IS NOT DISTINCT FROM carbon_tree.growth_habit_id::text")
+            ->orderByDesc('carbon_estimates.id');
+    }
+
+    public function riskEvaluation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RiskEvaluation::class, 'inspection_id')->orderByDesc('inspection_version');
+    }
+
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);

@@ -62,7 +62,7 @@ class ReportReadService
 
     public function inventoryColumns(bool $public): array
     {
-        $visible = ['code', 'common_names', 'scientific_name', 'municipality', 'organization',
+        $visible = ['carbon_status', 'carbon_carbon_kg', 'carbon_co2_kg', 'risk_priority', 'risk_suggestion', 'risk_methodology', 'code', 'common_names', 'scientific_name', 'municipality', 'organization',
             'placement', 'current_status_label', 'latest_inspection_date'];
 
         return array_values(array_filter($this->schema->columns($public), fn ($column) => in_array($column['key'], $visible, true)));
@@ -118,7 +118,7 @@ class ReportReadService
             $notices[] = 'Para PDF, limita la consulta a '.config('reports.max_pdf_rows').' filas. Excel y CSV permiten conjuntos mayores.';
         }
 
-        return $this->metadata($actor, $selection, $key) + ['report' => $definition, 'reports' => $this->catalog->definitions(),
+        return $this->metadata($actor, $selection, $key) + ['report' => $definition, 'reports' => array_values(array_filter($this->catalog->definitions(), fn ($item) => !$selection->isPublic() || !in_array($item['key'], ['risk', 'carbon', 'carbon_coverage'], true))),
             'filters' => $selection->values, 'summary' => ['totalTrees' => $summary['total'], 'totalRows' => $totalRows,
                 'georeferenced' => $summary['georeferenced'], 'withoutGeometry' => $summary['without_geometry']],
             'columns' => $columns, 'rows' => $rows, 'notices' => $notices, 'downloads' => $downloads,
@@ -139,7 +139,7 @@ class ReportReadService
 
     private function applied(array $values, array $selected): array
     {
-        $labels = ['q' => 'Búsqueda', 'code' => 'Código', 'common_name' => 'Nombre común (texto)', 'scientific_name' => 'Nombre científico (texto)',
+        $labels = ['risk_priority' => 'Prioridad fitosanitaria', 'q' => 'Búsqueda', 'code' => 'Código', 'common_name' => 'Nombre común (texto)', 'scientific_name' => 'Nombre científico (texto)',
             'department_id' => 'Departamento', 'municipality_id' => 'Municipio', 'organization_id' => 'Organización', 'inventory_id' => 'Inventario',
             'species_id' => 'Nombre científico', 'common_name_id' => 'Nombre común', 'family_id' => 'Familia', 'placement_id' => 'Emplazamiento', 'growth_habit_id' => 'Hábito',
             'establishment_origin_id' => 'Origen de establecimiento', 'biogeographic_origin_id' => 'Origen biogeográfico',
@@ -167,6 +167,10 @@ class ReportReadService
             }
             $value = is_array($value) ? implode(', ', $value) : $value;
             $value = match ($key) {
+                'risk_priority' => match ((string) $value) {
+                    'pending' => 'Pendiente de confirmación', 'inconsistent' => 'Inconsistente', 'unevaluated' => 'Sin evaluar',
+                    default => \App\Enums\RiskPriority::tryFrom((int) $value)?->label() ?? $value,
+                },
                 'current_status' => \App\Enums\TreeStatus::tryFrom((string) $value)?->label() ?? $value,
                 'maintenance_status' => \App\Enums\MaintenanceStatus::tryFrom((string) $value)?->label() ?? $value,
                 'maintenance_priority' => \App\Enums\MaintenancePriority::tryFrom((string) $value)?->label() ?? $value,

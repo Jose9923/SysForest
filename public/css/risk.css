@@ -1,0 +1,15 @@
+.risk-management fieldset {border: 0; padding: 0; margin: 0; min-width: 0;}
+.risk-management .panel {margin-block: 20px; padding: 24px;}
+.risk-management .table-wrap, .risk-management details {overflow-x: auto;}
+.risk-management table {width: 100%; border-collapse: collapse; margin-block: 12px;}
+.risk-management th, .risk-management td {padding: 12px; text-align: left; vertical-align: top; border-bottom: 1px solid #dce5df;}
+.risk-management th {background: #edf4ee; color: #244a38;}
+.risk-management td input[type="number"] {width: 5rem;}
+.risk-management td select {min-width: 130px;}
+.risk-management label {display: block; margin-block: 8px;}
+.risk-management label select, .risk-management label input:not([type="checkbox"]) {display: block; width: 100%; margin-top: 6px;}
+.risk-management select[multiple] {min-height: 130px;}
+.risk-management #risk-name {width: 100%; max-width: 700px;}
+.risk-management [data-risk-rule] {border: 1px solid #dce5df; border-radius: 12px;}
+.risk-management .form-actions {flex-wrap: wrap;}
+@media (max-width: 650px) {.risk-management .panel {padding: 16px;} .risk-management .table-wrap table {min-width: 760px;}}

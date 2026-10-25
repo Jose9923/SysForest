@@ -20,9 +20,21 @@ docker compose ps -a
 curl --fail --silent --show-error http://localhost:8080/health/ready
 ~~~
 
-`setup-env` crea `.env` y completa secretos locales ausentes sin imprimirlos ni reemplazar los existentes. PHP y Composer funcionan en contenedores. Se esperan siete servicios continuos saludables y dos inicializadores (`db-init`, `init`) terminados con código 0. La disponibilidad responde HTTP 200 con `{"status":"ok"}`.
+`setup-env` crea `.env` y completa secretos locales ausentes sin imprimirlos ni reemplazar los existentes. PHP y Composer funcionan en contenedores. Se esperan ocho servicios continuos saludables, incluido MongoDB, y dos inicializadores (`db-init`, `init`) terminados con código 0. La disponibilidad responde HTTP 200 con `{"status":"ok"}`.
 
 En una instalación **ya preparada**, basta `docker compose up -d` para arrancar. No hay que volver a sembrar datos en cada inicio.
+
+Al actualizar a una versión que incorpora nuevos secretos o dependencias, prepara primero la configuración y reconstruye la imagen:
+
+~~~bash
+bash bin/setup-env
+docker compose build app
+docker compose up -d
+~~~
+
+Esto completa, por ejemplo, `MONGO_ROOT_PASSWORD` y `AUDIT_MONGO_PASSWORD` sin sustituir claves existentes. Recrear un contenedor no actualiza una imagen anterior que carece del controlador PHP y del cliente de MongoDB. `.env` debe pertenecer al usuario que ejecuta Compose y tener permisos `600`.
+
+`APP_UID` y `APP_GID` deben corresponder a `id -u` e `id -g` de tu usuario de Ubuntu y ser mayores que cero. Ejecuta la preparación desde tu usuario habitual, sin `sudo`; un UID/GID `0` impide crear el usuario no privilegiado de la imagen.
 
 En una instalación local nueva, prepara el piloto y los catálogos explícitamente:
 
@@ -64,6 +76,7 @@ docker compose exec -T app php artisan db:seed --class=DevelopmentPasswordSeeder
 | Trabajo forestal | [Inventarios](http://localhost:8080/inventories), [Árboles](http://localhost:8080/trees) | Organización seleccionada y permiso por operación. |
 | Cartografía | [Mapa interno](http://localhost:8080/map), [Mapa público](http://localhost:8080/portal/map) | Alcance privado o universo publicado, respectivamente. |
 | Reportes | [Internos](http://localhost:8080/reports), [Públicos](http://localhost:8080/portal/reports) | Mismos filtros del universo correspondiente. |
+| Gestión del riesgo | [Parametrización institucional](http://localhost:8080/risk) | Metodologías propias por institución; el profesional confirma la prioridad en la inspección. [Contrato y operación](docs/risk-management.md). |
 | Importaciones | [Importaciones](http://localhost:8080/imports) | SUPER_ADMIN, ORGANIZATION_ADMIN u OFFICIAL en una institución autorizada. |
 | Auditoría | [Auditoría privada](http://localhost:8080/audit) | SUPER_ADMIN nacional u ORGANIZATION_ADMIN institucional. |
 | Infraestructura | [Estado local](http://localhost:8080/) | Disponibilidad, cola y scheduler. |

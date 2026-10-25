@@ -32,6 +32,20 @@ class MapTreeResource extends JsonResource
                 'scientific_name' => $species?->scientific_name,
                 'status' => $this->current_status->value, 'status_label' => $this->current_status->label(),
                 'placement' => $placement?->name,
+                'carbon' => $this->includeInspection ? [
+                    'status' => \App\Support\CarbonPresentation::label($this->carbon_status),
+                    'reference_status' => \App\Support\CarbonPresentation::referenceLabel($this->carbon_validation_status),
+                    'carbon_kg' => $this->carbon_carbon_kg, 'co2_kg' => $this->carbon_co2_kg,
+                    'included_in_live_stock' => $this->carbon_status === 'estimated'
+                        && in_array($this->current_status->value, ['active', 'under_observation', 'transplanted'], true),
+                ] : null,
+                'risk' => $this->includeInspection ? [
+                    'priority' => $this->risk_priority === null ? null : (int) $this->risk_priority,
+                    'color' => $this->risk_priority === null ? '#87939e' : \App\Enums\RiskPriority::from((int) $this->risk_priority)->color(),
+                    'label' => $this->risk_priority !== null ? \App\Enums\RiskPriority::from((int) $this->risk_priority)->label()
+                        : ($this->risk_evaluation_id === null ? 'Sin evaluar'
+                            : ((json_decode($this->risk_result ?? '{}', true)['status'] ?? '') === 'inconsistent' ? 'Inconsistente' : 'Pendiente de confirmación')),
+                ] : null,
                 'latest_inspection' => $this->includeInspection && $this->latest_inspection_date !== null
                     ? ['date' => $this->latest_inspection_date] : null,
                 'open_url' => route('maps.open', ['tree' => $this->id, 'scope' => $this->scopeKind], false),

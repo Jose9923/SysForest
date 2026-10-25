@@ -166,6 +166,22 @@ class InventoryExportSchema
         $add('fauna_photo_urls', 'Fotografías de fauna de la inspección', 'evidencias', source: 'Hoja1!CN4');
         $add('tree_photo_urls', 'Fotografías del individuo de la inspección', 'evidencias', source: 'Hoja1!CO4');
         if (!$public) {
+            foreach (['risk_priority' => 'Prioridad fitosanitaria profesional', 'risk_suggestion' => 'Prioridad fitosanitaria sugerida',
+                'risk_methodology' => 'Versión de metodología fitosanitaria', 'risk_explanation' => 'Explicación de la sugerencia fitosanitaria',
+                'risk_confirmed_by' => 'Prioridad confirmada por (ID)', 'risk_confirmed_at' => 'Confirmación de prioridad (UTC)',
+                'risk_observations' => 'Observaciones de la evaluación fitosanitaria'] as $field => $label) {
+                $add($field, $label, 'gestión del riesgo');
+            }
+            $add('carbon_status', 'Estado de estimación de carbono', 'carbono');
+            foreach (['biomass_kg' => 'Biomasa aérea seca estimada', 'carbon_kg' => 'Carbono aéreo almacenado estimado',
+                'co2_kg' => 'CO₂ correspondiente al carbono aéreo estimado'] as $field => $label) {
+                $add('carbon_'.$field, $label, 'carbono', 'decimal', 'kg');
+            }
+            $add('carbon_method_version', 'Método de estimación de carbono', 'carbono');
+            $add('carbon_profile_id', 'Referencia institucional de carbono (versión)', 'carbono');
+            $add('carbon_reference_status', 'Respaldo de la referencia de carbono', 'carbono');
+            $add('carbon_reference', 'Fuente de densidad de madera', 'carbono');
+            $add('carbon_stock_included', 'Incluido en stock vivo estimado', 'carbono', 'boolean');
             $add('general_observations', 'Observaciones de inspección', 'observaciones', source: 'Hoja1!CP4');
         }
 

@@ -78,7 +78,11 @@ class RestrepoOrnatoImportService
             if (!$disk->put($relative, $content)) {
                 throw new LogicException('No se pudo conservar la copia revisada en almacenamiento privado.');
             }
-            $report = $this->imports->run($disk->path($relative), (int) $actor->id, $organization->id, $inventory->id, true, $progress);
+            $report = app(HistoricalRiskImportScope::class)->recoverRestrepo(
+                $organization,
+                $inventory,
+                fn () => $this->imports->run($disk->path($relative), (int) $actor->id, $organization->id, $inventory->id, true, $progress)
+            );
             if ($report['status'] !== 'completed') {
                 throw new LogicException('Ornato no se completó: '.json_encode($report['errors'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
             }

@@ -87,7 +87,7 @@ class MobileReferenceService
             'id' => $record->id,
             'code' => $record->code,
             'name' => $taxonomy ? $record->scientific_name : $record->name,
-            'description' => $record->description,
+            'description' => \App\Support\ExcelReferencePresentation::text($record->description),
             'active' => (bool) $record->active,
             'sort_order' => (int) $record->sort_order,
             'updated_at' => $record->updated_at?->toIso8601String(),

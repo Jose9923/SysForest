@@ -2,6 +2,7 @@
 @section('title', $tree ? 'Editar árbol '.$tree->code : 'Registrar árbol')
 @include('forestry.assets', ['withMap' => true])
 @section('content')
+<p class="notice">El carbono aéreo se calcula al guardar las mediciones en la primera inspección. La identidad del árbol por sí sola no permite estimarlo.</p>
     @php
         $selectedIds = old('inventory_ids', $selectedInventoryIds ?? []);
         $selectedIds = is_array($selectedIds) ? $selectedIds : [];
