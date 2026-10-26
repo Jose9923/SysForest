@@ -40,6 +40,20 @@ class CarbonPresentation
         };
     }
 
+    public static function coverageNotice(array $rows): string
+    {
+        $total = array_sum(array_column($rows, 'trees'));
+        $estimated = array_sum(array_column($rows, 'estimated'));
+        $provisional = array_sum(array_column($rows, 'provisional'));
+        $reviewed = array_sum(array_column($rows, 'reviewed'));
+        $pending = array_sum(array_column($rows, 'pending'));
+        $percentage = $total > 0 ? number_format(100 * $estimated / $total, 1, ',', '.') : '0';
+
+        return 'Cobertura del stock: '.$estimated.' de '.$total.' árboles seleccionados ('.$percentage.' %). '
+            .$provisional.' con referencia bibliográfica provisional; '.$reviewed.' con referencia revisada por profesional. '
+            .$pending.' pendientes o excluidos. Los valores sin estimación no se consideran cero.';
+    }
+
     public static function current(?TreeInspection $inspection): ?CarbonEstimate
     {
         $estimate = $inspection?->getRelation('carbonEstimate');

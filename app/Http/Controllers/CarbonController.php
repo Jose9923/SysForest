@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Services\CarbonProfileService;
+use App\Services\CarbonRefreshService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -23,10 +25,16 @@ class CarbonController extends Controller
         return redirect()->route('carbon.index')->with('status', 'Referencia publicada. Las nuevas visitas la usarán automáticamente. Puedes actualizar las estimaciones existentes conservando su historia.');
     }
 
+    public function progress(Request $request, CarbonRefreshService $service): JsonResponse
+    {
+        return response()->json(['refresh' => $service->latest($request->user())])
+            ->header('Cache-Control', 'private, no-store');
+    }
+
     public function refresh(Request $request, CarbonProfileService $service): RedirectResponse
     {
-        $count = $service->refresh($request->user());
+        $service->refresh($request->user());
 
-        return redirect()->route('carbon.index')->with('status', 'Estimaciones agregadas: '.$count.'. Se conservaron los resultados anteriores.');
+        return redirect()->route('carbon.index')->with('status', 'Actualización solicitada. Puedes consultar su progreso y continuar trabajando; los resultados anteriores se conservan.');
     }
 }

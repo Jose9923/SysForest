@@ -45,7 +45,7 @@ class RiskEvaluationService
             throw ValidationException::withMessages(['phytosanitary_condition_ids' => 'Selecciona condiciones fitosanitarias existentes.']);
         }
 
-        return \App\Support\RiskPresentation::result($this->calculator->evaluate($config, $codes), $config)
+        return \App\Support\RiskPresentation::result($this->calculator->evaluate($config, $codes, $this->conditionReferences()), $config)
             + ['methodology_id' => $method?->id];
     }
 
@@ -59,7 +59,7 @@ class RiskEvaluationService
             return;
         }
         $method = $this->methods->initialize($inspection->organization_id);
-        $result = $this->calculator->evaluate($method->configuration, $inspection->conditions->where('assessment_type', 'phytosanitary')->pluck('code')->all());
+        $result = $this->calculator->evaluate($method->configuration, $inspection->conditions->where('assessment_type', 'phytosanitary')->pluck('code')->all(), $this->conditionReferences());
         $priority = null;
         if ($origin !== 'historical' && $result['errors'] !== []) {
             throw ValidationException::withMessages(['phytosanitary_condition_ids' => $result['errors']]);
@@ -75,10 +75,19 @@ class RiskEvaluationService
             }
             $priority = (int) $value;
             if ($priority !== $result['priority'] && trim(\App\Support\ExcelReferencePresentation::text($inspection->general_observations, false) ?? '') === '') {
-                throw ValidationException::withMessages(['general_observations' => 'Argumenta en observaciones por qué cambiaste la prioridad sugerida.']);
+                throw ValidationException::withMessages(['general_observations' => $result['priority'] === null
+                    ? 'No hay sugerencia automática. Justifica tu prioridad profesional en las observaciones generales.'
+                    : 'Argumenta en observaciones por qué cambiaste la prioridad sugerida.']);
             }
         }
         $evaluation = $this->risks->record($inspection, $method, $result, $priority, $actor?->id, $origin);
         $inspection->setRelation('riskEvaluation', $evaluation);
+    }
+
+    private function conditionReferences(): array
+    {
+        return $this->risks->conditions()->mapWithKeys(fn ($condition): array => [$condition->code => [
+            'label' => $condition->name, 'component' => $condition->category->code,
+        ]])->all();
     }
 }

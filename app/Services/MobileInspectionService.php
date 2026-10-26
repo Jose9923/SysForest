@@ -42,7 +42,10 @@ class MobileInspectionService
         Gate::forUser($actor)->authorize('viewAny', TreeInspection::class);
         $page = $this->reads->paginate($organization->id, $tree->id, (int) ($input['per_page'] ?? 50), (int) ($input['page'] ?? 1));
 
-        return ['tree_id' => $tree->id, 'data' => $page->getCollection()->map($this->projection(...))->all(),
+        $canViewRisk = Gate::forUser($actor)->allows('risk.view');
+
+        return ['tree_id' => $tree->id, 'data' => $page->getCollection()->map(fn (TreeInspection $visit): array =>
+            $this->projection($visit) + \App\Support\MobileInspectionResults::project($visit, $canViewRisk))->all(),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
                 'per_page' => $page->perPage(), 'total' => $page->total()]];
     }
@@ -53,7 +56,8 @@ class MobileInspectionService
         $inspection = $this->inspections->findForTenant($organization->id, $id);
         Gate::forUser($actor)->authorize('view', $inspection);
 
-        return ['data' => $this->projection($inspection)];
+        return ['data' => $this->projection($inspection)
+            + \App\Support\MobileInspectionResults::project($inspection, Gate::forUser($actor)->allows('risk.view'))];
     }
 
     public function create(User $actor, string $treeId, array $input): array

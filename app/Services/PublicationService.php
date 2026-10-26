@@ -32,6 +32,7 @@ class PublicationService
         private PublicationRepository $records,
         private UserRepository $users,
         private PublicationAuditService $audit,
+        private InspectionDerivedResultService $derivedResults,
     ) {
     }
 
@@ -130,7 +131,11 @@ class PublicationService
                     }
                     $changes += ['lock_version' => $record->lock_version + 1, 'updated_by' => $actor->id];
                 }
+                $previousVersion = $record instanceof TreeInspection ? $record->lock_version : null;
                 $this->records->persist($record, $changes);
+                if ($record instanceof TreeInspection) {
+                    $this->derivedResults->preserveAfterPublication($record, $previousVersion);
+                }
                 $this->audit->record($actor, $record, $old);
 
                 return $record;

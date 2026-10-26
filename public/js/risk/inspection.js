@@ -29,14 +29,17 @@
             box.querySelector('[data-risk-methodology]').value = data.methodology_id || '';
             confirmed.disabled = data.status !== 'valid';
             priority.setCustomValidity(data.status === 'valid' ? '' : 'Corrige las condiciones incompatibles antes de guardar.');
-            result.textContent = data.status === 'valid'
-                ? `Sugerencia: ${data.priority_label} (${data.methodology_code}). Severidad máxima ${data.severity_max}; extensión ${data.extension_class} (${data.affected_component_count} componentes). ${data.management_message}`
-                : 'Inspección inconsistente: corrige las selecciones antes de guardar.';
+            result.textContent = data.status !== 'valid'
+                ? 'Inspección inconsistente: corrige las selecciones antes de guardar.'
+                : data.coverage_status === 'missing'
+                    ? 'Captura insuficiente para sugerir una prioridad. Registra las condiciones observadas o justifica tu decisión profesional en las observaciones generales.'
+                    : `Sugerencia: ${data.priority_label} (${data.methodology_code}). Severidad máxima ${data.severity_max}; extensión ${data.extension_class} (${data.affected_component_count} componentes). ${data.management_message}`;
             const components = {PHT_ROOT: 'Sistema radicular', PHT_STEM: 'Fuste o estípite', PHT_BRANCH: 'Ramas', PHT_FOLIAGE: 'Follaje', PHT_FLOWER_FRUIT: 'Flores y frutos'};
             for (const message of [...data.errors, ...data.warnings,
                 ...data.affected_components.map(key => `Componente afectado: ${components[key] || key}.`),
                 ...data.determinants.map(item => `Determinante: ${item.display_label || item.label} (peso ${item.weight}).`),
-                ...data.overrides.map(item => `Prevalencia: ${item.label}, mínimo ${item.minimum}.`)]) {
+                ...data.overrides.map(item => `Prevalencia: ${item.label}, mínimo ${item.minimum}.`),
+                ...(data.excluded_conditions || []).map(item => `Condición registrada que no puntúa: ${item.display_label || item.label}.`)]) {
                 const li = document.createElement('li'); li.textContent = message; details.append(li);
             }
         } catch (error) {

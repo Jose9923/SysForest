@@ -45,6 +45,18 @@ Comprueba escritorio y móvil, foco visible, etiquetas, navegación por teclado,
 
 La [guía de operaciones](operations.md) documenta disponibilidad de servicios, logs, PostgreSQL/PostGIS, Redis, cola y scheduler. Los healthchecks se conservan porque supervisan los procesos necesarios para operar la aplicación.
 
+## Verificación de riesgo carbono y sincronización
+
+Esta lista describe comprobaciones a ejecutar en un entorno aislado autorizado; no acredita que ya se hayan realizado. La autorización de pruebas temporales no restablece una suite permanente. Registra datos de entrada, resultado real y diferencias, y conserva los informes históricos sin reutilizar sus cifras como evidencia nueva.
+
+1. Crear y corregir una visita web con confirmación profesional, condiciones contradictorias, captura sin condiciones evaluables y condiciones excluidas de la metodología. Comprobar sugerencia ausente y aviso, cobertura y justificación cuando correspondan.
+2. Rechazar matrices nuevas que reduzcan la prioridad al aumentar severidad o extensión; comprobar que las versiones históricas permanecen intactas y que una institución no modifica otra.
+3. Publicar y despublicar una inspección. Comparar ficha, mapa, filtros, agregados y archivos: conservar derivados vigentes, autor y fecha de confirmación originales, sin sobrescribir instantáneas anteriores. Confirmar que el portal no expone los nuevos datos privados.
+4. Incluir una especie sin estimaciones en la gráfica de carbono y descargar PNG, CSV y Excel. Mantener **Sin estimación** o ausencia en lugar de cero. Probar exclusión de muertos y selección única de última visita compatible.
+5. Solicitar dos veces la actualización institucional de carbono; comprobar una sola tarea activa, progreso, reintento sin duplicados y transacciones breves. Revocar permiso o publicar una referencia durante el trabajo y revisar la cancelación autorizada y su motivo.
+6. Consultar inspecciones por API móvil con y sin permiso de riesgo. Probar compatibilidad con respuestas anteriores, cola offline, edición local y recuperación posterior de derivados. Repetir POST/PATCH con el mismo recibo: su contenido confirmado se conserva; GET obtiene el estado vigente.
+7. Revisar manuales Word renderizados en todas sus páginas y contrastar los campos de API con la guía. Las capturas históricas ilustran controles de su fecha y no certifican la interfaz nueva.
+
 ## Alcance de la retirada
 
 La copia recuperable de las pruebas y sus hashes se conserva fuera del repositorio, en la carpeta de trabajo local `.ornato-work`. No se borraron logs, informes, capturas o archivos generados anteriormente. La base de pruebas y sus registros tampoco fueron eliminados, ni se modificaron seeders o permisos por esta retirada.

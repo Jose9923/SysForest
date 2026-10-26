@@ -83,9 +83,11 @@ class ReportRepository
             $notices[] = 'Estimación preliminar de biomasa aérea con Chave (2014) y fracción de carbono IPCC 0,47. Requiere validación local; no incluye raíces ni suelo, ni representa captura anual o compensación de emisiones.';
             $notices[] = 'Solo se agrega la última visita de cada árbol actualmente Sano, En observación o Trasplantado. Las densidades y los límites son institucionales. Los faltantes no equivalen a cero; pueden coexistir referencias históricas distintas.';
             if ($report === 'carbon') {
+                array_unshift($notices, \App\Support\CarbonPresentation::coverageNotice($rows));
                 $columns = [$this->column('group', 'Especie'), $this->column('trees', 'Individuos', 'integer'),
                     $this->column('estimated', 'Estimados incluidos', 'integer'),
-                    $this->column('provisional', 'Con referencia bibliográfica provisional', 'integer'), $this->column('pending', 'Pendientes o excluidos', 'integer'),
+                    $this->column('provisional', 'Con referencia bibliográfica provisional', 'integer'),
+                    $this->column('reviewed', 'Con referencia revisada por profesional', 'integer'), $this->column('pending', 'Pendientes o excluidos', 'integer'),
                     $this->column('biomass_kg', 'Biomasa aérea seca', 'decimal', 'kg'),
                     $this->column('carbon_kg', 'Carbono aéreo almacenado', 'decimal', 'kg'),
                     $this->column('co2_kg', 'CO₂ correspondiente al carbono aéreo', 'decimal', 'kg')];
@@ -153,11 +155,11 @@ class ReportRepository
 
         return $this->rows($this->selected($selection)->leftJoin('species', 'species.id', '=', 'selected.species_id')
             ->selectRaw('COALESCE(species.scientific_name, ?) AS "group", COUNT(*) AS trees, '
-                ."COUNT(*) FILTER (WHERE {$included}) AS estimated, COUNT(*) FILTER (WHERE {$included} AND selected.carbon_validation_status = 'bibliographic') AS provisional, COUNT(*) FILTER (WHERE NOT COALESCE({$included}, FALSE)) AS pending, "
+                ."COUNT(*) FILTER (WHERE {$included}) AS estimated, COUNT(*) FILTER (WHERE {$included} AND selected.carbon_validation_status = 'bibliographic') AS provisional, COUNT(*) FILTER (WHERE {$included} AND selected.carbon_validation_status = 'professional') AS reviewed, COUNT(*) FILTER (WHERE NOT COALESCE({$included}, FALSE)) AS pending, "
                 ."SUM(selected.carbon_biomass_kg) FILTER (WHERE {$included}) AS biomass_kg, "
                 ."SUM(selected.carbon_carbon_kg) FILTER (WHERE {$included}) AS carbon_kg, "
                 ."SUM(selected.carbon_co2_kg) FILTER (WHERE {$included}) AS co2_kg", ['Sin especie'])
-            ->groupBy('species.id', 'species.scientific_name')->orderBy('species.scientific_name'), ['trees', 'estimated', 'pending', 'provisional']);
+            ->groupBy('species.id', 'species.scientific_name')->orderBy('species.scientific_name'), ['trees', 'estimated', 'pending', 'provisional', 'reviewed']);
     }
 
     private function risks(ReportSelectionDTO $selection): array

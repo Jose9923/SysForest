@@ -14,7 +14,7 @@ class AuditPresentationService
         'national_role_assignment' => 'Rol nacional', 'department_role_assignment' => 'Rol departamental',
         'organization_role_assignment' => 'Rol institucional', 'invitation' => 'Invitación',
         'inventory' => 'Inventario', 'inventory_tree' => 'Participación en inventario', 'tree' => 'Individuo forestal',
-        'carbon_profile' => 'Referencia institucional de carbono', 'tree_inspection' => 'Inspección', 'evidence' => 'Evidencia fotográfica', 'maintenance' => 'Mantenimiento',
+        'carbon_profile' => 'Referencia institucional de carbono', 'carbon_refresh_run' => 'Actualización de estimaciones de carbono', 'tree_inspection' => 'Inspección', 'evidence' => 'Evidencia fotográfica', 'maintenance' => 'Mantenimiento',
         'import_batch' => 'Lote de importación', 'catalog' => 'Catálogo', 'security_event' => 'Evento de seguridad',
     ];
 

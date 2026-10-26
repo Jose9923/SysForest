@@ -9,3 +9,5 @@ Schedule::command('sysforest:cleanup-report-downloads')->hourly()->withoutOverla
 
 Schedule::command('sysforest:audit-sync')->everyTenSeconds()->withoutOverlapping(10)
     ->when(fn (): bool => config('audit.store', 'postgres') === 'mongodb');
+
+Schedule::command('sysforest:dispatch-carbon-refreshes')->everyMinute()->withoutOverlapping();

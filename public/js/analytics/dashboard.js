@@ -46,6 +46,12 @@ function wrapText(context, value, width) {
     return lines;
 }
 
+/** Un dato ausente no equivale a cero en la imagen ni en las ayudas del gráfico. */
+export function chartValueLabel(value, unit) {
+    if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) return 'Sin estimación';
+    return format.format(Number(value)) + ' ' + unit;
+}
+
 function exportPng(instance, data, context) {
     const source = instance.canvas;
     const output = document.createElement('canvas');
@@ -55,7 +61,7 @@ function exportPng(instance, data, context) {
     painter.font = '18px Arial';
     const filterText = context.appliedFilters.map(item => `${item.label}: ${item.value}`).join(' · ') || 'Sin filtros adicionales';
     const notes = wrapText(painter, `${context.scopeLabel} · ${filterText}`, width - 72);
-    const values = data.labels.flatMap((label, index) => wrapText(painter, `${label}: ${format.format(data.values[index])} ${data.unit}`, width - 72));
+    const values = data.labels.flatMap((label, index) => wrapText(painter, `${label}: ${chartValueLabel(data.values[index], data.unit)}`, width - 72));
     const foot = ['Valores representados', ...values, '', ...wrapText(painter,
         [...data.notices, `Consulta: ${context.generatedAt}. Fuente: SysForest.`].join(' '), width - 72)];
     const graphHeight = Math.max(400, Math.round(source.height * ((width - 72) / source.width)));
@@ -98,7 +104,7 @@ function makeChart(canvas, data) {
             plugins: {
                 legend: {display: doughnut, position: 'bottom', labels: {usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 16, color: '#536a5c', font: {size: 11}}},
                 tooltip: {backgroundColor: '#214637', padding: 12,
-                    callbacks: {label: item => `${format.format(Number(item.raw))} ${data.unit}`}},
+                    callbacks: {label: item => chartValueLabel(item.raw, data.unit)}},
             },
             scales: doughnut ? {} : {
                 x: {beginAtZero: !line, border: {display: false}, grid: {display: !line, color: '#edf1eb'},

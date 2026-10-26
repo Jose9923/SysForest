@@ -23,6 +23,7 @@ class AuditSnapshot
         'inventory_tree' => ['inventory_id', 'tree_id', 'included_by', 'included_at', 'notes'],
         'tree' => ['code', 'external_number', 'location_description', 'placement_id', 'species_id', 'growth_habit_id', 'establishment_origin_id', 'biogeographic_origin_id', 'is_protected', 'is_heritage', 'current_status', 'coordinate_raw', 'coordinate_format', 'latitude', 'longitude', 'datum', 'accuracy_m', 'gps_brand', 'gps_model', 'captured_at', 'created_by', 'updated_by', 'created_at', 'lock_version', 'deleted_at', 'deleted_by', 'deletion_reason_id', 'deletion_notes', 'restored_by', 'restored_at', 'is_public', 'publication_version'],
         'carbon_profile' => ['configuration_json'],
+        'carbon_refresh_run' => ['configuration_json'],
         'risk_methodology' => ['version', 'name', 'configuration_json'],
         'tree_inspection' => ['carbon', 'risk', 'context', 'measurements', 'calculations', 'phenology', 'observations', 'conditions', 'fauna', 'created_by', 'updated_by', 'created_at', 'lock_version', 'is_public', 'publication_version'],
         'evidence' => ['tree_id', 'tree_inspection_id', 'maintenance_id', 'evidence_type_id', 'caption', 'notes', 'captured_at', 'uploaded_by', 'updated_by', 'created_at', 'deleted_at', 'deleted_by', 'deletion_notes', 'lock_version', 'is_public', 'publication_version', 'public_id', 'public_caption'],

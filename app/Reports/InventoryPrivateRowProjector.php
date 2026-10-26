@@ -30,7 +30,7 @@ class InventoryPrivateRowProjector
         $values['carbon_stock_included'] = $carbon?->status === 'estimated'
             && in_array($tree->current_status->value, ['active', 'under_observation', 'transplanted'], true);
         $values['risk_priority'] = \App\Support\RiskPresentation::label($risk);
-        $values['risk_suggestion'] = $risk?->result['priority_label'] ?? null;
+        $values['risk_suggestion'] = $risk ? \App\Support\RiskPresentation::result($risk->result)['priority_label'] : null;
         $values['risk_methodology'] = $risk?->result['methodology_code'] ?? null;
         $values['risk_explanation'] = $risk ? \App\Support\RiskPresentation::explanation($risk) : null;
         $values['risk_confirmed_by'] = $risk?->confirmed_by;

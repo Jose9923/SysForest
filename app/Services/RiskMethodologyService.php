@@ -86,7 +86,10 @@ class RiskMethodologyService
                 'warnings.*.unless.*' => ['string', 'max:200'],
                 'warnings.*.message' => ['nullable', 'string', 'max:300'],
             ], ['required' => 'Completa :attribute.', 'between' => 'Valor fuera del intervalo permitido en :attribute.',
-                'in' => 'Selección no válida en :attribute.', 'array' => 'Estructura no válida en :attribute.'])->validate();
+                'in' => 'Selección no válida en :attribute.', 'array' => 'Estructura no válida en :attribute.',
+                'matrix.size' => 'La matriz debe contener cinco severidades, de 0 a 4.',
+                'matrix.*.size' => 'Cada severidad debe contener cuatro extensiones, de E0 a E3.',
+                'matrix.*.*.integer' => 'Cada prioridad de la matriz debe ser un número entero de 1 a 4.'])->validate();
             $setting = $this->risks->settings($organization->id);
             if ((int) $data['lock_version'] !== ($setting->lock_version ?? 0)) {
                 throw ValidationException::withMessages(['lock_version' => 'La parametrización cambió. Recarga antes de publicar.']);
@@ -94,7 +97,7 @@ class RiskMethodologyService
             $references = $this->risks->conditions()->keyBy('code');
             $old = $this->risks->active($organization->id);
             $previous = $old?->configuration ?? $this->template();
-            $configuration = ['matrix' => array_map(fn (array $row) => array_map(intval(...), array_values($row)), array_values($data['matrix'])),
+            $configuration = ['matrix' => $this->validatedMatrix($data['matrix']),
                 'conditions' => [], 'conflicts' => $this->enabledRules($data['conflicts'] ?? []),
                 'warnings' => $this->enabledRules($data['warnings'] ?? [])];
             foreach ($data['conditions'] as $code => $rule) {
@@ -128,6 +131,43 @@ class RiskMethodologyService
                 ['resource_id' => $method->id]
             );
         }, 3);
+    }
+
+    /** Se valida solo al publicar; las versiones históricas se conservan sin reinterpretarlas. */
+    private function validatedMatrix(array $matrix): array
+    {
+        $severities = array_keys($matrix);
+        sort($severities);
+        if ($severities !== range(0, 4)) {
+            throw ValidationException::withMessages(['matrix' => 'La matriz debe contener exactamente las severidades de 0 a 4.']);
+        }
+        $normalized = [];
+        foreach (range(0, 4) as $severity) {
+            $extensions = array_keys($matrix[$severity]);
+            sort($extensions);
+            if ($extensions !== range(0, 3)) {
+                throw ValidationException::withMessages(['matrix' => 'Cada severidad debe contener exactamente las extensiones E0, E1, E2 y E3.']);
+            }
+            foreach (range(0, 3) as $extension) {
+                $normalized[$severity][$extension] = (int) $matrix[$severity][$extension];
+            }
+        }
+        $errors = [];
+        foreach ($normalized as $severity => $row) {
+            foreach ($row as $extension => $priority) {
+                if ($severity > 0 && $priority < $normalized[$severity - 1][$extension]) {
+                    $errors['matrix.'.$severity.'.'.$extension][] = 'La prioridad no puede disminuir al aumentar la severidad de '.($severity - 1).' a '.$severity.' en E'.$extension.'.';
+                }
+                if ($extension > 0 && $priority < $row[$extension - 1]) {
+                    $errors['matrix.'.$severity.'.'.$extension][] = 'La prioridad no puede disminuir al aumentar la extensión de E'.($extension - 1).' a E'.$extension.' con severidad '.$severity.'.';
+                }
+            }
+        }
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $normalized;
     }
 
     private function enabledRules(array $rules): array

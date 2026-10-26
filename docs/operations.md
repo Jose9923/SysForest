@@ -21,7 +21,7 @@ docker compose ps -a
 
 La imagen instala el `composer.lock` existente y conserva dependencias de desarrollo, incluido Pint. Las suites automatizadas se retiraron por solicitud del usuario; no se incluyen sus archivos ni configuración en la imagen. `db-init` crea o comprueba los roles, bases, extensión PostGIS y privilegios; `init` aplica migraciones incrementales a las bases operativa y de pruebas. No ejecutan seeders automáticamente.
 
-Para una instalación local nueva, sigue los seeders explícitos del [README](../README.md#inicio-local). `AuthorizationSeeder` sincroniza cuatro roles y 49 permisos; no es un comando de diagnóstico. `DevelopmentIdentitySeeder` crea cuentas solamente en local/testing y puede sincronizar asignaciones de las cuentas de revisión existentes; tampoco debe utilizarse para reiniciar contraseñas.
+Para una instalación local nueva, sigue los seeders explícitos del [README](../README.md#inicio-local). `AuthorizationSeeder` sincroniza los roles y permisos definidos en el checkout, incluidos riesgo y carbono; no es un comando de diagnóstico. `DevelopmentIdentitySeeder` prepara cuentas solamente en local/testing y llama al seeder de contraseñas de desarrollo autorizado. No ejecutarlo en producción ni como una comprobación de salud; consulta [cuentas de desarrollo](development-accounts.md).
 
 ## Servicios y persistencia
 
@@ -121,6 +121,20 @@ Un MongoDB restaurado puede carecer de documentos que PostgreSQL ya marcó como 
 
 La descripción del modelo, fuentes y controles está en [Auditoría privada](audit.md). Este procedimiento documenta la recuperación prevista; su existencia no acredita un ensayo integral de restauración.
 
+## Actualización institucional de carbono en segundo plano
+
+La migración aditiva `000031_create_carbon_refresh_runs` incorpora el registro durable del trabajo. `POST /carbon/refresh` solicita la ejecución y devuelve la página; no recalcula todo el historial en la petición HTTP. El panel **Carbono almacenado** y `GET /carbon/refresh/status` muestran estado, visitas procesadas/total, estimaciones agregadas y motivo de terminación, con autenticación web, permiso `inspections.view`, alcance institucional y respuesta `no-store`. Sin esta migración, el panel informa que la actualización está pendiente y deshabilita la solicitud.
+
+El trabajo `RefreshCarbonEstimates` usa Redis, requiere el servicio `queue` y procesa lotes de hasta 25 visitas o 15 segundos con transacciones breves por visita. Tiene tres intentos automáticos. El scheduler ejecuta `sysforest:dispatch-carbon-refreshes` cada minuto para recuperar despachos pendientes. Mantener ambos servicios activos; un contenedor saludable no acredita que el cursor avance.
+
+Solo existe una tarea `queued` o `running` por organización. Se revalida el permiso `carbon.manage` del solicitante en cada visita. Si pierde acceso, la tarea termina `cancelled`; si se publica otra referencia, se cancela para evitar continuar silenciosamente con una configuración distinta. Un administrador autorizado puede solicitar una nueva ejecución. `completed` y `failed` son los otros estados finales. Los resultados confirmados se conservan y una repetición no duplica instantáneas con las mismas entradas.
+
+Durante una ejecución parcial pueden coexistir referencias históricas y nuevas. Revisar tarea, cobertura y procedencia antes de distribuir un informe. Ante un fallo, comprobar logs de `queue`/`scheduler`, conectividad Redis y mensaje del panel antes de volver a solicitar. No borrar instantáneas ni ejecuciones para forzar la recuperación. No activar el backfill CLI a la vez que un trabajo web activo.
+
+Los perfiles bibliográficos provisionales no acreditan validación profesional local. El reporte y sus descargas distinguen estimaciones provisionales y revisadas y advierten sobre la cobertura; revisar estos datos junto con el total. No completar mediciones ni fustes para aumentar cobertura. Consultar [carbono](carbon-estimation.md) y [riesgo](risk-management.md) para los contratos y límites; los [manuales](manuales.md) describen los procedimientos.
+
+El 26 de octubre de 2026 se aplicó la migración 31 en el piloto local (batch 20), se solicitó `queue:restart` y se reinició el scheduler. Esa activación no ejecutó un recálculo sobre visitas operativas. Otras instalaciones requieren su propio despliegue y comprobación; no se acredita un ensayo integral de recuperación.
+
 ## Actualizaciones y cambios de configuración
 
 Antes de actualizar un entorno con datos, conserva una copia recuperable y revisa las migraciones y la compatibilidad de la versión de código. No uses `migrate:fresh`, `db:wipe` ni borrado de volúmenes para actualizar.
@@ -197,6 +211,6 @@ Estas decisiones requieren un entorno y requisitos de operación concretos. La d
 | Auditoría muestra un aviso de respaldo | Ejecuta `sysforest:audit-status`; comprueba pendientes, cobertura y disponibilidad de MongoDB. Después de restaurarlo, usa `audit-sync --replay`. |
 | El worker está saludable pero la sonda no avanza | Revisa logs de `queue`, conexión Redis y despacho; distingue proceso activo de trabajo completado. |
 | El correo no aparece en una bandeja externa | La configuración local lo entrega a Mailpit en el puerto 8025. |
-| Cambié una clave de desarrollo y no puedo entrar | El seeder conserva contraseñas existentes; utiliza el flujo de recuperación/cambio de contraseña. |
+| Cambié una clave de desarrollo y no puedo entrar | Revisa si se ejecutó el seeder de desarrollo autorizado, que restablece las cuentas locales y revoca sus sesiones al cambiar la clave. Para operación normal utiliza recuperación o cambio de contraseña. |
 
 La [guía de verificación](testing.md) documenta `bash bin/check`: PSR-12 y sintaxis PHP/JavaScript, sin ejecutar suites ni consultar bases de datos. La revisión funcional es manual; no introduzcas datos forestales ficticios en la base operativa para completar capturas.

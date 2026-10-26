@@ -48,7 +48,10 @@ class TreeInspection extends Model
 
     public function riskEvaluation(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasOne(RiskEvaluation::class, 'inspection_id')->orderByDesc('inspection_version');
+        return $this->hasOne(RiskEvaluation::class, 'inspection_id')->select('risk_evaluations.*')
+            ->join('tree_inspections as risk_visit', 'risk_visit.id', '=', 'risk_evaluations.inspection_id')
+            ->whereColumn('risk_evaluations.organization_id', 'risk_visit.organization_id')
+            ->whereColumn('risk_evaluations.inspection_version', 'risk_visit.lock_version');
     }
 
     public function organization(): BelongsTo

@@ -4,8 +4,11 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/carbon.css') }}">
 @endpush
+@push('scripts')
+    <script src="{{ asset('js/carbon/progress.js') }}" type="module"></script>
+@endpush
 @section('content')
-<div class="carbon-page">
+<div class="carbon-page" data-carbon-progress-url="{{ route('carbon.progress') }}">
     <header class="carbon-heading">
         <div><p class="eyebrow">{{ $organization->name }}</p><h1>Carbono almacenado</h1><p>Del inventario forestal a una estimación del carbono aéreo.</p></div>
         <div class="carbon-heading-actions">
@@ -14,8 +17,17 @@
         </div>
     </header>
 
+    <section class="panel carbon-progress" aria-labelledby="carbon-progress-title" data-carbon-progress @if (!$refresh) hidden @endif data-active="{{ ($refresh['active'] ?? false) ? 'true' : 'false' }}">
+        <h2 id="carbon-progress-title">Actualización de estimaciones</h2>
+        <p role="status" aria-live="polite"><strong data-carbon-progress-label>{{ $refresh['label'] ?? '' }}</strong> · <span data-carbon-progress-count>{{ $refresh['processed'] ?? 0 }} de {{ $refresh['total'] ?? 0 }} visitas procesadas</span></p>
+        <progress data-carbon-progress-bar max="{{ max(1, $refresh['total'] ?? 0) }}" value="{{ $refresh['processed'] ?? 0 }}" aria-label="Visitas procesadas"></progress>
+        <p><span data-carbon-progress-added>{{ $refresh['estimates_added'] ?? 0 }}</span> estimaciones nuevas agregadas.</p>
+        <p data-carbon-progress-message>{{ $refresh['message'] ?? '' }}</p>
+        <a class="button secondary" href="{{ route('carbon.index') }}">Consultar progreso</a>
+    </section>
+
     <section class="carbon-method panel" aria-labelledby="carbon-method-title">
-        <div class="carbon-section-heading"><div><span class="section-kicker">EL RECORRIDO DEL CÁLCULO</span><h2 id="carbon-method-title">De la medida al carbono</h2><p>El sistema realiza estos pasos al guardar una inspección con datos completos y una referencia validada.</p></div><span class="carbon-badge">Estimación de stock aéreo</span></div>
+        <div class="carbon-section-heading"><div><span class="section-kicker">EL RECORRIDO DEL CÁLCULO</span><h2 id="carbon-method-title">De la medida al carbono</h2><p>El sistema realiza estos pasos al guardar una inspección con datos completos y una referencia aplicable, indicando si es provisional o revisada.</p></div><span class="carbon-badge">Estimación de stock aéreo</span></div>
         <div class="carbon-equations">
             <article class="carbon-equation">
                 <div class="carbon-step"><span>01</span><h3>Diámetro</h3></div>
@@ -75,7 +87,7 @@
         <aside class="carbon-guidance" aria-label="Orientación para las referencias de carbono">
             <section class="panel carbon-guide"><span class="section-kicker">ANTES DE PUBLICAR</span><h2>Una referencia con respaldo</h2><ul><li><strong>Identificación correcta</strong><span>Especie y hábito Árbol, un solo fuste y medidas completas.</span></li><li><strong>Densidad adecuada</strong><span>Usa masa seca / volumen verde. No densidad aparente a otra humedad.</span></li><li><strong>Aplicación local</strong><span>Revisa la pertinencia del modelo tropical para el contexto y el arbolado urbano.</span></li></ul><p class="carbon-guide-note">Palmas, arbustos y árboles con varios fustes requieren métodos específicos. Los datos faltantes permanecen pendientes y no cuentan como cero.</p></section>
             @if ($canManage)
-            <form class="panel carbon-refresh" method="POST" action="{{ route('carbon.refresh') }}">@csrf<span class="section-kicker">VISITAS EXISTENTES</span><h2>Aplicar las referencias actuales</h2><p>Las nuevas visitas usan la última referencia de su especie. Para aplicarla a las visitas anteriores, actualiza sus estimaciones.</p><p class="carbon-refresh-note">Se conserva la historia de resultados, mediciones y fechas. Repetir sin cambios no duplica registros.</p><button class="button secondary" type="submit">Actualizar estimaciones</button></form>
+            <form class="panel carbon-refresh" method="POST" action="{{ route('carbon.refresh') }}">@csrf<span class="section-kicker">VISITAS EXISTENTES</span><h2>Aplicar las referencias actuales</h2><p>Las nuevas visitas usan la última referencia de su especie. Para aplicarla a las visitas anteriores, solicita una actualización en segundo plano.</p><p class="carbon-refresh-note">Se conserva la historia de resultados, mediciones y fechas. Repetir sin cambios no duplica registros. Si las referencias cambian durante el proceso, se detendrá para que solicites una nueva actualización.</p><button class="button secondary" type="submit" data-carbon-refresh-button @disabled(!$refreshAvailable || ($refresh['active'] ?? false))>Actualizar estimaciones</button>@if (!$refreshAvailable)<p>La actualización en segundo plano estará disponible cuando se instale la actualización de base de datos de carbono.</p>@endif @error('refresh')<p class="field-error">{{ $message }}</p>@enderror</form>
             @endif
         </aside>
     </div>

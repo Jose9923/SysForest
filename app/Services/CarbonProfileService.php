@@ -21,7 +21,7 @@ class CarbonProfileService
         private CarbonRepository $repository,
         private UserRepository $users,
         private SecurityEventRepository $events,
-        private CarbonEstimationService $estimates
+        private CarbonRefreshService $refreshes
     ) {
     }
 
@@ -32,6 +32,7 @@ class CarbonProfileService
         $profiles = $this->repository->profiles($organization->id);
 
         return ['organization' => $organization, 'species' => $this->repository->species(), 'profiles' => $profiles,
+            'refresh' => $this->refreshes->latest($actor), 'refreshAvailable' => $this->refreshes->available(),
             'settingsVersion' => $profiles->first()?->id ?? 0, 'canManage' => $this->access->allows($actor, 'carbon.manage')];
     }
 
@@ -77,27 +78,8 @@ class CarbonProfileService
         }, 3);
     }
 
-    public function refresh(User $actor): int
+    public function refresh(User $actor): \App\Models\CarbonRefreshRun
     {
-        // La autorización se mantiene bloqueada durante la actualización institucional completa.
-        return DB::transaction(function () use ($actor): int {
-            $actor = $this->users->findForUpdate((int) $actor->id);
-            $organization = $this->access->organization($actor, true);
-            $this->access->authorize($actor, 'carbon.manage');
-            $this->repository->lockOrganization($organization->id);
-            $count = $this->estimates->backfill($organization->id);
-            $this->events->recordChange(
-                'carbon.estimates.refreshed',
-                $actor,
-                $organization->id,
-                'carbon_profile',
-                $organization->id,
-                [],
-                ['configuration_json' => json_encode(['estimates_added' => $count])],
-                ['resource_id' => $organization->id]
-            );
-
-            return $count;
-        }, 3);
+        return $this->refreshes->request($actor);
     }
 }

@@ -11,11 +11,12 @@ final class PhytosanitaryRisk
 {
     public const COMPONENTS = ['PHT_ROOT', 'PHT_STEM', 'PHT_BRANCH', 'PHT_FOLIAGE', 'PHT_FLOWER_FRUIT'];
 
-    public function evaluate(array $configuration, array $selectedCodes): array
+    public function evaluate(array $configuration, array $selectedCodes, array $conditionReferences = []): array
     {
         $selected = array_fill_keys($selectedCodes, true);
         $conditions = $configuration['conditions'];
         $marked = array_intersect_key($conditions, $selected);
+        $coverage = RiskCoverage::fromCodes($selectedCodes, array_keys($marked));
         $errors = [];
         foreach ($configuration['conflicts'] as $rule) {
             if (!isset($selected[$rule['left']])) {
@@ -28,7 +29,7 @@ final class PhytosanitaryRisk
                 }
             }
         }
-        $warnings = [];
+        $warnings = $coverage['warnings'];
         foreach ($configuration['warnings'] as $rule) {
             if (!isset($selected[$rule['condition']])) {
                 continue;
@@ -45,7 +46,14 @@ final class PhytosanitaryRisk
             'input_codes' => array_values(array_unique($selectedCodes)), 'selected_codes' => array_keys($marked), 'severity_max' => null, 'extension_class' => null,
             'determinants' => [], 'affected_components' => [], 'affected_component_count' => 0,
             'priority' => null, 'priority_label' => null, 'management_message' => null, 'overrides' => []];
-        if ($errors !== []) {
+        $result += array_diff_key($coverage, ['warnings' => true]);
+        $result['excluded_conditions'] = array_map(
+            fn (string $code): array => ['code' => $code,
+                'label' => $conditionReferences[$code]['label'] ?? $code,
+                'component' => $conditionReferences[$code]['component'] ?? null],
+            $coverage['excluded_codes']
+        );
+        if ($errors !== [] || $coverage['coverage_status'] === 'missing') {
             return $result;
         }
         $severity = max([0, ...array_column($marked, 'weight')]);

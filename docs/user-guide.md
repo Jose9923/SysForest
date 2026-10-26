@@ -11,8 +11,8 @@ Una vez autenticado, entra en **Organizaciones** y selecciona la institución en
 | Perfil | Uso principal |
 | --- | --- |
 | SUPER_ADMIN | Administración nacional; selecciona una organización para escribir datos forestales, importar o publicar. Mapa, reportes y auditoría admiten su alcance nacional. |
-| DEPARTMENT_ADMIN | Consulta dentro de su departamento. No importa, publica ni consulta auditoría privada. |
-| ORGANIZATION_ADMIN | Gestiona la institución y sus campañas, miembros, publicación y auditoría. |
+| DEPARTMENT_ADMIN | Consulta dentro de sus departamentos y auditoría departamental. No captura, importa ni publica por este rol. |
+| ORGANIZATION_ADMIN | Gestiona la institución, campañas, miembros, publicación y parámetros de riesgo y carbono. No accede a la bandeja de auditoría. |
 | OFFICIAL | Captura árboles, inspecciones, evidencias, órdenes e importaciones de su organización; consulta reportes. No administra miembros ni publicación. |
 
 El perfil permite gestionar datos propios, contraseña y sesiones. **Cerrar sesión** revoca la sesión autenticada.
@@ -47,6 +47,16 @@ Los insectos benignos, como abejas, no justifican por sí solos poner un árbol 
 
 Desde la ficha abre **Cambiar estado del árbol**, selecciona el estado y explica el motivo y su fuente. Guardarlo conserva el estado anterior y registra la fecha real del cambio y la persona responsable. No reemplaza las inspecciones históricas. Registrar o corregir una inspección no cambia automáticamente el estado del árbol.
 
+## Confirmar la prioridad fitosanitaria y consultar carbono
+
+Al crear o corregir una inspección web, registra las condiciones observadas y pulsa **Actualizar sugerencia** en Prioridad de Gestión Fitosanitaria. Lee los avisos, selecciona **Prioridad profesional**, explica en observaciones una diferencia con la sugerencia y marca la confirmación. Si no hay condiciones evaluables, no se sugiere Bajo; una decisión profesional exige justificación explícita. Corrige condiciones contradictorias antes de guardar.
+
+La cobertura indica cuántas condiciones capturadas participan en la metodología institucional, no que se hayan evaluado todos los órganos. Las capturas históricas, importadas o móviles no inventan una confirmación. Pendiente de confirmación, Inconsistente y Sin evaluar son distintos de una prioridad confirmada. La prioridad no cambia el estado del árbol ni genera una orden de mantenimiento.
+
+El panel **Carbono aéreo almacenado** muestra el stock estimado de biomasa aérea, carbono y CO₂ correspondiente. Requiere datos y referencia aplicables; consulta el motivo cuando no haya estimación. No equivale a cero, a emisiones o a captura anual. Las referencias bibliográficas provisionales se identifican y requieren revisión local. No inventes especie, fustes ni medidas para obtener un número.
+
+En **Prioridad fitosanitaria** y **Carbono almacenado**, los administradores autorizados publican parámetros propios de su organización. Las nuevas versiones conservan la historia. Para actualizar carbono en visitas existentes se solicita **Actualizar estimaciones de esta entidad** y se consulta el progreso. Revisa [riesgo](risk-management.md) y [carbono](carbon-estimation.md) para interpretación y límites.
+
 ## Registrar y cerrar mantenimientos
 
 Abre **Mantenimientos** y entra en la orden. Al comienzo de su ficha aparece **Seguimiento y cierre**, con el siguiente paso disponible abierto:
@@ -80,15 +90,19 @@ El **Mapa general** privado y las bandejas comparten filtros. Los filtros de con
 
 En **Reportes**, aplica los filtros y el alcance antes de descargar CSV, Excel, GeoJSON o PDF. La vista del mapa y su límite de marcadores no recortan las exportaciones. Los límites predeterminados son 50.000 filas privadas, 10.000 públicas y 200 para PDF tabular. Si se supera un límite, restringe los filtros; no se entrega un archivo silenciosamente truncado. Una ficha PDF individual contiene el perfil permitido completo. Un archivo de consulta exportado no sustituye la plantilla oficial de importación.
 
+Los mapas y reportes privados permiten consultar prioridad, stock de carbono y cobertura con los mismos filtros. El reporte distingue estimaciones provisionales y revisadas y conserva el aviso de cobertura en las descargas. Un PNG muestra **Sin estimación** para valores ausentes. El stock vivo solo suma la última visita compatible de árboles Sanos, En observación o Trasplantados; no suma visitas históricas ni representa una precisión certificada.
+
 ## Publicar información ciudadana
 
 En **Publicación ciudadana**, el administrador autoriza explícitamente la organización, una campaña activa fuera de Borrador y los árboles. Inspecciones y fotografías tienen autorización propia. Revisa después el portal sin sesión para comprobar la proyección ciudadana.
+
+Publicar o despublicar una visita conserva sus evaluaciones sin representar una nueva decisión profesional. Riesgo y carbono permanecen excluidos de la proyección ciudadana.
 
 Todo comienza privado. Autorizar un árbol no publica automáticamente sus notas internas, funcionarios, originales fotográficos ni auditoría. Despublicar un propietario retira sus dependientes en la siguiente consulta. Consulta [política pública](public-data-policy.md) para las condiciones exactas de visibilidad.
 
 ## Consultar auditoría y resolver conflictos
 
-**Auditoría** muestra los últimos 30 días UTC por defecto. Puedes filtrar por fechas, nombre actual del actor, acción, tipo e identificador del recurso; el administrador nacional dispone además de organización. El detalle distingue valores anteriores y nuevos. Los eventos históricos sin captura de valores lo indican expresamente; no se reconstruye un estado supuesto. El historial es de solo lectura y no tiene exportación.
+**Auditoría** está reservada a SUPER_ADMIN y DEPARTMENT_ADMIN dentro de sus alcances. Los filtros Desde y Hasta usan fechas nativas y calendario UTC inclusivo; también se filtra por módulo, acción, usuario y organización autorizados. El detalle distingue valores anteriores y nuevos. Los eventos históricos sin captura de valores lo indican expresamente. La descarga Excel conserva los filtros e incluye Eventos, Cambios y Criterios; el límite predeterminado es 50.000 eventos y no se truncan resultados. El historial sigue siendo de solo lectura. Consulta [auditoría](audit.md).
 
 Si otra persona modificó un registro abierto en tu formulario, el sistema devuelve conflicto y evita sobrescribir su cambio. Conserva tus observaciones, abre la versión vigente, compara y vuelve a aplicar únicamente lo que siga siendo necesario. Reenviar una pestaña obsoleta no resuelve el conflicto. Consulta [concurrencia](concurrency.md).
 
@@ -103,3 +117,5 @@ Si otra persona modificó un registro abierto en tu formulario, el sistema devue
 | Servicio no disponible (`503`) | Revisa [operación y diagnóstico](operations.md); la pantalla no revela SQL ni rutas internas. |
 
 En móvil, los filtros y acciones siguen las mismas reglas del servidor. Las tablas amplias pueden desplazarse horizontalmente dentro de su contenedor; el contenido debe seguir siendo legible al ampliar texto y navegar con teclado.
+
+Los [manuales ilustrados](manuales.md) reúnen estos procedimientos, capturas y documentación técnica en Word y texto. Para el trabajo offline y el intercambio entre SysForest Mobile y el servidor, consulta el [contrato móvil](mobile-api.md).

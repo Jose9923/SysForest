@@ -16,7 +16,7 @@ class MobileInspectionRepository
     public function paginate(string $organizationId, string $treeId, int $perPage, int $page): LengthAwarePaginator
     {
         $query = TreeInspection::query()->where('organization_id', $organizationId)->where('tree_id', $treeId)
-            ->with(['conditions', 'faunaCategories', 'inventoryTree']);
+            ->with(['conditions', 'faunaCategories', 'inventoryTree', 'carbonEstimate', 'riskEvaluation.methodology']);
 
         return $this->queries->ordered($query)->paginate($perPage, ['*'], 'page', $page);
     }

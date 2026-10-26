@@ -4,6 +4,13 @@ Inventario y gestión forestal institucional con mapas y portal ciudadano. El pr
 
 SYSFOREST utiliza Laravel 13, PHP 8.4, PostgreSQL/PostGIS y Redis. Mantiene MVC con el flujo `Controller → Service → Repository → Model`; Blade renderiza la interfaz y las plantillas de reportes/PDF. CSV, Excel y GeoJSON reutilizan los servicios, repositorios y filtros. Los comentarios útiles y la documentación se escriben en español; el código PHP sigue PSR-12.
 
+## Manuales de la aplicación
+
+Los [manuales de SysForest](docs/manuales.md) reúnen la documentación técnica y los procedimientos de usuario de la edición del 13 de octubre de 2026, contrastada con la implementación revisada:
+
+- [Manual técnico en Word](docs/SysForest_Manual_Tecnico.docx) · [Contenido en texto](docs/manual-tecnico.md).
+- [Manual de usuario en Word](docs/SysForest_Manual_Usuario.docx) · [Contenido en texto](docs/manual-usuario.md).
+
 ## Inicio local
 
 Ejecuta los comandos en Ubuntu, desde la carpeta del proyecto:

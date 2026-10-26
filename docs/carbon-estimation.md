@@ -31,7 +31,7 @@ La publicación manual exige especie activa, aplicabilidad, fuente bibliográfic
 
 Solo se estima con hábito oficial Árbol (`HAB_TREE`), un fuste y medidas completas dentro de los límites documentados. Palmas, arbustos, otros hábitos, varios fustes, diámetro inferior al mínimo y datos faltantes generan motivos explícitos con valores numéricos nulos. No se aplica densidad predeterminada ni se inventa equivalencia entre hábitos.
 
-Cada publicación agrega una versión institucional inmutable. La configuración de otra entidad nunca se reutiliza. Publicar no altera resultados anteriores. **Actualizar estimaciones de esta entidad** aplica las referencias actuales a las visitas existentes agregando instantáneas; los resultados anteriores se conservan. Una segunda ejecución sin cambios no duplica registros. Retirar aplicabilidad también requiere actualizar visitas existentes para que el reporte use la nueva referencia; las nuevas visitas la usan inmediatamente.
+Cada publicación agrega una versión institucional inmutable. La configuración de otra entidad nunca se reutiliza. Publicar no altera resultados anteriores. **Actualizar estimaciones** solicita en segundo plano la aplicación de las referencias actuales a las visitas existentes agregando instantáneas; los resultados anteriores se conservan. Una segunda ejecución sin cambios no duplica registros. Retirar aplicabilidad también requiere actualizar visitas existentes para que el reporte use la nueva referencia; las nuevas visitas la usan inmediatamente.
 
 ## Escritura e historia
 
@@ -49,7 +49,7 @@ La ficha de árbol, la inspección y el popup privado del mapa muestran el resul
 
 Se elige primero una única última inspección por fecha, creación e ID; después, su estimación más reciente compatible con versión, especie y hábito. No se suman visitas históricas. Los totales de stock vivo incluyen únicamente estados actuales Sano, En observación y Trasplantado; los demás se muestran como excluidos. Esto no estima descomposición, emisiones por muerte ni flujo anual.
 
-El reporte por especie incluye individuos totales, estimados incluidos, pendientes/excluidos y sumas en kg. Una especie sin estimaciones conserva sumas nulas, no ceros. El gráfico de cobertura hace visibles los motivos pendientes. Pueden coexistir referencias históricas; el inventario detallado identifica la versión y fuente de cada estimación.
+El reporte por especie incluye individuos totales, estimados incluidos, referencias bibliográficas provisionales, referencias revisadas por profesional, pendientes/excluidos y sumas en kg. La cobertura del conjunto seleccionado y ambos tipos de referencia se muestran junto a los resultados y se conservan en las descargas. Una especie sin estimaciones conserva sumas nulas, no ceros. El gráfico de cobertura hace visibles los motivos pendientes. Pueden coexistir referencias históricas; el inventario detallado identifica la versión y fuente de cada estimación.
 
 CSV, Excel, PDF y GeoJSON privados incluyen las nuevas columnas del inventario; los agregados usan CSV, Excel y PDF. La ficha PDF conserva el perfil completo. Las exportaciones mantienen instantánea y reautorización existentes. Los esquemas y endpoints públicos no incorporan carbono ni sus parámetros. La plantilla oficial V1/V2, sus 110 campos y sus huellas no cambian.
 
@@ -65,7 +65,7 @@ docker compose exec -T app php artisan db:seed --class=CarbonEstimationSeeder --
 docker compose exec -T app php artisan sysforest:carbon-backfill --organization=UUID
 ```
 
-La actualización CLI se reserva a operación autorizada; sin `--organization` recorre todas las entidades, incluidas archivadas, conservando su aislamiento. Cada visita se procesa en su propia transacción. La actualización web bloquea y autoriza la entidad durante la operación completa.
+La actualización CLI se reserva a operación autorizada; sin `--organization` recorre todas las entidades, incluidas archivadas, conservando su aislamiento. Cada visita se procesa en su propia transacción. Desde la revisión del 26/10/2026, la actualización web usa una ejecución durable en cola y libera los bloqueos al terminar cada visita; el contrato vigente se detalla abajo.
 
 Se ejecutaron 69 comprobaciones temporales en `sysforest_carbon_check`, separada del piloto: fórmula con resultado independiente, estados pendientes, versiones, repetición, historial, cambio de especie/hábito, exclusión de muertos, alcance, rechazo de funcionario, inmutabilidad SQL, rollback al fallar confirmación de riesgo, lecturas Blade, gráficas y generación real de CSV/XLSX/PDF/GeoJSON. No son una suite permanente ni validación científica de campo o aceptación en navegador.
 
@@ -102,3 +102,27 @@ Resultado local: **701 estimaciones numéricas** y 2.153 registros pendientes o 
 La comprobación aislada aprobó **135 verificaciones temporales**: 286 perfiles, densidades reproducibles frente al extracto, correspondencias, límites, estados, procedencia congelada, separación institucional, cambios manuales conservados, idempotencia, inmutabilidad, gráficas, mapa, exportación y generación real de CSV/Excel/PDF. PSR-12 y sintaxis en 15 archivos PHP, Blade y sintaxis JavaScript aprobados. Las huellas de diez tablas preexistentes (incluidas taxonomía y riesgo) coincidieron antes/después de la precarga y recálculo. No se reimportaron datos. El archivo de investigación contiene referencias para consulta, sin acreditar revisión científica de campo ni aceptación visual en navegador.
 
 Después de verificar la ampliación se eliminaron ambas bases temporales y los scripts de comprobación/investigación. El paquete bibliográfico y su extracto atribuible permanecen versionables. La repetición local agregó cero perfiles y cero estimaciones; se solicitó recarga gradual de workers.
+
+
+## Recálculo en segundo plano y cobertura — 26/10/2026
+
+La migración aditiva `2026_10_26_000031_create_carbon_refresh_runs.php` incorpora el estado durable del recálculo y un índice para recorrer visitas. No cambia las instantáneas de carbono ni el contrato de captura.
+
+- `POST /carbon/refresh` solicita una actualización y redirige a `/carbon`. Solo requiere el formulario y CSRF existentes; el servidor impone usuario e institución. Una segunda solicitud mientras la misma institución tiene trabajo activo reutiliza esa ejecución.
+- `GET /carbon/refresh/status` devuelve `{refresh: null}` o la última ejecución del tenant con `id`, `status`, `label`, `active`, `total`, `processed`, `estimates_added`, `message` y `requested_at`. Requiere acceso vigente e `inspections.view`, con `Cache-Control: private, no-store`. No acepta una institución arbitraria ni expone el autor.
+- La pantalla muestra En cola, En proceso, Completado, Cancelado o Fallido, número de visitas procesadas y estimaciones agregadas. Consulta automáticamente mientras el trabajo esté activo y ofrece una recarga manual.
+- Se fija un corte de visitas por fecha de creación al solicitar. Las visitas posteriores se calculan con el flujo normal de guardado. Las correcciones concurrentes conservan su versión y se calculan usando los valores vigentes al procesar cada visita.
+- `RefreshCarbonEstimates` se despacha explícitamente a Redis. Cada trabajo procesa como máximo 25 visitas y comprueba un límite de 15 segundos entre visitas; su timeout es 45 segundos. Cada visita usa una transacción independiente que confirma estimación, cursor y contadores juntos.
+- Antes de cada visita se bloquea brevemente el solicitante y la institución, se reconstruye el contexto con `TenantContextService::run` y se comprueba `carbon.manage`. El contexto se limpia al terminar. Si se pierde el acceso, se cancela sin inventar permisos para el worker.
+- Si cambia la versión institucional de referencias durante el recorrido, se cancela con un motivo visible. Las estimaciones ya confirmadas se conservan. Una nueva solicitud aplica las referencias más recientes a todas las visitas incluidas.
+- Los fallos de ejecución admiten tres intentos por trabajo, con espera de 10 y 30 segundos. Un fallo definitivo conserva el avance y queda visible; el administrador puede volver a solicitar una actualización. Repetir no duplica las instantáneas ya confirmadas.
+- El scheduler ejecuta `sysforest:dispatch-carbon-refreshes` cada minuto y vuelve a despachar ejecuciones activas cuyo despacho no se confirmó o supera dos minutos. Esto recupera la caída entre el commit y Redis o una continuación interrumpida. Los trabajos duplicados se serializan por visita y usan el cursor durable.
+- Los eventos `carbon.refresh.requested`, `completed`, `cancelled` y `failed` conservan institución, solicitante, versión de referencias, progreso y motivo mediante la proyección explícita de auditoría. Los snapshots anteriores permanecen intactos.
+
+El despliegue requiere aplicar la migración aditiva y tener activos worker Redis y scheduler. Antes de instalar la migración, la pantalla sigue disponible, explica por qué el recálculo aún no está habilitado y el recuperador no consulta una tabla inexistente. La migración se activó localmente en el lote 20, con recarga gradual de workers mediante queue:restart y reinicio del scheduler. No se ejecutó un recálculo sobre inventarios existentes ni se modificaron mediciones.
+
+El reporte y sus gráficas incluyen la cobertura numérica y distinguen las referencias provisionales de las revisadas por profesional. Las imágenes PNG y las ayudas del gráfico muestran **Sin estimación** cuando el valor es nulo; un cero numérico auténtico sigue siendo cero. Esta mejora no añade intervalos de incertidumbre ni acredita una validación científica de campo.
+
+Verificación aislada: 26 comprobaciones temporales en `carbon_refresh_qa_20261026`, con 30 visitas sintéticas y otra institución, aprobaron solicitud sin cálculo HTTP, lotes 25+5, idempotencia, cambio de referencias, revocación, aislamiento, recuperación, auditoría, agregación y compilación Blade. Dos procesos PHP simultáneos completaron una misma solicitud con exactamente 30 visitas y 30 estimaciones nuevas, sin duplicados. Nueve comprobaciones JavaScript verificaron ausencia, cero, texto pintado en PNG, CSV y sintaxis del progreso. Estas verificaciones no son una prueba de carga ni una aceptación visual del navegador.
+
+La comprobación adicional usó Redis real con una cola y prefijo exclusivos de QA, junto a un worker temporal conectado únicamente a la base sintética: dos jobs completaron 30 visitas y 30 estimaciones nuevas y dejaron la cola vacía. Se retiraron sus claves específicas y la base temporal al terminar. La comprobación global posterior aprobó 592 archivos PSR-12, 593 archivos PHP y 30 archivos JavaScript mediante bin/check. No se recreó una suite permanente.

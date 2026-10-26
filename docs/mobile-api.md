@@ -65,6 +65,61 @@ Las mediciones pertenecen a TreeInspection. GET `/trees/{tree}/inspections` usa 
 
 Las capacidades `can_update_trees`, `can_update_inspections` y `can_upload_photos` se agregaron a meta de inventarios. Orientan la interfaz; cada solicitud revalida políticas sobre el recurso concreto.
 
+## Resultados privados de riesgo y carbono
+
+Ampliación compatible del 26 de octubre de 2026. GET `/trees/{tree}/inspections` y GET `/inspections/{inspection}` agregan `risk` y `carbon` a cada visita. Son instantáneas de solo lectura calculadas en servidor, asociadas a `lock_version`; no son campos de captura ni se aceptan como confirmación profesional móvil. Las rutas, JWT y permisos institucionales existentes se mantienen.
+
+Consultar visitas exige `inspections.view` y acceso al árbol. Además, `risk` será `null` si la cuenta no tiene `risk.view` vigente. Esto no cambia los permisos de escritura. La metodología es la usada en la evaluación de esa visita; no necesariamente la última publicada por la institución. No se entrega la configuración institucional completa ni datos personales del profesional en estos objetos.
+
+### Objeto risk
+
+| Campo | Tipo y significado |
+| --- | --- |
+| `scope` | `phytosanitary_management_priority`. Prioridad de gestión fitosanitaria, no probabilidad de caída. |
+| `status`, `label` | Código `unassessed`, `inconsistent`, `pending_confirmation` o `confirmed`, y etiqueta en español. |
+| `inspection_version` | Entero que coincide con la versión de la visita consultada. |
+| `methodology` | Objeto `{id, version, name, code}` de la metodología aplicada, o `null` si no hay evaluación. |
+| `suggested_priority`, `suggested_label` | Nivel automático 1–4 y etiqueta, o `null` cuando no existe sugerencia válida. |
+| `confirmed_priority`, `confirmed_label` | Nivel 1–4 decidido por el profesional y etiqueta, o `null` mientras no exista decisión. |
+| `confirmed_at`, `evaluated_at` | Fechas ISO 8601, o `null`. Publicar no renueva la fecha de la decisión ni del cálculo original. |
+| `coverage_status` | `complete`, `partial`, `missing` o `null`. Describe si las condiciones registradas participan en la metodología; **no certifica que se hayan inspeccionado todos los órganos**. |
+| `evaluated_condition_count` | Cantidad de condiciones registradas consideradas por la metodología, o `null` sin evaluación. |
+| `warnings`, `errors` | Listas de mensajes en español. Conservar visibles los avisos de cobertura y de condiciones excluidas. |
+| `explanation` | Explicación de la evaluación, o `null`. |
+| `requires_web_confirmation` | Booleano. La confirmación pendiente se realiza en SysForest web por un usuario autorizado. |
+| `notice` | Aclaración del alcance del resultado. |
+
+Sin condiciones consideradas por la metodología, `suggested_priority` es `null`: ausencia de observaciones no equivale a árbol sano. Una visita capturada en móvil permanece pendiente de decisión profesional. Si se confirma en la web una prioridad sin sugerencia, se exigen observaciones justificadas; una confirmación previa se conserva como histórica, sin convertirla en una observación nueva.
+
+### Objeto carbon
+
+| Campo | Tipo y significado |
+| --- | --- |
+| `scope` | `aboveground_stock`: carbono aéreo almacenado. |
+| `status`, `label` | Código del estado de cálculo y explicación en español. `estimated` identifica una estimación; los pendientes conservan el motivo. |
+| `inspection_version` | Entero de la revisión vigente de la visita. |
+| `method_version` | Identificador de la fórmula aplicada, o `null` cuando no hay cálculo. |
+| `biomass_kg`, `carbon_kg`, `co2_kg` | Cadenas decimales con seis posiciones en kg, o `null`. **No convertir `null` en cero**: mostrar «Sin estimación». |
+| `reference_status`, `reference_label` | Estado técnico de la referencia y etiqueta: bibliográfica provisional, revisada por profesional o motivo pendiente. |
+| `reference` | Referencia bibliográfica o técnica registrada para el perfil, o `null`. |
+| `calculated_at` | Fecha ISO 8601 del cálculo original, o `null`. |
+| `notice` | Alcance de la estimación y diferencia frente al total institucional. |
+
+Los estados incluyen `unprocessed`, `missing_species`, `missing_habit`, `unsupported_habit`, `missing_profile`, `missing_density_reference`, `unresolved_identification`, `not_applicable`, `missing_stems`, `multiple_stems`, `missing_measurements`, `small_diameter` y `outside_range`. Usar `label` para presentarlos y admitir estados futuros sin fallar.
+
+Cada objeto describe una visita. No sumar todas las visitas para obtener el stock institucional: la plataforma selecciona la última visita compatible por árbol y excluye los estados que no representan stock vivo. Las cifras no representan emisiones institucionales, absorción anual, raíces, suelo ni créditos de carbono. Las referencias bibliográficas siguen siendo provisionales hasta su revisión profesional para el contexto local.
+
+### Sincronización y consulta sin conexión
+
+POST/PATCH mantienen sus respuestas y recibos congelados. Los recibos existentes no se reescriben para agregar resultados nuevos. Después de una creación o corrección confirmada, consultar GET `/inspections/{id}` para obtener resultados y permisos vigentes. Repetir GET es seguro. Si la descarga falla, conservar el recibo confirmado: no repetir la escritura con otro UUID ni volver a marcarla como fallida por ese motivo.
+
+SysForest móvil consulta la visita tras confirmar su creación y guarda el resultado local. También actualiza visitas al descargar el detalle del árbol. Muestra fecha de última consulta, estado de confirmación, avisos y referencias. Sin internet presenta la copia descargada; no recalcula ni confirma riesgo en el dispositivo. Una confirmación web posterior requiere descargar de nuevo el detalle para verla. Los clientes anteriores pueden ignorar estos campos adicionales.
+
+### Verificación de esta ampliación
+
+El 26 de octubre de 2026 se aprobaron 29 comprobaciones de servicios en una base PostgreSQL/PostGIS temporal, con fixtures sintéticos y reversión completa: publicación/despublicación, historial inmutable, confirmador original, rollback ante fallo, consistencia de consultas de reportes, proyección GET, permiso `risk.view`, aislamiento institucional, replay móvil sin duplicados y conservación de valores nulos. Estas comprobaciones no sustituyen pruebas HTTP completas ni validación en teléfonos físicos.
+
+
 ## Fotografías privadas
 
 Primero se confirma el árbol y se guarda su `tree_id`. Después se envía una fotografía por POST `/trees/{tree}/photos` con multipart/form-data y los campos `client_id`, `file`, `evidence_type_id`; son opcionales `caption`, `notes` y `captured_at`. El Content-Type debe incluir el boundary que construye la biblioteca HTTP. No se envía base64 ni se incrustan fotos en el lote JSON de árboles.
