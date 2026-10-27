@@ -126,3 +126,34 @@ El reporte y sus gráficas incluyen la cobertura numérica y distinguen las refe
 Verificación aislada: 26 comprobaciones temporales en `carbon_refresh_qa_20261026`, con 30 visitas sintéticas y otra institución, aprobaron solicitud sin cálculo HTTP, lotes 25+5, idempotencia, cambio de referencias, revocación, aislamiento, recuperación, auditoría, agregación y compilación Blade. Dos procesos PHP simultáneos completaron una misma solicitud con exactamente 30 visitas y 30 estimaciones nuevas, sin duplicados. Nueve comprobaciones JavaScript verificaron ausencia, cero, texto pintado en PNG, CSV y sintaxis del progreso. Estas verificaciones no son una prueba de carga ni una aceptación visual del navegador.
 
 La comprobación adicional usó Redis real con una cola y prefijo exclusivos de QA, junto a un worker temporal conectado únicamente a la base sintética: dos jobs completaron 30 visitas y 30 estimaciones nuevas y dejaron la cola vacía. Se retiraron sus claves específicas y la base temporal al terminar. La comprobación global posterior aprobó 592 archivos PSR-12, 593 archivos PHP y 30 archivos JavaScript mediante bin/check. No se recreó una suite permanente.
+
+## Activación solicitada de cálculos faltantes — 26/10/2026
+
+Después de la revisión y actualización de manuales, el usuario solicitó completar el carbono faltante. La base local en ese momento tenía 2.855 árboles/visitas (2.854 de Restrepo y uno de INEM), pero **cero perfiles y cero estimaciones**. Las cifras históricas de la precarga anterior no describían el estado de esta base. Se ejecutó únicamente `CarbonSpeciesReferenceSeeder` y el comando `sysforest:carbon-backfill --organization=UUID` por cada una de las dos instituciones activas. No se ejecutó `DatabaseSeeder` ni se modificaron cuentas, taxonomía o medidas.
+
+Se agregaron **286 perfiles institucionales** (143 por entidad), sin discrepancias de código, nombre o familia. Por entidad: 92 bibliográficos provisionales, 16 pendientes de densidad, 11 pendientes de identificación y 24 que requieren otro método. Se conservó el paquete y su huella existentes, sin nuevas densidades ni aprobación profesional atribuida.
+
+Restrepo recibió 2.854 instantáneas de evaluación: **701 con valores numéricos** y 2.153 con motivos pendientes o excluidos. INEM recibió una instantánea sin valor numérico porque su visita registra varios fustes. Una instantánea pendiente registra el motivo; no equivale a un árbol con cero carbono.
+
+El stock vivo de Restrepo incluye los 701 resultados bibliográficos provisionales: **205.596,647899 kg C** y **753.854,375634 kg CO₂ correspondiente**. La cobertura sobre sus 2.854 árboles es **24,6 %**. Son estimaciones del carbono aéreo almacenado, no captura anual ni huella de emisiones. La agregación utiliza una única última visita compatible por árbol.
+
+La cobertura del reporte de Restrepo quedó así (el estado actual excluido tiene prioridad sobre el motivo de cálculo):
+
+| Situación | Árboles |
+| --- | ---: |
+| Estimados | 701 |
+| Densidad específica pendiente | 444 |
+| Número de fustes ausente | 339 |
+| Varios fustes: requiere otro método | 515 |
+| Hábito distinto de árbol: requiere otro método | 670 |
+| Método no aplicable a la especie | 52 |
+| Identificación taxonómica pendiente | 49 |
+| DAP menor de 5 cm | 19 |
+| Estado actual excluido del stock vivo | 65 |
+| **Total** | **2.854** |
+
+Los motivos de las instantáneas, antes de excluir estados del stock vivo, coinciden con el desglose histórico de 701 estimados, 446 sin densidad, 51 sin especie, 346 sin fustes, 516 multifustes, 52 no aplicables, 19 con DAP pequeño, 49 sin identificación resuelta y 674 con hábito no compatible. No sumar ambos desgloses: describen los mismos árboles con criterios distintos.
+
+La repetición de la precarga conservó los 286 perfiles y agregó cero. La repetición del cálculo agregó cero instantáneas en ambas instituciones. Las huellas SHA-256 y conteos de diez tablas preexistentes coincidieron antes/después: árboles, inspecciones, especies, familias, condiciones, revisiones, evaluaciones y metodologías de riesgo, historiales de estado y filas importadas. No se recalculó ni confirmó riesgo. Esta fue una operación CLI local; no se creó una ejecución de progreso web ni se atribuyó a un profesional una decisión manual. No hubo cambios de algoritmo ni de contrato móvil.
+
+Para consultar el resultado, abrir el reporte privado de carbono o actualizar el tablero. Para ampliar la cobertura se necesitan datos de campo verificados, identificación taxonómica, fuentes específicas de densidad y/o métodos apropiados para los individuos excluidos. Los manuales funcionales siguen describiendo el mismo flujo de consulta y actualización; este apartado registra el estado y la operación de datos posterior a su entrega.
