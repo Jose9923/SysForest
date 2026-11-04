@@ -38,7 +38,7 @@ La operación completa usa una transacción y bloqueos. Primero valida que puede
 
 ## Contraseñas y sesiones trasladadas
 
-La detección utiliza `Hash::check` contra el valor público definido por `DevelopmentPasswordService`, no el dominio del correo ni el rol. Solo las coincidencias se sustituyen por contraseñas aleatorias no entregadas, y se renueva su `remember_token`. Se conservan el identificador, nombre, correo, estado, verificación y asignaciones de cada cuenta. Para esas cuentas se invalidan los enlaces `password_reset` pendientes y se revocan todas sus sesiones.
+La detección utiliza `Hash::check` exclusivamente contra la antigua clave general `DevelopmentPasswordService::DEFAULT_PASSWORD`, no el dominio del correo ni el rol. Las claves específicas que el propietario autorizó después para las tres cuentas Meta/INEM no se incorporan a esta detección; su configuración reproducible está descrita en [cuentas de desarrollo](development-accounts.md). Solo las coincidencias se sustituyen por contraseñas aleatorias no entregadas, y se renueva su `remember_token`. Se conservan el identificador, nombre, correo, estado, verificación y asignaciones de cada cuenta. Para esas cuentas se invalidan los enlaces `password_reset` pendientes y se revocan todas sus sesiones.
 
 La opción explícita `--revoke-all-sessions` extiende la revocación a todas las sesiones web y móviles de la base restaurada y consume todos sus enlaces pendientes de recuperación de contraseña. Conserva las contraseñas personalizadas. Los refresh opacos quedan inutilizables porque su sesión está revocada; no se borran sesiones, tokens ni auditoría. Esta opción debe utilizarse en el traslado a producción, además de configurar una nueva clave JWT.
 

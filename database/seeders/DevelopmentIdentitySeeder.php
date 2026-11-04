@@ -60,7 +60,7 @@ class DevelopmentIdentitySeeder extends Seeder
                     $user = $users->create([
                         'name' => $account['name'],
                         'email' => $account['email'],
-                        'password' => DevelopmentPasswordService::DEFAULT_PASSWORD,
+                        'password' => DevelopmentPasswordService::passwordForEmail($account['email']),
                         'active' => true,
                         'email_verified_at' => now(),
                     ]);

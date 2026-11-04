@@ -17,6 +17,18 @@ class DevelopmentPasswordService
 {
     public const DEFAULT_PASSWORD = 'password';
 
+    /** Claves específicas solicitadas para los tres perfiles institucionales del piloto. */
+    private const PASSWORDS_BY_EMAIL = [
+        'admin.inem@sysforest.test' => 'Cambio123*',
+        'funcionario.inem@sysforest.test' => 'Cambio123*',
+        'departamento.meta@sysforest.test' => 'Cambio123*',
+    ];
+
+    public static function passwordForEmail(string $email): string
+    {
+        return self::PASSWORDS_BY_EMAIL[strtolower(trim($email))] ?? self::DEFAULT_PASSWORD;
+    }
+
     public function __construct(
         private UserRepository $users,
         private AccountActionTokenRepository $tokens,
@@ -41,7 +53,8 @@ class DevelopmentPasswordService
         return DB::transaction(function (): array {
             $result = ['updated' => 0, 'unchanged' => 0];
             foreach ($this->users->allForUpdate() as $user) {
-                if (Hash::check(self::DEFAULT_PASSWORD, $user->password)) {
+                $password = self::passwordForEmail($user->email);
+                if (Hash::check($password, $user->password)) {
                     $result['unchanged']++;
 
                     continue;
@@ -49,7 +62,7 @@ class DevelopmentPasswordService
 
                 // User convierte la clave a hash; ni el valor ni el hash forman parte de la auditoría.
                 $user = $this->users->update($user, [
-                    'password' => self::DEFAULT_PASSWORD,
+                    'password' => $password,
                     'remember_token' => Str::random(60),
                 ]);
                 $this->tokens->consumePending($user, 'password_reset');
