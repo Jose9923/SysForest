@@ -50,3 +50,41 @@ RUN mkdir -p storage/app/private storage/app/public storage/framework/cache/data
 EXPOSE 9000
 ENTRYPOINT ["sysforest-entrypoint"]
 CMD ["php-fpm", "-F"]
+
+
+# Imagen de despliegue: el target runtime conserva el entorno local existente.
+FROM base AS production
+ENV APP_ENV=production APP_DEBUG=false
+COPY docker/production/php.ini /usr/local/etc/php/conf.d/99-sysforest.ini
+COPY docker/production/fpm.conf /usr/local/etc/php-fpm.d/zz-sysforest.conf
+COPY --chmod=755 docker/production/entrypoint.sh /usr/local/bin/sysforest-production-entrypoint
+COPY --chown=sysforest:sysforest composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --no-progress --no-scripts --no-autoloader
+# Lista explícita: nunca incorporar .env, respaldos, fotos locales ni herramientas de revisión.
+COPY --chown=sysforest:sysforest app ./app
+COPY --chown=sysforest:sysforest bootstrap/app.php bootstrap/providers.php ./bootstrap/
+COPY --chown=sysforest:sysforest config ./config
+COPY --chown=sysforest:sysforest database/migrations ./database/migrations
+COPY --chown=sysforest:sysforest database/seeders ./database/seeders
+COPY --chown=sysforest:sysforest public ./public
+# Las bibliotecas públicas deben viajar completas en el paquete de despliegue.
+RUN for asset in \
+        jquery/jquery.min.js \
+        select2/select2.min.js select2/select2.min.css select2/es.js \
+        leaflet/leaflet.js leaflet/leaflet.css \
+        leaflet/images/layers.png leaflet/images/layers-2x.png \
+        leaflet/images/marker-icon.png leaflet/images/marker-icon-2x.png leaflet/images/marker-shadow.png \
+        supercluster/supercluster.min.js leaflet-heat/leaflet-heat.js chartjs/chart.umd.min.js; do \
+        test -s "public/vendor/$asset" \
+            || { printf 'Falta un recurso público requerido: %s\n' "$asset" >&2; exit 1; }; \
+    done
+COPY --chown=sysforest:sysforest resources ./resources
+COPY --chown=sysforest:sysforest routes ./routes
+COPY --chown=sysforest:sysforest artisan ./artisan
+RUN mkdir -p storage/app/private storage/app/public storage/framework/cache/data \
+        storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && touch .env \
+    && composer dump-autoload --no-dev --no-interaction --optimize
+EXPOSE 9000
+ENTRYPOINT ["sysforest-production-entrypoint"]
+CMD ["php-fpm", "-F"]

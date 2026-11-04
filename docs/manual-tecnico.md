@@ -1,16 +1,16 @@
 # Manual técnico de SysForest
 
-Este manual permite al equipo de desarrollo y administración comprender la aplicación, preparar su entorno, mantener sus datos e integrar servicios externos. Describe la implementación disponible y distingue los procedimientos locales de los requisitos pendientes para una puesta en producción.
+Este manual permite al equipo de desarrollo y administración comprender la aplicación, preparar su entorno, mantener sus datos e integrar servicios externos. Distingue el entorno local del despliegue de producción, documenta la restauración realizada y señala los servicios que todavía requieren configuración.
 
-Edición ilustrada 1.2 · 26 de octubre de 2026 · Código de referencia 43d83e8 y ajustes locales del 26 de octubre de 2026
+Edición ilustrada 1.4 · 4 de noviembre de 2026 · Revisión de acceso móvil y despliegue del 4 de noviembre de 2026
 
 ## 1 Alcance y arquitectura de la aplicación
 
-SYSFOREST administra inventarios y seguimiento de arbolado por institución. La aplicación implementada reúne territorio y organizaciones, usuarios y permisos, catálogos nacionales, inventarios, individuos, inspecciones históricas, fotografías, mantenimientos, cartografía, análisis, reportes, importación Excel, portal público, auditoría, prioridad fitosanitaria, carbono aéreo almacenado y API móvil. Este manual describe el código revisado al 26 de octubre de 2026. Los documentos de fases anteriores son antecedentes: sus cifras de pruebas y declaraciones de alcance no deben interpretarse como una certificación de la versión actual.
+SYSFOREST administra inventarios y seguimiento de arbolado por institución. La aplicación implementada reúne territorio y organizaciones, usuarios y permisos, catálogos nacionales, inventarios, individuos, inspecciones históricas, fotografías, mantenimientos, cartografía, análisis, reportes, importación Excel, portal público, auditoría, prioridad fitosanitaria, carbono aéreo almacenado y API móvil. Este manual describe el código revisado al 4 de noviembre de 2026. Los documentos de fases anteriores son antecedentes: sus cifras de pruebas y declaraciones de alcance no deben interpretarse como una certificación de la versión actual.
 
 El sistema es una aplicación Laravel con renderizado Blade. Nginx recibe HTTP y entrega PHP a PHP-FPM; PostgreSQL con PostGIS conserva los datos de negocio y la geometría; Redis proporciona servicios auxiliares de caché, colas y sesión; queue y scheduler ejecutan procesos independientes. MongoDB sirve como proyección privada de auditoría, mientras PostgreSQL mantiene los registros transaccionales originales. Las librerías JavaScript de interfaz se distribuyen localmente. Los fondos cartográficos sí requieren consultar proveedores externos configurados.
 
-La fuente de verdad del backend local es /home/josev/SYSFOREST, dentro de Ubuntu 24.04 en WSL. El directorio Windows contiene también el proyecto cliente Flutter de SysForest Mobile; no sustituye el repositorio backend. La instancia local no equivale a una publicación HTTPS accesible desde teléfonos ni acredita distribución de aplicaciones en tiendas. Los contratos entre ambos se mantienen en docs/mobile-api.md.
+La fuente de trabajo del backend local es /home/josev/SYSFOREST, dentro de Ubuntu 24.04 en WSL. El cliente Flutter se mantiene en /home/josev/SysForest-Mobile, un repositorio independiente situado junto al backend. La instancia de producción se despliega en un VPS separado y utiliza https://sysforest.varcor.tech; el estado y procedimiento se describen en el capítulo 20. El contrato entre ambos se mantiene en docs/mobile-api.md. La distribución en tiendas no forma parte de esta edición.
 
 | Capa | Responsabilidad y límite |
 | --- | --- |
@@ -26,13 +26,13 @@ El flujo obligatorio es Controller → Service → Repository → Model. Los cá
 
 ## 2 Stack y organización del código
 
-Las siguientes versiones corresponden al archivo composer.lock, al Dockerfile, a las etiquetas de docker-compose.yml o a los manifiestos locales SOURCE.json revisados. Una etiqueta de imagen indica la configuración del proyecto, no una verificación del parche que ejecuta cada servidor. Para reproducibilidad, las dependencias PHP se instalan desde composer.lock y las bibliotecas de navegador conservan sus archivos de licencia y procedencia.
+Las siguientes versiones corresponden al archivo composer.lock, al Dockerfile, a las etiquetas de docker-compose.yml y compose.production.yml o a los manifiestos locales SOURCE.json revisados. Una etiqueta de imagen indica la configuración del proyecto, no una verificación del parche que ejecuta cada servidor. Para reproducibilidad, las dependencias PHP se instalan desde composer.lock y las bibliotecas de navegador conservan sus archivos de licencia y procedencia.
 
 | Componente | Versión o referencia | Uso |
 | --- | --- | --- |
 | PHP / Laravel | PHP 8.4; Laravel 13.31.0 | Aplicación, servicios y vistas Blade. |
 | PostgreSQL / PostGIS | Imagen postgis/postgis:17-3.5 | Datos transaccionales y selección espacial. |
-| MongoDB | Imagen mongo:8.0.30-noble | Proyección de lectura de auditoría. |
+| MongoDB | Local 8.0.30-noble; producción 8.0.34-noble | Proyección de lectura de auditoría. |
 | Redis / Nginx | 7.4-alpine / 1.28-alpine | Servicios auxiliares y entrada HTTP. |
 | JWT | php-open-source-saver/jwt-auth 2.9.3 | Firma y validación criptográfica del access token. |
 | MongoDB PHP | Extensión 2.5.3; biblioteca 2.5.0 | Acceso controlado a la proyección de auditoría. |
@@ -118,7 +118,7 @@ La relación inventory_trees permite incorporar el mismo individuo a varias camp
 
 ## 4 Instalación local y componentes de ejecución
 
-El entorno revisado utiliza Docker Compose dentro de Ubuntu-24.04 sobre WSL. La fuente de trabajo es /home/josev/SYSFOREST. Los comandos de este capítulo se ejecutan desde una terminal Ubuntu en esa carpeta; no desde una copia de preparación en Windows. Esta configuración corresponde al piloto local. El repositorio no acredita un despliegue externo, alta disponibilidad ni un servicio de respaldo automático.
+El entorno revisado utiliza Docker Compose dentro de Ubuntu-24.04 sobre WSL. La fuente de trabajo es /home/josev/SYSFOREST. Los comandos de este capítulo se ejecutan desde una terminal Ubuntu en esa carpeta; no desde una copia de preparación en Windows. Esta configuración corresponde al piloto local. El despliegue de producción utiliza el procedimiento separado del capítulo 20; esta configuración local no proporciona alta disponibilidad.
 
 Se necesitan Docker y Docker Compose accesibles para el usuario de Ubuntu, Bash y OpenSSL para preparar la configuración. PHP y Composer funcionan en contenedores y no requieren instalación en Windows ni en Ubuntu. Para ejecutar la comprobación completa bin/check se necesitan además Node y flock en Ubuntu. Los archivos y las fotografías exigen almacenamiento persistente; el dimensionamiento de CPU, memoria y disco deberá medirse con el volumen y la concurrencia previstos.
 
@@ -203,7 +203,25 @@ La vigencia predeterminada del access es de 10 minutos y la absoluta de sesión/
 
 En web, las cookies son HttpOnly, SameSite=Lax y Secure fuera del HTTP local; los tokens no deben guardarse en localStorage o sessionStorage. La sesión Laravel conserva CSRF, mensajes y la selección del navegador. GET /auth/session/status consulta la continuidad y POST /auth/session/ensure renueva cuando corresponde. El coordinador conserva formularios abiertos y detecta cambios de cuenta o institución; no reenvía automáticamente una escritura ya enviada.
 
-En móvil, el header transporta el JWT firmado con sub, sid, org, client, audiencia y expiración. No existe en este contrato una firma adicional del cuerpo HTTP: HTTPS protege el transporte completo. El secreto de firma pertenece exclusivamente al backend y nunca se distribuye a la app. La app debe guardar credenciales en almacenamiento seguro del dispositivo, mantener colas separadas por cuenta/institución y descartar el acceso local cuando se cierre o cambie esa identidad.
+En móvil, el header transporta el JWT firmado con sub, sid, org, client, audiencia y expiración. No existe en este contrato una firma adicional del cuerpo HTTP: HTTPS protege el transporte completo. El secreto de firma pertenece exclusivamente al backend y nunca se distribuye a la app. La app guarda únicamente tokens en almacenamiento seguro, nunca la contraseña; conserva las colas separadas por servidor, cuenta e institución y no reasigna pendientes al cambiar de identidad.
+
+El acceso móvil empieza en POST /api/mobile/v1/auth/organizations con email y password. El servidor valida credenciales, actividad y verificación antes de devolver las instituciones autorizadas; conserva los alcances institucionales, departamentales y nacionales vigentes. Esta consulta no emite JWT ni crea una sesión web o móvil. Una única institución permite continuar automáticamente; varias exigen selección explícita por nombre. La app llama entonces a /auth/login con el organization_id seleccionado y el servidor revalida el acceso antes de emitir los tokens.
+
+El descubrimiento devuelve 200 con data: [] si las credenciales son válidas pero no hay instituciones disponibles; credenciales incorrectas, cuentas inactivas o correo no verificado producen 401 genérico. La respuesta usa Cache-Control: no-store y el límite identity.login compartido con el inicio de sesión. La contraseña solo permanece en memoria durante este recorrido; cambiar de cuenta borra la lista y la contraseña. El UUID y el código institucional son datos internos de la respuesta, nunca campos que deba completar la persona.
+
+### Configuración de SysForest Mobile
+
+La aplicación Flutter vive en /home/josev/SysForest-Mobile, al lado del backend /home/josev/SYSFOREST. lib/config/app_config.dart concentra la configuración recibida al compilar con --dart-define-from-file. SYSFOREST_API_URL contiene el origen de la plataforma, sin /api/mobile/v1; el cliente añade el prefijo versionado. No se define un UUID institucional fijo en la configuración.
+
+config/production.json configura SYSFOREST_API_URL=https://sysforest.varcor.tech y ALLOW_LOCAL_HTTP=false para SysForest Mobile 0.2.1+3. config.example.json conserva una plantilla HTTPS y config.local.json permite una copia de configuración excluida de Git. El perfil config/development.json apunta a http://127.0.0.1:8080 con HTTP local permitido; un teléfono requiere el túnel de depuración para usar ese perfil. No incluya contraseñas, tokens ni secretos del servidor en estos JSON.
+
+```sh
+bash scripts/build_android.sh --dart-define-from-file=config/production.json
+```
+
+Cambiar el archivo de configuración exige recompilar e instalar la aplicación. No incluya contraseñas, tokens ni claves del servidor en estos JSON: los valores compilados pueden extraerse del paquete. Una URL ausente o no válida bloquea solicitudes y muestra un aviso de configuración; no impide consultar los datos ya descargados.
+
+Cada cuenta local conserva el servidor con el que se preparó. Si una nueva compilación cambia la URL, la aplicación mantiene sus datos y pendientes, pero impide utilizar esa cuenta contra el nuevo servidor. La reautenticación conserva correo e institución de la cuenta seleccionada; no reasigna operaciones al usuario que introduce otra identidad.
 
 ## 8 Contrato general de la API móvil
 
@@ -211,6 +229,7 @@ El prefijo versionado es /api/mobile/v1. Las rutas son privadas y distintas de l
 
 | Método y ruta relativa | Función |
 | --- | --- |
+| POST /auth/organizations | Valida email y password y lista instituciones autorizadas sin crear sesión ni emitir tokens. |
 | POST /auth/login | Recibe email, password y organization_id; devuelve tokens e identidad autorizada. |
 | POST /auth/refresh | Rota refresh_token y devuelve un nuevo par de credenciales. |
 | POST /auth/logout | Revoca por refresh_token; responde 204 de forma idempotente. |
@@ -561,7 +580,7 @@ La ampliación de riesgo y carbono requiere las migraciones institucionales y de
 
 ## 18 Copias de seguridad y recuperación
 
-Los volúmenes persistentes sobreviven a reinicios, pero no son copias de seguridad. Una copia recuperable debe coordinar PostgreSQL, storage_data, código y claves; conservar únicamente MongoDB o el repositorio no recupera árboles, autorizaciones ni fotografías. El proyecto documenta el procedimiento previsto y no entrega un script automático de respaldo ni acredita un ensayo integral de restauración.
+Los volúmenes persistentes sobreviven a reinicios, pero no son copias de seguridad. Una copia recuperable debe coordinar PostgreSQL, storage_data, código y claves; conservar únicamente MongoDB o el repositorio no recupera árboles, autorizaciones ni fotografías. El traslado del 4 de noviembre de 2026 verificó una restauración y la integridad de los archivos indicados en el capítulo 20; las copias periódicas y sus objetivos de recuperación requieren operación y comprobación continuas.
 
 1. Defina responsable, frecuencia, retención, cifrado, ubicación externa y objetivos RPO y RTO. RPO es la pérdida máxima de datos aceptada; RTO, el tiempo máximo de recuperación. Son decisiones operativas pendientes de validación, no garantías de la aplicación.
 2. Establezca un punto consistente entre la base PostgreSQL y los archivos privados. Prepare una ventana controlada o un mecanismo de instantáneas coordinadas que contemple peticiones y trabajos activos. La herramienta de respaldo debe preservar PostGIS, esquema, datos, restricciones, historiales y recibos de entrega.
@@ -604,7 +623,7 @@ El formato custom conserva la estructura y los datos de una base y permite una r
 
 La restauración comienza en un destino independiente. Recupere PostgreSQL con una versión compatible y PostGIS disponible; restablezca los roles y privilegios conforme al esquema del proyecto. Restaure los archivos conservando sus claves y permisos y use la versión de código compatible con la copia. Verifique migraciones y referencias antes de aplicar actualizaciones posteriores. No desactive triggers de auditoría para forzar una restauración parcial sobre una base operativa.
 
-Redis contiene caché, navegación, sesiones y trabajos pendientes. No se debe volver a colocar ciegamente una copia antigua de Redis en servicio: podría recuperar sesiones o reencolar tareas antiguas. El plan debe separar datos reconstruibles de trabajos que requieran revisión, exigir una política de invalidación de sesiones y comprobar la idempotencia antes de volver a procesar tareas. La recuperación de PostgreSQL también requiere revisar sesiones vigentes frente al momento de la copia; no se entrega aquí una revocación automática de recuperación.
+Redis contiene caché, navegación, sesiones y trabajos pendientes. No restaure ciegamente una copia antigua: podría recuperar sesiones o reencolar tareas. El traslado de producción utilizó Redis nuevo y conservó el historial SQL. Antes de exponer el destino, sysforest:prepare-production-access con --revoke-all-sessions revoca las sesiones restauradas e invalida enlaces de recuperación; rotar JWT_SECRET por sí solo no invalida los refresh opacos almacenados en PostgreSQL. Revise la idempotencia y el estado de los trabajos antes de reanudar las colas.
 
 ### Reconstruir la proyección de auditoría
 
@@ -638,4 +657,87 @@ El comando anterior es una intervención explícita: sustituya UUID_DEL_INTENTO 
 
 Para detener el entorno puede utilizarse docker compose stop y para retomarlo docker compose up -d. stop conserva contenedores y volúmenes. Eliminar volúmenes no es una operación normal de detención y destruye los datos que contienen.
 
-Una publicación real requiere dominio y HTTPS, configuración coherente de APP_URL, emisor JWT y cookies seguras, correo transaccional real, gestión de secretos, imagen apropiada para ejecución y exclusión de cuentas de desarrollo. También requiere copias verificadas, monitoreo de espacio y servicios, política de retención, respuesta a incidentes y medición de carga con límites aceptados. Abrir los puertos del Compose local no resuelve estos requisitos. La documentación describe lo implementado y los controles pendientes; no promete disponibilidad, cumplimiento o capacidad sin validarlos en el destino.
+La instalación de producción usa el Compose específico y el proxy HTTPS documentados en el capítulo 20. SMTP permanece aplazado. Mantenga copias verificadas, monitoreo de espacio y servicios, retención y respuesta a incidentes; mida la carga antes de ampliar límites. Los resultados de restauración y conectividad no acreditan disponibilidad continua ni capacidad de concurrencia.
+
+## 20 Despliegue del servicio de producción
+
+El despliegue del 4 de noviembre de 2026 utiliza un VPS Hostinger con 4 CPU, 16 GB de RAM, 200 GB de almacenamiento y Ubuntu 26.04. El origen web es https://sysforest.varcor.tech y la API móvil usa https://sysforest.varcor.tech/api/mobile/v1. El dominio y el acceso HTTPS fueron verificados el 4 de noviembre de 2026. Estas características describen el servidor contratado; no constituyen una medición de capacidad o concurrencia de la aplicación.
+
+Se verificaron DNS público, certificado TLS válido, acceso web con URLs HTTPS y cookies Secure. En la API móvil se comprobaron descubrimiento institucional, login, identidad, inventarios, parametrizaciones, consulta de árboles y cierre de sesión. Las solicitudes protegidas sin JWT y las credenciales de prueba rechazadas devolvieron 401. Estas comprobaciones no equivalen a una prueba de sincronización desde un teléfono físico.
+
+### Servicios y configuración
+
+compose.production.yml es independiente del Compose local. Construye el target production del Dockerfile con dependencias de ejecución y código incluido en la imagen. No incorpora archivos .env, respaldos ni almacenamiento privado. app, queue y scheduler comparten storage_data y ejecutan con el usuario sysforest. PostgreSQL, MongoDB, Redis y PHP-FPM no publican puertos.
+
+El Compose productivo usa MongoDB 8.0.34. Por la detección de versión del kernel Ubuntu del VPS se aplica únicamente a ese contenedor GLIBC_TUNABLES=glibc.pthread.rseq=1. El ajuste temporal, su justificación y el criterio para retirarlo se documentan en docker/production/README.md; no exige cambiar los permisos de auditoría ni borrar volúmenes.
+
+Caddy termina TLS y reenvía desde el host a Nginx en 127.0.0.1:18080. Nginx declara HTTPS a PHP y solo acepta la IP real del gateway Docker y loopback. APP_URL debe coincidir con el dominio HTTPS. Mantenga esta relación de red y proxy; cambiar únicamente la URL de configuración no publica el servicio ni obtiene un certificado.
+
+La configuración privada permanece fuera del repositorio. bin/production-env genera claves para una instalación nueva sin mostrarlas y no reemplaza un archivo existente. En esta migración se conservó APP_KEY por los payloads cifrados históricos; cambiarla sin revisar los datos cifrados puede impedir recuperarlos. El secreto JWT pertenece exclusivamente al backend. Los servicios PHP ordinarios no reciben las contraseñas administrativas PostgreSQL o MongoDB ni la del migrador.
+
+SMTP se aplazó expresamente. El destino de correo inicial no entrega mensajes: invitaciones, verificaciones y recuperación de acceso requieren configurar y comprobar un proveedor real antes de utilizarlas. No usar el canal log para mensajes con enlaces privados ni reintentar masivamente trabajos antiguos de correo.
+
+### Estado de la copia restaurada
+
+La copia trasladada conservó 71 tablas, 2.855 árboles y 2.855 visitas de inspección. Se mantuvieron las cinco cuentas existentes y se preparó una cuenta administrativa nueva. La colección de auditoría restaurada contenía 16.802 documentos. Los 11 archivos de storage/app trasladados se verificaron mediante SHA256; esta cantidad corresponde a archivos del almacenamiento, no necesariamente a 11 fotografías.
+
+En el destino se retiraron las contraseñas comunes de desarrollo, se revocaron nueve sesiones trasladadas y se invalidaron los enlaces de recuperación pendientes. Estas operaciones generan auditoría nueva, por lo que el total posterior puede superar el de la copia. No se restauró Redis ni se ejecutaron seeders. La instalación local permaneció operativa después del traslado; las escrituras posteriores de una instalación no se replican automáticamente a la otra.
+
+### Operar el Compose de producción
+
+Ejecute los comandos desde el directorio de la versión desplegada. El siguiente ejemplo usa /etc/sysforest/sysforest.env como ubicación de la configuración privada; sustitúyala por la ruta real autorizada. pc es una función Bash que mantiene el mismo archivo Compose y configuración en todos los pasos. No muestre el contenido del archivo ni use config sin --quiet en registros compartidos.
+
+```sh
+pc() {
+  docker compose --env-file /etc/sysforest/sysforest.env \
+    -f compose.production.yml "$@"
+}
+pc config --quiet
+pc ps
+curl --fail --silent --show-error \
+  http://127.0.0.1:18080/health/ready
+pc exec -T app php artisan sysforest:audit-status
+```
+
+/health/ready comprueba Laravel, PostgreSQL, PostGIS y Redis. La auditoría requiere su comprobación adicional; los procesos de cola y scheduler también deben mostrar avance de sus sondas. Para una actualización, respalde primero los datos, construya la imagen, aplique solo migraciones pendientes y recree los procesos PHP. OPcache productivo no comprueba archivos modificados en ejecución.
+
+```sh
+pc build app
+pc --profile maintenance run --rm --no-deps migrate
+pc up -d app queue scheduler nginx
+```
+
+db-init se utiliza explícitamente para preparar roles, base operativa y PostGIS. No es una sonda de salud: puede actualizar contraseñas PostgreSQL. No crea base de pruebas ni ejecuta migraciones o seeders. En el destino restaurado, una migración pendiente se ejecuta con el rol migrador; el rol de aplicación conserva solo los permisos operativos.
+
+### Repetir una restauración controlada
+
+1. Defina una ventana consistente: detenga nuevas escrituras y termine o controle los trabajos activos antes de copiar PostgreSQL y storage_data. Registre versión, fecha y hashes de las copias. Conserve las claves necesarias por un canal privado separado.
+
+1. Prepare un destino nuevo con los mismos nombres de roles y credenciales propias. Cree solo la base operativa y PostGIS mediante db-init. Restaure el archivo custom como administrador conservando propietarios y ACL; las tablas y funciones de aplicación deben quedar bajo el migrador. No use --no-owner si con ello quedarían bajo el administrador.
+
+1. Use pg_restore --exit-on-error --single-transaction sobre la base vacía preparada. La copia inspeccionada utiliza CREATE EXTENSION IF NOT EXISTS postgis y no recrea el esquema public; no requiere filtrar esas entradas. Si cambia la versión de PostGIS o el contenido de la copia, revise compatibilidad antes de restaurar.
+
+1. Conserve un respaldo completo de storage_data. Para este traslado se recuperó storage/app, incluidos originales y journals .pending, con sus rutas y propietario UID/GID compatibles. El entrypoint recrea los directorios de framework y logs; no se reintrodujeron cachés o sesiones antiguas.
+
+1. Restaure los documentos de activity_logs conservando la autenticación, el validador y los índices preparados en el MongoDB de destino, o reconstruya la proyección desde SQL. Ejecute audit-sync --replay y audit-status: nunca elimine historiales ni audit_deliveries para forzar una entrega.
+
+1. Mantenga Redis nuevo y revise las tareas pendientes antes de iniciar queue y scheduler. Prepare el acceso mediante sysforest:prepare-production-access con revocación total de sesiones. Compruebe cuentas, permisos, recibos móviles, archivos, conteos e integridad antes de habilitar el dominio.
+
+El comando de preparación de acceso ofrece una vista previa sin --apply. Su aplicación requiere el correo real confirmado del administrador y, si crea una cuenta, una contraseña recibida mediante entrada oculta o archivo privado. No envía correos ni borra cuentas. Con --revoke-all-sessions invalida las sesiones restauradas y los enlaces de recuperación de contraseña; conservar el historial permite auditar el traslado.
+
+### Crear una copia con el comando de producción
+
+bin/production-backup recibe rutas absolutas al proyecto, la configuración privada y el destino de copias. Rechaza guardar la configuración o las copias dentro del repositorio. Incluye PostgreSQL en formato custom, los documentos de la colección de auditoría y storage/app con fotografías, journals y derivados. Genera un manifiesto y hashes SHA256; los directorios usan permisos 0700 y los archivos 0600.
+
+```sh
+bash bin/production-backup \
+  --project-dir /opt/sysforest/releases/20261104-initial \
+  --env-file /opt/sysforest/private/production.env \
+  --destination /opt/sysforest/backups --quiesce
+```
+
+Las rutas del ejemplo corresponden a la versión inicial desplegada; cambie project-dir al actualizar la instalación. --dry-run revisa la preparación sin crear una copia. --quiesce detiene los contenedores de aplicación, Nginx, cola y scheduler que estaban en ejecución, y los reanuda al terminar o fallar. Programe esa interrupción con los usuarios. Sin --quiesce, la copia online no garantiza un único punto temporal entre la base y los archivos.
+
+El comando inspecciona el índice PostgreSQL y la integridad de los archivos comprimidos; no restaura una base para comprobar su contenido. Entrega manifest.json, SHA256SUMS, RESTORE_NOTES.txt y una marca COMPLETE al terminar; conserva los parciales con FAILED si falla. No copia .env ni Redis, no programa ejecuciones, no elimina copias antiguas y no realiza envío externo. Conserve las claves por separado y establezca retención, ubicación externa, vigilancia de fallos y ensayos de restauración con el responsable de operación.
+
+El procedimiento detallado de servicios, secretos, actualizaciones y límites está en docker/production/README.md. El proxy se describe en docker/edge/Caddyfile.example y docker/edge/compose.yml. Las copias recurrentes, retención, alertas y objetivos de recuperación deben configurarse y verificarse como operación continua; la restauración del 4 de noviembre no sustituye ese servicio.

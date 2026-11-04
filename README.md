@@ -4,6 +4,10 @@ Inventario y gestión forestal institucional con mapas y portal ciudadano. El pr
 
 SYSFOREST utiliza Laravel 13, PHP 8.4, PostgreSQL/PostGIS y Redis. Mantiene MVC con el flujo `Controller → Service → Repository → Model`; Blade renderiza la interfaz y las plantillas de reportes/PDF. CSV, Excel y GeoJSON reutilizan los servicios, repositorios y filtros. Los comentarios útiles y la documentación se escriben en español; el código PHP sigue PSR-12.
 
+## Producción
+
+La plataforma está disponible en [https://sysforest.varcor.tech](https://sysforest.varcor.tech). Consulta el [despliegue del 4 de noviembre de 2026](docs/production-deployment-20261104.md) para datos trasladados, verificaciones y pendientes, y el [procedimiento productivo](docker/production/README.md) para operar el servidor. Los comandos de la sección siguiente preparan exclusivamente el entorno local.
+
 ## Manuales de la aplicación
 
 Los [manuales de SysForest](docs/manuales.md) reúnen la documentación técnica y los procedimientos de usuario de la edición del 13 de octubre de 2026, contrastada con la implementación revisada:
@@ -127,4 +131,4 @@ Por solicitud expresa del usuario se retiraron las pruebas automatizadas. `bash 
 | Auditoría y conflictos de edición | [Auditoría](docs/audit.md), [concurrencia](docs/concurrency.md) |
 | Estructura técnica | [Arquitectura](docs/architecture.md), [base de datos](docs/database.md) |
 
-Los informes `docs/phase-*.md` conservan resultados históricos de cada entrega. El [cierre de Fase 15](docs/phase-15.md) registra su verificación completa histórica: 1806 pruebas PHP, 64 pruebas JavaScript y 577 archivos PSR-12; las cifras de una fase anterior no acreditan cambios posteriores. El esquema de Compose es local: todavía no representa un despliegue externo.
+Los informes `docs/phase-*.md` conservan resultados históricos de cada entrega. El [cierre de Fase 15](docs/phase-15.md) registra su verificación completa histórica: 1806 pruebas PHP, 64 pruebas JavaScript y 577 archivos PSR-12; las cifras de una fase anterior no acreditan cambios posteriores. El archivo `docker-compose.yml` conserva el entorno local; `compose.production.yml` corresponde al [despliegue externo documentado](docs/production-deployment-20261104.md).

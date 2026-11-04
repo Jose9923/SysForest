@@ -1,0 +1,284 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+usage() {
+    cat <<'HELP'
+Uso:
+  bash bin/production-backup --project-dir /ruta/release \
+    --env-file /ruta/privada/production.env --destination /ruta/respaldos \
+    [--quiesce] [--dry-run]
+
+Las tres rutas absolutas son obligatorias. Env y destino deben estar fuera del
+release. El directorio de destino debe ser privado (0700); si no existe se crea.
+
+Incluye PostgreSQL custom, colección Mongo de auditoría y storage/app con fotos,
+derivados y journals. No incluye secretos, Redis ni una copia externa al servidor.
+No borra respaldos anteriores y no configura cron o retención.
+
+Sin --quiesce las escrituras continúan: los tres archivos no representan un único
+instante. --quiesce detiene nginx, scheduler, queue y app durante la captura, solo
+si estaban funcionando, y reactiva sus mismos contenedores al terminar o fallar.
+Usar una ventana de mantenimiento; no ejecutar despliegues en paralelo.
+
+--dry-run valida configuración y contenedores, sin crear copias ni detenerlos.
+La validación de archivos no sustituye un ensayo de restauración independiente.
+HELP
+}
+
+fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
+source_argument=''
+environment_argument=''
+destination_argument=''
+quiesce=false
+dry_run=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --project-dir|--env-file|--destination)
+            [[ $# -ge 2 ]] || fail "Falta el valor de $1."
+            case "$1" in
+                --project-dir) source_argument="$2" ;;
+                --env-file) environment_argument="$2" ;;
+                --destination) destination_argument="$2" ;;
+            esac
+            shift 2 ;;
+        --quiesce) quiesce=true; shift ;;
+        --dry-run) dry_run=true; shift ;;
+        --help|-h) usage; exit 0 ;;
+        *) fail 'Opción desconocida. Consulta --help.' ;;
+    esac
+done
+for value in "$source_argument" "$environment_argument" "$destination_argument"; do
+    [[ "$value" == /* ]] || fail 'Se requieren tres rutas absolutas explícitas.'
+    [[ "$value" != *$'\n'* && "$value" != *$'\r'* ]] || fail 'Las rutas no pueden contener saltos de línea.'
+done
+for command in docker python3 realpath stat mktemp flock sha256sum gzip tar date; do
+    command -v "$command" >/dev/null || fail "Falta la herramienta $command."
+done
+project_dir="$(realpath -e -- "$source_argument")"
+environment_file="$(realpath -e -- "$environment_argument")"
+destination="$(realpath -m -- "$destination_argument")"
+[[ -d "$project_dir" && -f "$project_dir/compose.production.yml" ]] || fail 'No existe compose.production.yml en el release indicado.'
+[[ -f "$environment_file" && -r "$environment_file" ]] || fail 'No se puede leer el archivo privado de configuración.'
+[[ "$destination" != / && "$destination" != "$project_dir" ]] || fail 'El destino no puede ser la raíz ni el release.'
+for external_path in "$environment_file" "$destination"; do
+    case "$external_path" in "$project_dir"/*) fail 'Env y destino deben estar fuera del release.' ;; esac
+done
+environment_mode="$(stat -c '%a' -- "$environment_file")"
+(( (8#$environment_mode & 077) == 0 )) || fail 'El archivo de configuración permite acceso a otros usuarios; debe ser privado.'
+if [[ -e "$destination" ]]; then
+    [[ -d "$destination" && "$(stat -c '%a' -- "$destination")" == 700 ]] || fail 'El destino existente debe ser un directorio con permisos 0700.'
+fi
+
+# Compose lee el archivo; nunca se ejecuta .env como shell ni se imprime su contenido.
+export SYSFOREST_ENV_FILE="$environment_file"
+compose=(docker compose --project-name sysforest-production --project-directory "$project_dir" --env-file "$environment_file" -f "$project_dir/compose.production.yml")
+"${compose[@]}" config --quiet
+configuration="$("${compose[@]}" config --format json | python3 -c '
+import json, re, sys
+try:
+    c = json.load(sys.stdin)
+    s = c["services"]
+    assert c["name"] == "sysforest-production"
+    assert s["app"]["environment"]["APP_ENV"] == "production"
+    values = [s["app"]["environment"]["DB_DATABASE"], s["mongodb"]["environment"]["AUDIT_MONGO_DATABASE"], s["mongodb"]["environment"]["AUDIT_MONGO_COLLECTION"]]
+    assert all(isinstance(v, str) and re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_]{0,62}", v) for v in values)
+    print("\n".join(values))
+except Exception:
+    sys.exit("Configuración productiva o nombres de base inválidos.")
+')"
+mapfile -t names <<< "$configuration"
+[[ ${#names[@]} -eq 3 ]] || fail 'No se pudieron identificar los almacenes de origen.'
+database="${names[0]}"
+mongo_database="${names[1]}"
+mongo_collection="${names[2]}"
+
+declare -A containers
+for service in postgres mongodb app queue scheduler nginx; do
+    container="$("${compose[@]}" ps --all --quiet "$service")"
+    [[ "$container" =~ ^[a-f0-9]{64}$ ]] || fail "Se requiere exactamente un contenedor existente para $service."
+    actual_project="$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$container")"
+    actual_service="$(docker inspect --format '{{index .Config.Labels "com.docker.compose.service"}}' "$container")"
+    actual_directory="$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}' "$container")"
+    [[ "$actual_project" == sysforest-production && "$actual_service" == "$service" ]] || fail 'El contenedor no pertenece al proyecto indicado.'
+    [[ "$(realpath -m -- "$actual_directory")" == "$project_dir" ]] || fail 'El release no coincide con el utilizado por los contenedores; indica su directorio real.'
+    if $quiesce && [[ "$(docker inspect --format '{{.State.Paused}}' "$container")" == true ]]; then
+        fail 'Un contenedor está pausado manualmente; resolver su estado antes de usar --quiesce.'
+    fi
+    containers[$service]="$container"
+done
+for service in postgres mongodb; do
+    [[ "$(docker inspect --format '{{.State.Running}}' "${containers[$service]}")" == true ]] || fail "El servicio $service no está funcionando."
+    [[ "$(docker inspect --format '{{.State.Health.Status}}' "${containers[$service]}")" == healthy ]] || fail "El servicio $service no está saludable."
+done
+storage_mount="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/www/html/storage"}}{{.Type}}:{{.Name}}{{end}}{{end}}' "${containers[app]}")"
+[[ "$storage_mount" =~ ^volume:([a-zA-Z0-9][a-zA-Z0-9_.-]+)$ ]] || fail 'No se identificó un volumen privado único de almacenamiento.'
+storage_volume="${BASH_REMATCH[1]}"
+app_image="$(docker inspect --format '{{.Image}}' "${containers[app]}")"
+postgres_image="$(docker inspect --format '{{.Image}}' "${containers[postgres]}")"
+mongo_image="$(docker inspect --format '{{.Image}}' "${containers[mongodb]}")"
+mode=online
+$quiesce && mode=quiesced
+if $dry_run; then
+    printf 'Validación completada. Release: %s\nDestino: %s\nModo: %s\nNo se crearon archivos ni se detuvieron servicios.\n' "$project_dir" "$destination" "$mode"
+    exit 0
+fi
+
+# Un único respaldo por configuración, aunque se elijan destinos diferentes.
+exec {backup_lock}>"$(dirname -- "$environment_file")/.sysforest-production-backup.lock"
+flock --nonblock "$backup_lock" || fail 'Ya hay otro respaldo usando esta configuración.'
+if [[ ! -d "$destination" ]]; then mkdir -p -m 700 -- "$destination"; fi
+[[ "$(stat -c '%a' -- "$destination")" == 700 ]] || fail 'El destino no tiene los permisos privados requeridos.'
+started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+backup_dir="$(mktemp -d "$destination/backup-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")"
+chmod 700 "$backup_dir"
+printf '%s\n' 'Respaldo en curso. No restaurar mientras exista este marcador.' > "$backup_dir/INCOMPLETE"
+paused_ids=()
+paused_names=()
+resume_services() {
+    local index
+    local failed_ids=()
+    for ((index=${#paused_ids[@]}-1; index>=0; index--)); do
+        if ! docker start "${paused_ids[$index]}" >/dev/null 2>&1; then
+            failed_ids+=("${paused_ids[$index]}")
+        fi
+    done
+    paused_ids=("${failed_ids[@]}")
+    [[ ${#paused_ids[@]} -eq 0 ]]
+}
+cleanup() {
+    local status=$?
+    trap - EXIT INT TERM
+    if ! resume_services; then
+        status=1
+        printf '%s\n' "${paused_ids[@]}" > "$backup_dir/SERVICES_TO_RESUME.txt"
+        printf '%s\n' 'No se pudieron reactivar todos los servicios; revisa SERVICES_TO_RESUME.txt.' >&2
+    fi
+    if [[ "$status" -ne 0 ]]; then
+        printf '%s\n' 'La copia no se completó. Se conservaron los archivos para revisión; no son un respaldo confirmado.' > "$backup_dir/FAILED"
+        printf 'Respaldo incompleto conservado en: %s\n' "$backup_dir" >&2
+    fi
+    exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+if $quiesce; then
+    for service in nginx scheduler queue app; do
+        container="${containers[$service]}"
+        if [[ "$(docker inspect --format '{{.State.Running}}' "$container")" == true ]]; then
+            # Registrar antes de detener permite recuperar también un fallo parcial de docker stop.
+            paused_ids+=("$container")
+            paused_names+=("$service")
+            docker stop --time 75 "$container" >/dev/null
+        fi
+    done
+fi
+
+# Las credenciales se leen dentro del contenedor; no aparecen en argumentos ni en la copia.
+if ! docker exec "${containers[postgres]}" sh -c '
+    set -eu
+    PGPASSWORD=$(cat "$POSTGRES_PASSWORD_FILE")
+    export PGPASSWORD
+    exec pg_dump --username="$POSTGRES_USER" --dbname="$1" --format=custom
+' sh "$database" > "$backup_dir/postgres.dump.partial" 2>/dev/null; then
+    fail 'Falló la captura PostgreSQL. No se imprimen detalles que puedan contener credenciales.'
+fi
+
+# JSON es un subconjunto válido de YAML. El password viaja por pipe a --config,
+# nunca mediante --password, URI, argumentos del host o archivo persistente.
+if ! docker exec "${containers[mongodb]}" bash -c '
+    set -euo pipefail
+    mongosh --quiet --nodb --eval '\''const fs = require("fs"); print(JSON.stringify({password: fs.readFileSync(process.env.MONGO_INITDB_ROOT_PASSWORD_FILE, "utf8").trim()}));'\'' |
+        mongodump --config=/dev/stdin --host=127.0.0.1 --port=27017 \
+            --username="$MONGO_INITDB_ROOT_USERNAME" --authenticationDatabase=admin \
+            --db="$1" --collection="$2" --archive --gzip --quiet
+' bash "$mongo_database" "$mongo_collection" > "$backup_dir/mongo.archive.gz.partial" 2>/dev/null; then
+    fail 'Falló la captura MongoDB. Se conserva la copia parcial privada.'
+fi
+
+# Un contenedor efímero sin red solo lee el volumen; funciona con app detenida.
+if ! docker run --rm --network none --read-only --user 0:0 --cap-drop ALL --cap-add DAC_READ_SEARCH \
+    --security-opt no-new-privileges:true \
+    --mount "type=volume,source=$storage_volume,target=/snapshot,readonly" \
+    --entrypoint tar "$app_image" --numeric-owner --one-file-system -czf - -C /snapshot app \
+    > "$backup_dir/storage-app.tar.gz.partial" 2>/dev/null; then
+    fail 'Falló la captura de archivos; una copia online puede requerir --quiesce si hubo cambios concurrentes.'
+fi
+snapshot_finished_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+# La pausa termina antes de leer de nuevo los archivos grandes para verificarlos.
+resume_services || fail 'No fue posible reactivar todos los servicios después de la captura.'
+
+for archive in postgres.dump mongo.archive.gz storage-app.tar.gz; do
+    [[ -s "$backup_dir/$archive.partial" ]] || fail 'Se obtuvo un archivo de respaldo vacío.'
+done
+docker exec -i "${containers[postgres]}" pg_restore --list < "$backup_dir/postgres.dump.partial" > "$backup_dir/postgres.contents.txt"
+gzip -t "$backup_dir/mongo.archive.gz.partial"
+tar -tzf "$backup_dir/storage-app.tar.gz.partial" > /dev/null
+for archive in postgres.dump mongo.archive.gz storage-app.tar.gz; do
+    mv -- "$backup_dir/$archive.partial" "$backup_dir/$archive"
+done
+
+python3 - "$backup_dir/manifest.json" "$mode" "$started_at" "$snapshot_finished_at" "$project_dir" \
+    "$database" "$mongo_database" "$mongo_collection" "$app_image" "$postgres_image" "$mongo_image" "${paused_names[*]}" <<'PY'
+import json, sys
+path, mode, started, captured, source, database, mongo_db, collection, app, postgres, mongo, paused = sys.argv[1:]
+manifest = {
+    "format": "SYSFOREST_PRODUCTION_BACKUP_V1",
+    "mode": mode,
+    "started_at_utc": started,
+    "capture_finished_at_utc": captured,
+    "release_directory": source,
+    "postgres_database": database,
+    "mongo_namespace": mongo_db + "." + collection,
+    "storage_scope": "storage/app",
+    "image_ids": {"app": app, "postgres": postgres, "mongodb": mongo},
+    "services_stopped_for_capture": paused.split(),
+    "secrets_included": False,
+    "redis_included": False,
+    "offsite_copy_created": False,
+    "restore_rehearsal_performed": False,
+    "consistency": "Application services stopped during capture; independent database writers must also be excluded." if mode == "quiesced" else "Online exports have different capture instants; no cross-store atomic snapshot is claimed.",
+}
+with open(path, "w", encoding="utf-8") as output:
+    json.dump(manifest, output, ensure_ascii=False, indent=2)
+    output.write("\n")
+PY
+cat > "$backup_dir/RESTORE_NOTES.txt" <<'NOTES'
+Copia privada: contiene datos personales, hashes de usuarios, auditoría y archivos.
+No contiene .env, APP_KEY, credenciales técnicas, Redis ni una copia fuera del VPS.
+Conservar esos secretos separadamente con acceso restringido y copiar este respaldo
+a un destino externo autorizado. No hay retención ni borrado automático.
+
+Verificar SHA256SUMS antes de restaurar. El inventario pg_restore y las comprobaciones
+gzip/tar verifican lectura estructural, no una restauración integral de PostgreSQL,
+MongoDB o las relaciones entre evidencias e inventarios.
+
+Restaurar en un entorno separado sin SMTP real. El archivo PostgreSQL conserva
+propietarios y ACL; crear antes los roles sysforest_migrator y sysforest_app mediante
+el inicializador productivo, con los mismos nombres que en el origen. Restaurar
+con un rol administrativo autorizado que pueda reponer propietarios y privilegios;
+no omitir ownership/ACL ni elevar permisos del usuario de ejecución para evitar
+los controles de aislamiento. Las contraseñas de roles se conservan separadamente
+en la configuración privada, nunca en este respaldo. Conservar también las claves
+necesarias para descifrar payloads y restaurar
+storage/app con propietario compatible con el UID/GID de la aplicación. Mongo incluye
+solo la colección de auditoría, sus opciones e índices, no cuentas administrativas.
+No restaurar tareas Redis de otro entorno ni reintentar mensajes antiguos sin revisión.
+
+PostgreSQL conserva la auditoría canónica. Después de recuperar Mongo, conciliar con
+sysforest:audit-sync --replay y sysforest:audit-status. Un conflicto de hash exige
+investigación; no sobrescribir historiales. En modo online, Mongo puede contener
+eventos posteriores al snapshot SQL y los archivos pueden ser de otro instante:
+no se acredita consistencia conjunta ni recuperación automática sin conciliación.
+Para capturas coordinadas, usar --quiesce y excluir otros escritores durante la pausa.
+NOTES
+(
+    cd "$backup_dir"
+    sha256sum postgres.dump mongo.archive.gz storage-app.tar.gz postgres.contents.txt manifest.json RESTORE_NOTES.txt > SHA256SUMS
+    sha256sum --check --status SHA256SUMS
+)
+printf '%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$backup_dir/COMPLETE"
+rm -- "$backup_dir/INCOMPLETE"
+printf 'Respaldo completado y archivos verificados: %s\nModo: %s. No se ejecutó una restauración ni copia externa.\n' "$backup_dir" "$mode"

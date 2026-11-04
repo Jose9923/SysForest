@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+umask 077
+
+project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+if [[ $# != 2 ]]; then
+    printf '%s\n' 'Uso: bash bin/production-env /ruta/privada/sysforest.env https://dominio.example' >&2
+    exit 1
+fi
+production_destination="$(realpath -m -- "$1")"
+production_url="$2"
+if [[ ! "$production_url" =~ ^https://[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?(:[0-9]{1,5})?$ ]]; then
+    printf '%s\n' 'La URL debe ser HTTPS con dominio, sin ruta, credenciales ni parámetros.' >&2
+    exit 1
+fi
+case "$production_destination" in
+    "$project_dir"|"$project_dir"/*)
+        printf '%s\n' 'La configuración secreta debe guardarse fuera del repositorio.' >&2
+        exit 1
+        ;;
+esac
+if [[ "$production_destination" =~ [[:space:]\'\"\$\#] ]] || [[ -e "$production_destination" || -L "$production_destination" ]]; then
+    printf '%s\n' 'El destino debe ser nuevo y no contener espacios ni caracteres de interpolación.' >&2
+    exit 1
+fi
+production_parent="$(dirname -- "$production_destination")"
+mkdir -p -- "$production_parent"
+production_temporary="$(mktemp "$production_parent/.sysforest-env.XXXXXX")"
+trap 'rm -f -- "$production_temporary"' EXIT
+
+while IFS= read -r line || [[ -n "$line" ]]; do
+    case "$line" in
+        SYSFOREST_ENV_FILE=*) printf 'SYSFOREST_ENV_FILE=%s\n' "$production_destination" ;;
+        APP_URL=*) printf 'APP_URL=%s\n' "$production_url" ;;
+        APP_KEY=*) printf 'APP_KEY=base64:%s\n' "$(openssl rand -base64 32)" ;;
+        JWT_SECRET=*|DB_PASSWORD=*|DB_MIGRATOR_PASSWORD=*|POSTGRES_PASSWORD=*|AUDIT_MONGO_PASSWORD=*|MONGO_ROOT_PASSWORD=*)
+            printf '%s=%s\n' "${line%%=*}" "$(openssl rand -hex 32)" ;;
+        *) printf '%s\n' "$line" ;;
+    esac
+done < "$project_dir/docker/production/env.example" > "$production_temporary"
+chmod 600 "$production_temporary"
+# Enlace sin reemplazo: otra ejecución no puede sobrescribir un destino creado entre comprobaciones.
+ln -- "$production_temporary" "$production_destination"
+printf '%s\n' 'Configuración productiva creada con permisos privados; secretos no mostrados. Falta configurar SMTP.'

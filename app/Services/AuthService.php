@@ -9,6 +9,8 @@ use App\Repositories\AuthSessionRepository;
 use App\Repositories\RefreshTokenRepository;
 use App\Repositories\SecurityEventRepository;
 use App\Repositories\UserRepository;
+use App\Models\User;
+use Closure;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +30,41 @@ class AuthService
         private readonly SecurityEventRepository $events,
         private readonly TenantContextService $tenants,
     ) {
+    }
+
+    /**
+     * Verifica identidad bajo bloqueo y consulta sin crear sesión, refresh ni JWT.
+     * @param Closure(User): array $callback
+     */
+    public function withVerifiedMobileUser(string $email, #[\SensitiveParameter] string $password, Closure $callback): array
+    {
+        $candidate = $this->users->findByEmail(Str::lower(trim($email)));
+        if ($candidate === null) {
+            Hash::check($password, self::DUMMY_HASH);
+            $this->events->record('auth.login.failed', null, null);
+            throw new AuthenticationException('No fue posible autenticar la solicitud.');
+        }
+
+        try {
+            $result = DB::transaction(function () use ($candidate, $email, $password, $callback): ?array {
+                // El listado se resuelve dentro del mismo bloqueo que valida las credenciales actuales.
+                $user = $this->users->findForUpdate((int) $candidate->id);
+                $valid = Hash::check($password, $user->password);
+                if (!$valid || !$user->active || $user->email_verified_at === null
+                    || Str::lower($user->email) !== Str::lower(trim($email))) {
+                    $this->events->record('auth.login.failed', null, null);
+
+                    return null;
+                }
+
+                return $callback($user);
+            });
+        } catch (ModelNotFoundException) {
+            $this->events->record('auth.login.failed', null, null);
+            $result = null;
+        }
+
+        return $result ?? throw new AuthenticationException('No fue posible autenticar la solicitud.');
     }
 
     public function login(string $email, #[\SensitiveParameter] string $password, ?string $mobileOrganizationId = null): TokenPair

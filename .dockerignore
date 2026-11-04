@@ -19,3 +19,9 @@ phase2-staging
 # Las suites retiradas no deben incorporarse de nuevo a la imagen.
 tests
 phpunit.xml
+
+storage
+public/storage
+.production
+backups
+outputs

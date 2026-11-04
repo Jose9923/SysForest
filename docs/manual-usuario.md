@@ -2,11 +2,11 @@
 
 Este manual guía a las personas que registran, consultan y administran el inventario forestal. Explica los procedimientos de cada módulo, qué resultado esperar y cómo resolver mensajes habituales, respetando las opciones que habilita el rol de cada usuario.
 
-Edición ilustrada 1.2 · 26 de octubre de 2026 · Código de referencia 43d83e8 y ajustes locales del 26 de octubre de 2026
+Edición ilustrada 1.4 · 4 de noviembre de 2026 · Revisión de acceso móvil y despliegue del 4 de noviembre de 2026
 
 ## 1 Bienvenido a SysForest
 
-SysForest permite registrar y consultar el arbolado de una organización, conservar sus visitas de inspección, documentar intervenciones y fotografías, y analizar la información mediante mapas, gráficas y reportes. Este manual describe la aplicación disponible en el piloto local, revisada el 26 de octubre de 2026. Los botones visibles dependen de tu rol, la organización seleccionada y el estado del registro.
+SysForest permite registrar y consultar el arbolado de una organización, conservar sus visitas de inspección, documentar intervenciones y fotografías, y analizar la información mediante mapas, gráficas y reportes. Este manual describe la operación de SysForest y el acceso a la instalación trasladada a producción el 4 de noviembre de 2026. Los botones visibles dependen de tu rol, la organización seleccionada y el estado del registro.
 
 ### Cuatro conceptos para empezar
 
@@ -19,7 +19,7 @@ Para comenzar, lee los capítulos de acceso, permisos y selección de organizaci
 
 Los campos con asterisco son obligatorios. Cuando un dato opcional se desconoce, déjalo vacío o selecciona la opción de información no disponible. Un espacio en blanco no significa cero, ausencia evaluada ni una respuesta negativa. Antes de guardar, revisa la institución, el código del árbol y la campaña: estos tres datos evitan la mayoría de confusiones operativas.
 
-El piloto se consulta con la dirección que facilite el administrador. La dirección local 127.0.0.1 solo funciona desde el equipo que aloja el servicio. Existe un proyecto cliente SysForest Mobile para Android e iPhone con trabajo local y sincronización; requiere configurar un servidor alcanzable y preparar previamente los datos. Su entrega en tiendas y la aceptación en dispositivos no se deducen de este manual. Los procedimientos principales de los capítulos siguientes corresponden a la plataforma web.
+La plataforma web de producción se consulta en https://sysforest.varcor.tech. El dominio y el acceso HTTPS fueron verificados el 4 de noviembre de 2026. La dirección local 127.0.0.1 corresponde únicamente al equipo de pruebas. SysForest Mobile incorpora la dirección de la plataforma: al entrar escribes correo y contraseña, y eliges una institución por nombre cuando hay varias. El primer acceso y la descarga inicial requieren internet; después puedes consultar y capturar los datos preparados sin conexión.
 
 ## 2 Iniciar sesión y recuperar el acceso
 
@@ -32,6 +32,12 @@ El piloto se consulta con la dirección que facilite el administrador. La direcc
 
 Resultado esperado: ves la navegación institucional y las opciones autorizadas para tu cuenta. SysForest no tiene registro público abierto. Si todavía no tienes cuenta, el administrador de tu organización debe enviarte una invitación.
 
+### Acceso después de la migración
+
+La migración conserva las cuentas, instituciones e inventarios existentes. En producción se retiraron las contraseñas comunes de desarrollo y se cerraron las sesiones trasladadas. Utiliza la contraseña personal habilitada por el administrador; una sesión abierta en la instalación local no te conecta automáticamente a producción.
+
+El correo transaccional está pendiente de configuración por decisión del responsable de la instalación. Mientras tanto, las invitaciones, verificaciones y recuperaciones por correo no tienen entrega habilitada. Si necesitas recuperar acceso, solicita asistencia al administrador y no repitas el formulario esperando un mensaje que todavía no se puede enviar.
+
 ### Aceptar una invitación
 
 Abre el enlace del correo y revisa organización, rol y dirección de destino. Si es una cuenta nueva, completa tu nombre y crea la contraseña; luego pulsa Aceptar invitación. La contraseña debe tener al menos 12 caracteres e incluir mayúsculas, minúsculas, números y símbolos. Si ya tienes cuenta, inicia sesión con esa misma dirección y vuelve a abrir la invitación. Si está abierta una cuenta diferente, ciérrala antes de aceptar. La invitación añade acceso a la institución sin eliminar tus otras membresías.
@@ -43,7 +49,7 @@ Abre el enlace del correo y revisa organización, rol y dirección de destino. S
 3. Revisa el mensaje recibido y utiliza su enlace vigente para establecer una contraseña nueva.
 4. Regresa a Iniciar sesión. Si el enlace expiró o el correo no llega, solicita apoyo al administrador y verifica la dirección registrada.
 
-El mensaje de recuperación es deliberadamente general: no confirma públicamente si una dirección tiene cuenta. En un entorno local, la entrega de correos depende de la configuración del servicio. No compartas contraseñas ni enlaces de recuperación para que otra persona opere con tu identidad.
+El mensaje de recuperación es deliberadamente general: no confirma públicamente si una dirección tiene cuenta. En esta instalación, el correo transaccional está pendiente de configuración; solicita ayuda al administrador si necesitas recuperar acceso. No compartas contraseñas ni enlaces de recuperación para que otra persona opere con tu identidad.
 
 ### Entrar a tu espacio de trabajo
 
@@ -660,6 +666,32 @@ La prioridad orienta la gestión fitosanitaria y requiere criterio profesional. 
 - GeoJSON: archivo de geometrías geográficas. En las capas locales se utiliza WGS84 y el orden longitud, latitud.
 
 Para reportar una incidencia incluye módulo, código visible del registro, organización, fecha y hora, acción intentada y mensaje mostrado. Evita enviar contraseñas, enlaces de recuperación o archivos privados por canales no autorizados. Describe si el problema ocurrió antes o después de pulsar Guardar; esa diferencia ayuda a verificar el resultado sin duplicar trabajo.
+
+### Entrar a SysForest Mobile
+
+Abre SysForest en el teléfono con conexión a internet. La pantalla solicita Correo electrónico y Contraseña; la dirección de la plataforma viene incluida en la aplicación y no necesitas escribir un código de institución.
+
+1. Escribe el correo de tu cuenta y su contraseña; pulsa Continuar.
+
+1. Si tienes acceso a una sola institución, la aplicación entra automáticamente. Si tienes varias, selecciona el nombre de la institución donde vas a trabajar y pulsa Ingresar. Ninguna opción queda elegida de antemano.
+
+1. Comprueba la cuenta y la institución antes de descargar inventarios o registrar datos. Para corregir el correo mientras se muestra la lista, utiliza Cambiar cuenta: se borra la contraseña y debes escribirla otra vez.
+
+La lista se obtiene después de comprobar tu contraseña. Si no aparecen instituciones, solicita al administrador que revise el acceso de tu cuenta. Si las credenciales no son aceptadas, revisa el correo y la contraseña; la aplicación no permite consultar instituciones indicando únicamente un correo.
+
+Cuando se necesita iniciar sesión de nuevo para sincronizar trabajo guardado, la cuenta y la institución permanecen fijas: escribe la contraseña de esa cuenta. Los árboles, visitas y fotografías pendientes conservan su autor y su institución. El primer ingreso no se puede realizar sin internet; la consulta offline requiere datos descargados previamente.
+
+Si la aplicación informa que la plataforma no está configurada o que cambió respecto de tu cuenta guardada, comunica el aviso al administrador. La consulta local sigue disponible y los pendientes se conservan; la conexión se bloquea hasta disponer de una configuración compatible. No borres los datos de la aplicación para resolver ese aviso.
+
+### Actualizar la app para usar producción
+
+SysForest Mobile 0.2.1+3 incorpora https://sysforest.varcor.tech. Una vez habilitado el dominio con HTTPS válido, la conexión utiliza internet y no requiere cable USB ni que el computador local esté encendido. El APK se instala como actualización sobre la versión anterior cuando conserva la misma firma. No desinstales la app ni borres sus datos.
+
+Antes de actualizar, revisa si tienes capturas, visitas o fotos pendientes de la plataforma local y coordina su envío y traslado con el administrador. El servidor local y producción son instalaciones independientes: los cambios posteriores a la copia no se transfieren automáticamente.
+
+Si al abrir la versión nueva aparece el aviso de otra plataforma, los datos locales siguen conservados. Para entrar a producción, abre el menú de cuenta, pulsa Cerrar sesión y vuelve a escribir tu correo y contraseña. Si hay varias instituciones, elige la que corresponda. Cerrar sesión conserva los pendientes de la cuenta anterior, pero no los traslada ni los envía al servidor nuevo.
+
+Los pendientes de la plataforma local solo pueden enviarse usando una configuración y un servidor compatibles con su cuenta original. Solicita asistencia para resolverlos; no vuelvas a crear esos árboles en producción como solución al aviso. La compilación del APK no acredita por sí sola una prueba en un teléfono físico o en iPhone.
 
 ### Trabajo móvil y revisión posterior
 

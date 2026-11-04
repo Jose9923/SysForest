@@ -7,6 +7,7 @@ namespace App\Repositories;
 use App\Models\Organization;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class OrganizationRepository
 {
@@ -38,6 +39,24 @@ class OrganizationRepository
                     $query->orWhereHas('municipality', fn (Builder $municipalities) => $municipalities->whereIn('department_id', $departmentIds));
                 }
             })->orderBy('name')->orderBy('id')->paginate(15);
+    }
+
+    /** Candidatas activas para selección móvil; el Service revalida el acceso de cada entidad. */
+    public function mobileCandidates(int $actorId, bool $national, array $departmentIds): Collection
+    {
+        return Organization::query()->where('active', true)
+            ->when(!$national, function (Builder $query) use ($actorId, $departmentIds): void {
+                $query->where(function (Builder $scope) use ($actorId, $departmentIds): void {
+                    $scope->whereHas('memberships', function (Builder $memberships) use ($actorId): void {
+                        $memberships->where('user_id', $actorId)->where('active', true)->whereNull('left_at')
+                            ->whereHas('roleAssignment', fn (Builder $roles) => $roles->where('active', true)->whereNull('revoked_at')
+                                ->whereHas('role.permissions', fn (Builder $permissions) => $permissions->where('code', 'organizations.view')));
+                    });
+                    if ($departmentIds !== []) {
+                        $scope->orWhereHas('municipality', fn (Builder $municipalities) => $municipalities->whereIn('department_id', $departmentIds));
+                    }
+                });
+            })->orderBy('name')->orderBy('id')->get(['id', 'name', 'code']);
     }
 
     /** Incluye entidades inactivas, pero no registros anulados mediante soft delete. */

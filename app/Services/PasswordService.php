@@ -93,7 +93,8 @@ class PasswordService
         }, 3);
     }
 
-    private function validatePassword(#[SensitiveParameter] string $password): void
+    /** Política única para cambio, recuperación y preparación administrativa explícita. */
+    public function validatePassword(#[SensitiveParameter] string $password): void
     {
         Validator::make(['password' => $password], [
             'password' => ['required', 'string', 'max:128', Password::min(12)->mixedCase()->numbers()->symbols()],

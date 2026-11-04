@@ -104,10 +104,12 @@ class RoleAssignmentRepository
             ->where('organization_id', $membership->organization_id)->where('membership_id', $membership->id)->first();
     }
 
-    public function nationalAssignment(int $userId, string $roleName): ?NationalRoleAssignment
+    public function nationalAssignment(int $userId, string $roleName, bool $lock = false): ?NationalRoleAssignment
     {
-        return NationalRoleAssignment::query()->where('user_id', $userId)
-            ->where('role_id', $this->roleOfScope($roleName, 'national')->id)->first();
+        $query = NationalRoleAssignment::query()->where('user_id', $userId)
+            ->where('role_id', $this->roleOfScope($roleName, 'national')->id);
+
+        return ($lock ? $query->lockForUpdate() : $query)->first();
     }
 
     public function departmentAssignment(int $userId, string $departmentId, string $roleName): ?DepartmentRoleAssignment

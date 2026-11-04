@@ -1,0 +1,20 @@
+name: varcor-edge
+services:
+  caddy:
+    image: ${CADDY_IMAGE:?Indica una imagen oficial de Caddy fijada por digest}
+    network_mode: host
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  caddy_data:
+  caddy_config:

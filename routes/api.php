@@ -13,6 +13,7 @@ use App\Http\Middleware\MobileApiHeaders;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('mobile/v1')->name('mobile.')->middleware(MobileApiHeaders::class)->group(function (): void {
+    Route::post('auth/organizations', [MobileAuthController::class, 'organizations'])->middleware('throttle:identity.login')->name('organizations');
     Route::post('auth/login', [MobileAuthController::class, 'login'])->middleware('throttle:identity.login')->name('login');
     Route::post('auth/refresh', [MobileAuthController::class, 'refresh'])->middleware('throttle:identity.refresh')->name('refresh');
     Route::post('auth/logout', [MobileAuthController::class, 'logout'])->middleware('throttle:identity.refresh')->name('logout');

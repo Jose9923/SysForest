@@ -50,6 +50,28 @@ class OrganizationService
         return $this->organizations->paginateForActor((int) $actor->id, $departments);
     }
 
+    /** Proyección mínima para el selector móvil, después de validar correo y contraseña. */
+    public function mobileOptions(User $actor): array
+    {
+        $this->requireEligible($actor);
+        $national = $this->permissions->allowsNational($actor, 'organizations.view');
+        $departments = $national ? [] : $this->assignments->departmentsForUser((int) $actor->id)
+            ->filter(fn ($assignment): bool => $this->permissions->allowsDepartment($actor, 'organizations.view', $assignment->department_id))
+            ->pluck('department_id')->unique()->values()->all();
+        $options = [];
+        foreach ($this->organizations->mobileCandidates((int) $actor->id, $national, $departments) as $candidate) {
+            try {
+                $organization = $this->tenants->run($actor, $candidate->id, fn () => $this->tenants->currentOrganization($actor));
+                $options[] = ['id' => $organization->id, 'name' => $organization->name, 'code' => $organization->code];
+            } catch (AuthorizationException) {
+                // Una revocación concurrente retira la opción; seleccionar después vuelve a autorizar.
+                continue;
+            }
+        }
+
+        return $options;
+    }
+
     public function show(User $actor, string $id): Organization
     {
         $this->tenants->assertCurrentAccess($actor);

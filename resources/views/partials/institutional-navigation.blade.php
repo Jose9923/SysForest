@@ -21,7 +21,6 @@
         @can('audit.view')<a class="{{ request()->is('audit*') ? 'selected' : '' }}" href="{{ route('audit.index') }}"><span aria-hidden="true">◷</span> Auditoría</a>@endcan
         @can('publication.manage')<a class="{{ request()->is('publication*') ? 'selected' : '' }}" href="{{ route('publication.index') }}"><span aria-hidden="true">◎</span> Publicación ciudadana</a>@endcan
         <a href="{{ route('public.home') }}"><span aria-hidden="true">♧</span> Portal público</a>
-        <a href="/"><span aria-hidden="true">◉</span> Estado del sistema</a>
     </nav>
     <div class="sidebar-note"><span class="dot"></span> Entorno local <p>El territorio es el punto de partida.</p></div>
 </aside>

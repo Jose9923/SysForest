@@ -16,7 +16,18 @@ class MobileAuthService
         private readonly RefreshTokenService $refreshTokens,
         private readonly TokenService $tokens,
         private readonly TenantContextService $tenants,
+        private readonly OrganizationService $organizations,
     ) {
+    }
+
+    /** Consulta previa al login; no crea sesión ni emite credenciales reutilizables. */
+    public function organizations(string $email, #[\SensitiveParameter] string $password): array
+    {
+        return $this->auth->withVerifiedMobileUser(
+            $email,
+            $password,
+            fn (User $user): array => $this->organizations->mobileOptions($user),
+        );
     }
 
     public function login(string $email, #[\SensitiveParameter] string $password, string $organizationId): array

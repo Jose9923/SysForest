@@ -1,0 +1,16 @@
+{
+    admin 127.0.0.1:2019
+}
+
+# Cambia por tu subdominio con registros DNS A/AAAA correctos.
+sysforest.example.com {
+    encode zstd gzip
+    header Strict-Transport-Security "max-age=31536000"
+    reverse_proxy 127.0.0.1:18080 {
+        # Nginx solo confía en el gateway Docker de producción y loopback.
+        header_up X-Real-IP {remote_host}
+    }
+    # Sin access_log: no registrar tokens en URLs de verificación/reset.
+}
+
+# Cada aplicación adicional usa otro dominio y un puerto interno diferente.

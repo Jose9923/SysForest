@@ -32,9 +32,14 @@ class AccountActionTokenRepository
         $token->forceFill(['consumed_at' => now()])->save();
     }
 
-    public function consumePending(User $user, string $purpose): void
+    public function countPending(string $purpose): int
     {
-        AccountActionToken::query()->where('user_id', $user->id)->where('purpose', $purpose)
+        return AccountActionToken::query()->where('purpose', $purpose)->whereNull('consumed_at')->count();
+    }
+
+    public function consumePending(User $user, string $purpose): int
+    {
+        return AccountActionToken::query()->where('user_id', $user->id)->where('purpose', $purpose)
             ->whereNull('consumed_at')->update(['consumed_at' => now()]);
     }
 }

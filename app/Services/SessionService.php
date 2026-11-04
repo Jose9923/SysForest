@@ -47,10 +47,11 @@ class SessionService
     }
 
     /** El titular y quien ordena una revocación administrativa son identidades distintas. */
-    public function revokeAll(User $user, string $reason, ?User $actor = null): void
+    public function revokeAll(User $user, string $reason, ?User $actor = null): int
     {
-        DB::transaction(function () use ($user, $reason, $actor): void {
+        return DB::transaction(function () use ($user, $reason, $actor): int {
             $current = $this->users->findForUpdate((int) $user->id);
+            $revoked = 0;
 
             foreach ($this->sessions->unrevokedForUser((int) $current->id, lock: true) as $session) {
                 $this->sessions->update($session, ['revoked_at' => now(), 'revocation_reason' => $reason]);
@@ -60,7 +61,10 @@ class SessionService
                     null,
                     ['session_id' => $session->id, 'reason' => $reason, 'target_user_id' => $current->id]
                 );
+                $revoked++;
             }
+
+            return $revoked;
         });
     }
 }

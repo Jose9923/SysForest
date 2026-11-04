@@ -42,7 +42,13 @@ class UserRepository
         return $user->refresh();
     }
 
-    /** La autorización del restablecimiento global corresponde al servicio local de desarrollo. */
+    /** Consulta administrativa de credenciales; el servicio impone consola y entorno. */
+    public function allForSecurityReview(): Collection
+    {
+        return User::query()->orderBy('id')->get();
+    }
+
+    /** Los servicios administrativos autorizan el restablecimiento y conservan el orden de bloqueo. */
     public function allForUpdate(): Collection
     {
         return User::query()->orderBy('id')->lockForUpdate()->get();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\MobileLoginRequest;
+use App\Http\Requests\MobileOrganizationsRequest;
 use App\Http\Requests\MobileRefreshRequest;
 use App\Services\MobileAuthService;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +14,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MobileAuthController extends Controller
 {
+    public function organizations(MobileOrganizationsRequest $request, MobileAuthService $service): JsonResponse
+    {
+        return response()->json(['data' => $service->organizations(
+            $request->validated('email'),
+            $request->validated('password'),
+        )]);
+    }
+
     public function login(MobileLoginRequest $request, MobileAuthService $service): JsonResponse
     {
         return response()->json($service->login(

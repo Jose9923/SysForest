@@ -4,7 +4,7 @@ Esta guía describe las pantallas implementadas. Los botones disponibles depende
 
 ## Entrar y elegir organización
 
-Abre [el portal](http://localhost:8080/portal) y utiliza **Iniciar sesión**, o entra directamente en [login](http://localhost:8080/login). Las cuentas se reciben por invitación o, durante revisión local, mediante el [seeder explícito de desarrollo](development-accounts.md). No hay registro público abierto.
+Abre [el portal](https://sysforest.varcor.tech/portal) y utiliza **Iniciar sesión**, o entra directamente en [login](https://sysforest.varcor.tech/login). El dominio y el acceso HTTPS fueron verificados el 4 de noviembre de 2026. Las cuentas requieren autorización administrativa; no hay registro público abierto. La instalación local conserva http://localhost:8080 solo para pruebas. En producción, las contraseñas comunes de desarrollo se retiraron y el correo transaccional sigue pendiente: solicita ayuda al administrador para habilitar o recuperar acceso.
 
 Una vez autenticado, entra en **Organizaciones** y selecciona la institución en la que trabajarás. Comprueba esa selección antes de crear o modificar información. El sistema la revalida en cada petición: una cuenta, membresía u organización desactivada deja de autorizar operaciones aunque una pestaña anterior permanezca abierta.
 
@@ -119,3 +119,41 @@ Si otra persona modificó un registro abierto en tu formulario, el sistema devue
 En móvil, los filtros y acciones siguen las mismas reglas del servidor. Las tablas amplias pueden desplazarse horizontalmente dentro de su contenedor; el contenido debe seguir siendo legible al ampliar texto y navegar con teclado.
 
 Los [manuales ilustrados](manuales.md) reúnen estos procedimientos, capturas y documentación técnica en Word y texto. Para el trabajo offline y el intercambio entre SysForest Mobile y el servidor, consulta el [contrato móvil](mobile-api.md).
+
+
+## Acceso a SysForest Mobile
+
+Abre SysForest en el teléfono con conexión a internet. La pantalla solicita Correo electrónico y Contraseña; la dirección de la plataforma viene incluida en la aplicación y no necesitas escribir un código de institución.
+
+1. Escribe el correo de tu cuenta y su contraseña; pulsa Continuar.
+
+1. Si tienes acceso a una sola institución, la aplicación entra automáticamente. Si tienes varias, selecciona el nombre de la institución donde vas a trabajar y pulsa Ingresar. Ninguna opción queda elegida de antemano.
+
+1. Comprueba la cuenta y la institución antes de descargar inventarios o registrar datos. Para corregir el correo mientras se muestra la lista, utiliza Cambiar cuenta: se borra la contraseña y debes escribirla otra vez.
+
+La lista se obtiene después de comprobar tu contraseña. Si no aparecen instituciones, solicita al administrador que revise el acceso de tu cuenta. Si las credenciales no son aceptadas, revisa el correo y la contraseña; la aplicación no permite consultar instituciones indicando únicamente un correo.
+
+Cuando se necesita iniciar sesión de nuevo para sincronizar trabajo guardado, la cuenta y la institución permanecen fijas: escribe la contraseña de esa cuenta. Los árboles, visitas y fotografías pendientes conservan su autor y su institución. El primer ingreso no se puede realizar sin internet; la consulta offline requiere datos descargados previamente.
+
+Si la aplicación informa que la plataforma no está configurada o que cambió respecto de tu cuenta guardada, comunica el aviso al administrador. La consulta local sigue disponible y los pendientes se conservan; la conexión se bloquea hasta disponer de una configuración compatible. No borres los datos de la aplicación para resolver ese aviso.
+
+
+## Acceso a la instalación de producción
+
+La plataforma web de producción se consulta en https://sysforest.varcor.tech. El dominio y el acceso HTTPS fueron verificados el 4 de noviembre de 2026. La dirección local 127.0.0.1 corresponde únicamente al equipo de pruebas. SysForest Mobile incorpora la dirección de la plataforma: al entrar escribes correo y contraseña, y eliges una institución por nombre cuando hay varias. El primer acceso y la descarga inicial requieren internet; después puedes consultar y capturar los datos preparados sin conexión.
+
+### Acceso después de la migración
+
+La migración conserva las cuentas, instituciones e inventarios existentes. En producción se retiraron las contraseñas comunes de desarrollo y se cerraron las sesiones trasladadas. Utiliza la contraseña personal habilitada por el administrador; una sesión abierta en la instalación local no te conecta automáticamente a producción.
+
+El correo transaccional está pendiente de configuración por decisión del responsable de la instalación. Mientras tanto, las invitaciones, verificaciones y recuperaciones por correo no tienen entrega habilitada. Si necesitas recuperar acceso, solicita asistencia al administrador y no repitas el formulario esperando un mensaje que todavía no se puede enviar.
+
+### Actualizar la app para usar producción
+
+SysForest Mobile 0.2.1+3 incorpora https://sysforest.varcor.tech. Una vez habilitado el dominio con HTTPS válido, la conexión utiliza internet y no requiere cable USB ni que el computador local esté encendido. El APK se instala como actualización sobre la versión anterior cuando conserva la misma firma. No desinstales la app ni borres sus datos.
+
+Antes de actualizar, revisa si tienes capturas, visitas o fotos pendientes de la plataforma local y coordina su envío y traslado con el administrador. El servidor local y producción son instalaciones independientes: los cambios posteriores a la copia no se transfieren automáticamente.
+
+Si al abrir la versión nueva aparece el aviso de otra plataforma, los datos locales siguen conservados. Para entrar a producción, abre el menú de cuenta, pulsa Cerrar sesión y vuelve a escribir tu correo y contraseña. Si hay varias instituciones, elige la que corresponda. Cerrar sesión conserva los pendientes de la cuenta anterior, pero no los traslada ni los envía al servidor nuevo.
+
+Los pendientes de la plataforma local solo pueden enviarse usando una configuración y un servidor compatibles con su cuenta original. Solicita asistencia para resolverlos; no vuelvas a crear esos árboles en producción como solución al aviso. La compilación del APK no acredita por sí sola una prueba en un teléfono físico o en iPhone.

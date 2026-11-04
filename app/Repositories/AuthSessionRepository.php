@@ -34,6 +34,11 @@ class AuthSessionRepository
         return ($lock ? $query->lockForUpdate() : $query)->get();
     }
 
+    public function countUnrevoked(): int
+    {
+        return AuthSession::query()->whereNull('revoked_at')->count();
+    }
+
     public function update(AuthSession $session, array $attributes): AuthSession
     {
         $session->fill($attributes)->save();

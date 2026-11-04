@@ -4,14 +4,31 @@ Implementada y ampliada el 7 de octubre de 2026 con edición, visitas y fotograf
 
 ## Operación
 
-La instancia local sirve `http://127.0.0.1:8080/api/mobile/v1`. Docker publica Nginx solo en loopback: un teléfono físico requiere una URL de backend alcanzable y HTTPS. Este cambio no publica un servicio externo ni modifica puertos, DNS, certificados o secretos.
+El origen de producción es `https://sysforest.varcor.tech` y API_BASE es `https://sysforest.varcor.tech/api/mobile/v1`. El dominio y el acceso HTTPS fueron verificados el 4 de noviembre de 2026. La instalación local conserva `http://127.0.0.1:8080/api/mobile/v1` exclusivamente para pruebas; no es accesible desde otro dispositivo sin la configuración de red de desarrollo.
 
-Las cuentas se administran con el módulo de usuarios existente. La aplicación móvil recibe un `organization_id` autorizado en su configuración; el inicio de sesión exige correo, contraseña y ese UUID. La cuenta debe estar activa, verificada y tener acceso institucional vigente. El inventario se elige entre los devueltos por la API, sin deducirlo del nombre de usuario.
+Las cuentas se administran con el módulo de usuarios existente. Desde la ampliación del 3 de noviembre de 2026, la app recibe la URL del servidor desde su archivo de configuración de compilación; la pantalla solicita correo y contraseña. Consulta primero las instituciones autorizadas y muestra sus nombres cuando existe más de una; una sola se selecciona automáticamente. La cuenta debe estar activa, verificada y tener acceso institucional vigente. El inventario se elige entre los devueltos por la API, sin deducirlo del nombre de usuario.
+
+El UUID sigue siendo la identidad interna de la institución: el cliente obtiene `organization_id` del listado autenticado y lo envía al login existente. No se escribe ni se deduce del nombre en la pantalla. El contrato anterior de `POST /auth/login` se conserva para otros clientes.
+
+## Configuración del cliente para producción
+
+config/production.json configura SYSFOREST_API_URL=https://sysforest.varcor.tech y ALLOW_LOCAL_HTTP=false para SysForest Mobile 0.2.1+3. config.example.json conserva una plantilla HTTPS y config.local.json permite una copia de configuración excluida de Git. El perfil config/development.json apunta a http://127.0.0.1:8080 con HTTP local permitido; un teléfono requiere el túnel de depuración para usar ese perfil. No incluya contraseñas, tokens ni secretos del servidor en estos JSON.
+
+El cambio de origen exige un nuevo acceso. Las sesiones trasladadas se revocaron y las contraseñas comunes de desarrollo se retiraron en producción; no basta con sustituir la URL y reutilizar un JWT o refresh anterior. La cuenta y sus permisos se conservan en la copia, pero los pendientes offline permanecen asociados a su servidor original.
+
+Antes de actualizar, revisa si tienes capturas, visitas o fotos pendientes de la plataforma local y coordina su envío y traslado con el administrador. El servidor local y producción son instalaciones independientes: los cambios posteriores a la copia no se transfieren automáticamente.
+
+Si al abrir la versión nueva aparece el aviso de otra plataforma, los datos locales siguen conservados. Para entrar a producción, abre el menú de cuenta, pulsa Cerrar sesión y vuelve a escribir tu correo y contraseña. Si hay varias instituciones, elige la que corresponda. Cerrar sesión conserva los pendientes de la cuenta anterior, pero no los traslada ni los envía al servidor nuevo.
+
+Los pendientes de la plataforma local solo pueden enviarse usando una configuración y un servidor compatibles con su cuenta original. Solicita asistencia para resolverlos; no vuelvas a crear esos árboles en producción como solución al aviso. La compilación del APK no acredita por sí sola una prueba en un teléfono físico o en iPhone.
+
+El correo transaccional está aplazado: la autenticación por contraseña funciona con una cuenta habilitada, pero invitaciones, verificación y recuperación requieren configurar la entrega SMTP.
 
 ## Rutas
 
 | Método | Ruta bajo `/api/mobile/v1` | Autenticación |
 | --- | --- | --- |
+| POST | `/auth/organizations` | JSON email, password; sin sesión previa |
 | POST | `/auth/login` | JSON email, password, organization_id |
 | POST | `/auth/refresh` | JSON refresh_token |
 | POST | `/auth/logout` | JSON refresh_token; 204 idempotente |
@@ -34,6 +51,20 @@ Las cuentas se administran con el módulo de usuarios existente. La aplicación 
 El JWT incluye `sub`, `sid`, `org`, `client=mobile`, audiencia móvil y vencimiento. La firma pertenece al JWT transportado en Authorization; HTTPS protege la petición completa. La app no recibe el secreto de firma. El backend revalida sesión, usuario y acceso a la organización en cada petición. La audiencia y `client_type` impiden usar tokens/refresh móviles en la autenticación web o viceversa. Los refresh son opacos, se guardan con hash, rotan y revocan la sesión si se reutiliza uno consumido; no deben renovarse concurrentemente. Una pérdida de respuesta de refresh puede requerir login nuevo.
 
 Los POST y PATCH exigen JSON objeto de hasta 1 MiB, excepto la carga de fotos, que usa multipart/form-data. Los límites por usuario son 90 lecturas/minuto, 20 lotes de sincronización/minuto y 30 escrituras/minuto compartidas entre edición, visitas y fotos. Login/refresh usan los límites de identidad configurados. Se responde JSON incluso sin Accept. Las respuestas son privadas y no se cachean.
+
+## Descubrimiento institucional para el inicio de sesión
+
+`POST /auth/organizations` recibe correo y contraseña:
+
+```json
+{"email":"usuario@entidad.example","password":"contraseña del usuario"}
+```
+
+Con credenciales válidas responde HTTP 200 con `{"data":[{"id":"UUID","name":"Nombre de la institución","code":"Código interno"}]}`. El arreglo está ordenado por nombre e identificador, contiene todas las instituciones activas y no archivadas a las que la cuenta tiene acceso vigente, y puede estar vacío. La selección contempla membresías organizacionales y alcances administrativos nacionales/departamentales ya autorizados; nunca fabrica membresías ni concede escritura por un alcance de lectura. Cada candidata se revalida con `TenantContextService`, y el contexto se limpia después.
+
+El endpoint no devuelve usuarios, correos, roles, tokens ni sesiones, y no publica un directorio consultable solo por correo. Contraseña incorrecta, cuenta desconocida, inactiva o sin correo verificado reciben el mismo HTTP 401 genérico. JSON inválido, campos ausentes y formatos incorrectos usan las validaciones normales; `organization_id`, `user_id`, `access_token` y `refresh_token` están prohibidos en esta consulta. Conserva JSON objeto hasta 1 MiB, `Cache-Control: private, no-store` y el límite `identity.login`, compartido con el login; ambos pasos consumen el límite de identidad.
+
+El cliente mantiene la contraseña únicamente en memoria durante la selección. Si recibe una institución, puede llamar inmediatamente a `POST /auth/login` con sus credenciales y el `id`; si recibe varias, presenta un selector por nombre antes de llamar. Si recibe cero, informa que la cuenta no tiene instituciones disponibles. Cambiar correo o contraseña invalida las opciones anteriores. El listado no es una concesión permanente: el login verifica nuevamente contraseña, cuenta, institución y autorización antes de emitir el JWT firmado con `org`. Revocar el acceso o cambiar la contraseña entre ambos pasos impide el ingreso. No hay migración de base de datos ni cambios en sesiones ya emitidas.
 
 ## Sincronización
 
@@ -142,7 +173,7 @@ Se descarga paginación completa para uso offline. No hay token de snapshot, del
 
 ## Instalación y verificación
 
-Las migraciones 000022, 000023, 000024 y 000025 son aditivas y se aplicaron en la base operativa local. Las dos últimas agregan recibos de mutaciones y fotografías. Sesiones preexistentes permanecen web. No se modificaron `.env`, JWT_SECRET, datos forestales históricos ni la publicación privada por defecto. En otro ambiente se debe aplicar código y migraciones coordinadamente:
+Las migraciones 000022, 000023, 000024 y 000025 son aditivas y se aplicaron en la base operativa local. Las dos últimas agregan recibos de mutaciones y fotografías. Sesiones preexistentes permanecen web. En aquella ampliación no se modificaron `.env`, JWT_SECRET, datos forestales históricos ni la publicación privada por defecto. El traslado del 4 de noviembre de 2026 utilizó configuración de producción propia, conservó APP_KEY y revocó las sesiones restauradas; consulta `docker/production/README.md`. En otro ambiente se debe aplicar código y migraciones coordinadamente:
 
 ```bash
 docker compose run --rm --no-deps init php artisan migrate --force --no-interaction
