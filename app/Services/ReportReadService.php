@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Reports\ExportFormat;
 use App\Reports\InventoryExportSchema;
 use App\Reports\ReportCatalog;
+use App\Reports\RiskTreeSchema;
 use App\Repositories\ExportReadRepository;
 use App\Repositories\MapTreeRepository;
 use App\Repositories\ReportRepository;
@@ -29,6 +30,7 @@ class ReportReadService
         private MapTreeRepository $mapTrees,
         private MapReadService $privateMap,
         private PublicMapService $publicMap,
+        private RiskTreeSchema $riskSchema,
     ) {
     }
 
@@ -37,6 +39,13 @@ class ReportReadService
         [$key, $page] = $this->controls($input);
 
         return $this->page($actor, $this->filters->forUser($actor, $input, $key), $key, $page);
+    }
+
+    public function forRiskInbox(User $actor, array $input): array
+    {
+        [, $page] = $this->controls(array_replace($input, ['report' => 'risk_trees']));
+
+        return $this->page($actor, $this->filters->forRiskInbox($actor, $input), 'risk_trees', $page);
     }
 
     public function forPublic(array $input): array
@@ -87,7 +96,13 @@ class ReportReadService
         $definition = $this->catalog->get($key);
         $perPage = (int) config('reports.page_size', 25);
         $summary = $this->mapTrees->summary($selection->scope, $selection->filters);
-        if ($key === 'inventory') {
+        if ($key === 'risk_trees') {
+            abort_if($selection->isPublic(), 404);
+            $rows = $this->trees->paginate($selection, $page, $perPage, riskOnly: true);
+            $columns = $this->riskSchema->columns();
+            $notices = $this->riskSchema->notices();
+            $totalRows = $rows->total();
+        } elseif ($key === 'inventory') {
             $rows = $this->trees->paginate($selection, $page, $perPage);
             $columns = $this->inventoryColumns($selection->isPublic());
             $notices = ['La tabla resume el inventario. Excel, CSV y GeoJSON incluyen las columnas permitidas del perfil completo.',
@@ -119,7 +134,7 @@ class ReportReadService
             $notices[] = 'Para PDF, limita la consulta a '.config('reports.max_pdf_rows').' filas. Excel y CSV permiten conjuntos mayores.';
         }
 
-        return $this->metadata($actor, $selection, $key) + ['report' => $definition, 'reports' => array_values(array_filter($this->catalog->definitions(), fn ($item) => !$selection->isPublic() || !in_array($item['key'], ['risk', 'carbon', 'carbon_coverage'], true))),
+        return $this->metadata($actor, $selection, $key) + ['report' => $definition, 'reports' => array_values(array_filter($this->catalog->definitions(), fn ($item) => !$selection->isPublic() || !in_array($item['key'], ['risk', 'risk_trees', 'carbon', 'carbon_coverage'], true))),
             'filters' => $selection->values, 'summary' => ['totalTrees' => $summary['total'], 'totalRows' => $totalRows,
                 'georeferenced' => $summary['georeferenced'], 'withoutGeometry' => $summary['without_geometry']],
             'columns' => $columns, 'rows' => $rows, 'notices' => $notices, 'downloads' => $downloads,

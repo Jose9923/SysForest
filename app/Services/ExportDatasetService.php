@@ -7,6 +7,7 @@ namespace App\Services;
 use App\DTOs\ReportSelectionDTO;
 use App\Reports\ExportFormat;
 use App\Reports\InventoryExportSchema;
+use App\Reports\RiskTreeSchema;
 use App\Repositories\ExportReadRepository;
 use App\Repositories\MapTreeRepository;
 use App\Repositories\ReportRepository;
@@ -21,11 +22,13 @@ class ExportDatasetService
         private MapTreeRepository $mapTrees,
         private InventoryExportSchema $schema,
         private ReportReadService $presentation,
+        private RiskTreeSchema $riskSchema,
     ) {
     }
 
     public function prepare(ReportSelectionDTO $selection, string $report, ExportFormat $format, ?string $tree = null, ?string $organization = null): array
     {
+        abort_if($report === 'risk_trees' && $selection->isPublic(), 404);
         $summary = $this->mapTrees->summary($selection->scope, $selection->filters);
         if ($tree !== null) {
             $row = $this->trees->find($selection, $tree, $organization);
@@ -34,6 +37,15 @@ class ExportDatasetService
                 'totalRows' => 1, 'notices' => ['Ficha del individuo y su última inspección pertinente. No sustituye el historial de visitas.']];
             $summary = ['total' => 1, 'georeferenced' => $row['_geometry'] === null ? 0 : 1,
                 'without_geometry' => $row['_geometry'] === null ? 1 : 0];
+        } elseif ($report === 'risk_trees') {
+            $total = $this->trees->count($selection);
+            $this->checkLimit($selection, $format, $total);
+            $data = ['rows' => $this->trees->rows($selection, (int) config('reports.batch_size', 200), riskOnly: true),
+                'columns' => $this->riskSchema->columns(detail: $format !== ExportFormat::Pdf),
+                'totalRows' => $total, 'notices' => $this->riskSchema->notices()];
+            if ($format === ExportFormat::Pdf) {
+                $data['notices'][] = 'El PDF resume la bandeja. Excel y CSV incluyen además la explicación, observaciones y datos de confirmación disponibles.';
+            }
         } elseif ($report === 'inventory') {
             $total = $this->trees->count($selection);
             $this->checkLimit($selection, $format, $total);

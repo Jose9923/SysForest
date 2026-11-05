@@ -62,6 +62,24 @@ class ReportAccessService
         }
     }
 
+    /** Solo consulta de la bandeja institucional; exportar sigue exigiendo authorize(). */
+    public function authorizeRiskInbox(User $actor, ReportSelectionDTO $selection): void
+    {
+        if ($selection->scope->kind !== 'organization') {
+            throw $this->denied();
+        }
+        $this->maps->authorize($actor, $selection->scope, 'trees.view');
+        $required = ['inspections.view', 'risk.view'];
+        if ($selection->filters->trees->hasMaintenanceFilters()) {
+            $required[] = 'maintenances.view';
+        }
+        foreach ($required as $permission) {
+            if (!$this->allows($actor, $selection->scope, $permission)) {
+                throw $this->denied();
+            }
+        }
+    }
+
     private function allows(User $actor, TreeReadScope $scope, string $permission): bool
     {
         if ($scope->kind === 'national') {

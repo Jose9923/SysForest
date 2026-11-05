@@ -1,55 +1,54 @@
 @extends('layouts.institutional')
 @section('title', 'Gestión del riesgo')
 @include('forestry.assets')
-@push('styles')<link rel="stylesheet" href="{{ asset('css/risk.css') }}">@endpush
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/maps.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/reports.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/risk.css') }}">
+@endpush
+@push('scripts')<script type="module" src="{{ asset('js/risk/filters.js') }}"></script>@endpush
 @section('content')
-<div class="risk-management">
-<div class="page-heading"><div><p class="eyebrow">{{ $organization->name }}</p><h1>Gestión del riesgo</h1><p>Prioridad de Gestión Fitosanitaria · parametrización propia de esta institución.</p></div></div>
-<p class="notice">La metodología orienta el seguimiento; no estima probabilidad de caída. El profesional confirma la prioridad y registra su criterio en observaciones. Publicar una versión no cambia evaluaciones anteriores.</p>
-@if ($errors->any())<div role="alert" class="field-error"><ul>@foreach ($errors->all() as $message)<li>{{ $message }}</li>@endforeach</ul></div>@endif
-<div class="form-actions"><a class="button secondary" href="{{ route('inspections.index', ['risk_priority' => 'pending']) }}">Inspecciones pendientes</a><a class="button secondary" href="{{ route('inspections.index', ['risk_priority' => 'inconsistent']) }}">Revisar inconsistencias</a><a class="button secondary" href="{{ route('reports.index', ['report' => 'risk', 'scope' => 'organization']) }}">Reporte de prioridades</a></div>
-<form method="POST" action="{{ route('risk.store') }}">
-@csrf
-<input type="hidden" name="lock_version" value="{{ old('lock_version', $settingsVersion) }}">
-<fieldset @disabled(!$canManage)>
-<section class="panel"><h2>Metodología institucional</h2><label for="risk-name">Nombre</label><input id="risk-name" name="name" maxlength="150" required value="{{ old('name', $methodology?->name ?? 'Prioridad de Gestión Fitosanitaria') }}"><p>Versión vigente: {{ $methodology?->version ?? 'Inicial pendiente de publicación' }}. Guardar publica una nueva versión.</p></section>
-<section class="panel"><h2>Condiciones y pesos</h2><p>Incorporar habilita la condición para esta metodología. Peso 0 conserva información sin aumentar la severidad. El mínimo fuerza una prioridad, aunque el peso sea 0. El componente general no cuenta en la extensión.</p>
-<div class="table-wrap"><table><thead><tr><th>Condición del formulario</th><th>Incorporar</th><th>Peso (0–4)</th><th>Mínimo</th><th>Componente</th></tr></thead><tbody>
-@foreach ($conditions as $condition)
-@php($rule = $configuration['conditions'][$condition->code] ?? null)
-<tr><td>{{ $condition->category->name }} / {{ $condition->name }}@if (!$condition->active || !$condition->category->active)<br><small>Inactiva</small>@endif</td><td><input type="hidden" name="conditions[{{ $condition->code }}][enabled]" value="0"><input aria-label="Incorporar {{ $condition->category->name }} {{ $condition->name }}" type="checkbox" name="conditions[{{ $condition->code }}][enabled]" value="1" @checked(old('conditions.'.$condition->code.'.enabled', $rule !== null))></td>
-<td><input aria-label="Peso de {{ $condition->name }}" type="number" min="0" max="4" required name="conditions[{{ $condition->code }}][weight]" value="{{ old('conditions.'.$condition->code.'.weight', $rule['weight'] ?? 0) }}"></td>
-<td><select aria-label="Prioridad mínima de {{ $condition->name }}" name="conditions[{{ $condition->code }}][minimum]">@foreach ([0 => 'Sin mínimo', 1 => 'Bajo', 2 => 'Moderado', 3 => 'Alto', 4 => 'Crítico'] as $value => $label)<option value="{{ $value }}" @selected((int) old('conditions.'.$condition->code.'.minimum', $rule['minimum'] ?? 0) === $value)>{{ $label }}</option>@endforeach</select></td>
-<td><select aria-label="Componente de {{ $condition->name }}" name="conditions[{{ $condition->code }}][component]">@foreach (['PHT_ROOT' => 'Raíz', 'PHT_STEM' => 'Fuste', 'PHT_BRANCH' => 'Ramas', 'PHT_FOLIAGE' => 'Follaje', 'PHT_FLOWER_FRUIT' => 'Flores/frutos', 'PHT_GENERAL' => 'General'] as $value => $label)<option value="{{ $value }}" @selected(old('conditions.'.$condition->code.'.component', $rule['component'] ?? $condition->category->code) === $value)>{{ $label }}</option>@endforeach</select></td></tr>
-@endforeach
-</tbody></table></div></section>
-<section class="panel"><h2>Matriz de prioridad</h2><p>Severidad máxima de 0 a 4 y extensión: E0 sin componentes afectados; E1 uno; E2 dos o tres; E3 cuatro o cinco. La prioridad puede mantenerse o aumentar, nunca disminuir, al avanzar en severidad o extensión. Esta regla se comprueba antes de publicar, también en las celdas de respaldo.</p><table><thead><tr><th>Severidad</th>@foreach (['E0', 'E1', 'E2', 'E3'] as $label)<th>{{ $label }}</th>@endforeach</tr></thead><tbody>
-@for ($severity = 0; $severity <= 4; $severity++)<tr><th>{{ $severity }}</th>@for ($extension = 0; $extension <= 3; $extension++)<td><select aria-label="Severidad {{ $severity }}, extensión E{{ $extension }}" name="matrix[{{ $severity }}][{{ $extension }}]">@foreach (\App\Enums\RiskPriority::cases() as $priority)<option value="{{ $priority->value }}" @selected((int) old('matrix.'.$severity.'.'.$extension, $configuration['matrix'][$severity][$extension]) === $priority->value)>{{ $priority->label() }}</option>@endforeach</select></td>@endfor</tr>@endfor
-</tbody></table></section>
-<section class="panel"><h2>Contradicciones</h2><p>Las condiciones incompatibles bloquean el guardado. Desactiva una regla para retirarla de la nueva versión.</p>
-<div data-rule-list="conflicts">
-@foreach (old('conflicts', $configuration['conflicts']) as $index => $rule)
-@include('risk.rule', ['ruleKind' => 'conflicts'])
-@endforeach
-</div>
-@if ($canManage)<button class="button secondary" type="button" data-add-rule="conflicts">Agregar contradicción</button>@endif
+<section class="general-map risk-workspace" data-risk-page>
+    <header class="page-heading forestry-heading"><div><p class="eyebrow">{{ $organization->name }}</p><h1>Gestión del riesgo</h1><p class="muted">Consulta cada árbol y la prioridad fitosanitaria de su última inspección.</p></div></header>
+    @include('risk.navigation')
+    <p class="notice">La prioridad profesional y la sugerencia automática se muestran por separado. Esta prioridad orienta la gestión; no expresa probabilidad de caída.</p>
+    @if (($currentAccessMode ?? '') === 'department_read')<p class="forestry-readonly">Consulta departamental de la institución seleccionada. Los registros se muestran en modo de lectura.</p>@endif
+    <section class="risk-counts" aria-label="Resumen de árboles por prioridad">
+        <div class="risk-count risk-count-total"><span>Árboles seleccionados</span><strong>{{ number_format($summary['totalTrees'], 0, ',', '.') }}</strong></div>
+        @foreach ($riskSummary as $group)<a class="risk-count risk-count-{{ $group['key'] }}" href="{{ $group['url'] }}"><span>{{ $group['label'] }}</span><strong>{{ number_format($group['total'], 0, ',', '.') }}</strong></a>@endforeach
+    </section>
+    <p class="field-hint">Los conteos corresponden a los filtros aplicados sobre la última inspección de cada árbol.</p>
+    <p class="report-feedback" data-risk-status role="status" hidden></p>
+    @include('risk.filters')
+    @if (count($appliedFilters))<section class="report-applied" aria-label="Filtros aplicados"><h2>Filtros aplicados</h2><ul>@foreach ($appliedFilters as $filter)<li><strong>{{ $filter['label'] }}:</strong> {{ $filter['value'] }}</li>@endforeach</ul></section>@endif
+    @if (count($notices))<details class="risk-reading-help"><summary>Cómo leer el riesgo y el reporte</summary><ul>@foreach ($notices as $notice)<li>{{ $notice }}</li>@endforeach</ul></details>@endif
+    @if ($canViewReport)
+    <section class="panel report-download-panel risk-report-panel" aria-label="Reporte de riesgo por árbol">
+        <div><h2>Reporte de riesgo por árbol</h2><p>Descarga todos los árboles de esta selección. La paginación de la bandeja no limita el reporte.</p><div class="risk-report-links"><a href="{{ $reportUrl }}">Ver reporte detallado</a><a href="{{ $aggregateReportUrl }}">Ver resumen por prioridad</a></div></div>
+        @if ($canExport)@include('reports.downloads')@else<p class="muted">Tu perfil permite consultar el reporte; la descarga requiere permiso de exportación.</p>@endif
+        @if ($canExport && $rows->total() > (int) config('reports.max_pdf_rows', 200) && !collect($downloads)->contains('format', 'pdf'))<p class="risk-pdf-limit">El PDF admite hasta {{ number_format((int) config('reports.max_pdf_rows', 200), 0, ',', '.') }} árboles. Acota los filtros para descargarlo; Excel y CSV permiten conjuntos mayores.</p>@endif
+    </section>
+    @endif
+    <section class="panel forestry-table-panel risk-tree-panel" aria-label="Árboles y prioridad fitosanitaria">
+        <div class="forestry-table-summary"><strong>{{ number_format($rows->total(), 0, ',', '.') }} {{ $rows->total() === 1 ? 'árbol encontrado' : 'árboles encontrados' }}</strong><span class="muted">Una fila por árbol · última inspección</span></div>
+        @if ($rows->isEmpty())
+            <div class="forestry-empty"><h2>No hay árboles para esta selección</h2><p>Revisa los filtros para consultar otra prioridad, campaña o fecha de inspección.</p><a class="button secondary" href="{{ route('risk.index') }}">Limpiar filtros</a></div>
+        @else
+            <div class="forestry-table-wrap"><table class="forestry-table risk-tree-table"><thead><tr><th scope="col">Árbol</th><th scope="col">Última inspección</th><th scope="col">Prioridad profesional</th><th scope="col">Sugerencia automática</th><th scope="col">Confirmación</th><th scope="col">Acciones</th></tr></thead><tbody>
+            @foreach ($rows as $row)
+                <tr>
+                    <td data-label="Árbol"><div>@if ($canViewTree)<a class="tree-code" href="{{ route('trees.show', $row['_source']['tree_id']) }}">{{ $row['code'] }}</a>@else<strong class="tree-code">{{ $row['code'] }}</strong>@endif<small class="preserve-lines">{{ $row['common_names'] ?: 'Sin nombre común registrado' }}</small><small><i>{{ $row['scientific_name'] ?: 'Sin identificar' }}</i></small><span class="pill neutral">{{ $row['current_status_label'] }}</span>@if ($row['location_description'])<small>{{ $row['location_description'] }}</small>@endif</div></td>
+                    <td data-label="Última inspección"><div>@if ($row['latest_inspection_date'])<strong>{{ \Carbon\CarbonImmutable::parse($row['latest_inspection_date'])->format('d/m/Y') }}</strong><small>{{ $row['inventory'] ?: 'Sin campaña formal' }}</small>@else<span>Sin inspección registrada</span>@endif</div></td>
+                    <td data-label="Prioridad profesional"><span class="risk-priority" data-priority="{{ $row['risk_priority'] }}">{{ $row['risk_priority'] }}</span></td>
+                    <td data-label="Sugerencia automática"><div><strong>{{ $row['risk_suggestion'] ?: 'Sin sugerencia' }}</strong>@if ($row['risk_methodology'])<small>{{ $row['risk_methodology'] }}</small>@endif @if ($row['risk_explanation'])<details class="risk-row-detail"><summary>Ver explicación</summary><p class="preserve-lines">{{ $row['risk_explanation'] }}</p>@if ($row['risk_observations'])<p class="preserve-lines"><strong>Observaciones profesionales:</strong> {{ $row['risk_observations'] }}</p>@endif</details>@endif</div></td>
+                    <td data-label="Confirmación"><div>@if ($row['risk_confirmed_at'])<span>{{ $row['risk_confirmed_by'] ?: 'Responsable no disponible' }}</span><small>{{ \Carbon\CarbonImmutable::parse($row['risk_confirmed_at'])->utc()->format('d/m/Y H:i') }} UTC</small>@else<span>Sin confirmación registrada</span>@endif</div></td>
+                    <td data-label="Acciones"><div class="row-actions">@if ($canViewTree)<a href="{{ route('trees.show', $row['_source']['tree_id']) }}" aria-label="Ver ficha de {{ $row['code'] }}">Ver ficha</a>@endif @if ($canViewInspection && $row['_source']['inspection_id'])<a href="{{ route('inspections.show', $row['_source']['inspection_id']) }}" aria-label="Ver última inspección de {{ $row['code'] }}">Ver última inspección</a>@endif @if ($canCreateInspection)<a href="{{ route('trees.inspections.create', $row['_source']['tree_id']) }}" aria-label="Nueva inspección de {{ $row['code'] }}">Nueva inspección</a>@endif</div></td>
+                </tr>
+            @endforeach
+            </tbody></table></div>
+        @endif
+    </section>
+    @include('partials.pagination', ['paginator' => $rows])
 </section>
-<section class="panel"><h2>Advertencias</h2><p>Permiten guardar y confirmar la decisión, pero solicitan revisar la observación. No corrigen selecciones automáticamente.</p>
-<div data-rule-list="warnings">
-@foreach (old('warnings', $configuration['warnings']) as $index => $rule)
-@include('risk.rule', ['ruleKind' => 'warnings'])
-@endforeach
-</div>
-@if ($canManage)<button class="button secondary" type="button" data-add-rule="warnings">Agregar advertencia</button>@endif
-</section>
-@if ($canManage)
-@foreach (['conflicts', 'warnings'] as $ruleKind)
-<template data-rule-template="{{ $ruleKind }}">@include('risk.rule', ['index' => '__INDEX__', 'rule' => ['enabled' => 1]])</template>
-@endforeach
-@endif
-@if ($canManage)<button class="button" type="submit">Publicar nueva versión para {{ $organization->short_name ?: $organization->name }}</button>@endif
-</fieldset></form>
-<section class="panel"><h2>Versiones conservadas</h2><ul>@forelse ($versions as $version)<li>Versión {{ $version->version }} · {{ $version->name }} · {{ $version->created_at->format('d/m/Y H:i') }} UTC<details><summary>Consultar parámetros históricos</summary><table><thead><tr><th>Condición</th><th>Peso</th><th>Prioridad mínima</th></tr></thead><tbody>@foreach ($version->configuration['conditions'] as $row)<tr><td>{{ $row['label'] }}</td><td>{{ $row['weight'] }}</td><td>{{ $row['minimum'] ? \App\Enums\RiskPriority::from($row['minimum'])->label() : 'Sin mínimo' }}</td></tr>@endforeach</tbody></table>@include('risk.version', ['historicConfig' => $version->configuration])</details></li>@empty<li>Aún no hay versiones publicadas.</li>@endforelse</ul></section>
-</div>
+<script type="application/json" id="risk-bootstrap">{!! \Illuminate\Support\Js::encode(['config' => $filterConfig, 'filters' => $filters]) !!}</script>
 @endsection
-@push('scripts')<script src="{{ asset('js/risk/methodology.js') }}" defer></script>@endpush

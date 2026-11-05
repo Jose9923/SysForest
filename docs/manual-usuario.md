@@ -713,3 +713,9 @@ Prepara la cuenta, el inventario y los catálogos con conexión. Durante el trab
 Riesgo y carbono son resultados del servidor y pueden no estar disponibles antes de sincronizar. La app debe distinguir un resultado pendiente o antiguo de una confirmación actual. La validación profesional de prioridad se realiza según el flujo web documentado. Un conflicto de versión requiere comparar los cambios antes de reintentar; no lo soluciones creando otro árbol.
 
 Al confirmar una visita nueva, SysForest Mobile intenta consultar sus resultados para mostrar prioridad, avisos y carbono con la procedencia de la referencia. Si el servidor es anterior o no concede acceso a riesgo, la app permite trabajar sin esos campos. Una visita pendiente de sincronizar muestra sus resultados como pendientes de actualización. Al descargar de nuevo el detalle se actualizan los resultados; mientras tanto, una copia local puede estar desactualizada.
+
+## Bandeja de árboles en Gestión del riesgo
+
+Abre **Gestión del riesgo → Árboles y riesgo** para consultar un árbol por fila con la prioridad de su última inspección. La prioridad profesional y la sugerencia automática están separadas; Sin evaluar o Captura insuficiente no significa Bajo. Puedes abrir su ficha, revisar la visita o iniciar una nueva inspección si tienes permiso.
+
+Usa la búsqueda, inventario, prioridad, estado y fechas para elegir el conjunto. **Más filtros** incluye nombres y selección de condiciones por órgano. Los contadores corresponden a los filtros aplicados. **Reporte de riesgo por árbol** permite ver el detalle y descargar Excel, CSV o PDF según permisos; la descarga incluye todas las filas filtradas, no solo la página actual. Para PDF, limita la selección a 200 filas. **Metodología institucional** conserva la configuración y sus versiones.

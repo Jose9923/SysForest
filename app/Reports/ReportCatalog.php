@@ -18,6 +18,7 @@ class ReportCatalog
             $this->definition('inventory', 'Inventario general', 'Individuos del conjunto filtrado y su última inspección pertinente.', 'árboles', [...$inspections, 'evidences.view']),
             $this->definition('carbon', 'Carbono aéreo almacenado por especie', 'Stock estimado en la última visita de cada árbol vivo; incluye cobertura y pendientes.', 'kg de CO₂', $inspections),
             $this->definition('carbon_coverage', 'Cobertura de estimación de carbono', 'Individuos estimados, pendientes y excluidos del stock vivo.', 'árboles', $inspections),
+            $this->definition('risk_trees', 'Riesgo por árbol', 'Una fila por individuo con su última inspección, prioridad profesional y sugerencia automática diferenciadas.', 'árboles', [...$inspections, 'risk.view']),
             $this->definition('risk', 'Prioridad fitosanitaria', 'Decisión profesional de la última inspección y evaluaciones pendientes; metodología propia de cada institución.', 'árboles', $inspections),
             $this->definition('species', 'Especies', 'Individuos por especie, incluyendo los que aún no tienen identificación.', 'árboles', $trees),
             $this->definition('families', 'Familias', 'Individuos por familia taxonómica.', 'árboles', $trees),

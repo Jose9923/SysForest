@@ -11,6 +11,7 @@ use App\Models\Tree;
 use App\Models\TreeInspection;
 use App\Reports\InventoryPrivateRowProjector;
 use App\Reports\InventoryPublicRowProjector;
+use App\Reports\RiskTreeRowProjector;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as ModelCollection;
@@ -43,6 +44,7 @@ class ExportReadRepository
         private PublicVisibilityRepository $publication,
         private InventoryPrivateRowProjector $privateProjector,
         private InventoryPublicRowProjector $publicProjector,
+        private RiskTreeRowProjector $riskProjector,
     ) {
     }
 
@@ -56,18 +58,18 @@ class ExportReadRepository
      * El servicio que genera el archivo mantiene el snapshot y comprueba el límite de descarga.
      * Los metadatos con prefijo _ nunca forman parte del esquema entregado al usuario.
      */
-    public function rows(ReportSelectionDTO $selection, int $batchSize = 200): iterable
+    public function rows(ReportSelectionDTO $selection, int $batchSize = 200, bool $riskOnly = false): iterable
     {
         if ($batchSize < 1 || $batchSize > 1000) {
             throw new InvalidArgumentException('El lote debe contener entre 1 y 1000 árboles.');
         }
-        $query = $this->ordered($selection);
+        $query = $this->ordered($selection, $riskOnly);
         for ($offset = 0; ; $offset += $batchSize) {
             $batch = (clone $query)->offset($offset)->limit($batchSize)->get();
             if ($batch->isEmpty()) {
                 break;
             }
-            foreach ($this->projectBatch($selection, $batch) as $row) {
+            foreach ($this->projectBatch($selection, $batch, $riskOnly) as $row) {
                 yield $row;
             }
             if ($batch->count() < $batchSize) {
@@ -77,13 +79,13 @@ class ExportReadRepository
     }
 
     /** Una página real de SQL; nunca recorre primero las filas de las páginas anteriores. */
-    public function paginate(ReportSelectionDTO $selection, int $page = 1, int $perPage = 25): LengthAwarePaginator
+    public function paginate(ReportSelectionDTO $selection, int $page = 1, int $perPage = 25, bool $riskOnly = false): LengthAwarePaginator
     {
         if ($page < 1 || $perPage < 1 || $perPage > 100) {
             throw new InvalidArgumentException('La página debe ser positiva y contener entre 1 y 100 árboles.');
         }
-        $paginator = $this->ordered($selection)->paginate($perPage, ['*'], 'page', $page);
-        $paginator->setCollection(collect($this->projectBatch($selection, $paginator->getCollection())));
+        $paginator = $this->ordered($selection, $riskOnly)->paginate($perPage, ['*'], 'page', $page);
+        $paginator->setCollection(collect($this->projectBatch($selection, $paginator->getCollection(), $riskOnly)));
 
         return $paginator->appends(array_diff_key($selection->values, ['page' => true]));
     }
@@ -117,18 +119,19 @@ class ExportReadRepository
         return $tree === null ? null : $this->projectBatch($selection, new ModelCollection([$tree]))[0];
     }
 
-    private function ordered(ReportSelectionDTO $selection): Builder
+    private function ordered(ReportSelectionDTO $selection, bool $riskOnly = false): Builder
     {
         $sort = TreeFilterDTO::fromValidated(array_replace(
             $selection->filters->trees->values(),
             array_intersect_key($selection->values, ['sort' => true, 'direction' => true])
         ));
 
-        return $this->trees->ordered($this->projectQuery($selection), $sort);
+        return $this->trees->ordered($this->projectQuery($selection, $riskOnly), $sort);
     }
 
-    private function projectQuery(ReportSelectionDTO $selection): Builder
+    private function projectQuery(ReportSelectionDTO $selection, bool $riskOnly = false): Builder
     {
+        abort_if($riskOnly && $selection->isPublic(), 404);
         $fields = self::TREE_FIELDS;
         if (!$selection->isPublic()) {
             $fields = array_merge($fields, self::PRIVATE_TREE_FIELDS);
@@ -147,13 +150,13 @@ class ExportReadRepository
     }
 
     /** @return list<array> */
-    private function projectBatch(ReportSelectionDTO $selection, ModelCollection $batch): array
+    private function projectBatch(ReportSelectionDTO $selection, ModelCollection $batch, bool $riskOnly = false): array
     {
         if ($batch->isEmpty()) {
             return [];
         }
-        $inspections = $this->inspections($selection, $batch);
-        $evidences = $this->evidences($selection, $inspections);
+        $inspections = $this->inspections($selection, $batch, $riskOnly);
+        $evidences = $riskOnly ? collect() : $this->evidences($selection, $inspections);
         $rows = [];
         foreach ($batch as $tree) {
             $inspection = $inspections->get($tree->getAttribute('export_inspection_id'));
@@ -161,8 +164,9 @@ class ExportReadRepository
                 throw new \LogicException('La visita seleccionada no pertenece al árbol y organización del lote.');
             }
             $photos = $inspection === null ? collect() : ($evidences->get($inspection->id) ?? collect());
-            $row = $selection->isPublic() ? $this->publicProjector->project($tree, $inspection, $photos)
-                : $this->privateProjector->project($tree, $inspection, $photos);
+            $row = $riskOnly ? $this->riskProjector->project($tree, $inspection)
+                : ($selection->isPublic() ? $this->publicProjector->project($tree, $inspection, $photos)
+                    : $this->privateProjector->project($tree, $inspection, $photos));
             $row['_geometry'] = $tree->getAttribute('longitude') === null ? null : [
                 'type' => 'Point', 'coordinates' => [(float) $tree->getAttribute('longitude'), (float) $tree->getAttribute('latitude')],
             ];
@@ -178,7 +182,7 @@ class ExportReadRepository
     }
 
     /** Precarga los IDs ya escogidos por LATERAL; no vuelve a elegir otra visita por organización. */
-    private function inspections(ReportSelectionDTO $selection, ModelCollection $batch): Collection
+    private function inspections(ReportSelectionDTO $selection, ModelCollection $batch, bool $riskOnly = false): Collection
     {
         $selected = $batch->filter(fn (Tree $tree) => $tree->getAttribute('export_inspection_id') !== null);
         if ($selected->isEmpty()) {
@@ -193,6 +197,11 @@ class ExportReadRepository
             $relations[] = 'classificationRuleVersion:id,code';
             $relations[] = 'riskEvaluation.methodology';
             $relations[] = 'carbonEstimate';
+        }
+        if ($riskOnly) {
+            $fields = ['id', 'organization_id', 'tree_id', 'inspection_date', 'lock_version', 'inventory_tree_id'];
+            $relations = ['riskEvaluation.methodology', 'riskEvaluation.confirmer',
+                'inventoryTree:id,organization_id,tree_id,inventory_id', 'inventoryTree.inventory:id,organization_id,code,name'];
         }
         $query = TreeInspection::query()->select($fields)->with($relations)
             ->where(function (Builder $query) use ($selected): void {

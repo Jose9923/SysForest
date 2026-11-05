@@ -167,3 +167,9 @@ Antes de actualizar, revisa si tienes capturas, visitas o fotos pendientes de la
 Si al abrir la versión nueva aparece el aviso de otra plataforma, los datos locales siguen conservados. Para entrar a producción, abre el menú de cuenta, pulsa Cerrar sesión y vuelve a escribir tu correo y contraseña. Si hay varias instituciones, elige la que corresponda. Cerrar sesión conserva los pendientes de la cuenta anterior, pero no los traslada ni los envía al servidor nuevo.
 
 Los pendientes de la plataforma local solo pueden enviarse usando una configuración y un servidor compatibles con su cuenta original. Solicita asistencia para resolverlos; no vuelvas a crear esos árboles en producción como solución al aviso. La compilación del APK no acredita por sí sola una prueba en un teléfono físico o en iPhone.
+
+## Bandeja de árboles en Gestión del riesgo
+
+Abre **Gestión del riesgo → Árboles y riesgo** para consultar un árbol por fila con la prioridad de su última inspección. La prioridad profesional y la sugerencia automática están separadas; Sin evaluar o Captura insuficiente no significa Bajo. Puedes abrir su ficha, revisar la visita o iniciar una nueva inspección si tienes permiso.
+
+Usa la búsqueda, inventario, prioridad, estado y fechas para elegir el conjunto. **Más filtros** incluye nombres y selección de condiciones por órgano. Los contadores corresponden a los filtros aplicados. **Reporte de riesgo por árbol** permite ver el detalle y descargar Excel, CSV o PDF según permisos; la descarga incluye todas las filas filtradas, no solo la página actual. Para PDF, limita la selección a 200 filas. **Metodología institucional** conserva la configuración y sus versiones.

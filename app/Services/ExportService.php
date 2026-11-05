@@ -81,7 +81,7 @@ class ExportService
             $path = $this->files->create();
             $count = $this->snapshots->read(function () use ($selection, $report, $format, $tree, $organization, $metadata, $path, &$manifest, &$fingerprint): int {
                 $data = $this->datasets->prepare($selection, $report, $format, $tree, $organization);
-                if ($report !== 'inventory') {
+                if (!in_array($report, ['inventory', 'risk_trees'], true)) {
                     $fingerprint = $this->fingerprint(['rows' => $data['rows'], 'summary' => $data['summary']]);
                 }
                 $rows = $this->tracked($data['rows'], $manifest);

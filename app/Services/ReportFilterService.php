@@ -29,6 +29,23 @@ class ReportFilterService
 
     public function forUser(User $actor, array $input, string $report = 'inventory', bool $export = false): ReportSelectionDTO
     {
+        $selection = $this->privateSelection($actor, $input);
+        $this->access->authorize($actor, $selection, $report, $export);
+
+        return $selection;
+    }
+
+    /** La bandeja conserva su permiso de consulta; no concede acceso a reportes ni descargas. */
+    public function forRiskInbox(User $actor, array $input): ReportSelectionDTO
+    {
+        $selection = $this->privateSelection($actor, array_replace($input, ['scope' => 'organization']));
+        $this->access->authorizeRiskInbox($actor, $selection);
+
+        return $selection;
+    }
+
+    private function privateSelection(User $actor, array $input): ReportSelectionDTO
+    {
         $input = $this->input($input);
         $allowed = array_filter(array_keys(TreeFilterInput::rules() + MapInput::rules(false)), fn (string $key) => !str_contains($key, '.'));
         $unknown = array_diff(array_keys($input), $allowed);
@@ -39,15 +56,12 @@ class ReportFilterService
         $map = $context['filters'];
         $values = $this->clean($map->trees->values());
         $values['scope'] = $context['scope']->kind;
-        $selection = new ReportSelectionDTO($context['scope'], $this->filters($map), $this->radiusValues($values, $map));
-        $this->access->authorize($actor, $selection, $report, $export);
-
-        return $selection;
+        return new ReportSelectionDTO($context['scope'], $this->filters($map), $this->radiusValues($values, $map));
     }
 
     public function forPublic(array $input, string $report = 'inventory'): ReportSelectionDTO
     {
-        if (in_array($report, ['risk', 'carbon', 'carbon_coverage'], true)) {
+        if (in_array($report, ['risk', 'risk_trees', 'carbon', 'carbon_coverage'], true)) {
             throw ValidationException::withMessages(['report' => 'Este reporte es exclusivamente privado.']);
         }
         $definition = $this->catalog->get($report);
