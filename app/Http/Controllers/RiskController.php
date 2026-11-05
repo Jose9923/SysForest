@@ -26,6 +26,14 @@ class RiskController extends Controller
         return redirect()->route('risk.index')->with('status', 'Nueva versión institucional publicada. Las evaluaciones anteriores se conservan.');
     }
 
+    public function previewRegistration(Request $request, RiskEvaluationService $service): JsonResponse
+    {
+        $data = $request->validate(['phytosanitary_condition_ids' => ['sometimes', 'array', 'max:100'],
+            'phytosanitary_condition_ids.*' => ['uuid', 'distinct'], 'inspection_id' => ['prohibited']]);
+
+        return response()->json($service->previewRegistration($request->user(), $data));
+    }
+
     public function preview(Request $request, string $tree, RiskEvaluationService $service): JsonResponse
     {
         $data = $request->validate(['phytosanitary_condition_ids' => ['sometimes', 'array', 'max:100'],

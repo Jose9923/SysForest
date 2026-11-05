@@ -1,5 +1,5 @@
-<section class="panel forestry-panel" data-risk-form data-preview-url="{{ route('risk.preview', $tree->id) }}" data-inspection-id="{{ $inspection?->id }}">
-<h2>Prioridad de Gestión Fitosanitaria</h2><p>El sistema sugiere; confirma tu decisión profesional. Si eliges otro nivel o no hay sugerencia por falta de condiciones evaluadas, justifica tu decisión en las observaciones generales. No marcar condiciones no significa que el árbol esté sano. No implica una orden de intervención ni modifica el estado del árbol.</p>
+<section class="panel forestry-panel" data-risk-form data-preview-url="{{ $tree ? route('risk.preview', $tree->id) : route('risk.registration-preview') }}" data-inspection-id="{{ $inspection?->id }}">
+<h2>Prioridad de Gestión Fitosanitaria</h2><p>El sistema sugiere; confirma tu decisión profesional. Si eliges otro nivel o no hay sugerencia por falta de condiciones evaluadas, justifica tu decisión en las observaciones generales. No seleccionar condiciones no significa que el árbol esté sano. No implica una orden de intervención ni modifica el estado del árbol.</p>
 <input type="hidden" name="risk_methodology_id" value="{{ $riskMethodology->id }}" data-risk-methodology>
 <p role="status" aria-live="polite" data-risk-result>Consulta la sugerencia después de registrar las condiciones.</p>
 <ul data-risk-details></ul>

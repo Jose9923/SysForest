@@ -46,6 +46,12 @@ class MaintenanceRepository
         if (($filters['trashed'] ?? null) === 'only') {
             $query->onlyTrashed();
         }
+        if (!empty($filters['inventory_id'])) {
+            $this->uuid($filters['inventory_id']);
+            $query->whereHas('tree', fn (Builder $tree) => $tree->where('trees.organization_id', $organizationId)
+                ->whereHas('inventories', fn (Builder $inventory) => $inventory
+                    ->where('inventories.organization_id', $organizationId)->where('inventories.id', $filters['inventory_id'])));
+        }
         foreach (['tree_id', 'maintenance_type_id'] as $key) {
             if (!empty($filters[$key])) {
                 $this->uuid($filters[$key]);
@@ -68,7 +74,12 @@ class MaintenanceRepository
                 ->orWhereHas('tree', fn (Builder $tree) => $tree->where('code', 'ilike', $term)));
         }
 
-        return $query->orderByDesc('created_at')->orderByDesc('id')->paginate(20)->withQueryString();
+        return $query->orderByDesc('created_at')->orderByDesc('id')->paginate(
+            (int) ($filters['per_page'] ?? 20),
+            ['*'],
+            'page',
+            isset($filters['page']) ? (int) $filters['page'] : null,
+        )->withQueryString();
     }
 
     public function timelineForTree(string $organizationId, string $treeId): Collection

@@ -16,6 +16,17 @@
             <div class="field"><label for="tree-placement">Emplazamiento</label><select class="catalog-select" id="tree-placement" name="placement_id"><option value="">Todos los emplazamientos</option>@foreach ($options['placements'] as $option)<option value="{{ $option->id }}" @selected(($filters['placement_id'] ?? '') === $option->id)>{{ $option->name }}</option>@endforeach</select></div>
             <div class="field"><label for="tree-status">Estado del árbol</label><select id="tree-status" name="current_status"><option value="">Todos los estados</option>@foreach ($statuses as $value => $label)<option value="{{ $value }}" @selected(($filters['current_status'] ?? '') === $value)>{{ $label }}</option>@endforeach</select></div>
         </div>
+        @if ($canViewRisk)
+            <details class="condition-filter-details" @if (!empty($filters['physical_condition_ids']) || !empty($filters['phytosanitary_condition_ids'])) open @endif>
+                <summary>Condiciones de la última inspección</summary>
+                <div class="form-grid">
+                    @foreach (['physical_mechanical' => ['physical_condition_ids', 'Estado físico-mecánico'], 'phytosanitary' => ['phytosanitary_condition_ids', 'Estado fitosanitario']] as $type => [$field, $label])
+                        @include('inspections.condition-fields', ['categories' => $conditionFilterCategories[$type] ?? collect(), 'assessmentLabel' => $label, 'fieldName' => $field, 'selectedIds' => $filters[$field] ?? [], 'filterMode' => true])
+                    @endforeach
+                    <div class="field"><label for="tree-condition-mode">Coincidencia de condiciones</label><select id="tree-condition-mode" name="condition_mode"><option value="any" @selected(($filters['condition_mode'] ?? 'any') === 'any')>Al menos una</option><option value="all" @selected(($filters['condition_mode'] ?? '') === 'all')>Todas en la misma inspección</option></select></div>
+                </div>
+            </details>
+        @endif
         <div class="filter-footer">
             <div class="filter-sort">
                 <div class="field"><label for="tree-sort">Ordenar por</label><select id="tree-sort" name="sort">@foreach (['code' => 'Código', 'created_at' => 'Fecha de registro', 'scientific_name' => 'Nombre científico'] as $value => $label)<option value="{{ $value }}" @selected(($filters['sort'] ?? 'code') === $value)>{{ $label }}</option>@endforeach</select></div>

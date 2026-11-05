@@ -34,6 +34,8 @@ El correo transaccional está aplazado: la autenticación por contraseña funcio
 | POST | `/auth/logout` | JSON refresh_token; 204 idempotente |
 | GET | `/auth/me` | Authorization Bearer |
 | GET | `/inventories` | Authorization Bearer |
+| POST | `/inventories` | Authorization Bearer; creación idempotente |
+| GET | `/inventories/{inventory}/maintenances` | Authorization Bearer; consulta paginada |
 | GET | `/parameterizations` | Authorization Bearer |
 | GET | `/parameterizations/{catalog}` | Authorization Bearer |
 | POST | `/inventories/{inventory}/trees/sync` | Authorization Bearer |
@@ -65,6 +67,26 @@ Con credenciales válidas responde HTTP 200 con `{"data":[{"id":"UUID","name":"N
 El endpoint no devuelve usuarios, correos, roles, tokens ni sesiones, y no publica un directorio consultable solo por correo. Contraseña incorrecta, cuenta desconocida, inactiva o sin correo verificado reciben el mismo HTTP 401 genérico. JSON inválido, campos ausentes y formatos incorrectos usan las validaciones normales; `organization_id`, `user_id`, `access_token` y `refresh_token` están prohibidos en esta consulta. Conserva JSON objeto hasta 1 MiB, `Cache-Control: private, no-store` y el límite `identity.login`, compartido con el login; ambos pasos consumen el límite de identidad.
 
 El cliente mantiene la contraseña únicamente en memoria durante la selección. Si recibe una institución, puede llamar inmediatamente a `POST /auth/login` con sus credenciales y el `id`; si recibe varias, presenta un selector por nombre antes de llamar. Si recibe cero, informa que la cuenta no tiene instituciones disponibles. Cambiar correo o contraseña invalida las opciones anteriores. El listado no es una concesión permanente: el login verifica nuevamente contraseña, cuenta, institución y autorización antes de emitir el JWT firmado con `org`. Revocar el acceso o cambiar la contraseña entre ambos pasos impide el ingreso. No hay migración de base de datos ni cambios en sesiones ya emitidas.
+
+## Inventarios y mantenimientos móviles · 4 de noviembre de 2026
+
+`GET /inventories` incorpora en `meta` las capacidades `can_create_inventories` y `can_view_maintenances`. Son capacidades vigentes de la cuenta e institución; no conceden permisos nuevos. La app debe actualizar referencias mediante la sincronización manual antes de ofrecer funciones nuevas a una cuenta que solo conserva referencias de una versión anterior.
+
+### Crear inventario
+
+`POST /inventories` recibe `operation_id` (UUID estable) e `inventory`, con `code`, `name` y opcionalmente `description`, `starts_at`, `ends_at`, `status` y `active`. El cliente de campo crea campañas activas. Las fechas usan `AAAA-MM-DD`; código y nombre cumplen las reglas del catálogo institucional. Usuario, institución e identificador definitivo provienen del servidor.
+
+Una respuesta 201 contiene `{operation_id, status: "created", data: {...inventario}}`. Repetir la misma operación confirmada devuelve 200 y `status: "replayed"`; reutilizar su UUID con otro contenido o usuario produce 409. El recibo durable se confirma en la misma transacción que el inventario. Un rechazo no borra capturas locales. La aplicación sincroniza primero el inventario y después sus árboles, resolviendo el ID definitivo antes de congelar las peticiones dependientes.
+
+### Consultar mantenimientos
+
+`GET /inventories/{inventory}/maintenances` acepta `tree_id`, `status`, `priority`, `q`, `page` y `per_page`. Devuelve `data` y `meta` de paginación. Cada orden incluye `id`, `code`, `tree_id`, `tree_code`, `maintenance_type_id`, `type_name`, `status`, `status_label`, `priority`, `priority_label`, `scheduled_date`, `performed_date`, `assignee_name`, `notes`, `result` y `updated_at`.
+
+La consulta exige acceso vigente a la institución, inventario, árboles y mantenimientos. No devuelve órdenes anuladas ni de árboles fuera del inventario autorizado. El teléfono conserva la copia descargada y su fecha para consulta sin internet; una copia antigua no acredita el estado actual. Esta ampliación permite consultar mantenimientos; sus transiciones y cierre continúan en la web.
+
+### Primera inspección en la captura
+
+La nueva app envía siempre `inspection` dentro del item de creación de árbol. No usa una segunda escritura para esa primera visita. El recibo devuelve `tree_id` e `inspection_id`; un reintento conserva UUID y contenido. Se mantiene el contrato compatible para capturas ya preparadas por versiones anteriores que no incluían inspección. Las inspecciones posteriores continúan por `POST /trees/{tree}/inspections`.
 
 ## Sincronización
 

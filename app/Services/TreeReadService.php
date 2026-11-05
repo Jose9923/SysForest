@@ -24,7 +24,8 @@ class TreeReadService
         private TreeInspectionReadService $inspections,
         private MaintenanceReadService $maintenances,
         private TreeFilterService $filters,
-        private TreeCaptureDateService $captureDates
+        private TreeCaptureDateService $captureDates,
+        private ConditionFilterOptionsService $conditionOptions
     ) {
     }
 
@@ -48,9 +49,12 @@ class TreeReadService
         $view['options'] = array_replace($view['options'], $this->catalogs->filterOptions());
         $view['options']['inventories'] = $this->inventories->options($organization->id, false);
 
+        $canInspect = $this->access->allows($actor, 'inspections.view');
+
         return array_merge($view, ['organization' => $organization, 'filters' => $filters,
-            'canViewRisk' => $this->access->allows($actor, 'inspections.view'),
-            'trees' => $this->trees->paginate($organization->id, $filters, $this->access->allows($actor, 'inspections.view'))]);
+            'canViewRisk' => $canInspect,
+            'conditionFilterCategories' => $canInspect ? $this->conditionOptions->groups() : collect(),
+            'trees' => $this->trees->paginate($organization->id, $filters, $canInspect)]);
     }
 
     public function form(User $actor, ?string $id = null): array
@@ -59,7 +63,15 @@ class TreeReadService
         $tree = $id ? $this->trees->findForTenant($organization->id, $id) : null;
         Gate::forUser($actor)->authorize($tree ? 'update' : 'create', $tree ?? Tree::class);
 
-        return array_merge($this->shared($actor, $tree), ['organization' => $organization, 'tree' => $tree, 'selectedInventoryIds' => []]);
+        $view = $this->shared($actor, $tree);
+        if ($tree === null) {
+            $initial = $this->inspections->registrationForm($actor);
+            $view['options'] = array_replace($view['options'], $initial['inspectionOptions']);
+            unset($initial['inspectionOptions']);
+            $view = array_merge($view, $initial);
+        }
+
+        return array_merge($view, ['organization' => $organization, 'tree' => $tree, 'selectedInventoryIds' => []]);
     }
 
     public function show(User $actor, string $id): array
@@ -100,7 +112,7 @@ class TreeReadService
         return ['options' => $options, 'statuses' => $statuses, 'availableInventories' => $availableInventories,
             'captureDate' => ['input' => $this->captureDates->inputValue($tree?->captured_at),
                 'display' => $this->captureDates->displayValue($tree?->captured_at)],
-            'canCreate' => Gate::forUser($actor)->allows('create', Tree::class),
+            'canCreate' => Gate::forUser($actor)->allows('create', Tree::class) && $this->access->allows($actor, 'inspections.create'),
             'canUpdate' => $tree ? Gate::forUser($actor)->allows('update', $tree) : $this->access->allows($actor, 'trees.update'),
             'canVoid' => $tree ? Gate::forUser($actor)->allows('void', $tree) : $this->access->allows($actor, 'trees.void'),
             'canRestore' => $tree ? Gate::forUser($actor)->allows('restore', $tree) : $this->access->allows($actor, 'trees.restore'),

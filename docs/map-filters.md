@@ -1,5 +1,15 @@
 # Motor compartido de filtros y mapas
 
+## Selectores de condiciones en cascada · 04/11/2026
+
+Los filtros web de árboles, inspecciones, mapas, análisis y reportes reutilizan `inspections/condition-fields.blade.php` en `filterMode`. La consulta pública de mapa, listado y reportes utiliza el mismo componente. Cada evaluación permite elegir varios órganos o grupos y, por cada uno, varias condiciones. Las selecciones físico-mecánicas y fitosanitarias permanecen independientes.
+
+El selector de órganos es auxiliar y no tiene `name`: elegir un órgano sin condiciones solo muestra opciones, sin filtrar ni añadir parámetros GET. Se mantienen `physical_condition_ids[]`, `phytosanitary_condition_ids[]` y `condition_mode`. Quitar un órgano limpia únicamente sus condiciones, con una advertencia previa en la ayuda. Las referencias históricas inactivas siguen disponibles para consulta. No cambia ANY/ALL, la última inspección determinista, las reglas de autorización ni las proyecciones públicas.
+
+El componente recibe UUID en privado y códigos estables en público. `MapFilters.sync` restaura condiciones y órganos mediante `SysforestConditionCascade.setValues(contenedor, ids)`; el helper actualiza Select2 sin disparar cambios de negocio. Cada selector de condiciones expone `data-filter-label` con evaluación y órgano para identificar los criterios. Los catálogos se preparan en servicios/repositorios, sin consultas en Blade.
+
+La evidencia específica de esta presentación está en [condition-cascade-20261104.md](condition-cascade-20261104.md). Las secciones de fases y sus cifras de verificación se conservan como historia de sus respectivas entregas.
+
 ## Alcance de Fase 10
 
 El listado de árboles, el listado de árboles con su última inspección y el mapa consultan un único motor forestal. PostGIS resuelve la selección espacial y las agregaciones. No se reconstruyen coordenadas desde `coordinate_raw`, no se cargan todos los árboles para filtrarlos en PHP o JavaScript y no se crean puntos para registros sin geometría.

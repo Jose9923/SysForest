@@ -1,15 +1,6 @@
 /* Solo presenta resultados del servidor; no contiene fórmulas forestales. */
 (function () {
     'use strict';
-    document.querySelectorAll('[data-condition-group]').forEach((group) => {
-        const count = group.querySelector('[data-selected-count]');
-        const update = () => {
-            const selected = group.querySelectorAll('input[type="checkbox"]:checked').length;
-            if (count) count.textContent = selected + (selected === 1 ? ' registrada' : ' registradas');
-        };
-        group.addEventListener('change', update);
-        update();
-    });
     document.querySelectorAll('[data-dendrometry-form]').forEach((form) => {
         const panel = form.querySelector('[data-calculation-panel]');
         const status = panel.querySelector('[data-calculation-status]');

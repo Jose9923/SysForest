@@ -65,9 +65,21 @@ El script no incluye secretos ni Redis, no configura copias externas, no elimina
 
 En esta entrega no se programó cron ni un temporizador; periodicidad y retención permanecen pendientes. La lectura de los archivos y sus hashes no equivale a un ensayo integral de restauración en un entorno independiente. La restauración inicial para migrar al VPS sí se completó; todavía no se ha restaurado este nuevo respaldo.
 
+## Correo transaccional con Brevo
+
+El 4 de noviembre de 2026, en horario `America/Bogota`, se activó Brevo para esta instalación. `varcor.tech` quedó autenticado y `notificaciones@varcor.tech` aparece verificado con DKIM y DMARC. Los cuatro registros DNS de correo se añadieron conservando los registros de los sitios publicados. El remitente de esta aplicación conserva el nombre **SYSFOREST**.
+
+Se configuró SMTP en `smtp-relay.brevo.com:587`, con `MAIL_SCHEME=smtp`, negociación STARTTLS y validación del certificado. `MAIL_URL` debe estar **ausente**, no definido con una cadena vacía: en la versión desplegada de Laravel 13, ese valor vacío anula el transporte y provoca `Unsupported mail transport []`. El login y la clave SMTP permanecen únicamente en configuración privada, fuera del repositorio y de la imagen.
+
+Se recrearon `app`, `queue` y `scheduler` para cargar el entorno; se verificaron en los tres servicios el transporte `EsmtpTransport`, la configuración esperada y la presencia de credenciales sin imprimirlas. Los servicios PHP y Nginx quedaron saludables y las comprobaciones HTTP/HTTPS fueron satisfactorias. La prueba dirigida al correo administrativo fue **aceptada por el transporte** y el usuario confirmó su **recepción el 4 de noviembre de 2026**. Son dos comprobaciones distintas: una respuesta SMTP satisfactoria no acredita por sí sola la llegada a la bandeja.
+
+EcoData y SysForest usan la misma cuenta gratuita de Brevo: el cupo de **300 envíos diarios es compartido**, no se asignan 300 a cada aplicación. Los envíos pendientes del proveedor pueden llegar después de que un enlace haya vencido; en ese caso se debe solicitar uno nuevo. Consultar el uso y los registros de entrega en Brevo. [Límites oficiales del plan gratuito](https://help.brevo.com/hc/en-us/articles/208580669-FAQs-What-are-the-limits-of-the-Free-plan).
+
+Revisar en el panel de Brevo el vencimiento y estado de la clave SMTP privada. Su renovación requiere actualizar ambas configuraciones privadas y recrear sus servicios PHP; no colocar la clave en manuales, comandos de ejemplo ni archivos versionados. Brevo también puede desactivar claves después de 90 días sin envíos satisfactorios. [Administración de claves SMTP](https://help.brevo.com/hc/en-us/articles/7959631848850-Create-and-manage-your-SMTP-keys).
+
 ## Pendientes al cierre
 
-- Configurar SMTP real: durante esta preparación no se enviaron correos. Las invitaciones y recuperaciones que requieren entrega por correo no deben darse por operativas hasta verificar ese transporte.
+- Completar los recorridos de invitación/recuperación desde los enlaces recibidos. El transporte SMTP ya está activado y el usuario confirmó la recepción de las pruebas; este envío no acredita todos los flujos funcionales.
 - Definir y verificar respaldos periódicos locales y externos, su política de retención y un ensayo de restauración del nuevo respaldo. La copia externa inicial ya está confirmada.
 - Instalar y verificar el APK productivo en un teléfono físico, incluyendo trabajo offline, sincronización y fotografías.
 - Completar la preparación de distribución móvil para usuarios finales cuando corresponda.
@@ -90,3 +102,23 @@ Comprobaciones realizadas después de la reparación:
 - La sesión de verificación se cerró. `/.env` y `/vendor/autoload.php` continuaron bloqueados; una biblioteca inexistente siguió respondiendo 404.
 
 Esta revisión acredita las respuestas HTTP, integridad, dependencias y orden de carga. No constituye una prueba visual del navegador ni de todos los proveedores externos de mapas base. Para eliminar una página de error que permanezca cargada, recargar la cartografía con Ctrl + F5.
+
+## Captura completa y aplicación 0.3.0 · 4 de noviembre de 2026
+
+Se publicó el formulario web que registra árbol y primera inspección juntos y la ampliación móvil de inventarios y mantenimientos. El delta de 32 archivos fue verificado por SHA-256; se aplicó únicamente la migración aditiva 000032. Se reconstruyó la imagen y se recrearon app, queue y scheduler. Los siete servicios terminaron saludables. La configuración privada y SMTP permanecieron idénticos, y las bibliotecas y descargas anteriores conservaron sus huellas.
+
+Imagen activa: `sha256:ee2b1ce84aed944ace6a463a8cbae4a4188375576ff874a31f9d548246e608c7`. El respaldo previo conserva datos, fuente e imagen bajo `/opt/sysforest/backups/field-capture-20261105T011715Z`; la copia de datos es `/opt/sysforest/backups/field-capture-20261105T011715Z/data/backup-20261105T011733Z-mgULmu`. Fue un respaldo online: no representa una instantánea coordinada de todos los almacenes ni un ensayo de restauración. Se conserva la imagen anterior etiquetada como `sysforest-app:before-field-capture-20261105t011715z`. Las rutas del respaldo usan UTC; la publicación corresponde al 4 de noviembre en America/Bogota.
+
+HTTP autenticado comprobó el alta con 23 condiciones físicas, 42 fitosanitarias y seis categorías de fauna, la sugerencia de riesgo sin crear árbol y los formularios de visitas posteriores. En ambas instituciones se comprobaron capacidades, inventarios, árboles y mantenimientos. Una creación de inventario incompleta respondió 422 sin registros. Se cerraron exclusivamente las sesiones de verificación; no se insertaron datos productivos de prueba.
+
+[Descargar APK 0.3.0](https://sysforest.varcor.tech/descargas/SysForest-Mobile-0.3.0.apk): paquete Android `co.sysforest.mobile`, versión 0.3.0+5, variante debug universal y misma firma anterior. Compilación, análisis estático, firma, tamaño, descarga HTTPS por rangos y manifiesto de hash aprobados. Instalar encima y después actualizar referencias desde Sincronizar. La validación física permanece pendiente. No se realizó commit ni push de esta ampliación.
+
+El detalle de la implementación y sus límites está en [captura inicial y módulos móviles](field-capture-20261104.md).
+
+## Selectores por órgano y condiciones · actualización del 04/11/2026
+
+Actualización finalizada sin migraciones ni cambios de configuración. Imagen activa: `sha256:fae16e6047d7b5055bcc6c2fa75f2ebc7a3f77e5aa4f65c54d5f2a8cbac6e26a`; delta de 17 archivos, siete servicios saludables y verificaciones HTTPS de nueve páginas, riesgo y API pública aprobadas. Los formularios y filtros ahora permiten varios órganos y varias condiciones por órgano; se conserva ANY/ALL y la separación de referencias privadas/públicas.
+
+Respaldo de datos online, fuente e imagen: `/opt/sysforest/backups/condition-cascade-20261105T014535Z`; datos `/opt/sysforest/backups/condition-cascade-20261105T014535Z/data/backup-20261105T014607Z-Bn13gI`. Tag anterior: `sysforest-app:before-condition-cascade-20261105t014535z`. El respaldo online no constituye una instantánea global coordinada. Configuración productiva, SMTP y los 34 archivos previos de vendor/descargas permanecieron idénticos antes de publicar la APK adicional.
+
+Android [0.3.1+6](https://sysforest.varcor.tech/descargas/SysForest-Mobile-0.3.1.apk) publicado y verificado, con misma firma y SHA-256 `d1f3bbee1ebca53d16344c95078edad1ab8c9ba770df9c72faa81eeef50f3480`. Conserva los enlaces de versiones anteriores. El análisis y la compilación fueron satisfactorios; no hubo prueba física de teléfono. Alcance, archivos, verificaciones y límites: [informe de cascada](condition-cascade-20261104.md).

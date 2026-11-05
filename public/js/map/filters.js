@@ -87,7 +87,7 @@ export class MapFilters {
         this.synchronizing = true;
         const values = cleanFilters(filters, this.filterKeys);
         for (const element of this.form.elements) {
-            if (!element.name) continue;
+            if (!element.name || element.matches('[data-condition-select]')) continue;
             const key = element.name.replace(/\[\]$/, '');
             if (!this.filterKeys.includes(key)) continue;
             const value = values[key] ?? (ARRAY_KEYS.includes(key) ? [] : key === 'condition_mode' ? 'any' : '');
@@ -101,6 +101,9 @@ export class MapFilters {
                 if (this.$(element).hasClass('select2-hidden-accessible')) this.$(element).trigger('change.select2');
             } else element.value = value;
         }
+        this.form.querySelectorAll('[data-condition-cascade]').forEach(cascade => {
+            this.document.defaultView.SysforestConditionCascade.setValues(cascade, values[cascade.dataset.conditionField] ?? []);
+        });
         this.synchronizing = false;
         this.updateLegacyNotices();
     }
@@ -116,11 +119,19 @@ export class MapFilters {
     resetSearch() { this.$('[data-map-search]').val(null).trigger('change.select2'); }
     describe(filters) {
         return Object.entries(cleanFilters(filters, this.filterKeys)).filter(([key]) => !['condition_mode', 'scope'].includes(key)).map(([key, value]) => {
-            const element = this.form.elements.namedItem(ARRAY_KEYS.includes(key) ? `${key}[]` : key);
+            const fields = [...this.form.elements].filter(element => element.name === (ARRAY_KEYS.includes(key) ? `${key}[]` : key));
+            const element = fields[0];
+            const values = Array.isArray(value) ? value : [value];
+            const conditionFields = fields.filter(field => field.matches('[data-condition-select]'));
+            if (conditionFields.length) {
+                const labels = conditionFields.flatMap(field => [...field.options]
+                    .filter(option => values.includes(option.value))
+                    .map(option => `${field.dataset.filterLabel}: ${option.textContent}`));
+                return {key, text: [...new Set(labels)].join('; ') || 'Condiciones seleccionadas'};
+            }
             const name = element?.dataset.filterLabel || key;
             let text = String(value);
             if (element?.tagName === 'SELECT') {
-                const values = Array.isArray(value) ? value : [value];
                 text = [...element.options].filter(option => values.includes(option.value)).map(option => option.textContent).join(', ') || 'Seleccionado';
             } else if (element?.type === 'checkbox') text = 'Sí';
             return {key, text: `${name}: ${text}`};

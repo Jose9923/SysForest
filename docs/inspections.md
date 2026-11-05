@@ -1,5 +1,21 @@
 # Inspecciones forestales históricas
 
+## Captura inicial y visitas posteriores · 4 de noviembre de 2026
+
+El alta web del árbol incluye su primera inspección completa en una sola pantalla. `TreeRegistrationService` confirma árbol, participación, visita, condiciones, fauna, derivados e historiales dentro de una transacción. La visita se vincula a una de las campañas elegidas para el árbol. Exige permisos de crear árboles e inspecciones y mantiene la confirmación profesional del riesgo.
+
+Editar la identidad de un árbol existente no crea una visita. Las segundas inspecciones y posteriores se registran desde el módulo **Inspecciones**, conservando fecha y observaciones propias. El modelo mantiene `Tree` y `TreeInspection` separados aunque su primera captura se presente junta.
+
+En el celular, una captura nueva incluye árbol e inspección inicial en una transacción local y en un único item del endpoint de sincronización. El servidor confirma ambos mediante el recibo existente. Las visitas posteriores utilizan el módulo **Inspecciones** y su operación independiente. La confirmación profesional del riesgo móvil continúa realizándose en la web.
+
+## Selección web de condiciones · 4 de noviembre de 2026
+
+La primera inspección, las visitas posteriores y sus correcciones comparten `inspections/condition-fields.blade.php`. Cada evaluación tiene un selector múltiple de órganos o grupos; cada órgano elegido muestra otro selector múltiple limitado a sus condiciones. Select2 permite buscar nombres y conservar varios órganos y condiciones simultáneamente, con independencia entre evaluación físico-mecánica y fitosanitaria. Se mantienen las 23 condiciones físicas en cuatro grupos y las 42 fitosanitarias en seis grupos.
+
+Las condiciones seleccionadas determinan los órganos que se abren al cargar una visita o recuperar errores de validación. Los órganos abiertos sin condiciones se recuperan mediante una entrada auxiliar de presentación, sin persistir una evaluación. Las referencias históricas inactivas ya seleccionadas permanecen visibles e identificadas. Quitar un órgano limpia solo sus condiciones del formulario; la ayuda lo advierte antes de la interacción. Fauna conserva sus casillas y su contrato actual.
+
+El envío conserva `physical_condition_ids[]` y `phytosanitary_condition_ids[]`. La previsualización de riesgo lee las selecciones reales y cualquier cambio de condiciones invalida la confirmación profesional anterior. El servidor sigue validando referencias y contradicciones. La presentación no modifica el estado del árbol, reglas, historiales ni esquema de datos. Evidencia y límites: [selectores en cascada](condition-cascade-20261104.md).
+
 ## Alcance y separación del dominio
 
 Fase 7 implementa visitas fechadas, mediciones, resultados, condiciones, fenología, fauna y observaciones. Tree conserva identidad, taxonomía, ubicación y estado permanente. Ningún dato de inspección se copia a trees. La fuente forestal es la matriz de 94 variables aprobada; las fotografías CN/CO están implementadas mediante Evidence desde Fase 8. No se incorporan mantenimientos, mapas generales, importación ni reportes finales.
@@ -10,7 +26,7 @@ Una inspección tiene UUID, organization_id, tree_id, inventory_tree_id nullable
 
 Una visita puede registrarse sin campaña formal. Cuando tiene contexto, inventory_tree_id identifica una participación existente de ese mismo árbol en una campaña de su propia organización. Se admiten participaciones en campañas cerradas o desactivadas para transcribir visitas históricas; esto no abre la campaña ni incorpora nuevos individuos. No se infiere que las fechas de la visita deban estar dentro de fechas administrativas del inventario. No se exige una campaña activa para que Official registre o corrija una inspección.
 
-La creación inicial de Tree conserva el requisito de participación de Fase 6. Su ficha ofrece inmediatamente «Nueva inspección». Son dos operaciones separadas: guardar identidad y ubicación, luego registrar la visita. TreeService y TreeInspectionService no dependen circularmente ni ofrecen una transacción combinada ficticia.
+En la entrega original de Fase 7, la creación de Tree y la primera visita eran dos operaciones separadas: guardar identidad y ubicación, luego usar «Nueva inspección» desde la ficha. Desde el 04/11/2026, el alta web las coordina en una transacción mediante TreeRegistrationService, como se describe al comienzo de este documento. Se conserva el requisito de participación del árbol de Fase 6 y la separación de TreeService y TreeInspectionService, sin dependencias circulares.
 
 ## Integridad institucional
 
@@ -22,7 +38,7 @@ La identidad, organización, Tree, autor original, fecha de creación y versione
 
 ## Condiciones y referencias históricas
 
-Se utilizan las 23 condiciones físicas y 42 fitosanitarias de Fase 5. La evaluación y órgano distinguen identidades que comparten nombre. No existen columnas booleanas por condición. Desde el 25/10/2026, la metodología de riesgo de cada institución valida contradicciones antes de guardar: bloquea las selecciones incompatibles, sin corregirlas automáticamente. Una casilla sin marcar no significa ausencia evaluada.
+Se utilizan las 23 condiciones físicas y 42 fitosanitarias de Fase 5. La evaluación y órgano distinguen identidades que comparten nombre. No existen columnas booleanas por condición. Desde el 25/10/2026, la metodología de riesgo de cada institución valida contradicciones antes de guardar: bloquea las selecciones incompatibles, sin corregirlas automáticamente. Una condición sin seleccionar no significa ausencia evaluada.
 
 La [gestión del riesgo](risk-management.md) conserva la sugerencia automática y la prioridad confirmada por el profesional, con su metodología institucional y sus revisiones. La confirmación web es obligatoria y un cambio de nivel respecto a la sugerencia requiere argumento en observaciones. Los históricos e importaciones quedan pendientes de decisión profesional; el estado operativo de Tree permanece independiente.
 
@@ -70,15 +86,15 @@ latestForTrees usa DISTINCT ON y carga relaciones por lotes. latestTrees selecci
 
 La consulta histórica admite Tree, campaña propia de la inspección, intervalo de fecha, especie actual del Tree, madurez, clase diamétrica, clase de altura, condiciones por tipo y rangos de CAP/DAP/altura total. Los rangos pueden tener solo un extremo. El catálogo histórico desactivado sigue siendo válido para filtros.
 
-Las condiciones usan ANY o ALL; ALL cuenta condiciones distintas del mismo inspection_id y ANY usa EXISTS, sin duplicar árboles mediante joins. latestTrees mantiene inventory_id como filtro de participación del Tree (semántica Fase 6), mientras la bandeja de inspecciones filtra la campaña que contextualiza esa visita. Los Repositories contienen una sola implementación de filtros de inspección reutilizable por los futuros servicios de exportación/reportes.
+Los filtros reutilizan la cascada de órganos y condiciones en modo de consulta: abrir un órgano no añade un filtro; solo se envían las condiciones elegidas. Las condiciones usan ANY o ALL; ALL cuenta condiciones distintas del mismo inspection_id y ANY usa EXISTS, sin duplicar árboles mediante joins. latestTrees mantiene inventory_id como filtro de participación del Tree (semántica Fase 6), mientras la bandeja de inspecciones filtra la campaña que contextualiza esa visita. Los Repositories contienen una sola implementación de filtros de inspección reutilizable por los futuros servicios de exportación/reportes.
 
 ## Interfaz y endpoints
 
-Blade organiza captura en contexto, dasonomía, condiciones físicas, fitosanitarias, fenología, fauna y observaciones. Checkboxes por órgano, Select2 en relaciones, navegación por secciones, tarjetas responsive y outputs «Calculado automáticamente». JavaScript envía las medidas al servidor y muestra su respuesta; no tiene fórmulas ni decide clases. El guardado recalcula siempre, aunque el cliente envíe DAP/área/volumen falsos. Las respuestas antiguas de previsualización se descartan.
+Blade organiza captura en contexto, dasonomía, condiciones físicas, fitosanitarias, fenología, fauna y observaciones. La presentación original de Fase 7 usaba checkboxes por órgano; desde el 04/11/2026 las condiciones usan los selectores múltiples en cascada descritos arriba. Se conservan Select2 en relaciones, navegación por secciones, tarjetas responsive y outputs «Calculado automáticamente». JavaScript envía las medidas al servidor y muestra su respuesta; no tiene fórmulas ni decide clases. El guardado recalcula siempre, aunque el cliente envíe DAP/área/volumen falsos. Las respuestas antiguas de previsualización se descartan.
 
 Rutas privadas: GET /inspections; GET/POST /trees/{tree}/inspections[/create]; GET /inspections/{inspection}; GET /inspections/{inspection}/edit; PUT /inspections/{inspection}; POST /dendrometry/preview. La previsualización de una corrección autoriza su inspección y reutiliza su regla original. No hay consultas directamente en Controllers o Blade.
 
-El formulario completo normaliza grupos de casillas omitidos como arreglos vacíos, para permitir desmarcarlas todas sin JavaScript. En llamadas directas al servicio, los campos omitidos conservan el valor anterior y NULL explícito limpia un dato opcional.
+El formulario completo normaliza las listas de selección omitidas como arreglos vacíos, de modo que retirar todas las condiciones limpia la selección al guardar. La cascada de órganos requiere JavaScript y muestra un aviso cuando está desactivado. En llamadas directas al servicio, los campos omitidos conservan el valor anterior y NULL explícito limpia un dato opcional.
 
 Los resultados ejecutados, inventario de archivos y deudas se registran en [phase-7.md](phase-7.md).
 

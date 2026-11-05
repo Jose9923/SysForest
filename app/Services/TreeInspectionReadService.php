@@ -52,6 +52,20 @@ class TreeInspectionReadService
             'filters' => $filters, 'options' => $options, 'canCreateInspection' => $this->access->allows($actor, 'inspections.create')];
     }
 
+    /** Catálogos para la primera visita, antes de que exista la identidad del árbol. */
+    public function registrationForm(User $actor): array
+    {
+        $organization = $this->access->organization($actor);
+        $this->access->authorize($actor, 'trees.create');
+        $this->access->authorize($actor, 'inspections.create');
+
+        return ['inspection' => null, 'firstInspection' => true,
+            'riskMethodology' => $this->riskMethods->initialize($organization->id),
+            'inspectionOptions' => ['conditionCategories' => $this->conditions->options()->groupBy('assessment_type'),
+                'faunaCategories' => $this->fauna->options()],
+            'selectedPhysicalConditionIds' => [], 'selectedPhytosanitaryConditionIds' => [], 'selectedFaunaCategoryIds' => []];
+    }
+
     public function form(User $actor, string $treeId, ?string $inspectionId = null): array
     {
         $organization = $this->access->organization($actor);

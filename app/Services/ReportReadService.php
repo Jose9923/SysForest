@@ -78,7 +78,8 @@ class ReportReadService
         return ['title' => $definition['title'], 'generatedAt' => now()->toIso8601String(),
             'isPublic' => $selection->isPublic(), 'scopeLabel' => $scopeLabel,
             'appliedFilters' => $this->applied($selection->values, $map['selectedOptions']),
-            'selectedOptions' => $map['selectedOptions'], 'filterConfig' => $this->filterConfig($map['mapConfig'])];
+            'selectedOptions' => $map['selectedOptions'], 'conditionFilterCategories' => $map['conditionFilterCategories'],
+            'filterConfig' => $this->filterConfig($map['mapConfig'])];
     }
 
     private function page(?User $actor, ReportSelectionDTO $selection, string $key, int $page): array

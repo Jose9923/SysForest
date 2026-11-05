@@ -89,9 +89,21 @@ Las medidas observadas pertenecen a la inspección. Las entradas decimales se tr
 
 El servidor aplica BCMath y conserva la versión de cálculo. DAP en metros = CAP en centímetros / 100 / PI; radio = DAP / 2; área basal = PI × radio². Los volúmenes usan área basal × altura correspondiente × factor de forma. No se multiplican automáticamente por número de fustes. Las clases de EXCEL_V1 corresponden a ceil(DAP_cm / 5) y ceil(altura_total_m / 10), sin redondear primero el valor presentado. Cambiar fórmulas, precisión o bandas requiere una versión nueva; no recalcular historia silenciosamente.
 
+### Presentación web de condiciones por órgano
+
+Desde el 04/11/2026, resources/views/inspections/condition-fields.blade.php presenta una cascada Select2: un selector múltiple de órganos o grupos por evaluación y un selector múltiple de condiciones por cada grupo elegido. Se reutiliza en el alta conjunta de árbol y primera inspección, nuevas visitas, correcciones y filtros. Mantiene las 23 condiciones físico-mecánicas y 42 fitosanitarias, IDs estables y los campos physical_condition_ids[] y phytosanitary_condition_ids[]. No requiere una migración ni cambia validación, transacciones o reglas forestales.
+
+El componente deduce los órganos iniciales de las condiciones guardadas o recuperadas con old(). En captura, el campo auxiliar `physical_condition_ids_categories[]` o `phytosanitary_condition_ids_categories[]` permite recuperar también un órgano abierto sin condiciones después de un error; no forma parte de los datos de dominio. Las referencias históricas inactivas se mantienen según las opciones autorizadas de la visita. En filterMode el selector de órganos carece de name: solamente las condiciones seleccionadas se envían como criterios. El componente crea una ViewErrorBag local vacía si no recibe errors, para funcionar en rutas públicas sin sesión y conservar los mensajes de validación en captura.
+
+public/js/condition-cascade.js controla visibilidad y selección; quitar un órgano limpia, deshabilita y oculta únicamente su selector de condiciones. El contenedor expone data-condition-cascade y data-condition-field. SysforestConditionCascade.setValues(contenedor, ids) restaura condiciones, deduce órganos y actualiza Select2 sin emitir cambios de negocio, para sincronizar filtros con URL y restablecerlos. public/css/condition-cascade.css adapta la presentación a formularios y filtros. Los assets se incluyen una sola vez desde Blade.
+
+La cascada requiere JavaScript; el aviso noscript lo informa. Fauna conserva sus casillas y contratos. La verificación de presentación y sus límites se documentan en docs/condition-cascade-20261104.md; las capturas anteriores de los manuales conservan el diseño de su fecha.
+
 ### Prioridad de gestión fitosanitaria
 
 PhytosanitaryRisk calcula una prioridad ordinal con condiciones y metodología de la organización. RiskEvaluationService registra resultado automático, metodología, origen, decisión y autor de confirmación. Los orígenes históricos, importación y móvil no atribuyen una confirmación profesional inexistente. El servidor rechaza contradicciones en capturas y correcciones ordinarias; las evaluaciones incompletas deben ser explícitas para que ausencia de captura no se interprete como salud.
+
+public/js/risk/inspection.js obtiene las condiciones fitosanitarias mediante FormData del formulario, incluyendo todos los selectores por órgano. Escucha los cambios de ambos tipos de condiciones y la retirada de órganos con condiciones, invalida inmediatamente la confirmación anterior y solicita actualizar la previsualización. No calcula reglas forestales en JavaScript.
 
 Web exige una decisión profesional y confirmación en cada alta o corrección; una decisión distinta de la sugerencia requiere observaciones. Las matrices institucionales se validan para evitar progresiones incoherentes. Publicar una metodología crea una versión y no cambia resultados históricos. El cálculo no modifica Tree.current_status ni crea mantenimientos.
 
@@ -224,6 +236,17 @@ Cambiar el archivo de configuración exige recompilar e instalar la aplicación.
 Cada cuenta local conserva el servidor con el que se preparó. Si una nueva compilación cambia la URL, la aplicación mantiene sus datos y pendientes, pero impide utilizar esa cuenta contra el nuevo servidor. La reautenticación conserva correo e institución de la cuenta seleccionada; no reasigna operaciones al usuario que introduce otra identidad.
 
 ## 8 Contrato general de la API móvil
+
+### Selección de condiciones · 0.3.1
+
+`HierarchicalConditionField` y `ConditionSelection` presentan múltiples órganos y múltiples condiciones por órgano. Conservan órganos vacíos durante reconstrucciones, referencias históricas y desconocidas, con retiro explícito. Los arrays de IDs, recibos, SQLite y sincronización no cambian. La web aplica el mismo flujo a captura y filtros con sus contratos UUID/código público y ANY/ALL. Evidencia de publicación y límites físicos: [condition-cascade-20261104.md](condition-cascade-20261104.md).
+
+### Ampliación de captura e inventarios · 0.3.0
+
+La creación web usa TreeRegistrationService para confirmar identidad y primera inspección de forma atómica, conservando la separación de modelos y la confirmación profesional del riesgo. Editar la identidad no crea visitas. La app incorpora inspection dentro del item tree.create; reconcilia el inspection_id del recibo sin encolar una segunda visita inicial.
+
+POST /api/mobile/v1/inventories crea campañas activas mediante operation_id y receipt durable (migración 000032). GET /api/mobile/v1/inventories/{inventory}/maintenances permite consultar órdenes autorizadas con paginación y filtros. El cliente conserva la selección deseada separada de la descarga efectiva y remapea IDs locales después de confirmar el inventario. SQLite v2 admite operaciones sin local_tree_id y conserva las filas previas. Consulte docs/mobile-api.md y docs/field-capture-20261104.md para contrato, evidencia y límites; no se añadieron suites permanentes.
+
 
 El prefijo versionado es /api/mobile/v1. Las rutas son privadas y distintas de la API pública o los endpoints JSON de la sesión web. La URL base de producción debe acordarse y publicarse con HTTPS antes de integrar un dispositivo físico. La dirección loopback del piloto solo representa el servicio local del equipo que la ejecuta.
 
@@ -379,6 +402,8 @@ family_id, species_id y common_name_id se combinan con AND. Una combinación inc
 Las claves de texto common_name y scientific_name permanecen por compatibilidad con enlaces previos y realizan coincidencia parcial. La interfaz muestra el criterio antiguo y permite retirarlo; seleccionar el catálogo sustituye el texto equivalente. q y code siguen siendo campos libres. Los caracteres %, _ y barra inversa se tratan literalmente; SQL usa parámetros enlazados. Vacío no filtra, mientras false, 0 y la cadena 0 conservan su significado explícito.
 
 ### Última inspección e interpretación de condiciones
+
+Los filtros de condiciones comparten la cascada de captura con filterMode: varios órganos y varias condiciones por órgano, con etiquetas de evaluación y grupo. Elegir solo un órgano no añade un criterio. Mapas, listados, análisis y reportes mantienen los arrays originales de condiciones; el mapa restaura los selectores mediante SysforestConditionCascade.setValues. Los catálogos de consulta incluyen referencias históricas inactivas. En público, los valores del componente son códigos públicos; el cambio de presentación no expone UUID ni amplía la proyección.
 
 La última visita se determina por inspection_date, created_at e id descendentes. TreeQueryRepository utiliza una subconsulta LATERAL que primero elige esa visita y después aplica fecha, medidas, clases, madurez y condiciones. Editar una visita antigua no cambia su created_at ni la convierte en la más reciente. La bandeja histórica de inspecciones filtra cada visita; la consulta de árboles usa la última visita pertinente.
 

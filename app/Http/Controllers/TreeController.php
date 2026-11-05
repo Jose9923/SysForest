@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateTreeRequest;
 use App\Http\Requests\TreeFilterRequest;
 use App\Services\TreeReadService;
 use App\Services\TreeService;
+use App\Services\TreeRegistrationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -29,11 +30,11 @@ class TreeController extends Controller
         return view('trees.form', $this->reader->form($request->user()));
     }
 
-    public function store(StoreTreeRequest $request): RedirectResponse
+    public function store(StoreTreeRequest $request, TreeRegistrationService $registration): RedirectResponse
     {
-        $tree = $this->trees->create($request->user(), $request->validated());
+        $tree = $registration->create($request->user(), $request->validated());
 
-        return redirect()->route('trees.show', $tree->id)->with('status', 'Individuo forestal creado.');
+        return redirect()->route('trees.show', $tree->id)->with('status', 'Árbol y primera inspección registrados. Las próximas visitas se agregan desde Inspecciones.');
     }
 
     public function show(Request $request, string $tree): View

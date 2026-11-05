@@ -21,7 +21,7 @@
                 headers: {'Content-Type': 'application/json', 'Accept': 'application/json',
                     'X-CSRF-TOKEN': form.querySelector('[name="_token"]').value},
                 body: JSON.stringify({inspection_id: box.dataset.inspectionId || null,
-                    phytosanitary_condition_ids: [...form.querySelectorAll('[name="phytosanitary_condition_ids[]"]:checked')].map(input => input.value)}),
+                    phytosanitary_condition_ids: new FormData(form).getAll('phytosanitary_condition_ids[]')}),
             });
             const data = await response.json();
             if (current !== sequence) return;
@@ -49,14 +49,20 @@
             result.textContent = error.message;
         }
     }
-    form.addEventListener('change', event => {
-        if (event.target.name === 'phytosanitary_condition_ids[]') {
+    const conditionsChanged = event => {
+        if (['physical_condition_ids[]', 'phytosanitary_condition_ids[]'].includes(event.target.name)) {
             ++sequence;
             confirmed.checked = false;
+            confirmed.disabled = true;
+            priority.setCustomValidity('Espera la sugerencia antes de confirmar.');
+            result.textContent = 'Condiciones modificadas. Actualizando sugerencia…';
             clearTimeout(timer); timer = setTimeout(preview, 250);
         }
         if (event.target.name === 'risk_priority') confirmed.checked = false;
-    });
+    };
+    // Select2 emite change mediante jQuery; este listener recibe también los cambios nativos.
+    if (window.jQuery) window.jQuery(form).on('change.inspectionRisk', conditionsChanged);
+    else form.addEventListener('change', conditionsChanged);
     box.querySelector('[data-risk-preview]').addEventListener('click', preview);
     preview();
 })();

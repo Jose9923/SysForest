@@ -1,15 +1,19 @@
 @extends('layouts.institutional')
 @section('title', $tree ? 'Editar árbol '.$tree->code : 'Registrar árbol')
 @include('forestry.assets', ['withMap' => true])
+@if (!$tree)
+    @include('inspections.assets', ['stylesOnly' => true])
+    @push('scripts')<script src="{{ asset('js/inspections.js') }}" defer></script>@endpush
+@endif
 @section('content')
-<p class="notice">El carbono aéreo se calcula al guardar las mediciones en la primera inspección. La identidad del árbol por sí sola no permite estimarlo.</p>
+@if (!$tree)<p class="notice">Registra el árbol y su primera inspección en este formulario. Ambos se guardan juntos. Las visitas posteriores se registran desde Inspecciones.</p>@else<p class="notice">Esta pantalla actualiza la identidad del árbol. Registra las mediciones y condiciones de una nueva visita desde Inspecciones.</p>@endif
     @php
         $selectedIds = old('inventory_ids', $selectedInventoryIds ?? []);
         $selectedIds = is_array($selectedIds) ? $selectedIds : [];
     @endphp
     <a class="back-link" href="{{ $tree ? route('trees.show', $tree->id) : route('trees.index') }}">← {{ $tree ? 'Volver a la ficha' : 'Volver a árboles' }}</a>
-    <div class="page-heading forestry-heading"><div><p class="eyebrow">{{ $organization->name }} · FICHA PERMANENTE</p><h1>{{ $tree ? 'Editar árbol '.$tree->code : 'Registrar árbol' }}</h1><p class="muted">La identidad del árbol se conserva entre campañas.</p></div></div>
-    <form class="forestry-form" method="POST" action="{{ $tree ? route('trees.update', $tree->id) : route('trees.store') }}">
+    <div class="page-heading forestry-heading"><div><p class="eyebrow">{{ $organization->name }} · FICHA PERMANENTE</p><h1>{{ $tree ? 'Editar árbol '.$tree->code : 'Registrar árbol' }}</h1><p class="muted">{{ $tree ? 'La identidad del árbol se conserva entre campañas.' : 'Identidad, ubicación y evaluación completa de la primera visita.' }}</p></div></div>
+    <form class="forestry-form{{ !$tree ? ' inspection-form' : '' }}" @if (!$tree) data-dendrometry-form data-preview-url="{{ route('dendrometry.preview') }}" data-inspection-id="" @endif method="POST" action="{{ $tree ? route('trees.update', $tree->id) : route('trees.store') }}">
         @csrf @if ($tree) @method('PUT')<input type="hidden" name="lock_version" value="{{ old('lock_version', $tree->lock_version) }}">@endif
         <div class="forestry-layout forestry-form-layout">
             <div class="forestry-stack">
@@ -58,6 +62,10 @@
                 @include('forestry.map', ['mapId' => 'tree-form-map', 'mapLabel' => $tree?->code ?? 'Árbol por registrar', 'mapLatitude' => $tree?->latitude, 'mapLongitude' => $tree?->longitude, 'mapFormat' => $tree?->coordinate_format, 'mapEditable' => !$tree, 'mapInputId' => $tree ? '' : 'create-coordinate-raw', 'mapDatumId' => $tree ? '' : 'create-datum'])
             </aside>
         </div>
-        <div class="forestry-submit"><div class="form-actions"><a class="button secondary" href="{{ $tree ? route('trees.show', $tree->id) : route('trees.index') }}">Cancelar</a><button class="button" @disabled(!$tree && $availableInventories->isEmpty())>{{ $tree ? 'Guardar cambios' : 'Registrar árbol' }}</button></div></div>
+        @if (!$tree)
+            <div class="page-heading forestry-heading"><div><p class="eyebrow">PRIMERA VISITA</p><h2>Inspección inicial del árbol</h2><p class="muted">Registra lo medido y observado. Las condiciones sin seleccionar no declaran una ausencia evaluada.</p></div></div>
+            @include('inspections.fields')
+        @endif
+        <div class="forestry-submit"><div class="form-actions"><a class="button secondary" href="{{ $tree ? route('trees.show', $tree->id) : route('trees.index') }}">Cancelar</a><button class="button" @disabled(!$tree && $availableInventories->isEmpty())>{{ $tree ? 'Guardar cambios' : 'Guardar árbol y primera inspección' }}</button></div></div>
     </form>
 @endsection

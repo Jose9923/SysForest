@@ -22,6 +22,7 @@ class PublicMapService
         private MapTreeRepository $trees,
         private MapOptionRepository $territories,
         private PublicReferenceRepository $references,
+        private ConditionFilterOptionsService $conditionOptions,
     ) {
     }
 
@@ -34,6 +35,7 @@ class PublicMapService
     {
         return ['initialFilters' => $filters->publicValues + ['render_mode' => 'clusters'],
             'filters' => $filters->publicValues, 'selectedOptions' => $this->references->selected($filters),
+            'conditionFilterCategories' => $this->conditionOptions->groups(public: true),
             'mapConfig' => $this->configuration()];
     }
 

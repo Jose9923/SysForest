@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Mobile\MobileReferenceController;
+use App\Http\Controllers\Mobile\MobileInventoryController;
+use App\Http\Controllers\Mobile\MobileMaintenanceController;
 use App\Http\Controllers\Mobile\MobileTreePhotoController;
 use App\Http\Controllers\Mobile\MobileTreeController;
 use App\Http\Controllers\Mobile\MobileInspectionController;
@@ -20,6 +22,7 @@ Route::prefix('mobile/v1')->name('mobile.')->middleware(MobileApiHeaders::class)
 
     Route::middleware(AuthenticateMobileJwt::class)->group(function (): void {
         Route::middleware('throttle:mobile.read')->group(function (): void {
+            Route::get('inventories/{inventory}/maintenances', [MobileMaintenanceController::class, 'index'])->whereUuid('inventory')->name('maintenances.index');
             Route::get('inventories/{inventory}/trees', [MobileTreeController::class, 'index'])->whereUuid('inventory')->name('trees.index');
             Route::get('trees/{tree}', [MobileTreeController::class, 'show'])->whereUuid('tree')->name('trees.show');
             Route::get('trees/{tree}/inspections', [MobileInspectionController::class, 'index'])->whereUuid('tree')->name('inspections.index');
@@ -32,6 +35,7 @@ Route::prefix('mobile/v1')->name('mobile.')->middleware(MobileApiHeaders::class)
             Route::get('parameterizations/{catalog}', [MobileReferenceController::class, 'catalog'])->name('catalog');
         });
         Route::middleware('throttle:mobile.write')->group(function (): void {
+            Route::post('inventories', [MobileInventoryController::class, 'store'])->name('inventories.store');
             Route::patch('trees/{tree}', [MobileTreeController::class, 'update'])->whereUuid('tree')->name('trees.update');
             Route::post('trees/{tree}/inspections', [MobileInspectionController::class, 'store'])->whereUuid('tree')->name('inspections.store');
             Route::patch('inspections/{inspection}', [MobileInspectionController::class, 'update'])->whereUuid('inspection')->name('inspections.update');

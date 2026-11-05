@@ -142,7 +142,7 @@ La bandeja permite buscar campañas por código o nombre y comprobar su estado. 
 
 ## 6 Registrar un árbol y su identidad botánica
 
-Antes de crear un individuo, búscalo por código, número anterior, ubicación y especie. El número legado ayuda a reconocerlo, pero no garantiza por sí mismo que no exista otro registro. La ficha de árbol reúne su identidad permanente; las medidas de una visita se registran después en una inspección.
+Antes de crear un individuo, búscalo por código, número anterior, ubicación y especie. El número legado ayuda a reconocerlo, pero no garantiza por sí mismo que no exista otro registro. La ficha reúne la identidad permanente del árbol. En el alta también completas la primera inspección en el mismo formulario; las visitas siguientes se registran desde Inspecciones.
 
 1. En Árboles, abre Registrar árbol y confirma la organización.
 2. Selecciona uno o varios Inventarios activos. El Código SYSFOREST se asignará al guardar.
@@ -150,7 +150,8 @@ Antes de crear un individuo, búscalo por código, número anterior, ubicación 
 4. En Especie · nombre común y científico, busca y selecciona la identificación del catálogo. Familia y Nombres comunes registrados se muestran a partir de esa especie.
 5. Selecciona emplazamiento, hábito de crecimiento y orígenes conocidos. Deja No informado o Sin identificar cuando falte información comprobada.
 6. Registra ubicación y captura GPS según el capítulo siguiente. Selecciona el estado inicial y, si corresponde, marca Árbol protegido o Árbol patrimonial.
-7. Pulsa Registrar árbol y revisa la ficha, su código, campañas e identidad botánica.
+7. Completa la Primera inspección: fecha, mediciones, condiciones físicas y fitosanitarias, fauna, fenología y observaciones; confirma la prioridad profesional. Si elegiste varias campañas, indica a cuál pertenece esta visita.
+8. Pulsa Guardar árbol y primera inspección y revisa la ficha. Ambos se guardan juntos; un error en la inspección no deja creado un árbol incompleto.
 
 ### Familia, especie y varios nombres comunes
 
@@ -201,20 +202,24 @@ Antes de editar o registrar una nueva visita, confirma el código, los nombres y
 
 ## 8 Registrar y corregir inspecciones
 
-Objetivo: conservar lo observado en una fecha sin sobrescribir visitas anteriores. Desde la ficha del árbol, abre Nueva inspección. Usa Corregir inspección cuando se trata de un error de transcripción de una visita existente; para una nueva visita, crea una inspección nueva.
+Objetivo: conservar lo observado en una fecha sin sobrescribir visitas anteriores. La primera inspección se completa al registrar el árbol. Para la segunda y posteriores, abre Inspecciones y utiliza Nueva inspección en la fila del árbol. La ficha también conserva ese acceso. Usa Corregir inspección cuando se trata de un error de transcripción de una visita existente; para una nueva visita, crea una inspección nueva.
 
 1. Revisa el código y la especie del árbol. Completa Fecha de inspección, que es obligatoria.
 2. Selecciona Inventario o campaña cuando la visita corresponda a una campaña vinculada. La opción Sin campaña formal permite una visita sin ese contexto.
 3. En Dasonomía registra CAP en centímetros; alturas total y comercial y ejes de copa X e Y en metros. Añade número de fustes y factor de forma cuando se conozcan.
 4. Revisa los valores calculados que devuelve SysForest. No reemplaces datos desconocidos por cero ni escribas derivados para forzar resultados.
-5. Marca las condiciones físicas y fitosanitarias observadas en cada órgano. Añade fenología, fauna y observaciones conocidas.
+5. En cada evaluación selecciona uno o varios Órganos o grupos; después elige una o varias condiciones observadas dentro de cada órgano. Añade fenología, fauna y observaciones conocidas.
 6. Confirma la prioridad según el apartado siguiente y guarda. Revisa la ficha y adjunta fotografías.
 
 El factor de forma admitido está entre 0,45 y 0,7. El número de fustes es un conteo observado: no multiplica automáticamente los volúmenes. DAP, áreas, volúmenes, clases y otros resultados se calculan en el servidor según los datos y reglas disponibles; si faltan entradas necesarias, un resultado puede permanecer vacío.
 
 ### Condiciones, fenología y fauna
 
-Las condiciones pueden ser múltiples. Una casilla sin marcar no acredita ausencia evaluada; registra solo lo observado y evita inferir diagnósticos. Las condiciones se conservan por órgano y por visita. En floración y fructificación puedes registrar fecha y descripción del desarrollo independientemente, sin escalas inventadas. Fauna admite varias categorías y una descripción general; una categoría no identifica por sí sola una especie animal.
+Desde el 4 de noviembre de 2026, la captura web usa dos pasos con selectores buscables. En Condiciones físico-mecánicas elige, por ejemplo, sistema radicular y ramas; aparecerá un selector de condiciones propio para cada uno. Puedes mantener ambos órganos abiertos y elegir varios hallazgos en cada uno. Repite el recorrido en Condiciones fitosanitarias, cuya selección es independiente. El mismo control aparece en la primera inspección, las visitas posteriores y las correcciones.
+
+Quitar un órgano limpia únicamente sus condiciones en el formulario, como indica la ayuda. Las selecciones de los otros órganos y de la otra evaluación se conservan. Al corregir una visita, los órganos de las condiciones guardadas ya aparecen abiertos; las referencias históricas inactivas se identifican. Si la validación devuelve un error, revisa los campos señalados: las selecciones se recuperan para corregirlas.
+
+Una condición sin seleccionar o un órgano abierto sin hallazgos no acreditan ausencia evaluada; registra solo lo observado y evita inferir diagnósticos. Las condiciones se conservan por órgano y por visita. En floración y fructificación puedes registrar fecha y descripción del desarrollo independientemente, sin escalas inventadas. Fauna mantiene sus casillas, admite varias categorías y una descripción general; una categoría no identifica por sí sola una especie animal.
 
 Resultado esperado: la visita queda en la línea de tiempo con fecha, autor, medidas y observaciones. Para corregirla, abre su ficha, utiliza Corregir inspección y pulsa Guardar corrección. Se conserva el historial. Corregir una visita antigua no la convierte en la última: la consulta actual toma primero la fecha de inspección y aplica un orden estable cuando hay empates. El estado general del árbol requiere su cambio explícito desde la ficha.
 
@@ -227,7 +232,7 @@ Esta prioridad ayuda a organizar la revisión del árbol a partir de las condici
 3. Selecciona la Prioridad profesional. Si difiere de la sugerencia, explica la razón en Observaciones generales.
 4. Marca Confirmo la prioridad profesional y guarda. En una corrección vuelve a revisar y confirmar la decisión de esa versión.
 
-Las condiciones contradictorias deben corregirse antes de guardar. Revisa los avisos de captura incompleta: la cobertura indica cuáles de las condiciones registradas participan en la metodología, no certifica que se hayan evaluado todos los órganos. Sin condiciones evaluables no aparece una sugerencia; para confirmar una prioridad profesional debes justificarla en Observaciones generales. Si cambió la metodología mientras tenías abierto el formulario, vuelve a consultar la sugerencia vigente.
+Si añades o retiras una condición, también al quitar su órgano, la confirmación se desmarca. Revisa la sugerencia actualizada y confirma otra vez. Las condiciones contradictorias deben corregirse antes de guardar. Revisa los avisos de captura incompleta: la cobertura indica cuáles de las condiciones registradas participan en la metodología, no certifica que se hayan evaluado todos los órganos. Sin condiciones evaluables no aparece una sugerencia; para confirmar una prioridad profesional debes justificarla en Observaciones generales. Si cambió la metodología mientras tenías abierto el formulario, vuelve a consultar la sugerencia vigente.
 
 | Resultado visible | Cómo interpretarlo |
 | --- | --- |
@@ -390,6 +395,8 @@ Los filtros de Nombre común y Nombre científico son selectores con búsqueda e
 Cualquiera de los nombres comunes de una misma especie encuentra los mismos árboles sin multiplicarlos. Si seleccionas nombre común, nombre científico y familia a la vez, todos deben coincidir: los criterios se combinan. Al cambiar una referencia superior pueden limpiarse las selecciones dependientes; revisa el formulario antes de aplicar. Los filtros permiten consultar referencias históricas inactivas, aunque ya no puedan elegirse para capturas nuevas.
 
 ### Última inspección y condiciones
+
+Los filtros de condiciones utilizan el mismo recorrido: elige uno o varios órganos o grupos y después una o varias condiciones de cada uno. Puedes combinar condiciones físicas y fitosanitarias. Elegir solo un órgano muestra sus opciones, pero no restringe los resultados. Al retirarlo se limpian únicamente sus condiciones; revisa los criterios antes de aplicar. Este control se comparte entre listados, mapas, gráficas y reportes, incluida la consulta pública disponible.
 
 En los filtros actuales de árboles, mapas y análisis, las condiciones y medidas corresponden a la última inspección pertinente del individuo. No se busca una visita antigua solo porque coincida. Cualquiera de las condiciones permite que coincida al menos una; Todas exige que estén en la misma inspección. No combina una condición de un año con otra de una visita diferente.
 
@@ -692,6 +699,12 @@ Antes de actualizar, revisa si tienes capturas, visitas o fotos pendientes de la
 Si al abrir la versión nueva aparece el aviso de otra plataforma, los datos locales siguen conservados. Para entrar a producción, abre el menú de cuenta, pulsa Cerrar sesión y vuelve a escribir tu correo y contraseña. Si hay varias instituciones, elige la que corresponda. Cerrar sesión conserva los pendientes de la cuenta anterior, pero no los traslada ni los envía al servidor nuevo.
 
 Los pendientes de la plataforma local solo pueden enviarse usando una configuración y un servidor compatibles con su cuenta original. Solicita asistencia para resolverlos; no vuelvas a crear esos árboles en producción como solución al aviso. La compilación del APK no acredita por sí sola una prueba en un teléfono físico o en iPhone.
+
+### Captura completa y selección por órgano · móvil 0.3.1
+
+El registro de un árbol incorpora su primera inspección completa. En físico-mecánico y fitosanitario elige varios órganos o grupos y, en cada uno, varias condiciones de su propio selector. Quitar un órgano limpia solo sus condiciones; al editar se recuperan las selecciones y referencias históricas. Las siguientes visitas se crean en la pestaña Inspecciones. Desde Inventarios puedes crear una campaña si tienes permiso, incluso sin conexión; al sincronizar se confirma primero la campaña y después sus árboles. En Inventarios o en el menú lateral, Mantenimientos permite consultar órdenes, estado, responsable y resultados, y conservar la copia descargada sin internet. La ejecución y el cierre de mantenimientos continúan en la web.
+
+[Instalar actualización Android 0.3.1](https://sysforest.varcor.tech/descargas/SysForest-Mobile-0.3.1.apk) encima de la anterior, sin borrar datos. Después pulsa Sincronizar ahora para actualizar capacidades y catálogos. Guardar no inicia envíos. Esta es una APK de validación; todavía falta recorrer las nuevas funciones en un teléfono físico.
 
 ### Trabajo móvil y revisión posterior
 

@@ -6,7 +6,7 @@ namespace App\Services;
 
 use App\Enums\InventoryStatus;
 use App\Enums\TreeStatus;
-use App\Models\Inventory;
+use App\Support\MobileInventoryProjection;
 use App\Models\User;
 use App\Repositories\MobileReferenceRepository;
 use App\Validation\MobileReferenceInput;
@@ -59,19 +59,13 @@ class MobileReferenceService
         $this->forestryAccess->authorize($actor, 'inventories.view');
         $page = $this->references->inventories($organization->id, $this->filters($input));
 
-        return ['data' => $page->getCollection()->map(fn (Inventory $inventory) => [
-            'id' => $inventory->id,
-            'organization_id' => $inventory->organization_id,
-            'code' => $inventory->code,
-            'name' => $inventory->name,
-            'description' => $inventory->description,
-            'starts_at' => $inventory->starts_at?->format('Y-m-d'),
-            'ends_at' => $inventory->ends_at?->format('Y-m-d'),
-            'status' => $inventory->status->value,
-            'active' => $inventory->active,
-            'updated_at' => $inventory->updated_at?->toIso8601String(),
-        ])->all(), 'meta' => $this->pagination($page) + [
+        return ['data' => $page->getCollection()->map(MobileInventoryProjection::make(...))->all(), 'meta' => $this->pagination($page) + [
             'organization_id' => $organization->id,
+            'supports_inventory_creation' => true,
+            'supports_maintenance_reads' => true,
+            'can_create_inventories' => $this->forestryAccess->allows($actor, 'inventories.create'),
+            'can_view_maintenances' => $this->forestryAccess->allows($actor, 'maintenances.view')
+                && $this->forestryAccess->allows($actor, 'trees.view'),
             'can_create_trees' => $this->forestryAccess->allows($actor, 'trees.create'),
             'can_create_inspections' => $this->forestryAccess->allows($actor, 'inspections.create'),
             'can_update_trees' => $this->forestryAccess->allows($actor, 'trees.update'),

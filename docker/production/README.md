@@ -23,6 +23,18 @@ docker compose --env-file /etc/sysforest/sysforest.env -f compose.production.yml
 
 `db-init` prepara únicamente la base operativa, PostGIS y roles separados, reutilizando los permisos SQL vigentes. No migra esquema ni inserta entidades. Al invocarlo con credenciales cambiadas actualiza las claves PostgreSQL: no debe tratarse como una comprobación de salud. El inicializador Mongo se ejecuta solo sobre un volumen nuevo y conserva el rol de aplicación limitado a `find` e `insert`.
 
+## Activación y rotación de SMTP
+
+La instalación de `sysforest.varcor.tech` utiliza Brevo desde el 4 de noviembre de 2026; el generador conserva su destino inicial sin entrega para futuras instalaciones. El estado y la evidencia están en [el informe de producción](../../docs/production-deployment-20261104.md#correo-transaccional-con-brevo).
+
+Configurar en el env privado `MAIL_MAILER=smtp`, `MAIL_SCHEME=smtp`, `MAIL_HOST=smtp-relay.brevo.com`, `MAIL_PORT=587`, `MAIL_FROM_ADDRESS=notificaciones@varcor.tech` y `MAIL_FROM_NAME=SYSFOREST`. Añadir `MAIL_USERNAME` y `MAIL_PASSWORD` únicamente por el canal privado. Usar el login SMTP y la clave SMTP de Brevo, no la contraseña de acceso al panel ni una clave API. Con `smtp` y puerto 587, el transporte negocia STARTTLS; mantener la verificación del certificado.
+
+**Eliminar `MAIL_URL` del entorno y de cualquier asignación Compose que lo inyecte.** No escribir `MAIL_URL=` ni `MAIL_URL=''`: el valor vacío sobreescribe el transporte en Laravel 13 y causa `Unsupported mail transport []`. `MAIL_ENCRYPTION=tls` no sustituye `MAIL_SCHEME` en esta configuración.
+
+Tras respaldar el env privado y validar con `config --quiet`, recrear `app`, `queue` y `scheduler` con `up -d --no-deps --force-recreate`; un simple `restart` conserva las variables anteriores. Comprobar en cada servicio la construcción de `EsmtpTransport`, host/puerto/remitente y presencia de credenciales mediante una salida filtrada, sin volcar secretos. Verificar salud HTTP/HTTPS y realizar un envío autorizado; comprobar por separado aceptación del transporte y recepción del destinatario.
+
+Las dos aplicaciones comparten el cupo de la cuenta gratuita de Brevo: 300 envíos por día en total. El archivo privado conserva la clave; revisar su vencimiento en el panel para planificar la rotación conjunta. No imprimir payloads de notificaciones ni enlaces de acción al diagnosticar colas o rechazos.
+
 ## Bibliotecas públicas y comprobación de entrega
 
 El paquete de despliegue debe conservar completo `public/vendor`, con sus licencias y metadatos: jQuery, Select2 y su traducción al español, Leaflet y sus cinco imágenes, Supercluster, Leaflet Heat y Chart.js. La dependencia PHP de Composer está en `vendor` de la raíz; excluirla del paquete no debe excluir también `public/vendor` por compartir el nombre de carpeta.

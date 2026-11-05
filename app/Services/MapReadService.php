@@ -22,6 +22,7 @@ class MapReadService
         private MapAccessService $access,
         private MapTreeRepository $trees,
         private MapOptionRepository $options,
+        private ConditionFilterOptionsService $conditionOptions,
     ) {
     }
 
@@ -39,7 +40,10 @@ class MapReadService
             $initial['scope'] = $scope->kind;
         }
 
+        $canInspect = $this->access->allows($actor, $scope, 'inspections.view');
+
         return ['initialFilters' => $initial, 'selectedOptions' => $this->options->selected($scope, $filters->trees->values()),
+            'conditionFilterCategories' => $canInspect ? $this->conditionOptions->groups() : collect(),
             'mapConfig' => [
                 'endpoints' => [
                     'trees' => route('maps.trees', absolute: false), 'clusters' => route('maps.clusters', absolute: false),
@@ -58,7 +62,7 @@ class MapReadService
                 'tree_statuses' => $enumOptions(TreeStatus::cases()),
                 'maintenance_statuses' => $enumOptions(MaintenanceStatus::cases()),
                 'maintenance_priorities' => $enumOptions(MaintenancePriority::cases()),
-                'can_inspect' => $this->access->allows($actor, $scope, 'inspections.view'),
+                'can_inspect' => $canInspect,
                 'can_filter_maintenance' => $this->access->allows($actor, $scope, 'maintenances.view'),
             ]];
     }

@@ -37,7 +37,22 @@ class RiskEvaluationService
             $tree = $this->trees->findForTenant($organization->id, $treeId);
             Gate::forUser($actor)->authorize('create', [TreeInspection::class, $tree]);
         }
-        $method = $this->risks->active($organization->id);
+        return $this->previewForOrganization($organization->id, $input);
+    }
+
+    /** Una sugerencia de la primera visita no crea árboles ni completa observaciones ausentes. */
+    public function previewRegistration(User $actor, array $input): array
+    {
+        $organization = $this->access->organization($actor);
+        $this->access->authorize($actor, 'trees.create');
+        $this->access->authorize($actor, 'inspections.create');
+
+        return $this->previewForOrganization($organization->id, $input);
+    }
+
+    private function previewForOrganization(string $organizationId, array $input): array
+    {
+        $method = $this->risks->active($organizationId);
         $config = $method?->configuration ?? $this->methods->template();
         $ids = $input['phytosanitary_condition_ids'] ?? [];
         $codes = $this->risks->selectedCodes($ids);

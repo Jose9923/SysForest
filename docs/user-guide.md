@@ -26,7 +26,7 @@ Si la sesión termina, se revoca o cambia la cuenta o institución en otra pesta
 1. En **Inventarios**, el administrador crea o selecciona la campaña institucional y revisa su estado. El código de una campaña existente es permanente.
 2. En **Árboles**, registra el individuo en una campaña que permita captura. Selecciona las referencias de catálogo y conserva como ausente cualquier dato desconocido.
 3. Informa coordenadas decimales o DMS y revisa la previsualización. Declara el datum únicamente cuando se conozca; la marca del GPS no lo determina.
-4. Desde la ficha del árbol, crea una **Inspección** con su fecha, medidas y observaciones. El árbol conserva la identidad y la inspección representa una visita histórica.
+4. En el mismo formulario de registro completa la **Primera inspección**: fecha, medidas, condiciones físico-mecánicas y fitosanitarias, fauna, fenología y observaciones. Confirma la prioridad profesional y pulsa **Guardar árbol y primera inspección**. Ambos registros se guardan juntos; si falla la inspección, tampoco queda creado el árbol. Para una segunda visita o posteriores entra en **Inspecciones** y selecciona el árbol existente.
 5. Adjunta fotografías desde **Evidencias** del árbol, inspección u orden correspondiente. Los originales son privados y se consultan mediante acceso autorizado.
 
 La **Fecha y hora de captura** de la ubicación se selecciona con calendario en **hora de Colombia (America/Bogota)**, tanto al registrar el árbol como al cambiar su ubicación. Déjala vacía si se desconoce. La ficha muestra esa misma hora local. El servidor conserva el instante en UTC; la plantilla Excel y las integraciones que envían `captured_at` mantienen su contrato ISO con zona. Cambiar otros datos sin modificar el calendario conserva la precisión histórica de la fecha.
@@ -34,6 +34,14 @@ La **Fecha y hora de captura** de la ubicación se selecciona con calendario en 
 Los cálculos derivados se realizan en el servidor. Una medida desconocida no equivale a cero. Consulta [dasonomía](dendrometry.md) para unidades, fórmulas y precisión, e [inspecciones](inspections.md) para condiciones y fenología.
 
 Un individuo puede participar en varias campañas sin duplicar su identidad. **Anular** se reserva para registros creados por error; muerto, talado o retirado son estados de un individuo real y conservan su historial. La restauración requiere permiso y conserva UUID, código y relaciones.
+
+## Elegir órganos y condiciones en la web
+
+En **Condiciones físico-mecánicas** y **Condiciones fitosanitarias**, elige primero uno o varios **Órganos o grupos**. Puedes buscar por nombre y mantener, por ejemplo, sistema radicular y ramas seleccionados a la vez. Cada órgano abre su propio selector de **Condiciones**, donde puedes elegir varios hallazgos. Las dos evaluaciones conservan selecciones independientes.
+
+Este recorrido se utiliza en la primera inspección del árbol, en visitas posteriores y al corregir una visita. Al abrir una corrección aparecen los órganos de las condiciones ya registradas; las referencias históricas inactivas se identifican y pueden conservarse según las reglas de la visita. Si la validación señala un error, se recuperan las selecciones para corregirlo.
+
+Quitar un órgano limpia únicamente sus condiciones en el formulario. Revisa ese cambio antes de guardar; los demás órganos y la otra evaluación conservan lo elegido. Una condición sin seleccionar o un órgano vacío no declaran una ausencia evaluada. Las casillas de fauna siguen en su apartado.
 
 ## Distinguir estado y condiciones del árbol
 
@@ -49,7 +57,7 @@ Desde la ficha abre **Cambiar estado del árbol**, selecciona el estado y explic
 
 ## Confirmar la prioridad fitosanitaria y consultar carbono
 
-Al crear o corregir una inspección web, registra las condiciones observadas y pulsa **Actualizar sugerencia** en Prioridad de Gestión Fitosanitaria. Lee los avisos, selecciona **Prioridad profesional**, explica en observaciones una diferencia con la sugerencia y marca la confirmación. Si no hay condiciones evaluables, no se sugiere Bajo; una decisión profesional exige justificación explícita. Corrige condiciones contradictorias antes de guardar.
+Al crear o corregir una inspección web, registra las condiciones observadas y pulsa **Actualizar sugerencia** en Prioridad de Gestión Fitosanitaria. Lee los avisos, selecciona **Prioridad profesional**, explica en observaciones una diferencia con la sugerencia y marca la confirmación. Si no hay condiciones evaluables, no se sugiere Bajo; una decisión profesional exige justificación explícita. Corrige condiciones contradictorias antes de guardar. Si añades o retiras una condición, incluso al quitar su órgano, la confirmación anterior se desmarca: revisa la sugerencia actualizada y confirma nuevamente.
 
 La cobertura indica cuántas condiciones capturadas participan en la metodología institucional, no que se hayan evaluado todos los órganos. Las capturas históricas, importadas o móviles no inventan una confirmación. Pendiente de confirmación, Inconsistente y Sin evaluar son distintos de una prioridad confirmada. La prioridad no cambia el estado del árbol ni genera una orden de mantenimiento.
 
@@ -87,6 +95,8 @@ La vista previa vence a las 24 horas por defecto. Puedes cancelar un lote pendie
 ## Consultar mapas y reportes
 
 El **Mapa general** privado y las bandejas comparten filtros. Los filtros de condición actual consultan la última inspección pertinente; seleccionar todas las condiciones exige que coincidan en esa misma visita. El mapa de calor representa densidad, no riesgo forestal. Los individuos sin coordenadas pueden aparecer en los conteos y listados sin generar un marcador.
+
+Para filtrar condiciones, elige varios órganos o grupos y después las condiciones concretas de cada uno, igual que en la captura. Elegir solo el órgano no añade un criterio. Puedes combinar condiciones físicas y fitosanitarias con **Cualquiera** o **Todas**; quitar un órgano limpia solo los criterios de ese órgano. Este control se comparte entre listados, mapas, análisis y reportes, con las opciones disponibles en cada alcance.
 
 En **Reportes**, aplica los filtros y el alcance antes de descargar CSV, Excel, GeoJSON o PDF. La vista del mapa y su límite de marcadores no recortan las exportaciones. Los límites predeterminados son 50.000 filas privadas, 10.000 públicas y 200 para PDF tabular. Si se supera un límite, restringe los filtros; no se entrega un archivo silenciosamente truncado. Una ficha PDF individual contiene el perfil permitido completo. Un archivo de consulta exportado no sustituye la plantilla oficial de importación.
 
