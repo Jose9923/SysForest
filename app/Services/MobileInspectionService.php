@@ -13,6 +13,7 @@ use App\Repositories\TreeInspectionRepository;
 use App\Repositories\TreeRepository;
 use App\Validation\DendrometryInput;
 use App\Validation\MobileMutationInput;
+use App\Validation\MobileRiskInput;
 use App\Validation\TreeInspectionInput;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Gate;
@@ -78,6 +79,9 @@ class MobileInspectionService
 
             return ['tree_id' => $tree->id, 'data' => $this->projection($inspection)];
         }, function (User $actor, string $organizationId) use ($treeId, $data): void {
+            if (MobileRiskInput::hasDecision($data['inspection'])) {
+                $this->access->authorize($actor, 'risk.view');
+            }
             Gate::forUser($actor)->authorize('create', [TreeInspection::class, $this->trees->findForTenant($organizationId, $treeId)]);
             Gate::forUser($actor)->authorize('view', $this->inventories->findForTenant($organizationId, $data['inventory_id']));
         });
@@ -87,11 +91,21 @@ class MobileInspectionService
     {
         $data = Validator::make($input, MobileMutationInput::inspectionUpdate(), MobileMutationInput::messages())->validate();
 
-        return $this->mutations->run($actor, 'inspection.update', $id, 'inspections.update', $data, function (User $actor) use ($id, $data): array {
+        return $this->mutations->run($actor, 'inspection.update', $id, 'inspections.update', $data, function (User $actor, string $organizationId) use ($id, $data): array {
+            if ($data['require_latest_inspection'] ?? false) {
+                $reference = $this->inspections->findForTenant($organizationId, $id);
+                $this->trees->findForTenant($organizationId, $reference->tree_id, true);
+                if ($this->inspections->latestForTree($organizationId, $reference->tree_id)?->id !== $reference->id) {
+                    throw new \App\Exceptions\StaleInspectionException();
+                }
+            }
             $inspection = $this->writes->update($actor, $id, ['lock_version' => $data['lock_version']] + $data['changes'], 'mobile');
 
             return ['tree_id' => $inspection->tree_id, 'data' => $this->projection($inspection)];
-        }, function (User $actor, string $organizationId) use ($id): void {
+        }, function (User $actor, string $organizationId) use ($id, $data): void {
+            if (MobileRiskInput::hasDecision($data['changes'])) {
+                $this->access->authorize($actor, 'risk.view');
+            }
             Gate::forUser($actor)->authorize('update', $this->inspections->findForTenant($organizationId, $id));
         });
     }

@@ -9,6 +9,7 @@ use App\Models\TreeInspection;
 use App\Models\User;
 use App\Repositories\RiskRepository;
 use App\Repositories\TreeInspectionRepository;
+use App\Validation\MobileRiskInput;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
@@ -79,7 +80,12 @@ class RiskEvaluationService
         if ($origin !== 'historical' && $result['errors'] !== []) {
             throw ValidationException::withMessages(['phytosanitary_condition_ids' => $result['errors']]);
         }
-        if ($origin === 'web') {
+        $mobileDecision = $origin === 'mobile' && MobileRiskInput::hasDecision($input);
+        if ($mobileDecision) {
+            abort_unless($actor !== null, 403);
+            $this->access->authorize($actor, 'risk.view');
+        }
+        if ($origin === 'web' || $mobileDecision) {
             if (($input['risk_methodology_id'] ?? null) !== $method->id) {
                 throw ValidationException::withMessages(['risk_priority' => 'La metodología cambió. Actualiza la sugerencia y confirma nuevamente.']);
             }

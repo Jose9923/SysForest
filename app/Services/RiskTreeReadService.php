@@ -60,6 +60,7 @@ class RiskTreeReadService
         return array_merge($view, ['organization' => $organization, 'riskSummary' => $riskSummary,
             'canManage' => $this->access->allows($actor, 'risk.manage'),
             'canCreateInspection' => $this->access->allows($actor, 'inspections.create'),
+            'canChangeRisk' => $this->access->allows($actor, 'inspections.update'),
             'canViewTree' => $this->access->allows($actor, 'trees.view'),
             'canViewInspection' => $this->access->allows($actor, 'inspections.view'),
             'canViewReport' => $canViewReport, 'canExport' => $canExport,

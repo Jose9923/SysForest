@@ -223,3 +223,48 @@ No se recrearon suites automatizadas retiradas por el usuario. No se verificó d
 - 20 comprobaciones de compatibilidad de sincronización anterior, incluida corrección del validador anidado para conservar el rango BIGINT de número de fustes.
 
 No se hizo una carrera multiproceso ni prueba de carga; la protección concurrente usa bloqueo institucional y unicidad PostgreSQL. Se conserva la limitación de validación desde teléfono físico y despliegue HTTPS externo. Los ejercicios fueron temporales, sin recrear suites automatizadas.
+
+## Confirmación de riesgo desde Android · 0.3.2
+
+La API añade preview autenticado y decisión explícita opcional con metodología vigente en las escrituras móviles. Conserva clientes anteriores sin decisión, recibos durables, autorización en replay y reglas institucionales. La app revisa visitas existentes mediante PATCH+lock_version y mantiene sincronización solo manual. Ver [contrato, comprobaciones y límites](mobile-risk-20261104.md).
+
+
+## Gestión del riesgo desde su propio módulo · 04/11/2026
+
+Ampliación implementada y verificada localmente; publicación pendiente al redactar este apartado. Conserva los contratos y antecedentes anteriores. La bandeja consulta `GET /api/mobile/v1/risk/trees` con JWT móvil y los filtros siguientes:
+
+| Parámetro | Contrato |
+| --- | --- |
+| `inventory_id` | UUID obligatorio de un inventario autorizado de la institución activa. |
+| `page` | Entero desde 1; predeterminado 1. |
+| `per_page` | Entero desde 1 hasta 100; predeterminado 100. |
+| `q` | Búsqueda opcional, máximo 200 caracteres. |
+| `risk_priority` | Opcional: `1`, `2`, `3`, `4`, `pending`, `inconsistent` o `unevaluated`. |
+
+No admite `scope`, organización, territorio ni filtros adicionales enviados por el cliente. El inventario filtra la participación del árbol; su evaluación proviene de la última visita global del árbol, aunque esa visita corresponda a otra campaña. La selección y el orden determinista se comparten con la bandeja web, sin ampliar TenantContext ni exigir `reports.view`.
+
+Responde `{data:[...],meta:{current_page,last_page,per_page,total,inventory_id,organization_id,generated_at}}`. Cada fila contiene `id`, `tree_id`, `tree_code`, `common_names`, `scientific_name`, `location_description`, `tree_status_label`, `inspection_id`, `inspection_version`, `inspection_date`, `risk_group`, `risk_priority_label`, `risk_suggestion_label`, `risk_confirmed_at` y `can_change_risk`. Los nombres comunes conservan la representación textual con separadores de línea. La proyección no incluye evidencia, carbono, auditoría ni identidad del confirmador. `inspection_id`/versión/fecha son nulos cuando no existe visita; eso no se interpreta como riesgo bajo y `can_change_risk` es falso.
+
+La consulta exige `inventories.view`, `trees.view`, `inspections.view` y `risk.view`, con acceso al inventario. La edición además exige `inspections.update`. El modo departamental conserva consulta y no ofrece edición. El manifiesto y meta de inventarios anuncian `supports_risk_inbox`; meta añade `can_view_risk_inbox`. Las capacidades orientan la interfaz y cada solicitud reautoriza el recurso.
+
+Al abrir **Cambiar riesgo**, consultar GET `/inspections/{id}` para obtener entradas y `lock_version` vigentes. El preview existente admite `require_latest_inspection: true` cuando se envía `inspection_id`; junto con `lock_version` rechaza una visita que ya no es la última. El campo se omite en previews de una visita nueva.
+
+Para confirmar desde el módulo, PATCH `/inspections/{id}` conserva la misma inspección y recibe:
+
+```json
+{
+  "operation_id": "UUID durable de esta operación",
+  "lock_version": 3,
+  "require_latest_inspection": true,
+  "changes": {
+    "risk_priority": 2,
+    "risk_confirmed": true,
+    "risk_methodology_id": "UUID de la metodología consultada",
+    "general_observations": "Justificación profesional y observaciones de la misma visita."
+  }
+}
+```
+
+Los textos UUID del ejemplo son marcadores y deben sustituirse por referencias reales. La guardia de última visita se comprueba bajo los mismos bloqueos de escritura. Una operación nueva con última visita o versión obsoleta recibe 409 `version_conflict`; metodología obsoleta o decisión inválida mantiene el rechazo 422 existente. Sin sugerencia o al cambiarla se exige justificación. Las contradicciones siguen bloqueando la confirmación. `require_latest_inspection` es opcional para compatibilidad: las correcciones históricas anteriores siguen admitidas sin esta guardia. Un replay ya confirmado devuelve su recibo original aunque después haya otra visita; no vuelve a aplicar la decisión ni cambia el UUID.
+
+La variante mayúscula/minúscula de un UUID válido identifica el mismo recurso, también con la guardia de última visita y al recuperar el recibo. HTTP de consulta sin JWT devuelve 401, filtros no admitidos 422 e inventario ajeno 404. Las pruebas locales aprobaron 60 comprobaciones de API, incluidas rutas HTTP reales, permisos, filtros, paginación, última visita, UUID y replay, con rollback íntegro y huellas idénticas de 16 tablas. Ver [alcance web, evidencia y límites](risk-module-20261104.md).

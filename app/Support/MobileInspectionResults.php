@@ -45,7 +45,9 @@ final class MobileInspectionResults
             'evaluated_condition_count' => $result['evaluated_condition_count'] ?? null,
             'explanation' => $evaluation === null ? null : RiskPresentation::explanation($evaluation),
             'requires_web_confirmation' => $evaluation?->priority === null,
-            'notice' => 'Prioridad fitosanitaria; no representa probabilidad de caída. La confirmación profesional se realiza en la plataforma web.'];
+            'requires_confirmation' => $evaluation?->priority === null,
+            'supports_mobile_confirmation' => true,
+            'notice' => 'Prioridad fitosanitaria; no representa probabilidad de caída. La confirmación profesional se realiza en una app compatible o en la plataforma web.'];
     }
 
     private static function carbon(TreeInspection $inspection): array

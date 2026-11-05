@@ -39,6 +39,9 @@ class MobileReferenceService
             'cache_refresh' => 'full_replacement_after_all_pages',
             'active_only' => true,
             'classification' => 'server_computed',
+            'supports_risk_inbox' => true,
+            'supports_risk_preview' => true,
+            'supports_risk_confirmation' => true,
         ], 'meta' => ['generated_at' => now()->toIso8601String()]];
     }
 
@@ -63,6 +66,16 @@ class MobileReferenceService
             'organization_id' => $organization->id,
             'supports_inventory_creation' => true,
             'supports_maintenance_reads' => true,
+            'supports_risk_inbox' => true,
+            'supports_risk_preview' => true,
+            'supports_risk_confirmation' => true,
+            'can_view_risk_inbox' => $this->forestryAccess->allows($actor, 'risk.view')
+                && $this->forestryAccess->allows($actor, 'trees.view')
+                && $this->forestryAccess->allows($actor, 'inspections.view')
+                && $this->forestryAccess->allows($actor, 'inventories.view'),
+            'can_confirm_risk' => $this->forestryAccess->allows($actor, 'risk.view')
+                && ($this->forestryAccess->allows($actor, 'inspections.create')
+                    || $this->forestryAccess->allows($actor, 'inspections.update')),
             'can_create_inventories' => $this->forestryAccess->allows($actor, 'inventories.create'),
             'can_view_maintenances' => $this->forestryAccess->allows($actor, 'maintenances.view')
                 && $this->forestryAccess->allows($actor, 'trees.view'),

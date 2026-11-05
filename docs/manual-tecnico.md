@@ -770,3 +770,7 @@ El procedimiento detallado de servicios, secretos, actualizaciones y límites es
 ## Bandeja y reporte detallado de riesgo · 04/11/2026
 
 `RiskTreeReadService` prepara `/risk` mediante `ReportReadService.forRiskInbox` y `ReportFilterService.forRiskInbox`. `ReportAccessService.authorizeRiskInbox` autoriza el alcance institucional exacto sin requerir permisos de reportes. El reporte privado `risk_trees` conserva autorización de consulta/exportación adicional. `RiskTreeRowProjector` y `RiskTreeSchema` limitan campos; `ExportReadRepository` reutiliza última visita y paginación/lotes con relaciones de riesgo, confirmador y campaña, sin cargar evidencia ni carbono para este perfil. El agregado `risk` permanece disponible. La configuración anterior está en `/risk/methodology`; el POST conserva validación y control de versión. Ver [informe de bandeja](risk-tree-inbox-20261104.md) para criterios, comprobaciones y límites.
+
+## Confirmación de riesgo desde Android · 0.3.2
+
+La API añade preview autenticado y decisión explícita opcional con metodología vigente en las escrituras móviles. Conserva clientes anteriores sin decisión, recibos durables, autorización en replay y reglas institucionales. La app revisa visitas existentes mediante PATCH+lock_version y mantiene sincronización solo manual. Ver [contrato, comprobaciones y límites](mobile-risk-20261104.md).

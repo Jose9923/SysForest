@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Mobile\MobileReferenceController;
+use App\Http\Controllers\Mobile\MobileRiskController;
 use App\Http\Controllers\Mobile\MobileInventoryController;
 use App\Http\Controllers\Mobile\MobileMaintenanceController;
 use App\Http\Controllers\Mobile\MobileTreePhotoController;
@@ -22,6 +23,8 @@ Route::prefix('mobile/v1')->name('mobile.')->middleware(MobileApiHeaders::class)
 
     Route::middleware(AuthenticateMobileJwt::class)->group(function (): void {
         Route::middleware('throttle:mobile.read')->group(function (): void {
+            Route::get('risk/trees', [MobileRiskController::class, 'index'])->name('risk.trees');
+            Route::post('risk/preview', [MobileRiskController::class, 'preview'])->name('risk.preview');
             Route::get('inventories/{inventory}/maintenances', [MobileMaintenanceController::class, 'index'])->whereUuid('inventory')->name('maintenances.index');
             Route::get('inventories/{inventory}/trees', [MobileTreeController::class, 'index'])->whereUuid('inventory')->name('trees.index');
             Route::get('trees/{tree}', [MobileTreeController::class, 'show'])->whereUuid('tree')->name('trees.show');

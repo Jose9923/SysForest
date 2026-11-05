@@ -11,6 +11,7 @@ use App\Repositories\InventoryRepository;
 use App\Repositories\MobileTreeSyncRepository;
 use App\Repositories\UserRepository;
 use App\Validation\TreeInput;
+use App\Validation\MobileRiskInput;
 use App\Validation\TreeInspectionInput;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -80,6 +81,12 @@ class MobileTreeSyncService
             $hash = hash('sha256', json_encode($this->canonical([
                 'tree' => $item['tree'] ?? null, 'inspection' => $item['inspection'] ?? null,
             ]), JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION));
+            if (is_array($item['inspection'] ?? null)) {
+                $this->access->authorize($actor, 'inspections.create');
+                if (MobileRiskInput::hasDecision($item['inspection'])) {
+                    $this->access->authorize($actor, 'risk.view');
+                }
+            }
             $receipt = $this->receipts->receipt($organization->id, $clientId);
             if ($receipt !== null) {
                 if ($receipt->created_by !== (int) $actor->id || $receipt->inventory_id !== $inventoryId
@@ -121,9 +128,6 @@ class MobileTreeSyncService
         $treeRules['captured_at'] = ['nullable', 'date', 'regex:/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})\z/D'];
         $inspectionRules = TreeInspectionInput::rules();
         $inspectionRules['inventory_tree_id'] = ['prohibited'];
-        foreach (['risk_priority', 'risk_confirmed', 'risk_methodology_id'] as $field) {
-            unset($inspectionRules[$field]);
-        }
         foreach ([$treeRules, $inspectionRules] as $index => $fieldRules) {
             foreach ($fieldRules as $field => $constraints) {
                 if (in_array('prohibited', $constraints, true)) {

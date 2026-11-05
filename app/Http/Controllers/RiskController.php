@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\StaleInspectionException;
+use App\Services\RiskDecisionService;
 use App\Services\RiskMethodologyService;
 use App\Services\RiskTreeReadService;
 use App\Services\RiskEvaluationService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
@@ -18,6 +22,25 @@ class RiskController extends Controller
     public function index(Request $request, RiskTreeReadService $service): View
     {
         return view('risk.index', $service->page($request->user(), $request->query()));
+    }
+
+    public function decision(Request $request, string $tree, RiskDecisionService $service): View
+    {
+        return view('risk.decision', $service->page($request->user(), $tree));
+    }
+
+    public function updateDecision(Request $request, string $tree, RiskDecisionService $service): RedirectResponse|Response
+    {
+        try {
+            $service->update($request->user(), $tree, $request->all());
+        } catch (StaleInspectionException|ConflictHttpException $exception) {
+            return response()->view('risk.decision-conflict', ['treeId' => $tree,
+                'conflictMessage' => $exception instanceof StaleInspectionException
+                    ? 'Esta inspección cambió desde que abriste la decisión. Revisa la versión actual antes de guardar.'
+                    : $exception->getMessage()], 409);
+        }
+
+        return redirect()->route('risk.index')->with('status', 'Riesgo actualizado sobre la última inspección. La decisión anterior se conserva en el historial.');
     }
 
     public function methodology(Request $request, RiskMethodologyService $service): View

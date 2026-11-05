@@ -60,3 +60,21 @@ a.risk-count:hover, a.risk-count:focus-visible {border-color: #26774e; box-shado
 .risk-report-panel .risk-pdf-limit {flex-basis: 100%; max-width: none; color: #52685a;}
 .risk-tree-table .row-actions {flex-wrap: wrap; min-width: 0;}
 .risk-tree-table .row-actions a {white-space: normal; overflow-wrap: anywhere;}
+
+.risk-decision {max-width: 1150px; margin-inline: auto;}
+.risk-decision .panel {padding: 24px; margin-block: 20px;}
+.risk-decision-context {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px;}
+.risk-decision-context > div {display: flex; flex-direction: column; gap: 7px;}
+.risk-decision-context strong {font-size: 1.1rem;}
+.risk-decision-suggestion details {margin-top: 14px; line-height: 1.6;}
+.risk-decision-suggestion summary {cursor: pointer; color: #246341;}
+.risk-decision-form fieldset {border: 0; padding: 0; margin: 0; min-width: 0;}
+.risk-decision-form legend {font-size: 1.25rem; font-weight: 700; margin-bottom: 18px;}
+.risk-decision-form .field {margin-bottom: 20px;}
+.risk-decision-form label {display: block; font-weight: 600; margin-bottom: 8px;}
+.risk-decision-form select, .risk-decision-form textarea {width: 100%;}
+.risk-decision-form select {max-width: 400px; min-height: 44px;}
+.risk-decision-form .risk-decision-confirm {display: flex; gap: 10px; align-items: flex-start; line-height: 1.5;}
+.risk-decision-confirm input {width: 20px; height: 20px; flex: 0 0 auto; margin-top: 2px;}
+.risk-decision .form-actions {display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px;}
+@media (max-width: 700px) {.risk-decision-context {grid-template-columns: minmax(0, 1fr);} .risk-decision .panel {padding: 18px;}}

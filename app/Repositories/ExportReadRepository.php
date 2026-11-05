@@ -175,6 +175,13 @@ class ExportReadRepository
             $row['_identity'] = rawurlencode($organizationCode).'/'.rawurlencode($tree->code);
             $row['_source'] = ['tree_id' => $tree->id, 'inspection_id' => $inspection?->id,
                 'evidence_ids' => $photos->pluck('id')->all(), 'maintenance_ids' => []];
+            if ($riskOnly) {
+                $risk = $inspection?->getRelation('riskEvaluation');
+                $row['_source']['inspection_version'] = $inspection?->lock_version;
+                $row['_source']['risk_group'] = $risk === null ? 'unevaluated'
+                    : (($risk->result['status'] ?? '') === 'inconsistent' ? 'inconsistent'
+                        : ($risk->priority === null ? 'pending' : (string) $risk->priority));
+            }
             $rows[] = $row;
         }
 

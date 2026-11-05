@@ -173,3 +173,15 @@ Los pendientes de la plataforma local solo pueden enviarse usando una configurac
 Abre **Gestión del riesgo → Árboles y riesgo** para consultar un árbol por fila con la prioridad de su última inspección. La prioridad profesional y la sugerencia automática están separadas; Sin evaluar o Captura insuficiente no significa Bajo. Puedes abrir su ficha, revisar la visita o iniciar una nueva inspección si tienes permiso.
 
 Usa la búsqueda, inventario, prioridad, estado y fechas para elegir el conjunto. **Más filtros** incluye nombres y selección de condiciones por órgano. Los contadores corresponden a los filtros aplicados. **Reporte de riesgo por árbol** permite ver el detalle y descargar Excel, CSV o PDF según permisos; la descarga incluye todas las filas filtradas, no solo la página actual. Para PDF, limita la selección a 200 filas. **Metodología institucional** conserva la configuración y sus versiones.
+
+## Continuidad de captura y riesgo profesional · Android 0.3.2+7
+
+Al cerrar un selector de órganos, condiciones o catálogos, el formulario conserva su posición y no vuelve al campo de texto anterior. El botón Aplicar permanece visible sobre el teclado; la búsqueda mantiene las selecciones y Cancelar no las aplica.
+
+En la primera inspección y las visitas posteriores, **Gestión del riesgo** permite consultar la sugerencia con internet, elegir Bajo, Moderado, Alto o Crítico y marcar la confirmación profesional. **Usar la prioridad sugerida** selecciona el nivel; la confirmación es una acción separada. Justifica en Observaciones generales si eliges otro nivel o no hay sugerencia. Cambiar condiciones físicas o fitosanitarias invalida la confirmación y exige consultar nuevamente. Una contradicción impide confirmar; la falta de condiciones no se interpreta como riesgo Bajo.
+
+Sin conexión puedes guardar una captura con el riesgo pendiente. Si habías empezado a elegir una prioridad sin confirmarla, usa **Dejar el riesgo pendiente** para continuar. La consulta no guarda la visita ni envía la cola. Guardar sigue siendo local y **Sincronizar ahora** sigue siendo el único inicio de los envíos.
+
+Para una visita ya descargada, abre su ficha o el listado de Inspecciones y pulsa **Revisar riesgo**. Revisa las observaciones, consulta, selecciona y confirma; se prepara una corrección de esa misma visita, conservando su historial. Ante un cambio de versión, consulta la visita vigente y revisa nuevamente la decisión. Una justificación local escrita o pendiente se conserva al actualizar; puedes elegir explícitamente usar las observaciones del servidor. Los envíos inciertos conservan su identificador y contenido.
+
+Después de instalar la actualización, pulsa **Sincronizar ahora** para actualizar las capacidades de tu cuenta. Consulta y confirmación requieren los permisos de riesgo y de captura o corrección correspondientes. Las versiones anteriores continúan enviando sus capturas sin decisión profesional.
