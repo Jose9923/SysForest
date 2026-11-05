@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MobileTreePhotoRequest;
+use App\Http\Requests\MobileInventoryPageRequest;
 use App\Services\MobileTreePhotoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,11 @@ class MobileTreePhotoController extends Controller
     public function index(Request $request, string $tree): JsonResponse
     {
         return response()->json($this->photos->index($request->user(), $tree, $request->query()));
+    }
+
+    public function inventory(MobileInventoryPageRequest $request, string $inventory): JsonResponse
+    {
+        return response()->json($this->photos->inventory($request->user(), $inventory, $request->validated()));
     }
 
     public function store(MobileTreePhotoRequest $request, string $tree): JsonResponse

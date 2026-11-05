@@ -9,9 +9,11 @@ use App\Models\Evidence;
 use App\Models\User;
 use App\Repositories\EvidenceRepository;
 use App\Repositories\EvidenceTypeRepository;
+use App\Repositories\InventoryRepository;
 use App\Repositories\MobilePhotoRepository;
 use App\Repositories\UserRepository;
 use App\Validation\MobileTreePhotoInput;
+use App\Validation\MobileInventoryPageInput;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -40,6 +42,8 @@ class MobileTreePhotoService
         private EvidenceAuditService $audit,
         private EvidenceReadService $reader,
         private EvidenceDeliveryService $delivery,
+        private ForestryAccessService $access,
+        private InventoryRepository $inventories,
     ) {
     }
 
@@ -127,10 +131,40 @@ class MobileTreePhotoService
         ]];
     }
 
+    /** Descarga paginada de metadatos privados; los originales se reautorizan al solicitar su contenido. */
+    public function inventory(User $actor, string $inventoryId, array $input): array
+    {
+        $data = MobileInventoryPageInput::validate($input);
+        $organization = $this->access->organization($actor);
+        $inventory = $this->inventories->findForTenant($organization->id, strtolower($inventoryId));
+        Gate::forUser($actor)->authorize('view', $inventory);
+        $this->access->authorize($actor, 'trees.view');
+        Gate::forUser($actor)->authorize('viewAny', Evidence::class);
+        $page = $this->evidences->paginateForInventory(
+            $organization->id,
+            $inventory->id,
+            (int) ($data['page'] ?? 1),
+            (int) ($data['per_page'] ?? 100),
+            $this->access->allows($actor, 'inspections.view'),
+            $this->access->allows($actor, 'maintenances.view'),
+        );
+
+        return ['data' => $page->getCollection()->map(fn (Evidence $photo): array => array_replace($this->photo($photo), [
+            'tree_id' => $photo->getAttribute('mobile_tree_id'),
+            'tree_inspection_id' => $photo->tree_inspection_id, 'maintenance_id' => $photo->maintenance_id,
+            'source_kind' => $photo->tree_id !== null ? 'tree' : ($photo->tree_inspection_id !== null ? 'inspection' : 'maintenance'),
+        ]))->all(), 'meta' => [
+            'organization_id' => $organization->id, 'inventory_id' => $inventory->id,
+            'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+            'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
+            'generated_at' => now()->toIso8601String(),
+        ]];
+    }
+
     public function content(User $actor, string $photoId): StreamedResponse
     {
         $photo = $this->reader->authorizeExisting($actor, strtolower($photoId));
-        abort_if($photo->tree_id === null || $photo->trashed(), 404);
+        abort_if($photo->trashed(), 404);
 
         return $this->delivery->response($actor, $photo->id);
     }

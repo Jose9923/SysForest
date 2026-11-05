@@ -77,8 +77,10 @@ class MobileReferenceRepository
     /** El alcance se recibe únicamente del contexto JWT revalidado por el servicio. */
     public function inventories(string $organizationId, array $filters): LengthAwarePaginator
     {
-        $query = Inventory::query()->where('organization_id', $organizationId)
-            ->where('active', true)->where('status', 'active');
+        $query = Inventory::query()->where('organization_id', $organizationId);
+        if (!($filters['include_all'] ?? false)) {
+            $query->where('active', true)->where('status', 'active');
+        }
         $this->search($query, $filters['q'] ?? '', 'name');
 
         return $query->orderBy('name')->orderBy('id')->paginate(

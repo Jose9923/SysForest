@@ -7,15 +7,20 @@ namespace App\Validation;
 /** Límites compartidos por el transporte HTTP y la lectura de referencias móviles. */
 final class MobileReferenceInput
 {
-    public static function rules(): array
+    public static function rules(bool $inventories = false): array
     {
-        return [
+        $rules = [
             'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:500'],
             'q' => ['nullable', 'string', 'max:150'],
             'family_id' => ['nullable', 'uuid'],
             'condition_category_id' => ['nullable', 'uuid'],
         ];
+        if ($inventories) {
+            $rules['include_all'] = ['sometimes', 'boolean'];
+        }
+
+        return $rules;
     }
 
     public static function messages(): array

@@ -39,6 +39,7 @@ class MobileReferenceService
             'cache_refresh' => 'full_replacement_after_all_pages',
             'active_only' => true,
             'classification' => 'server_computed',
+            'supports_inventory_history_reads' => true,
             'supports_risk_inbox' => true,
             'supports_risk_preview' => true,
             'supports_risk_confirmation' => true,
@@ -60,11 +61,26 @@ class MobileReferenceService
     {
         $organization = $this->forestryAccess->organization($actor);
         $this->forestryAccess->authorize($actor, 'inventories.view');
-        $page = $this->references->inventories($organization->id, $this->filters($input));
+        $page = $this->references->inventories($organization->id, $this->filters($input, true));
+        $canReadTrees = $this->forestryAccess->allows($actor, 'trees.view');
+        $canReadInspections = $canReadTrees && $this->forestryAccess->allows($actor, 'inspections.view');
+        $canReadPhotos = $canReadTrees && $this->forestryAccess->allows($actor, 'evidences.view');
+        $photoSources = $canReadPhotos ? ['tree'] : [];
+        if ($canReadPhotos && $canReadInspections) {
+            $photoSources[] = 'inspection';
+        }
+        if ($canReadPhotos && $this->forestryAccess->allows($actor, 'maintenances.view')) {
+            $photoSources[] = 'maintenance';
+        }
 
         return ['data' => $page->getCollection()->map(MobileInventoryProjection::make(...))->all(), 'meta' => $this->pagination($page) + [
             'organization_id' => $organization->id,
             'supports_inventory_creation' => true,
+            'supports_inventory_history_reads' => true,
+            'can_view_inventory_trees' => $canReadTrees,
+            'can_view_inventory_inspections' => $canReadInspections,
+            'can_view_inventory_photos' => $canReadPhotos,
+            'inventory_photo_sources' => $photoSources,
             'supports_maintenance_reads' => true,
             'supports_risk_inbox' => true,
             'supports_risk_preview' => true,
@@ -118,9 +134,9 @@ class MobileReferenceService
         return $data;
     }
 
-    private function filters(array $input): array
+    private function filters(array $input, bool $inventories = false): array
     {
-        $filters = Validator::make($input, MobileReferenceInput::rules(), MobileReferenceInput::messages())->validate();
+        $filters = Validator::make($input, MobileReferenceInput::rules($inventories), MobileReferenceInput::messages())->validate();
         $filters['q'] = trim($filters['q'] ?? '');
 
         return $filters;

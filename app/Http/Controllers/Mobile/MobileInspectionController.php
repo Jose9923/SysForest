@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\MobileInspectionStoreRequest;
 use App\Http\Requests\MobileInspectionUpdateRequest;
 use App\Http\Requests\MobilePageRequest;
+use App\Http\Requests\MobileInventoryPageRequest;
 use App\Services\MobileInspectionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,11 @@ class MobileInspectionController extends Controller
     public function index(MobilePageRequest $request, string $tree, MobileInspectionService $service): JsonResponse
     {
         return response()->json($service->index($request->user(), $tree, $request->validated()));
+    }
+
+    public function inventory(MobileInventoryPageRequest $request, string $inventory, MobileInspectionService $service): JsonResponse
+    {
+        return response()->json($service->inventory($request->user(), $inventory, $request->validated()));
     }
 
     public function show(Request $request, string $inspection, MobileInspectionService $service): JsonResponse

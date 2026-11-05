@@ -13,6 +13,7 @@ use App\Repositories\TreeInspectionRepository;
 use App\Repositories\TreeRepository;
 use App\Validation\DendrometryInput;
 use App\Validation\MobileMutationInput;
+use App\Validation\MobileInventoryPageInput;
 use App\Validation\MobileRiskInput;
 use App\Validation\TreeInspectionInput;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -49,6 +50,25 @@ class MobileInspectionService
             $this->projection($visit) + \App\Support\MobileInspectionResults::project($visit, $canViewRisk))->all(),
             'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
                 'per_page' => $page->perPage(), 'total' => $page->total()]];
+    }
+
+    public function inventory(User $actor, string $inventoryId, array $input = []): array
+    {
+        $data = MobileInventoryPageInput::validate($input);
+        $organization = $this->access->organization($actor);
+        $inventory = $this->inventories->findForTenant($organization->id, $inventoryId);
+        Gate::forUser($actor)->authorize('view', $inventory);
+        $this->access->authorize($actor, 'trees.view');
+        Gate::forUser($actor)->authorize('viewAny', TreeInspection::class);
+        $page = $this->reads->paginateForInventory($organization->id, $inventory->id, (int) ($data['per_page'] ?? 100), (int) ($data['page'] ?? 1));
+        $canViewRisk = $this->access->allows($actor, 'risk.view');
+
+        return ['data' => $page->getCollection()->map(fn (TreeInspection $visit): array =>
+            $this->projection($visit) + \App\Support\MobileInspectionResults::project($visit, $canViewRisk))->all(),
+            'meta' => ['inventory_id' => $inventory->id, 'organization_id' => $organization->id,
+                'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+                'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
+                'generated_at' => now()->toIso8601String()]];
     }
 
     public function show(User $actor, string $id): array

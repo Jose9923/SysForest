@@ -27,6 +27,8 @@ Route::prefix('mobile/v1')->name('mobile.')->middleware(MobileApiHeaders::class)
             Route::post('risk/preview', [MobileRiskController::class, 'preview'])->name('risk.preview');
             Route::get('inventories/{inventory}/maintenances', [MobileMaintenanceController::class, 'index'])->whereUuid('inventory')->name('maintenances.index');
             Route::get('inventories/{inventory}/trees', [MobileTreeController::class, 'index'])->whereUuid('inventory')->name('trees.index');
+            Route::get('inventories/{inventory}/inspections', [MobileInspectionController::class, 'inventory'])->whereUuid('inventory')->name('inventories.inspections');
+            Route::get('inventories/{inventory}/photos', [MobileTreePhotoController::class, 'inventory'])->whereUuid('inventory')->name('inventories.photos');
             Route::get('trees/{tree}', [MobileTreeController::class, 'show'])->whereUuid('tree')->name('trees.show');
             Route::get('trees/{tree}/inspections', [MobileInspectionController::class, 'index'])->whereUuid('tree')->name('inspections.index');
             Route::get('inspections/{inspection}', [MobileInspectionController::class, 'show'])->whereUuid('inspection')->name('inspections.show');

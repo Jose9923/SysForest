@@ -16,7 +16,7 @@ class MobileReferenceRequest extends FormRequest
 
     public function rules(): array
     {
-        return MobileReferenceInput::rules();
+        return MobileReferenceInput::rules($this->routeIs('mobile.inventories'));
     }
 
     public function messages(): array

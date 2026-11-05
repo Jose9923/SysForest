@@ -36,8 +36,10 @@ class MobileTreeService
 
         return ['inventory_id' => $inventory->id,
             'data' => $page->getCollection()->map($this->projection(...))->all(),
-            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
-                'per_page' => $page->perPage(), 'total' => $page->total()]];
+            'meta' => ['inventory_id' => $inventory->id, 'organization_id' => $organization->id,
+                'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+                'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
+                'generated_at' => now()->toIso8601String()]];
     }
 
     public function show(User $actor, string $id): array

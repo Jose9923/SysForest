@@ -9,6 +9,8 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -74,6 +76,52 @@ class EvidenceRepository
     public function paginateForOwner(string $organizationId, ?string $treeId, ?string $inspectionId, array $filters = [], ?string $maintenanceId = null): LengthAwarePaginator
     {
         return $this->ownerQuery($organizationId, $treeId, $inspectionId, $filters, $maintenanceId)->paginate(20)->withQueryString();
+    }
+
+    /** Todas las fotos vigentes de los árboles participantes, sin limitar sus visitas a esta campaña. */
+    public function paginateForInventory(
+        string $organizationId,
+        string $inventoryId,
+        int $page = 1,
+        int $perPage = 100,
+        bool $includeInspections = false,
+        bool $includeMaintenances = false,
+    ): LengthAwarePaginator {
+        $this->requireUuid($organizationId);
+        $this->requireUuid($inventoryId);
+        if ($page < 1 || $page > 1000000 || $perPage < 1 || $perPage > 100) {
+            throw new InvalidArgumentException('La página debe ser válida y contener entre 1 y 100 fotografías.');
+        }
+
+        // Las capacidades se resuelven una vez en el Service; cada rama reproduce el alcance de su propietario.
+        return Evidence::query()->where('evidences.organization_id', $organizationId)
+            ->leftJoin('tree_inspections as photo_inspection', fn (JoinClause $join) => $join
+                ->on('photo_inspection.id', '=', 'evidences.tree_inspection_id')
+                ->on('photo_inspection.organization_id', '=', 'evidences.organization_id'))
+            ->leftJoin('maintenances as photo_maintenance', fn (JoinClause $join) => $join
+                ->on('photo_maintenance.id', '=', 'evidences.maintenance_id')
+                ->on('photo_maintenance.organization_id', '=', 'evidences.organization_id'))
+            ->join('trees as photo_tree', fn (JoinClause $join) => $join
+                ->on('photo_tree.id', '=', DB::raw('COALESCE(evidences.tree_id, photo_inspection.tree_id, photo_maintenance.tree_id)'))
+                ->on('photo_tree.organization_id', '=', 'evidences.organization_id'))
+            ->whereNull('photo_tree.deleted_at')
+            ->where(function (Builder $owners) use ($includeInspections, $includeMaintenances): void {
+                $owners->whereNotNull('evidences.tree_id');
+                if ($includeInspections) {
+                    $owners->orWhereNotNull('evidences.tree_inspection_id');
+                }
+                if ($includeMaintenances) {
+                    $owners->orWhere(fn (Builder $maintenance) => $maintenance
+                        ->whereNotNull('evidences.maintenance_id')->whereNull('photo_maintenance.deleted_at'));
+                }
+            })
+            ->whereExists(fn (QueryBuilder $participation) => $participation->selectRaw('1')->from('inventory_trees as photo_participation')
+                ->whereColumn('photo_participation.organization_id', 'evidences.organization_id')
+                ->whereColumn('photo_participation.tree_id', 'photo_tree.id')
+                ->where('photo_participation.inventory_id', $inventoryId))
+            ->select('evidences.*')->addSelect('photo_tree.id as mobile_tree_id')
+            ->orderByDesc('evidences.created_at')->orderByDesc('evidences.id')
+            ->paginate($perPage, ['*'], 'page', $page);
     }
 
     /** La ficha muestra una muestra acotada y el total; la página solicitada no altera este resumen. */

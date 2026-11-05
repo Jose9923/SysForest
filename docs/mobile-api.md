@@ -268,3 +268,54 @@ Para confirmar desde el módulo, PATCH `/inspections/{id}` conserva la misma ins
 Los textos UUID del ejemplo son marcadores y deben sustituirse por referencias reales. La guardia de última visita se comprueba bajo los mismos bloqueos de escritura. Una operación nueva con última visita o versión obsoleta recibe 409 `version_conflict`; metodología obsoleta o decisión inválida mantiene el rechazo 422 existente. Sin sugerencia o al cambiarla se exige justificación. Las contradicciones siguen bloqueando la confirmación. `require_latest_inspection` es opcional para compatibilidad: las correcciones históricas anteriores siguen admitidas sin esta guardia. Un replay ya confirmado devuelve su recibo original aunque después haya otra visita; no vuelve a aplicar la decisión ni cambia el UUID.
 
 La variante mayúscula/minúscula de un UUID válido identifica el mismo recurso, también con la guardia de última visita y al recuperar el recibo. HTTP de consulta sin JWT devuelve 401, filtros no admitidos 422 e inventario ajeno 404. Las pruebas locales aprobaron 60 comprobaciones de API, incluidas rutas HTTP reales, permisos, filtros, paginación, última visita, UUID y replay, con rollback íntegro y huellas idénticas de 16 tablas. Ver [alcance web, evidencia y límites](risk-module-20261104.md).
+
+
+## Descarga completa por inventario · 05/11/2026
+
+Ampliación activada y verificada por HTTPS el 05/11/2026; la publicación de la APK corresponde al paso posterior de la entrega. Permite que una sincronización manual descargue los inventarios autorizados de la institución activa, sus árboles, todas las visitas de esos árboles y sus fotografías autorizadas, sin consultar cada ficha individual. Conserva las rutas anteriores y no modifica permisos ni reglas de captura.
+
+### Inventarios y capacidades
+
+`GET /api/mobile/v1/inventories?include_all=1` incluye campañas activas, cerradas, archivadas y en borrador, también con `active=false`, siempre dentro del tenant autorizado. El parámetro booleano es opcional; omitido o falso mantiene el comportamiento anterior de campañas activas y disponibles. La paginación existente y búsqueda `q` se conservan. Leer una campaña cerrada no concede permiso de captura: cada escritura mantiene sus validaciones y políticas actuales.
+
+El manifiesto de parametrizaciones (`data`) y la lista de inventarios (`meta`) anuncian `supports_inventory_history_reads: true`. La lista añade estas capacidades calculadas con los permisos vigentes:
+
+| Campo en `meta` | Significado |
+| --- | --- |
+| `can_view_inventory_trees` | Puede consultar los árboles del inventario. |
+| `can_view_inventory_inspections` | Puede consultar también sus visitas completas. |
+| `can_view_inventory_photos` | Puede consultar fotografías privadas del árbol. |
+| `inventory_photo_sources` | Orígenes autorizados: `tree`, y opcionalmente `inspection` y `maintenance`. Lista vacía si no puede consultar fotografías. |
+
+Las capacidades orientan al cliente, pero no sustituyen la autorización de cada petición. Si el servidor no anuncia la nueva capacidad, el cliente no debe declarar descargado el historial completo usando solamente el resumen de árboles.
+
+`GET /inventories/{inventory}/trees` ya devuelve la misma proyección completa que `GET /trees/{tree}`: campos de identidad, ubicación, estado, versión y participaciones. Añade a su `meta` `organization_id`, `inventory_id`, `has_more` y `generated_at`, conservando los campos existentes y el `inventory_id` superior. No es necesario hacer una petición adicional por árbol para completar su ficha.
+
+### Visitas y fotos por páginas
+
+Las dos rutas nuevas son privadas, requieren JWT móvil y aceptan exclusivamente `page` (1–1.000.000) y `per_page` (1–100, predeterminado 100):
+
+| Ruta GET relativa a `/api/mobile/v1` | Contenido |
+| --- | --- |
+| `/inventories/{inventory}/inspections` | Todas las visitas vigentes de los árboles participantes, aunque pertenezcan a otra campaña o no tengan campaña asociada. |
+| `/inventories/{inventory}/photos` | Fotografías vigentes autorizadas del árbol, sus visitas históricas y sus mantenimientos. |
+
+Ambas responden `{data:[...],meta:{organization_id,inventory_id,current_page,last_page,per_page,total,has_more,generated_at}}`. El ámbito procede de la sesión y del inventario autorizado, no de filtros aportados por el cliente. `scope`, `organization_id`, `tree_id` y otros filtros adicionales reciben 422; inventario ajeno o inexistente, 404; falta de autenticación, 401. Se excluyen árboles anulados. El orden de visitas es `inspection_date DESC, created_at DESC, id DESC`; el de fotos, `created_at DESC, id DESC`.
+
+La consulta de visitas exige `inventories.view`, `trees.view` e `inspections.view`. Cada fila conserva exactamente la proyección de la ruta histórica por árbol, con mediciones, observaciones, fauna, condiciones, fechas, `lock_version`, `inventory_tree_id`, `inventory_id`, riesgo y carbono. `inventory_id` sigue identificando la campaña de esa visita; no se sustituye por la campaña usada para descargar. Las selecciones históricas de catálogos inactivos se conservan. Sin `risk.view`, `risk` es `null`. No se recalcula ni se confirma riesgo al descargar. El historial comprende todas las visitas y sus versiones vigentes; las revisiones internas de auditoría no se serializan.
+
+### Fotografías privadas y contenido
+
+La consulta base exige `inventories.view`, `trees.view` y `evidences.view`. Incluye fotos de visitas solo con `inspections.view` y fotos de mantenimientos solo con `maintenances.view`. Si falta uno de esos permisos, se omite su rama y se conservan las fotos de los demás propietarios autorizados. No se incluyen evidencias ni mantenimientos anulados. La marca de publicación no restringe esta lectura privada: una foto publicada también puede descargarse mediante su ruta privada autorizada.
+
+La proyección bulk conserva `id`, `tree_id`, `evidence_type_id`, `caption`, `notes`, `captured_at`, `mime_type`, `size_bytes`, `width`, `height`, `checksum_sha256`, `created_at`, `uploaded_by` y `content_url`. Añade `tree_inspection_id`, `maintenance_id` (nulos cuando no aplican) y `source_kind` (`tree`, `inspection` o `maintenance`). En esta colección, `tree_id` siempre es el árbol efectivo del propietario, para vincular la foto localmente. No se exponen rutas de almacenamiento, disco ni metadata interna.
+
+`content_url` conserva `/api/mobile/v1/photos/{id}/content`. Esta ruta admite los tres propietarios y vuelve a autorizar el propietario actual mediante las políticas y la entrega de evidencias existentes; el contenido sigue siendo privado y `no-store`. Un permiso revocado después de listar puede impedir su descarga. La galería histórica `GET /trees/{tree}/photos` conserva su proyección y sus fotos de propietario directo; las cargas de fotos no cambian.
+
+### Persistencia del cliente y límites
+
+Descargar todas las páginas de cada colección y comprobar su institución e inventario antes de reemplazar su copia local. Solo después de terminar las colecciones y los bytes de todas las fotos autorizadas puede anunciarse una descarga completa. Cada árbol, visita y foto conserva su ID estable; un árbol compartido entre campañas no crea nuevas identidades. Ante fallo o cancelación, conservar los datos ya confirmados y no declarar completo un lote parcial. Las capacidades deben renovarse en cada sincronización manual.
+
+No existe token de snapshot ni garantía de instantánea entre páginas. Una modificación concurrente puede exigir repetir la descarga; este contrato no añade sincronización en segundo plano. Tampoco amplía acceso a otras instituciones ni permite suplir un permiso faltante mediante la caché. Se conserva el límite vigente de 90 solicitudes de lectura por minuto y usuario, compartido por páginas y contenido de fotos. Ante 429, respetar la espera indicada por el servidor y permitir reintento/cancelación sin declarar terminado el lote.
+
+Ver [evidencia del backend y límites de verificación](inventory-history-20261105.md).
