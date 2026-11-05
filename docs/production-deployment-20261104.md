@@ -142,3 +142,11 @@ Publicado el acceso Cambiar riesgo dentro de Gestión del riesgo web y la bandej
 Respaldo `/opt/sysforest/backups/risk-module-20261105T041104Z`, datos online `/opt/sysforest/backups/risk-module-20261105T041104Z/data/backup-20261105T041116Z-8xysun` y tag anterior `sysforest-app:before-risk-module-20261105t041104z`. Se preservan fuente e imagen anterior y se verificaron sus huellas. El respaldo online no representa una instantánea global coordinada.
 
 Android [0.3.3+8](https://sysforest.varcor.tech/descargas/SysForest-Mobile-0.3.3.apk) publicado con misma firma y SHA-256 `fdec923621363fbaeeaba6c5adb3cab24cb9795f3cf83486930fff51c6fd7148`. Actualizar encima, luego Sincronizar ahora para referencias y Actualizar bandeja dentro de Gestión del riesgo. Elegir árbol→Cambiar riesgo guarda localmente; el envío permanece manual y conserva la misma visita/historial. Se verificaron widgets, SQLite, API, compilación y descarga; prueba física pendiente. Alcance, evidencia y límites: [informe del módulo](risk-module-20261104.md).
+
+## Mensaje de prioridad sin sugerencia · 04/11/2026
+
+Publicado un ajuste de `resources/views/risk/decision.blade.php`: distingue la información insuficiente, que admite decisión justificada, de condiciones incompatibles, que requieren revisar la misma inspección mediante un enlace directo. Las reglas de confirmación permanecen vigentes.
+
+Imagen `sha256:aaf4627f98cc4a8cad87ebb7f9b8163484c48bef3776bfd39edb30768f3842fe`; siete servicios saludables, diecisiete archivos restantes de ejecución, treinta y siete recursos/descargas y entorno privado intactos. Respaldo del archivo y tag de imagen anterior en `/opt/sysforest/backups/risk-label-20261105T043135Z`, tag `sysforest-app:before-risk-label-20261105t043135z`. Respaldo de datos previo conservado en `/opt/sysforest/backups/risk-module-20261105T041104Z/data/backup-20261105T041116Z-8xysun`; no fue necesario modificar el esquema ni los registros.
+
+Veinte comprobaciones de render, revisión CUA y HTTPS autenticado de caso incompatible y válido aprobados; catorce huellas de tablas idénticas y sesión de verificación cerrada. No hubo nueva APK, migraciones ni seeders. Detalles: [informe de Gestión del riesgo](risk-module-20261104.md).
