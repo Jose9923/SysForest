@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\MobileTreePhotoRequest;
-use App\Http\Requests\MobileInventoryPageRequest;
-use App\Services\MobileTreePhotoService;
+use App\Http\Requests\Mobile\MobileTreePhotoRequest;
+use App\Http\Requests\Mobile\MobileInventoryPageRequest;
+use App\Services\Mobile\MobileTreePhotoService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;

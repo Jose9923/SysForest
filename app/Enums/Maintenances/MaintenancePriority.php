@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Enums\Maintenances;
+
+enum MaintenancePriority: string
+{
+    case Low = 'low';
+    case Normal = 'normal';
+    case High = 'high';
+    case Urgent = 'urgent';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Low => 'Baja', self::Normal => 'Normal', self::High => 'Alta', self::Urgent => 'Urgente',
+        };
+    }
+}

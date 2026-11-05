@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Services\RestrepoOrnatoSeedService;
+use App\Services\Imports\RestrepoOrnatoSeedService;
 use Illuminate\Database\Seeder;
 
 /** Preparación explícita del territorio, institución, campaña y catálogos; no crea árboles. */

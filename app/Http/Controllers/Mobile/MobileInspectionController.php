@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\MobileInspectionStoreRequest;
-use App\Http\Requests\MobileInspectionUpdateRequest;
-use App\Http\Requests\MobilePageRequest;
-use App\Http\Requests\MobileInventoryPageRequest;
-use App\Services\MobileInspectionService;
+use App\Http\Requests\Mobile\MobileInspectionStoreRequest;
+use App\Http\Requests\Mobile\MobileInspectionUpdateRequest;
+use App\Http\Requests\Mobile\MobilePageRequest;
+use App\Http\Requests\Mobile\MobileInventoryPageRequest;
+use App\Services\Mobile\MobileInspectionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

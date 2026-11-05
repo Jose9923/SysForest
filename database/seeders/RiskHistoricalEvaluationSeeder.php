@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Services\HistoricalRiskService;
+use App\Services\Risk\HistoricalRiskService;
 use Illuminate\Database\Seeder;
 
 /** Repetir agrega únicamente visitas aún no evaluadas, sin reescribir decisiones. */

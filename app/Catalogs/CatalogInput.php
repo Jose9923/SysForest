@@ -16,6 +16,6 @@ final class CatalogInput
             'active' => ['required', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0', 'max:2147483647'],
             'organization_id' => ['prohibited'],
-        ] + \App\Validation\VersionInput::rules($updating);
+        ] + \App\Validation\Shared\VersionInput::rules($updating);
     }
 }

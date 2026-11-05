@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\PublicPortal;
+
+use App\Services\PublicPortal\PublicTreeService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+
+class PublicTreeController extends Controller
+{
+    public function __construct(private PublicTreeService $trees)
+    {
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        return response()->json($this->trees->listing($request->query())['trees']);
+    }
+
+    public function indicators(Request $request): JsonResponse
+    {
+        return response()->json($this->trees->indicators($request->query()));
+    }
+
+    public function show(Request $request, string $organization, string $tree): JsonResponse
+    {
+        $data = $this->trees->detail($organization, $tree, $request->query());
+
+        return response()->json(['data' => $data['tree'], 'inspections' => $data['inspectionHistory'],
+            'maintenances' => $data['maintenanceHistory'], 'evidences' => $data['gallery']]);
+    }
+}

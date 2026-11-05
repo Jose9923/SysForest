@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Catalogs;
 
-use App\Models\CatalogEntry;
+use App\Models\Catalogs\CatalogEntry;
 
 final readonly class CatalogDefinition
 {

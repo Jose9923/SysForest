@@ -2,9 +2,9 @@
 @section('title', 'Registro modificado')
 @section('content')
     @php
-        $maintenanceConflict = ($exception ?? null) instanceof \App\Exceptions\StaleMaintenanceException;
-        $inspectionConflict = ($exception ?? null) instanceof \App\Exceptions\StaleInspectionException;
-        $evidenceConflict = ($exception ?? null) instanceof \App\Exceptions\StaleEvidenceException;
+        $maintenanceConflict = ($exception ?? null) instanceof \App\Exceptions\Maintenances\StaleMaintenanceException;
+        $inspectionConflict = ($exception ?? null) instanceof \App\Exceptions\Inspections\StaleInspectionException;
+        $evidenceConflict = ($exception ?? null) instanceof \App\Exceptions\Evidences\StaleEvidenceException;
     @endphp
     <section class="panel access-panel"><span class="large-symbol" aria-hidden="true">↻</span><p class="eyebrow">CONFLICTO DE ACTUALIZACIÓN</p><h1>{{ $maintenanceConflict ? 'El mantenimiento cambió' : ($evidenceConflict ? 'La evidencia cambió' : ($inspectionConflict ? 'La inspección cambió' : 'El registro cambió')) }}</h1>
         <p>{{ $maintenanceConflict ? 'El mantenimiento fue modificado por otro usuario.' : ($evidenceConflict ? 'La evidencia fue modificada por otro usuario.' : ($inspectionConflict ? 'Esta inspección fue modificada por otro usuario. Actualiza la ficha antes de continuar.' : 'Este registro fue modificado por otro usuario. Actualiza la ficha antes de continuar.')) }}</p>

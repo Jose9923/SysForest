@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth;
 
-use App\Models\AuthSession;
+use App\Models\Auth\AuthSession;
 use App\Models\User;
 use JsonSerializable;
 

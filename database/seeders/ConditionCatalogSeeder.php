@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\ConditionCatalogKind;
-use App\Repositories\ConditionCatalogRepository;
+use App\Enums\Conditions\ConditionCatalogKind;
+use App\Repositories\Conditions\ConditionCatalogRepository;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 

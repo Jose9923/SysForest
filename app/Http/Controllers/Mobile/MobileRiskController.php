@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\MobileRiskPreviewRequest;
-use App\Services\MobileRiskService;
-use App\Services\MobileRiskInboxService;
+use App\Http\Requests\Mobile\MobileRiskPreviewRequest;
+use App\Services\Mobile\MobileRiskService;
+use App\Services\Mobile\MobileRiskInboxService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 

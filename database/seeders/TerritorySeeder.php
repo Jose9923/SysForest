@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Services\TerritorySeedService;
+use App\Services\Territories\TerritorySeedService;
 use Illuminate\Database\Seeder;
 
 /** Completa los departamentos y municipios de la copia oficial de DIVIPOLA incluida en el proyecto. */

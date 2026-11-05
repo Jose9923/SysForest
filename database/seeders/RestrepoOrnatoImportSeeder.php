@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Services\RestrepoOrnatoImportService;
+use App\Services\Imports\RestrepoOrnatoImportService;
 use Illuminate\Database\Seeder;
 
 /** Confirma la carga local autorizada después de preparar las cuentas y los catálogos. */

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Repositories\PermissionRepository;
-use App\Repositories\RoleRepository;
+use App\Repositories\Auth\PermissionRepository;
+use App\Repositories\Auth\RoleRepository;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Reports;
 
-use App\Models\Evidence;
-use App\Models\Tree;
-use App\Models\TreeInspection;
+use App\Models\Evidences\Evidence;
+use App\Models\Trees\Tree;
+use App\Models\Inspections\TreeInspection;
 use Illuminate\Support\Collection;
 
 /** Lista pública cerrada: la proyección no tiene acceso a textos privados ni a archivos originales. */

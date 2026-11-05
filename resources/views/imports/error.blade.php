@@ -3,12 +3,12 @@
 @section('content')
     <section class="card">
         <h1>Revisa la importación</h1>
-        <p>{{ \App\Support\ExcelReferencePresentation::riskMessage(\App\Support\ExcelReferencePresentation::text($message)) }}</p>
+        <p>{{ \App\Support\Imports\ExcelReferencePresentation::riskMessage(\App\Support\Imports\ExcelReferencePresentation::text($message)) }}</p>
         @if ($errors !== [])
             <ul>
                 @foreach ($errors as $messages)
                     @foreach ($messages as $error)
-                        <li>{{ \App\Support\ExcelReferencePresentation::riskMessage(\App\Support\ExcelReferencePresentation::text($error)) }}</li>
+                        <li>{{ \App\Support\Imports\ExcelReferencePresentation::riskMessage(\App\Support\Imports\ExcelReferencePresentation::text($error)) }}</li>
                     @endforeach
                 @endforeach
             </ul>

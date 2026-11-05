@@ -16,29 +16,29 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->prepend(\App\Http\Middleware\SecureErrorResponses::class);
+        $middleware->prepend(\App\Http\Middleware\Infrastructure\SecureErrorResponses::class);
         // Los límites móviles protegidos se calculan con la identidad ya autenticada.
         $middleware->prependToPriorityList(
             \Illuminate\Routing\Middleware\ThrottleRequests::class,
-            \App\Http\Middleware\AuthenticateMobileJwt::class,
+            \App\Http\Middleware\Mobile\AuthenticateMobileJwt::class,
         );
         // La evidencia textual del GPS se conserva; el parser normaliza una copia para interpretar.
         $middleware->trimStrings(except: ['coordinate_raw', 'flowering_development', 'fruiting_development', 'fauna_observations', 'general_observations']);
         $middleware->alias([
-            'jwt.cookie' => \App\Http\Middleware\AuthenticateJwtCookie::class,
-            'jwt.optional' => \App\Http\Middleware\OptionalJwtCookie::class,
-            'identity.session' => \App\Http\Middleware\BindAuthenticatedSession::class,
-            'identity.verified' => \App\Http\Middleware\RequireVerifiedEmail::class,
-            'identity.headers' => \App\Http\Middleware\IdentityResponseHeaders::class,
-            'tenant.share' => \App\Http\Middleware\ShareTenantContext::class,
-            'tenant.context' => \App\Http\Middleware\ResolveTenantContext::class,
+            'jwt.cookie' => \App\Http\Middleware\Auth\AuthenticateJwtCookie::class,
+            'jwt.optional' => \App\Http\Middleware\Auth\OptionalJwtCookie::class,
+            'identity.session' => \App\Http\Middleware\Auth\BindAuthenticatedSession::class,
+            'identity.verified' => \App\Http\Middleware\Auth\RequireVerifiedEmail::class,
+            'identity.headers' => \App\Http\Middleware\Auth\IdentityResponseHeaders::class,
+            'tenant.share' => \App\Http\Middleware\Tenancy\ShareTenantContext::class,
+            'tenant.context' => \App\Http\Middleware\Tenancy\ResolveTenantContext::class,
         ]);
         $middleware->redirectGuestsTo(fn () => route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\PublicExceptionRenderer::class)->render($exception, $request));
-        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\ReportExceptionRenderer::class)->render($exception, $request));
-        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\ImportExceptionRenderer::class)->render($exception, $request));
+        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\ExceptionRenderers\PublicPortal\PublicExceptionRenderer::class)->render($exception, $request));
+        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\ExceptionRenderers\Reports\ReportExceptionRenderer::class)->render($exception, $request));
+        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\ExceptionRenderers\Imports\ImportExceptionRenderer::class)->render($exception, $request));
         $exceptions->render(function (Throwable $exception, Request $request) {
             if (!$request->is('evidences/*', 'trees/*/evidences*', 'inspections/*/evidences*', 'maintenances/*/evidences*')
                 || $exception instanceof \Illuminate\Validation\ValidationException
@@ -78,7 +78,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson()) {
                 return response()->json(['message' => $message], $status);
             }
-            if ($exception instanceof \App\Exceptions\StaleMaintenanceException) {
+            if ($exception instanceof \App\Exceptions\Maintenances\StaleMaintenanceException) {
                 return response()->view('errors.409', ['exception' => $exception], $status);
             }
 
@@ -119,6 +119,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return redirect()->route($request->cookie(config('security.refresh_cookie')) ? 'auth.renew' : 'login');
         });
-        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\SystemExceptionRenderer::class)->render($exception, $request));
-        $exceptions->respond(fn (\Symfony\Component\HttpFoundation\Response $response) => app(\App\Http\SystemExceptionRenderer::class)->secure($response));
+        $exceptions->render(fn (Throwable $exception, Request $request) => app(\App\Http\ExceptionRenderers\Infrastructure\SystemExceptionRenderer::class)->render($exception, $request));
+        $exceptions->respond(fn (\Symfony\Component\HttpFoundation\Response $response) => app(\App\Http\ExceptionRenderers\Infrastructure\SystemExceptionRenderer::class)->secure($response));
     })->create();

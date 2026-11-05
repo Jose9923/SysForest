@@ -49,7 +49,7 @@ class AuditSnapshot
         if (isset(self::FIELDS[$type])) {
             return $type;
         }
-        if ($model instanceof \App\Models\CatalogEntry
+        if ($model instanceof \App\Models\Catalogs\CatalogEntry
             || in_array($type, ['family', 'species', 'species_common_name', 'common_name', 'condition', 'condition_category', 'classification_rule_version'], true)) {
             return 'catalog';
         }

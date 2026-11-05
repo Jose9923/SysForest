@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\MobileMaintenanceRequest;
-use App\Services\MobileMaintenanceService;
+use App\Http\Requests\Mobile\MobileMaintenanceRequest;
+use App\Services\Mobile\MobileMaintenanceService;
 use Illuminate\Http\JsonResponse;
 
 class MobileMaintenanceController extends Controller

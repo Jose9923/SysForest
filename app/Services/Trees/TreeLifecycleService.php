@@ -1,0 +1,60 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Trees;
+
+use App\Models\Trees\Tree;
+use App\Models\User;
+use App\Repositories\Trees\TreeCatalogRepository;
+use App\Repositories\Trees\TreeRepository;
+use App\Validation\Trees\TreeInput;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+
+class TreeLifecycleService
+{
+    public function __construct(
+        private TreeWriteService $writes,
+        private TreeStatusService $statuses,
+        private TreeLocationService $locations,
+        private TreeRepository $trees,
+        private TreeCatalogRepository $catalogs
+    ) {
+    }
+
+    public function status(User $actor, string $id, array $input): Tree
+    {
+        return $this->writes->run($actor, $id, 'update', $input['lock_version'] ?? null, function (Tree $tree, User $actor) use ($input): void {
+            $data = Validator::make($input, TreeInput::statusRules(), TreeInput::messages())->validate();
+            $this->statuses->apply($tree, $actor, $data['current_status'], $data['reason'] ?? null);
+        }, false, null);
+    }
+
+    public function location(User $actor, string $id, array $input): Tree
+    {
+        return $this->writes->run($actor, $id, 'update', $input['lock_version'] ?? null, function (Tree $tree, User $actor) use ($input): void {
+            $data = Validator::make($input, array_merge(TreeInput::identityGuards(), TreeInput::locationRules()), TreeInput::messages())->validate();
+            $this->locations->apply($tree, $actor, $data);
+        }, false, null);
+    }
+
+    public function void(User $actor, string $id, array $input): Tree
+    {
+        return $this->writes->run($actor, $id, 'void', $input['lock_version'] ?? null, function (Tree $tree, User $actor) use ($input): void {
+            $data = Validator::make($input, TreeInput::voidRules(), TreeInput::messages())->validate();
+            if (!$this->catalogs->validSelection('deletion_reason_id', $data['deletion_reason_id'])) {
+                throw ValidationException::withMessages(['deletion_reason_id' => 'Seleccione un motivo de anulación disponible.']);
+            }
+            $this->trees->void($tree, ['deleted_by' => $actor->id, 'deletion_reason_id' => $data['deletion_reason_id'],
+                'deletion_notes' => $data['deletion_notes'] ?? null]);
+        }, false, 'tree.voided');
+    }
+
+    public function restore(User $actor, string $id, array $input): Tree
+    {
+        return $this->writes->run($actor, $id, 'restore', $input['lock_version'] ?? null, function (Tree $tree, User $actor): void {
+            $this->trees->restore($tree, (int) $actor->id);
+        }, true, 'tree.restored');
+    }
+}

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Services\CarbonReferenceSeedService;
+use App\Services\Carbon\CarbonReferenceSeedService;
 use Illuminate\Database\Seeder;
 
 class CarbonSpeciesReferenceSeeder extends Seeder

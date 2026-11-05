@@ -1,5 +1,7 @@
 # Arquitectura de SYSFOREST
 
+La [organización física vigente por módulos](module-organization-20261105.md), aplicada al proyecto local el 5 de noviembre de 2026, conserva MVC y el flujo entre capas. Las secciones de fases siguientes describen el diseño y la evidencia histórica de su fecha.
+
 ## Estado y alcance
 
 Este documento conserva la arquitectura objetivo acordada para SYSFOREST. El desarrollo integrado alcanza Fase 13: territorio, autenticación, catálogos, inventarios, árboles, inspecciones, evidencias, mantenimientos, mapas, portal público, reportes/exportaciones y plantilla/importación Excel. La Fase 12 conserva sus resultados y limitaciones en [phase-12.md](phase-12.md). La Fase 13 está implementada; su cierre se registra en [phase-13.md](phase-13.md), con activación de permisos operativos completada tras aprobación explícita del usuario. La infraestructura de Fase 2 continúa como base. Los módulos de fases posteriores son diseño, no capacidades implementadas.
@@ -38,40 +40,27 @@ En Fase 12, `ReportSelectionDTO` conserva el alcance de lectura y los filtros co
 
 ## Organización del código
 
-La estructura se incorporará progresivamente, cuando la fase correspondiente necesite cada carpeta:
+Cada capa agrupa sus clases por módulo, de forma consistente con las vistas Blade. Ejemplo del módulo de árboles:
 
 ```text
 app/
-  Http/Controllers/
-  Http/Requests/
-  Http/Resources/
-  Http/Middleware/
-  Services/
-  Repositories/
-  Models/
-  Policies/
-  Domain/Forestry/
-  Domain/Geospatial/
-  DTOs/
-  Imports/
-  Enums/
-  Jobs/
-  Mail/
-resources/views/
-  layouts/
-  components/
-  partials/
-  auth/
-  trees/
-  inspections/
-  reports/
-  imports/
-  public/
-  emails/
-database/migrations/
-database/seeders/
-docs/
+  Http/Controllers/Trees/
+  Http/Requests/Trees/
+  Services/Trees/
+  Repositories/Trees/
+  Models/Trees/
+  Policies/Trees/
+  Validation/Trees/
+routes/
+  web.php
+  api.php
+  console.php
+  web/trees/routes.php
+  api/mobile/v1.php
+resources/views/trees/
 ```
+
+El mismo criterio se aplica a inspecciones, inventarios, mantenimientos, riesgo y demás módulos. Las carpetas compartidas tienen responsabilidades concretas y los puntos de entrada conservan el orden y contexto de cada ruta. La [guía de organización](module-organization-20261105.md) enumera módulos, capas y las cuatro identidades de clase que se mantienen por compatibilidad con JWT y trabajos en cola.
 
 El código PHP debe cumplir PSR-12, usar tipos y retornos explícitos cuando proceda y mantener `declare(strict_types=1)` donde sea compatible. Los bloques PHPDoc se redactan en español y describen contratos, parámetros o decisiones que aporten información; no repiten innecesariamente las firmas.
 

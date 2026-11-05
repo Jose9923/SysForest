@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories\Users;
+
+use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
+
+class UserRepository
+{
+    public function find(int $id): User
+    {
+        return User::query()->findOrFail($id);
+    }
+
+    public function findForUpdate(int $id): User
+    {
+        return User::query()->lockForUpdate()->findOrFail($id);
+    }
+
+    public function findByEmail(string $email): ?User
+    {
+        return User::query()->whereRaw('lower(email) = ?', [strtolower(trim($email))])->first();
+    }
+
+    /** Los Services autorizan los atributos sensibles; nunca se pasa Request::all a este método. */
+    public function create(array $attributes): User
+    {
+        $user = new User();
+        return $this->update($user, $attributes);
+    }
+
+    public function update(User $user, array $attributes): User
+    {
+        $allowed = array_intersect_key($attributes, array_flip(['name', 'email', 'password', 'email_verified_at', 'active', 'remember_token']));
+        if (isset($allowed['email'])) {
+            $allowed['email'] = strtolower(trim($allowed['email']));
+        }
+        $user->forceFill($allowed)->save();
+        return $user->refresh();
+    }
+
+    /** Consulta administrativa de credenciales; el servicio impone consola y entorno. */
+    public function allForSecurityReview(): Collection
+    {
+        return User::query()->orderBy('id')->get();
+    }
+
+    /** Los servicios administrativos autorizan el restablecimiento y conservan el orden de bloqueo. */
+    public function allForUpdate(): Collection
+    {
+        return User::query()->orderBy('id')->lockForUpdate()->get();
+    }
+
+    public function paginate(): LengthAwarePaginator
+    {
+        return User::query()->orderBy('name')->orderBy('id')->paginate(20);
+    }
+
+}

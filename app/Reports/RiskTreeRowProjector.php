@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Reports;
 
-use App\Models\Tree;
-use App\Models\TreeInspection;
-use App\Support\ExcelReferencePresentation;
-use App\Support\RiskPresentation;
+use App\Models\Trees\Tree;
+use App\Models\Inspections\TreeInspection;
+use App\Support\Imports\ExcelReferencePresentation;
+use App\Support\Risk\RiskPresentation;
 use LogicException;
 
 /** Presenta evaluaciones persistidas y relaciones precargadas; no calcula ni confirma riesgo. */

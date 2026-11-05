@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\MobileInventoryStoreRequest;
-use App\Services\MobileInventoryService;
+use App\Http\Requests\Mobile\MobileInventoryStoreRequest;
+use App\Services\Mobile\MobileInventoryService;
 use Illuminate\Http\JsonResponse;
 
 class MobileInventoryController extends Controller

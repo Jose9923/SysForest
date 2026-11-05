@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Requests\Evidences;
+
+use App\Services\Evidences\EvidenceReadService;
+use App\Validation\Evidences\EvidenceInput;
+use Illuminate\Foundation\Http\FormRequest;
+
+class StoreEvidenceRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return app(EvidenceReadService::class)->authorizeUpload($this->user(), $this->route('tree'), $this->route('inspection'), $this->route('maintenance'));
+    }
+
+    public function rules(): array
+    {
+        return EvidenceInput::storeRules();
+    }
+
+    public function messages(): array
+    {
+        return EvidenceInput::messages();
+    }
+}

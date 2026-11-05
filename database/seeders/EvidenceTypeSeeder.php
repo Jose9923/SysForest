@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use App\Catalogs\CatalogRegistry;
-use App\Repositories\CatalogRepository;
+use App\Repositories\Catalogs\CatalogRepository;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 

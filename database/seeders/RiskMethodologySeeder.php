@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Repositories\RiskRepository;
-use App\Services\RiskMethodologyService;
+use App\Repositories\Risk\RiskRepository;
+use App\Services\Risk\RiskMethodologyService;
 use Illuminate\Database\Seeder;
 
 /** Inicializa copias independientes; repetir no cambia decisiones ni versiones publicadas. */

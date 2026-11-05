@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Repositories\ClassificationRuleRepository;
+use App\Repositories\Catalogs\ClassificationRuleRepository;
 use Illuminate\Database\Seeder;
 
 class ClassificationRuleSeeder extends Seeder

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Repositories\InventoryRepository;
-use App\Repositories\OrganizationRepository;
+use App\Repositories\Inventories\InventoryRepository;
+use App\Repositories\Organizations\OrganizationRepository;
 use Illuminate\Database\Seeder;
 
 class PilotInventorySeeder extends Seeder

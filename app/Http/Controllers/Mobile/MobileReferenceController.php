@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\MobileReferenceRequest;
-use App\Services\MobileReferenceService;
+use App\Http\Requests\Mobile\MobileReferenceRequest;
+use App\Services\Mobile\MobileReferenceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

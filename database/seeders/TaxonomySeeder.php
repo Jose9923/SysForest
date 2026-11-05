@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\TaxonomyCatalog;
-use App\Repositories\TaxonomyRepository;
+use App\Enums\Taxonomy\TaxonomyCatalog;
+use App\Repositories\Taxonomy\TaxonomyRepository;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Forestry;
 
-use App\DTOs\ClassResult;
+use App\DTOs\Forestry\ClassResult;
 use InvalidArgumentException;
 
 final class DecimalClassification

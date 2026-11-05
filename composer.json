@@ -29,7 +29,13 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "classmap": [
+            "app/Jobs/Infrastructure/InfrastructureProbeJob.php",
+            "app/Jobs/Carbon/RefreshCarbonEstimates.php",
+            "app/Jobs/Auth/SendSecurityMail.php",
+            "app/Models/Users/User.php"
+        ]
     },
     "scripts": {
         "format": "pint --preset psr12",

@@ -1,75 +1,48 @@
 <?php
 
 declare(strict_types=1);
-
-use App\Http\Controllers as C;
 use Illuminate\Support\Facades\Route;
 
-require __DIR__.'/public.php';
-require __DIR__.'/public-reports.php';
+require __DIR__.'/web/public-portal/routes.php';
+require __DIR__.'/web/reports/public.php';
 
 // Disponibilidad técnica independiente de Redis y de las sesiones de usuario.
-Route::withoutMiddleware('web')->group(function (): void {
-    Route::get('/', [C\SystemStatusController::class, 'index'])->name('system.home');
-    Route::get('/health/ready', [C\SystemStatusController::class, 'readiness'])->name('system.readiness');
-});
+require __DIR__.'/web/infrastructure/routes.php';
 
 Route::middleware('identity.headers')->group(function (): void {
-    Route::get('/login', [C\LoginController::class, 'create'])->name('login');
-    Route::post('/login', [C\LoginController::class, 'store'])->middleware('throttle:identity.login')->name('login.store');
-    Route::post('/logout', C\LogoutController::class)->name('logout');
-    Route::get('/auth/session/status', [C\SessionContinuityController::class, 'status'])->name('auth.session.status');
-    Route::post('/auth/session/ensure', [C\SessionContinuityController::class, 'ensure'])->middleware('throttle:identity.refresh')->name('auth.session.ensure');
-    Route::get('/auth/renew', [C\RefreshController::class, 'create'])->name('auth.renew');
-    Route::post('/auth/refresh', [C\RefreshController::class, 'store'])->middleware('throttle:identity.refresh')->name('auth.refresh');
-    Route::get('/forgot-password', [C\PasswordResetController::class, 'create'])->name('password.request');
-    Route::post('/forgot-password', [C\PasswordResetController::class, 'send'])->middleware('throttle:identity.password')->name('password.email');
-    Route::get('/reset-password', [C\PasswordResetController::class, 'edit'])->name('password.reset');
-    Route::post('/reset-password', [C\PasswordResetController::class, 'update'])->middleware('throttle:identity.password')->name('password.store');
+    require __DIR__.'/web/auth/entry.php';
     Route::middleware('jwt.optional')->group(function (): void {
-        Route::get('/verify-email', [C\EmailVerificationController::class, 'show'])->name('verification.notice');
-        Route::get('/invitations/accept', [C\InvitationController::class, 'show'])->name('invitations.preview');
-        Route::post('/invitations/accept', [C\InvitationController::class, 'accept'])->middleware('throttle:identity.invitation')->name('invitations.accept');
+        require __DIR__.'/web/auth/notice.php';
+        require __DIR__.'/web/invitations/accept.php';
     });
     Route::middleware(['jwt.cookie', 'identity.session'])->group(function (): void {
-        Route::post('/verify-email', [C\EmailVerificationController::class, 'store'])->middleware('throttle:identity.password')->name('verification.verify');
-        Route::post('/verify-email/send', [C\EmailVerificationController::class, 'send'])->middleware('throttle:identity.password')->name('verification.send');
-        Route::get('/profile', [C\ProfileController::class, 'show'])->middleware('tenant.share')->name('profile.show');
-        Route::put('/profile', [C\ProfileController::class, 'update'])->name('profile.update');
-        Route::put('/profile/password', [C\ProfileController::class, 'password'])->middleware('throttle:identity.password')->name('password.change');
-        Route::delete('/profile/sessions/{session}', [C\ProfileController::class, 'destroySession'])->whereUuid('session')->name('sessions.destroy');
+        require __DIR__.'/web/auth/verification.php';
+        require __DIR__.'/web/profile/routes.php';
 
         Route::middleware(['identity.verified', 'tenant.share'])->group(function (): void {
-            require __DIR__.'/catalogs.php';
-            require __DIR__.'/maps.php';
-            require __DIR__.'/reports.php';
-            require __DIR__.'/analytics.php';
-            require __DIR__.'/audit.php';
-            Route::get('/territories', C\TerritoryController::class)->name('territories.index');
-            Route::post('/active-organization', C\TenantSelectionController::class)->name('tenant.select');
-            Route::get('/organizations', [C\OrganizationController::class, 'index'])->name('organizations.index');
-            Route::get('/organizations/create', [C\OrganizationController::class, 'create'])->name('organizations.create');
-            Route::post('/organizations', [C\OrganizationController::class, 'store'])->name('organizations.store');
-            Route::get('/administration/organizations/{organization}/edit', [C\OrganizationAdministrationController::class, 'edit'])->whereUuid('organization')->name('administration.organizations.edit');
-            Route::put('/administration/organizations/{organization}', [C\OrganizationAdministrationController::class, 'update'])->whereUuid('organization')->name('administration.organizations.update');
-            Route::get('/users', [C\UserController::class, 'index'])->name('users.index');
-            Route::get('/users/{user}', [C\UserController::class, 'show'])->whereNumber('user')->name('users.show');
-            Route::put('/users/{user}', [C\UserController::class, 'update'])->whereNumber('user')->name('users.update');
-            Route::post('/users/{user}/roles', [C\UserController::class, 'roles'])->whereNumber('user')->name('users.roles');
+            require __DIR__.'/web/catalogs/routes.php';
+            require __DIR__.'/web/maps/routes.php';
+            require __DIR__.'/web/reports/routes.php';
+            require __DIR__.'/web/analytics/routes.php';
+            require __DIR__.'/web/audit/routes.php';
+            require __DIR__.'/web/territories/routes.php';
+            require __DIR__.'/web/organizations/browse.php';
+            require __DIR__.'/web/users/routes.php';
             Route::middleware('tenant.context')->group(function (): void {
-                require __DIR__.'/forestry.php';
-                require __DIR__.'/risk.php';
-                require __DIR__.'/carbon.php';
-                require __DIR__.'/imports.php';
-                require __DIR__.'/publication.php';
-                Route::get('/organizations/{organization}', [C\OrganizationController::class, 'show'])->whereUuid('organization')->name('organizations.show');
-                Route::get('/organizations/{organization}/edit', [C\OrganizationController::class, 'edit'])->whereUuid('organization')->name('organizations.edit');
-                Route::put('/organizations/{organization}', [C\OrganizationController::class, 'update'])->whereUuid('organization')->name('organizations.update');
-                Route::get('/memberships', [C\OrganizationMembershipController::class, 'index'])->name('memberships.index');
-                Route::get('/memberships/{membership}', [C\OrganizationMembershipController::class, 'show'])->whereUuid('membership')->name('memberships.show');
-                Route::patch('/memberships/{membership}', [C\OrganizationMembershipController::class, 'update'])->whereUuid('membership')->name('memberships.update');
-                Route::get('/invitations/create', [C\InvitationController::class, 'create'])->name('invitations.create');
-                Route::post('/invitations', [C\InvitationController::class, 'store'])->middleware('throttle:identity.invitation')->name('invitations.store');
+                require __DIR__.'/web/evidences/routes.php';
+                require __DIR__.'/web/inspections/routes.php';
+                require __DIR__.'/web/forestry/dendrometry.php';
+                require __DIR__.'/web/trees/routes.php';
+                require __DIR__.'/web/forestry/coordinates.php';
+                require __DIR__.'/web/inventories/routes.php';
+                require __DIR__.'/web/maintenances/routes.php';
+                require __DIR__.'/web/risk/routes.php';
+                require __DIR__.'/web/carbon/routes.php';
+                require __DIR__.'/web/imports/routes.php';
+                require __DIR__.'/web/publication/routes.php';
+                require __DIR__.'/web/organizations/tenant.php';
+                require __DIR__.'/web/memberships/routes.php';
+                require __DIR__.'/web/invitations/manage.php';
             });
         });
     });

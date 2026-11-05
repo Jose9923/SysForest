@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Repositories\OrganizationMembershipRepository;
-use App\Repositories\RoleAssignmentRepository;
-use App\Repositories\UserRepository;
-use App\Services\PilotSeedService;
-use App\Services\DevelopmentPasswordService;
+use App\Repositories\Memberships\OrganizationMembershipRepository;
+use App\Repositories\Auth\RoleAssignmentRepository;
+use App\Repositories\Users\UserRepository;
+use App\Services\Organizations\PilotSeedService;
+use App\Services\Auth\DevelopmentPasswordService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;

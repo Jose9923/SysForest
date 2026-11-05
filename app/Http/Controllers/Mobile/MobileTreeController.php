@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\MobilePageRequest;
-use App\Http\Requests\MobileTreeUpdateRequest;
-use App\Services\MobileTreeService;
+use App\Http\Requests\Mobile\MobilePageRequest;
+use App\Http\Requests\Mobile\MobileTreeUpdateRequest;
+use App\Services\Mobile\MobileTreeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

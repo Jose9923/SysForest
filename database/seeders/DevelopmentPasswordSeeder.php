@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Services\DevelopmentPasswordService;
+use App\Services\Auth\DevelopmentPasswordService;
 use Illuminate\Database\Seeder;
 
 /** Restablecimiento explícito de claves locales, sin sembrar organizaciones ni sincronizar roles. */

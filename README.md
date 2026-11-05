@@ -4,6 +4,10 @@ Inventario y gestión forestal institucional con mapas y portal ciudadano. El pr
 
 SYSFOREST utiliza Laravel 13, PHP 8.4, PostgreSQL/PostGIS y Redis. Mantiene MVC con el flujo `Controller → Service → Repository → Model`; Blade renderiza la interfaz y las plantillas de reportes/PDF. CSV, Excel y GeoJSON reutilizan los servicios, repositorios y filtros. Los comentarios útiles y la documentación se escriben en español; el código PHP sigue PSR-12.
 
+## Organización del código
+
+Las capas del backend están agrupadas por módulo, como las vistas Blade: `Http/Controllers/Trees`, `Services/Trees`, `Repositories/Trees`, `Models/Trees`, y sus equivalentes de inspecciones, inventarios, riesgo y demás módulos. Consulta la [estructura del proyecto y compatibilidad de autoload](docs/module-organization-20261105.md).
+
 ## Producción
 
 La plataforma está disponible en [https://sysforest.varcor.tech](https://sysforest.varcor.tech). Consulta el [despliegue del 4 de noviembre de 2026](docs/production-deployment-20261104.md) para datos trasladados, verificaciones y pendientes, y el [procedimiento productivo](docker/production/README.md) para operar el servidor. Los comandos de la sección siguiente preparan exclusivamente el entorno local.
