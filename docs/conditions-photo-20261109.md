@@ -30,3 +30,10 @@ Activada el 09/11/2026, fuente `cde5585`, imagen `sha256:2c71a9533bccfeae23e81b6
 Respaldo previo: `/opt/sysforest/backups/conditions-photo-20261109t181417z`, con datos online, fuentes, imagen y etiqueta de reversión. La revisión productiva de solo lectura confirmó 3 árboles/3 inspecciones/3 evidencias, 2 portadas coincidentes entre ficha/mapa y 2 streams de imagen con tamaño/SHA256 correctos; la API móvil entrega código/tipo/fuente y capacidad de reportes. No se modificaron esos registros.
 
 [APK 0.3.9+14 publicada](https://sysforest.varcor.tech/descargas/SysForest-Mobile-0.3.9.apk), misma firma y permisos, 169119449 bytes, SHA256 `e9eb433f06972f5632024d703d03b9824083a0273874ec2a5781cca275e07bc5`. Tras instalar sobre la anterior, usar Sincronizar ahora para actualizar permisos, datos y fotos. Revisión visual y compilación aprobadas; teléfono físico pendiente. Durante la publicación de APK se conservaron las 11 versiones anteriores y no se reinició ni cambió el backend.
+
+
+## Aclaración de alcance posterior
+
+El usuario confirmó que, al no existir Reportes en Android previamente, el ajuste de ese módulo debía limitarse a la web. Android 0.3.10+15 retira la página y el menú de Reportes añadidos en 0.3.9. Conserva íntegros los filtros de Gráficas, las fotos completas, los colores y la sincronización. Las secciones anteriores documentan la entrega inicial; esta aclaración define el alcance vigente. No hay cambios de runtime, datos ni permisos del backend; su capacidad can_view_reports permanece compatible con la versión anterior publicada.
+
+La corrección quedó publicada como [APK 0.3.10](https://sysforest.varcor.tech/descargas/SysForest-Mobile-0.3.10.apk), con compilación, firma y HTTPS verificados. No se cambió ni reinició el backend.
