@@ -158,6 +158,8 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
         const invalidate = () => {
             epoch += 1; debouncedRefresh.cancel(); viewportRequest.cancel(); extentRequest.cancel(); controls.cancelLookups();
             layers.clear(); map.closePopup(); clearCounts();
+            const searchResult = root.querySelector('[data-map-search-result]');
+            searchResult.replaceChildren(); searchResult.hidden = true;
             root.querySelector('[data-map-empty]').hidden = true;
         };
         const apply = (nextFilters, {reset = false, fromHistory = false} = {}) => {
@@ -172,9 +174,10 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
         const controls = new MapFilters({form: root.querySelector('[data-map-filters]'), config, document, origin, $: window.jQuery, filterKeys, createRequest,
             getAppliedFilters: () => filters, onApply: next => apply(next), onError: message => announce(message, true),
             onSearch: result => {
-                root.querySelector('[data-map-search-result]').hidden = true;
+                const previousResult = root.querySelector('[data-map-search-result]');
+                previousResult.replaceChildren(); previousResult.hidden = true;
                 const point = pointLatLng({geometry: result.geometry});
-                const popup = popupRenderer({code: result.text, open_url: result.open_url}, {document, csrf, origin});
+                const popup = popupRenderer({code: result.text, open_url: result.open_url}, {document, csrf, origin, map});
                 if (point) { map.setView(point, 18); L.popup({maxWidth: 300}).setLatLng(point).setContent(popup).openOn(map); }
                 else {
                     const notice = root.querySelector('[data-map-search-result]');

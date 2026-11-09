@@ -1,7 +1,8 @@
 import {sameOriginUrl} from './state.js';
 import {treePopupContent} from './popup-content.js';
+import {attachTreePhoto} from './tree-photo.js';
 
-export function treePopup(properties, {document, csrf, origin}) {
+export function treePopup(properties, {document, csrf, origin, map}) {
     const box = treePopupContent(properties, {document});
     if (properties.carbon) {
         const carbon = document.createElement('p');
@@ -34,5 +35,6 @@ export function treePopup(properties, {document, csrf, origin}) {
             box.append(form);
         } catch { /* Una URL ajena o mal formada nunca genera una acción. */ }
     }
+    attachTreePhoto(box, properties, {document, origin, map});
     return box;
 }

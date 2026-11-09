@@ -1,5 +1,7 @@
 # SYSFOREST
 
+Actualización 09/11/2026: [filtros de condiciones, foto del árbol completo y paridad móvil](docs/conditions-photo-20261109.md).
+
 Inventario y gestión forestal institucional con mapas y portal ciudadano. El proyecto está en **`/home/josev/SYSFOREST`, Ubuntu-24.04 WSL**; esa carpeta es la fuente de verdad.
 
 SYSFOREST utiliza Laravel 13, PHP 8.4, PostgreSQL/PostGIS y Redis. Mantiene MVC con el flujo `Controller → Service → Repository → Model`; Blade renderiza la interfaz y las plantillas de reportes/PDF. CSV, Excel y GeoJSON reutilizan los servicios, repositorios y filtros. Los comentarios útiles y la documentación se escriben en español; el código PHP sigue PSR-12.

@@ -191,3 +191,5 @@
     .map-local-layers label { flex-basis: 100%; }
     .map-north { padding: 6px 8px; }
 }
+
+.map-tree-photo{margin:0 0 12px;display:grid;gap:6px}.map-tree-photo img{display:block;width:100%;height:160px;object-fit:contain;background:#f0f4ee;border:1px solid #dfe7e1;border-radius:7px}.map-tree-photo figcaption{font-size:12px;line-height:1.45;color:#64756b;overflow-wrap:anywhere}

@@ -32,7 +32,6 @@ function initialize() {
         controls.initialize(); controls.sync(applied);
         window.jQuery(form.elements.namedItem('report')).on('change.reportKind', applySelection);
         root.querySelector('[data-map-filter-count]').textContent = String(filterCount(applied, filterKeys));
-        root.querySelector('[data-map-filter-panel]').open = window.matchMedia('(min-width: 1151px)').matches;
         root.querySelector('[data-reports-reset]').addEventListener('click', () => navigate(normalize({}), boot.report));
         window.addEventListener('pagehide', () => controls.cancelLookups());
     } catch {

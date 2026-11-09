@@ -16,7 +16,16 @@
             @endunless
         @endforeach
         <p class="map-hint">Selecciona el territorio y el inventario. Aplica los cambios para actualizar todas las gráficas.</p>
-        @include('maps.filter-fields', ['mapConfig' => $filterConfig, 'initialFilters' => $filters, 'publicMap' => false])
+        @if ($filterConfig['can_inspect'])
+            <details class="map-filter-group" data-report-condition-filters open>
+                <summary>Estado físico-mecánico y fitosanitario</summary>
+                <div class="map-fields">
+                    <p class="map-hint">Elige uno o varios órganos o grupos y después sus condiciones. Se filtran árboles por su última inspección.</p>
+                    @include('maps.condition-filter-fields', ['initialFilters' => $filters, 'publicMap' => false])
+                </div>
+            </details>
+        @endif
+        @include('maps.filter-fields', ['mapConfig' => $filterConfig, 'initialFilters' => $filters, 'publicMap' => false, 'separateConditionFilters' => true])
         <div class="map-filter-actions"><button class="button" type="submit">Aplicar filtros</button><a class="button secondary" href="{{ route('analytics.index', ['scope' => $filterConfig['scope']['mode']]) }}">Limpiar filtros</a></div>
     </form>
 </details>

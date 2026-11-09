@@ -191,6 +191,9 @@ class MobileTreePhotoService
     {
         return [
             'id' => $photo->id, 'tree_id' => $photo->tree_id, 'evidence_type_id' => $photo->evidence_type_id,
+            'evidence_type_code' => $photo->evidenceType?->code, 'evidence_type_name' => $photo->evidenceType?->name,
+            'source_kind' => $photo->tree_id !== null ? 'tree' : ($photo->tree_inspection_id !== null ? 'inspection' : 'maintenance'),
+            'tree_inspection_id' => $photo->tree_inspection_id, 'maintenance_id' => $photo->maintenance_id,
             'caption' => $photo->caption, 'notes' => $photo->notes,
             'captured_at' => $photo->captured_at?->utc()->format('Y-m-d\TH:i:s.u\Z'),
             'mime_type' => $photo->mime_type, 'size_bytes' => $photo->size_bytes,

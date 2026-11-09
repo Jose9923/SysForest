@@ -94,7 +94,7 @@ class EvidenceRepository
         }
 
         // Las capacidades se resuelven una vez en el Service; cada rama reproduce el alcance de su propietario.
-        return Evidence::query()->where('evidences.organization_id', $organizationId)
+        return Evidence::query()->with('evidenceType')->where('evidences.organization_id', $organizationId)
             ->leftJoin('tree_inspections as photo_inspection', fn (JoinClause $join) => $join
                 ->on('photo_inspection.id', '=', 'evidences.tree_inspection_id')
                 ->on('photo_inspection.organization_id', '=', 'evidences.organization_id'))
@@ -122,6 +122,27 @@ class EvidenceRepository
             ->select('evidences.*')->addSelect('photo_tree.id as mobile_tree_id')
             ->orderByDesc('evidences.created_at')->orderByDesc('evidences.id')
             ->paginate($perPage, ['*'], 'page', $page);
+    }
+
+    /** Portada explícita: árbol o sus visitas autorizadas; nunca mantenimientos ni anuladas. */
+    public function wholeTreePhoto(string $organizationId, string $treeId, bool $includeInspections = false): ?Evidence
+    {
+        $this->requireUuid($organizationId);
+        $this->requireUuid($treeId);
+
+        return $this->queryForTenant($organizationId)
+            ->whereHas('evidenceType', fn (Builder $type) => $type->where('code', 'EVD_WHOLE_TREE'))
+            ->whereNull('maintenance_id')
+            ->where(function (Builder $owners) use ($organizationId, $treeId, $includeInspections): void {
+                $owners->where(fn (Builder $direct) => $direct->where('tree_id', $treeId)->whereNull('tree_inspection_id'));
+                if ($includeInspections) {
+                    $owners->orWhere(fn (Builder $visit) => $visit->whereNull('tree_id')
+                        ->whereHas('inspection', fn (Builder $inspection) => $inspection
+                            ->where('organization_id', $organizationId)->where('tree_id', $treeId)));
+                }
+            })
+            ->orderByRaw('COALESCE(captured_at, created_at) DESC NULLS LAST')
+            ->orderByDesc('created_at')->orderByDesc('id')->first();
     }
 
     /** La ficha muestra una muestra acotada y el total; la página solicitada no altera este resumen. */

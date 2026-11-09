@@ -16,9 +16,12 @@
     </div>
     @if ($tree->trashed())<div class="record-warning"><strong>Este registro está anulado</strong><p>{{ $tree->deletionReason?->name ?? 'Motivo no disponible' }} · {{ $tree->deleted_at?->format('d/m/Y H:i') }}</p>@if ($tree->deletion_notes)<p class="preserve-lines">{{ $tree->deletion_notes }}</p>@endif</div>@endif
     @if (!$canUpdate && !$tree->trashed())<p class="forestry-readonly">La ficha está disponible para consulta. La edición requiere permisos vigentes y, para funcionarios, una campaña activa vinculada.</p>@endif
-    <div class="forestry-stack" style="margin-bottom:22px">
-        @include('inspections.tree-summary')
-        @if ($latestInspectionEvidenceGallery ?? null)@include('evidences.gallery', ['gallery' => $latestInspectionEvidenceGallery])@endif
+    <div class="tree-overview {{ ($wholeTreePhoto || $treeEvidenceGallery) ? 'has-cover' : '' }}">
+        <div class="forestry-stack">
+            @include('inspections.tree-summary')
+            @if ($latestInspectionEvidenceGallery ?? null)@include('evidences.gallery', ['gallery' => $latestInspectionEvidenceGallery])@endif
+        </div>
+        @include('trees.cover-photo')
     </div>
     <div class="forestry-layout">
         <div class="forestry-stack">

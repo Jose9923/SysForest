@@ -88,6 +88,7 @@ class TreeReadService
         $summary = array_merge($this->inspections->treeSummary($actor, $tree), $this->maintenances->treeSummary($actor, $tree));
 
         return array_merge($this->shared($actor, $tree), $summary, ['organization' => $organization, 'tree' => $this->trees->detail($tree),
+            'wholeTreePhoto' => $this->evidences->wholeTreePhoto($actor, $tree),
             'treeEvidenceGallery' => $this->evidences->gallery($actor, $tree),
             'latestInspectionEvidenceGallery' => $summary['latestInspection'] ? $this->evidences->gallery($actor, $summary['latestInspection']) : null]);
     }

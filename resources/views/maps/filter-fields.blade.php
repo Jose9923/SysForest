@@ -40,10 +40,9 @@
                 @foreach (['diameter_class_number' => 'Clase diamétrica', 'height_class_number' => 'Clase de altura'] as $field => $label)
                     <div class="field"><label for="map-filter-{{ $field }}">{{ $label }}</label><input id="map-filter-{{ $field }}" name="{{ $field }}" type="number" min="1" max="9223372036854775807" step="1" inputmode="numeric" data-filter-label="{{ $label }}" value="{{ $initialFilters[$field] ?? '' }}" placeholder="Cualquier clase"></div>
                 @endforeach
-                @foreach (['physical_mechanical' => ['physical_condition_ids', 'Estado físico-mecánico'], 'phytosanitary' => ['phytosanitary_condition_ids', 'Estado fitosanitario']] as $type => [$field, $label])
-                    @include('inspections.condition-fields', ['categories' => $conditionFilterCategories[$type] ?? collect(), 'assessmentLabel' => $label, 'fieldName' => $field, 'selectedIds' => $initialFilters[$field] ?? [], 'filterMode' => true])
-                @endforeach
-                <div class="field"><label for="map-condition-mode">Coincidencia de condiciones</label><select id="map-condition-mode" name="condition_mode" data-filter-label="Coincidencia de condiciones"><option value="any" @selected(($initialFilters['condition_mode'] ?? 'any') === 'any')>Al menos una</option><option value="all" @selected(($initialFilters['condition_mode'] ?? '') === 'all')>Todas en la misma inspección</option></select></div>
+                @unless ($separateConditionFilters ?? false)
+                    @include('maps.condition-filter-fields')
+                @endunless
             </div></details>
         @endif
         @if ($mapConfig['can_filter_maintenance'])

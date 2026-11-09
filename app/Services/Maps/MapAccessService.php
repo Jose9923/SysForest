@@ -15,7 +15,7 @@ use App\Services\Tenancy\TenantContextService;
 
 class MapAccessService
 {
-    private const READ_PERMISSIONS = ['trees.view', 'inspections.view', 'maintenances.view'];
+    private const READ_PERMISSIONS = ['trees.view', 'inspections.view', 'maintenances.view', 'evidences.view'];
 
     public function __construct(
         private PermissionService $permissions,

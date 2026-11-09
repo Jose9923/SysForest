@@ -17,7 +17,16 @@
         @endforeach
         @if (!$isPublic && !array_key_exists('scope', $filters))<input type="hidden" name="scope" value="{{ $filterConfig['scope']['mode'] }}">@endif
         <p class="map-hint">Aplica los cambios para actualizar la vista previa y sus descargas.</p>
-        @include('maps.filter-fields', ['mapConfig' => $filterConfig, 'initialFilters' => $filters, 'publicMap' => $isPublic])
+        @if ($filterConfig['can_inspect'])
+            <details class="map-filter-group" data-report-condition-filters open>
+                <summary>Estado físico-mecánico y fitosanitario</summary>
+                <div class="map-fields">
+                    <p class="map-hint">Elige uno o varios órganos o grupos y después sus condiciones. Se filtran árboles por su última inspección{{ $isPublic ? ' publicada' : '' }}.</p>
+                    @include('maps.condition-filter-fields', ['initialFilters' => $filters, 'publicMap' => $isPublic])
+                </div>
+            </details>
+        @endif
+        @include('maps.filter-fields', ['mapConfig' => $filterConfig, 'initialFilters' => $filters, 'publicMap' => $isPublic, 'separateConditionFilters' => true])
         <div class="map-filter-actions"><button class="button" type="submit">Aplicar filtros</button><button class="button secondary" type="button" data-reports-reset>Limpiar filtros</button></div>
     </form>
 </details>

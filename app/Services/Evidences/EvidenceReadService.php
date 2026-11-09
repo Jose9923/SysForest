@@ -47,6 +47,21 @@ class EvidenceReadService
         return $evidence;
     }
 
+    public function wholeTreePhoto(User $actor, Tree $tree): ?array
+    {
+        if (!Gate::forUser($actor)->allows('view', $tree) || !Gate::forUser($actor)->allows('viewAny', Evidence::class)) {
+            return null;
+        }
+        $organization = $this->access->organization($actor);
+        abort_unless($organization->id === $tree->organization_id, 403);
+        $photo = $this->evidences->wholeTreePhoto($organization->id, $tree->id, $this->access->allows($actor, 'inspections.view'));
+        if ($photo === null || !Gate::forUser($actor)->allows('view', $photo)) {
+            return null;
+        }
+
+        return $this->item($photo, []) + ['sourceLabel' => $photo->tree_inspection_id ? 'Fotografía de una inspección' : 'Fotografía del árbol'];
+    }
+
     public function uploadForm(User $actor, ?string $treeId, ?string $inspectionId, ?string $maintenanceId = null): array
     {
         $owner = $this->owners->resolve($actor, $treeId, $inspectionId, false, $maintenanceId);

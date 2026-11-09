@@ -154,7 +154,6 @@ function initialize() {
             root.querySelector('[data-map-filter-count]').textContent = String(filterCount(applied, filterKeys));
             window.addEventListener('pagehide', () => controls.cancelLookups());
         }
-        root.querySelector('[data-map-filter-panel]').open = window.matchMedia('(min-width: 1151px)').matches;
         const instances = new Map();
         const data = new Map(boot.charts.map(chart => [chart.key, chart]));
         const cards = [...root.querySelectorAll('[data-chart-card]')];

@@ -80,6 +80,7 @@ class MobileReferenceService
             'supports_inventory_creation' => true,
             'supports_inventory_history_reads' => true,
             'can_view_inventory_trees' => $canReadTrees,
+            'can_view_reports' => $canReadTrees && $this->forestryAccess->allows($actor, 'reports.view'),
             'can_view_inventory_inspections' => $canReadInspections,
             'can_view_inventory_photos' => $canReadPhotos,
             'inventory_photo_sources' => $photoSources,
