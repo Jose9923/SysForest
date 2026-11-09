@@ -17,6 +17,12 @@ class ForestryCatalogSeeder extends Seeder
         $catalogs = app(CatalogRegistry::class);
         $repository = app(CatalogRepository::class);
         $data = [
+            'location-change-types' => [
+                ['correction', 'Corrección'],
+                ['relocation', 'Reubicación'],
+                ['transplant', 'Trasplante'],
+                ['removal', 'Remoción'],
+            ],
             'placements' => [
                 ['PLC_SIDEWALK', 'Andén'],
                 ['PLC_PARK', 'Parque'],

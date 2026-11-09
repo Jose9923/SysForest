@@ -105,10 +105,10 @@ class AuditExportService
     {
         $criteria = [
             'Reporte' => 'Auditoría de actividad de SYSFOREST',
-            'Generado (UTC)' => CarbonImmutable::now('UTC')->format('Y-m-d H:i:s.u'),
+            'Generado (Bogotá)' => \App\Support\Time\BogotaDateTime::format(CarbonImmutable::now('UTC'), 'Y-m-d H:i:s.u'),
             'Alcance' => $scope->label(),
-            'Desde (inclusive, UTC)' => $filters['date_from'],
-            'Hasta (inclusive, UTC)' => $filters['date_to'],
+            'Desde (inclusive, Bogotá)' => $filters['date_from'],
+            'Hasta (inclusive, Bogotá)' => $filters['date_to'],
         ];
         foreach ([
             'organization_id' => 'Organización (identificador)', 'user_id' => 'Usuario (identificador)',
@@ -126,7 +126,7 @@ class AuditExportService
             };
         }
         $criteria['Contenido'] = 'Todos los eventos que cumplen los filtros, no solo la página visible. Los cambios se relacionan por el identificador del registro.';
-        $criteria['Fechas'] = 'Las fechas y horas se muestran en UTC; el rango incluye el día inicial y el día final completos.';
+        $criteria['Fechas'] = 'Las fechas y horas se muestran en hora de Bogotá; el rango incluye el día inicial y el día final completos.';
         $criteria['Historial'] = 'Instantánea consistente del registro transaccional que alimenta MongoDB. Solo incluye atributos permitidos de auditoría.';
         $criteria['Nombres'] = 'Los nombres de usuarios y organizaciones corresponden a sus valores actuales; los identificadores conservan la referencia.';
         $criteria['Cambios'] = 'Un evento puede no tener valores anteriores y posteriores. La hoja Cambios incluye únicamente diferencias disponibles.';

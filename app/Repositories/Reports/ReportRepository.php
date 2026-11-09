@@ -68,6 +68,10 @@ class ReportRepository
         }
         if (in_array($report, ['physical_conditions', 'phytosanitary_conditions'], true)) {
             array_unshift($columns, $this->column('category', 'Categoría'));
+            $type = $report === 'physical_conditions' ? 'physical_mechanical' : 'phytosanitary';
+            if ($selection->conditionSeries($type) !== []) {
+                $notices[] = 'Se muestran únicamente las condiciones u órganos seleccionados para esta evaluación. Cero significa que ningún árbol del conjunto filtrado registra esa condición; no acredita una evaluación negativa.';
+            }
         }
         if ($report === 'maintenances') {
             $columns = [$this->column('type', 'Tipo'), $this->column('status', 'Estado'),
@@ -211,6 +215,10 @@ class ReportRepository
     private function conditions(ReportSelectionDTO $selection, string $report): array
     {
         $type = $report === 'physical_conditions' ? 'physical_mechanical' : 'phytosanitary';
+        $series = $selection->conditionSeries($type);
+        if ($series !== []) {
+            return $this->selectedConditions($selection, $type, $series);
+        }
         $conditions = DB::table('inspection_conditions as link')
             ->join('conditions', 'conditions.id', '=', 'link.condition_id')
             ->join('condition_categories as categories', 'categories.id', '=', 'conditions.condition_category_id')
@@ -221,6 +229,33 @@ class ReportRepository
         return $this->rows($this->selected($selection)->leftJoinLateral($conditions, 'grouping')
             ->selectRaw('COALESCE(grouping.category, ?) AS category, COALESCE(grouping.name, ?) AS "group", COUNT(DISTINCT selected.tree_id) AS trees', ['Sin dato', 'Sin condición registrada'])
             ->groupBy('grouping.category_id', 'grouping.category', 'grouping.id', 'grouping.name')->orderBy('grouping.category')->orderBy('grouping.name'));
+    }
+
+    /** El catálogo determina las series; la última inspección autorizada determina cada conteo. */
+    private function selectedConditions(ReportSelectionDTO $selection, string $type, array $series): array
+    {
+        $counts = $this->selected($selection)
+            ->join('inspection_conditions as link', fn ($join) => $join
+                ->on('link.inspection_id', '=', 'selected.inspection_id')
+                ->on('link.organization_id', '=', 'selected.organization_id'))
+            ->select('link.condition_id')->selectRaw('COUNT(DISTINCT selected.tree_id) AS trees')
+            ->groupBy('link.condition_id');
+        if ($series['condition_ids'] !== []) {
+            $counts->whereIn('link.condition_id', $series['condition_ids']);
+        }
+        $query = DB::table('conditions')
+            ->join('condition_categories as categories', 'categories.id', '=', 'conditions.condition_category_id')
+            ->leftJoinSub($counts, 'totals', 'totals.condition_id', '=', 'conditions.id')
+            ->where('conditions.assessment_type', $type)->where('categories.assessment_type', $type);
+        if ($series['condition_ids'] !== []) {
+            $query->whereIn('conditions.id', $series['condition_ids']);
+        } else {
+            $query->whereIn('categories.id', $series['category_ids']);
+        }
+
+        return $this->rows($query
+            ->selectRaw('categories.name AS category, conditions.name AS "group", COALESCE(totals.trees, 0) AS trees')
+            ->orderBy('categories.name')->orderBy('conditions.name')->orderBy('conditions.id'));
     }
 
     private function fauna(ReportSelectionDTO $selection): array

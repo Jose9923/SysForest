@@ -24,7 +24,7 @@
                 <x-form-errors />
                 @yield('content')
             </main>
-            <footer>SYSFOREST · Inventario y gestión forestal institucional</footer>
+            <footer>SYSFOREST · Inventario y gestión forestal institucional · Horas de Bogotá (UTC−5)</footer>
         </div>
     </div>
     @include('partials.session-continuity')

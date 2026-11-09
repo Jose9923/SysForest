@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models\Trees;
 
-use App\Enums\Trees\LocationChangeType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,7 +25,7 @@ class TreeLocationHistory extends Model
     {
         return [
             'old_metadata' => 'array', 'new_metadata' => 'array',
-            'change_type' => LocationChangeType::class, 'changed_at' => 'immutable_datetime',
+            'changed_at' => 'immutable_datetime',
         ];
     }
 

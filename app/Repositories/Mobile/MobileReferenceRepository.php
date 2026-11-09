@@ -15,6 +15,7 @@ use App\Models\Catalogs\FaunaCategory;
 use App\Models\Catalogs\GrowthHabit;
 use App\Models\Inventories\Inventory;
 use App\Models\Catalogs\MaintenanceType;
+use App\Models\Catalogs\LocationChangeType;
 use App\Models\Catalogs\MaturityState;
 use App\Models\Catalogs\Placement;
 use App\Models\Taxonomy\Species;
@@ -27,6 +28,7 @@ class MobileReferenceRepository
 {
     public const CATALOGS = [
         'placements' => Placement::class,
+        'location_change_types' => LocationChangeType::class,
         'species' => Species::class,
         'families' => Family::class,
         'growth_habits' => GrowthHabit::class,

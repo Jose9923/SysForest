@@ -98,10 +98,10 @@ class EvidenceService
     {
         return $this->writes->run($actor, $id, 'update', $input, function (Evidence $evidence, User $actor, array $version) use ($input): void {
             $current = ['evidence_type_id' => $evidence->evidence_type_id, 'caption' => $evidence->caption,
-                'notes' => $evidence->notes, 'captured_at' => $evidence->captured_at?->utc()->format('Y-m-d\TH:i')];
+                'notes' => $evidence->notes, 'captured_at' => \App\Support\Time\BogotaDateTime::input($evidence->captured_at)];
             $data = Validator::make(array_replace($current, $input), EvidenceInput::updateRules(), EvidenceInput::messages())->validate();
             $this->validateType($data['evidence_type_id'], $evidence->evidence_type_id, 'evidence_type_id');
-            $this->evidences->update($evidence, $this->metadata($data) + $version);
+            $this->evidences->update($evidence, $this->metadata($data, $evidence->captured_at) + $version);
         }, 'evidence.updated');
     }
 
@@ -131,10 +131,12 @@ class EvidenceService
         }
     }
 
-    private function metadata(array $item): array
+    private function metadata(array $item, ?\DateTimeInterface $currentCapture = null): array
     {
         return ['evidence_type_id' => $item['evidence_type_id'], 'caption' => $item['caption'] ?? null,
             'notes' => $item['notes'] ?? null, 'captured_at' => trim((string) ($item['captured_at'] ?? '')) !== ''
-                ? CarbonImmutable::createFromFormat('!Y-m-d\TH:i', $item['captured_at'], 'UTC') : null];
+                ? ($currentCapture !== null && \App\Support\Time\BogotaDateTime::input($currentCapture) === $item['captured_at']
+                    ? CarbonImmutable::instance($currentCapture)->utc()
+                    : CarbonImmutable::createFromFormat('!Y-m-d\TH:i', $item['captured_at'], \App\Support\Time\BogotaDateTime::TIMEZONE)->utc()) : null];
     }
 }

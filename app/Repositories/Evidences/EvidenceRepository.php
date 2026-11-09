@@ -219,10 +219,11 @@ class EvidenceRepository
             $this->requireUuid($filters['evidence_type_id']);
             $query->where('evidence_type_id', $filters['evidence_type_id']);
         }
-        foreach (['date_from' => '>=', 'date_to' => '<='] as $field => $operator) {
-            if (isset($filters[$field]) && $filters[$field] !== '') {
-                $query->whereDate('created_at', $operator, $filters[$field]);
-            }
+        if (isset($filters['date_from']) && $filters['date_from'] !== '') {
+            $query->where('created_at', '>=', \App\Support\Time\BogotaDateTime::startOfDayUtc($filters['date_from'])->toIso8601String());
+        }
+        if (isset($filters['date_to']) && $filters['date_to'] !== '') {
+            $query->where('created_at', '<', \App\Support\Time\BogotaDateTime::afterDayUtc($filters['date_to'])->toIso8601String());
         }
         $sort = in_array($filters['sort'] ?? '', ['created_at', 'captured_at'], true) ? $filters['sort'] : 'created_at';
         $direction = ($filters['direction'] ?? '') === 'asc' ? 'asc' : 'desc';

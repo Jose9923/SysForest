@@ -51,8 +51,11 @@ final class XlsxExportWriter
             }
             $writer->addNewSheetAndMakeItCurrent()->setName('Criterios');
             $writer->addRow($this->row(['Criterio', 'Valor'], $header));
-            foreach (['title' => 'Reporte', 'generatedAt' => 'Generado', 'scopeLabel' => 'Alcance'] as $key => $label) {
-                $writer->addRow($this->row([$label, $metadata[$key] ?? '']));
+            foreach (['title' => 'Reporte', 'generatedAt' => 'Generado (Bogotá)', 'scopeLabel' => 'Alcance'] as $key => $label) {
+                $value = $key === 'generatedAt'
+                    ? \App\Support\Time\BogotaDateTime::format($metadata[$key] ?? null, 'd/m/Y H:i:s')
+                    : ($metadata[$key] ?? '');
+                $writer->addRow($this->row([$label, $value]));
             }
             $writer->addRow($this->row(['Filas', (string) $count]));
             foreach ($metadata['appliedFilters'] ?? [] as $filter) {

@@ -5,7 +5,7 @@
 <p>Sugerencia automática: {{ $riskResult['priority_label'] ?? ($riskResult['status'] === 'inconsistent' ? 'No emitida por contradicciones' : 'No emitida por falta de condiciones evaluadas') }} · {{ $riskResult['methodology_code'] }} · Severidad {{ $riskResult['severity_max'] ?? '—' }} · Extensión {{ $riskResult['extension_class'] ?? '—' }}.</p>
 @if (isset($riskResult['historical_suggestion']))<p>Antecedente automático conservado: {{ $riskResult['historical_suggestion']['priority_label'] }}. Se calculó sin condiciones evaluadas y no acredita un diagnóstico sano.</p>@endif
 <p>Condiciones registradas incluidas en la metodología: {{ $riskResult['evaluated_condition_count'] }}. Este conteo no acredita la revisión completa de todos los órganos.</p>
-@if ($risk->confirmed_at)<p>Confirmada el {{ $risk->confirmed_at->format('d/m/Y H:i') }} UTC · {{ $risk->confirmer?->name ?? 'Responsable no disponible' }}.</p>@else<p>Requiere revisión y confirmación profesional.</p>@endif
+@if ($risk->confirmed_at)<p>Confirmada el {{ \App\Support\Time\BogotaDateTime::format($risk->confirmed_at) }} (Bogotá) · {{ $risk->confirmer?->name ?? 'Responsable no disponible' }}.</p>@else<p>Requiere revisión y confirmación profesional.</p>@endif
 @php($componentNames = ['PHT_ROOT' => 'Sistema radicular', 'PHT_STEM' => 'Fuste o estípite', 'PHT_BRANCH' => 'Ramas', 'PHT_FOLIAGE' => 'Follaje', 'PHT_FLOWER_FRUIT' => 'Flores y frutos'])
 <p>Componentes afectados ({{ $risk->result['affected_component_count'] }}): {{ collect($risk->result['affected_components'])->map(fn ($code) => $componentNames[$code] ?? $code)->join(', ') ?: 'Ninguno registrado' }}.</p>
 <ul>@foreach (array_merge($riskResult['errors'], $riskResult['warnings']) as $message)<li>{{ $message }}</li>@endforeach

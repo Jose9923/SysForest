@@ -1,5 +1,5 @@
 @foreach (['physical_mechanical' => ['physical_condition_ids', 'Estado físico-mecánico'], 'phytosanitary' => ['phytosanitary_condition_ids', 'Estado fitosanitario']] as $type => [$field, $label])
-    @include('inspections.condition-fields', ['categories' => $conditionFilterCategories[$type] ?? collect(), 'assessmentLabel' => $label, 'fieldName' => $field, 'selectedIds' => $initialFilters[$field] ?? [], 'filterMode' => true])
+    @include('inspections.condition-fields', ['categories' => $conditionFilterCategories[$type] ?? collect(), 'assessmentLabel' => $label, 'fieldName' => $field, 'selectedIds' => $initialFilters[$field] ?? [], 'filterMode' => true, 'seriesFilterMode' => $seriesFilterMode ?? false, 'selectedCategories' => $initialFilters[str_replace('_condition_ids', '_condition_category_ids', $field)] ?? []])
 @endforeach
 <div class="field">
     <label for="map-condition-mode">Coincidencia de condiciones</label>

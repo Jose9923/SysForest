@@ -31,11 +31,11 @@
         refresh(false);
         return instance;
     };
-    const setValues = (cascade, ids) => {
+    const setValues = (cascade, ids, categoryIds = []) => {
         if (!cascade) return;
         const {categories, panels, refresh} = initialize(cascade);
         const selected = new Set(Array.isArray(ids) ? ids.filter(id => typeof id === 'string') : []);
-        const selectedCategories = new Set();
+        const selectedCategories = new Set(Array.isArray(categoryIds) ? categoryIds.filter(id => typeof id === 'string') : []);
         panels.forEach(panel => {
             const conditions = panel.querySelector('[data-condition-select]');
             Array.from(conditions.options).forEach(option => { option.selected = selected.has(option.value); });

@@ -82,15 +82,26 @@ class ReportReadService
     public function metadata(?User $actor, ReportSelectionDTO $selection, string $key): array
     {
         $definition = $this->catalog->get($key);
-        $map = $selection->isPublic() ? $this->publicMap->page($selection->values)
-            : $this->privateMap->page($actor, $selection->values);
+        $seriesFields = ['physical_condition_category_ids' => 'physical_mechanical',
+            'phytosanitary_condition_category_ids' => 'phytosanitary'];
+        $mapInput = array_diff_key($selection->values, $seriesFields);
+        $map = $selection->isPublic() ? $this->publicMap->page($mapInput)
+            : $this->privateMap->page($actor, $mapInput);
+        if (!$selection->isPublic()) {
+            foreach ($seriesFields as $field => $type) {
+                $ids = $selection->values[$field] ?? [];
+                $map['selectedOptions'][$field] = ($map['conditionFilterCategories'][$type] ?? collect())
+                    ->filter(fn ($category) => in_array($category->id, $ids, true))
+                    ->map(fn ($category) => ['id' => $category->id, 'text' => $category->name])->values()->all();
+            }
+        }
         $scopeLabel = $selection->isPublic() ? 'Información publicada · consulta ciudadana' : $map['mapConfig']['scope']['label'];
 
         return ['title' => $definition['title'], 'generatedAt' => now()->toIso8601String(),
             'isPublic' => $selection->isPublic(), 'scopeLabel' => $scopeLabel,
             'appliedFilters' => $this->applied($selection->values, $map['selectedOptions']),
             'selectedOptions' => $map['selectedOptions'], 'conditionFilterCategories' => $map['conditionFilterCategories'],
-            'filterConfig' => $this->filterConfig($map['mapConfig'])];
+            'filterConfig' => $this->filterConfig($map['mapConfig'], $selection->isPublic())];
     }
 
     private function page(?User $actor, ReportSelectionDTO $selection, string $key, int $page): array
@@ -144,13 +155,18 @@ class ReportReadService
                 'canonical' => rtrim((string) config('app.url'), '/').'/portal/reports?report='.$key]];
     }
 
-    private function filterConfig(array $config): array
+    private function filterConfig(array $config, bool $public): array
     {
         $keys = $config['filter_keys'] ?? array_keys(TreeFilterInput::rules() + MapInput::rules(false));
         $keys = array_values(array_filter($keys, fn ($key) => !str_contains($key, '.')
             && !in_array($key, ['tree_id', 'trashed', 'include_deleted', 'include_voided_trees', 'page', 'render_mode', 'term', 'west', 'east', 'south', 'north', 'zoom'], true)));
         $config['filter_keys'] = array_values(array_unique([...$keys, 'radius_latitude', 'radius_longitude', 'radius_meters',
             'cap_cm_min', 'cap_cm_max', 'dap_m_min', 'dap_m_max', 'total_height_m_min', 'total_height_m_max', 'sort', 'direction']));
+
+        if (!$public) {
+            $config['filter_keys'] = array_values(array_unique([...$config['filter_keys'],
+                'physical_condition_category_ids', 'phytosanitary_condition_category_ids']));
+        }
 
         return $config;
     }
@@ -165,6 +181,8 @@ class ReportReadService
             'is_protected' => 'Protegido', 'is_heritage' => 'Patrimonial', 'diameter_class_number' => 'Clase diamétrica',
             'height_class_number' => 'Clase de altura', 'physical_condition_ids' => 'Condiciones físico-mecánicas',
             'phytosanitary_condition_ids' => 'Condiciones fitosanitarias', 'condition_mode' => 'Coincidencia de condiciones',
+            'physical_condition_category_ids' => 'Órganos mostrados · físico-mecánico',
+            'phytosanitary_condition_category_ids' => 'Órganos mostrados · fitosanitario',
             'maintenance_type_id' => 'Tipo de mantenimiento', 'maintenance_status' => 'Estado del mantenimiento',
             'maintenance_priority' => 'Prioridad de mantenimiento', 'has_pending_maintenance' => 'Mantenimiento pendiente',
             'radius_latitude' => 'Centro del radio · latitud', 'radius_longitude' => 'Centro del radio · longitud', 'radius_meters' => 'Radio (m)',

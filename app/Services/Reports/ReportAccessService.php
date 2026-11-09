@@ -52,7 +52,7 @@ class ReportAccessService
         if ($export) {
             $required[] = 'reports.export';
         }
-        if ($selection->filters->trees->hasInspectionFilters()) {
+        if ($selection->filters->trees->hasInspectionFilters() || $selection->hasConditionSeries()) {
             $required[] = 'inspections.view';
         }
         if ($selection->filters->trees->hasMaintenanceFilters()) {

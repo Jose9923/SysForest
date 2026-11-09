@@ -131,8 +131,21 @@ class AnalyticsReadService
         if (!in_array($key, ['diameter_classes', 'height_classes'], true)) {
             usort($plotted, fn ($left, $right) => $right[$metric] <=> $left[$metric] ?: strcmp($labels($left), $labels($right)));
         }
-        $limit = in_array($key, ['species', 'families'], true) ? 10 : 12;
+        $conditionType = match ($key) {
+            'physical_conditions' => 'physical_mechanical',
+            'phytosanitary_conditions' => 'phytosanitary',
+            default => null,
+        };
+        $series = $conditionType === null ? [] : $selection->conditionSeries($conditionType);
+        $selectedConditions = !empty($series['condition_ids']) || !empty($series['category_ids']);
+        $limit = $selectedConditions ? count($plotted) : (in_array($key, ['species', 'families'], true) ? 10 : 12);
         $visible = array_slice($plotted, 0, $limit);
+        if ($selectedConditions) {
+            $notices[] = 'Se muestran todas las condiciones de esta selección. Un 0 significa que ningún árbol del conjunto filtrado la tiene registrada; no confirma que se haya evaluado su ausencia. La tabla y las descargas conservan la misma selección.';
+            if ($plotted !== [] && array_sum(array_column($plotted, $metric)) === 0) {
+                $notices[] = 'Ningún árbol del conjunto filtrado registra estas condiciones en su última inspección; se muestran con valor 0.';
+            }
+        }
         $chartLabels = array_map($labels, $visible);
         $values = array_column($visible, $metric);
         if (count($plotted) > $limit) {

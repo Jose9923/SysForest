@@ -9,6 +9,10 @@ WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = :'target_database')
 SELECT format('ALTER DATABASE %I OWNER TO %I', :'target_database', :'migrator_user')
 \gexec
 
+-- Las consultas directas usan Bogotá; la conexión ORM fija explícitamente UTC.
+SELECT format('ALTER DATABASE %I SET timezone TO %L', :'target_database', 'America/Bogota')
+\gexec
+
 SELECT format('REVOKE ALL ON DATABASE %I FROM PUBLIC', :'target_database')
 \gexec
 

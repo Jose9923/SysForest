@@ -35,6 +35,22 @@ Los cálculos derivados se realizan en el servidor. Una medida desconocida no eq
 
 Un individuo puede participar en varias campañas sin duplicar su identidad. **Anular** se reserva para registros creados por error; muerto, talado o retirado son estados de un individuo real y conservan su historial. La restauración requiere permiso y conserva UUID, código y relaciones.
 
+## Administrar tipos de cambio y registrar una remoción
+
+En **Catálogos forestales**, abre **Tipos de cambio de ubicación**. Las opciones iniciales son **Corrección**, **Reubicación**, **Trasplante** y **Remoción**. El superadministrador puede crear otros tipos, editar su nombre y descripción, ordenar el listado y activar o desactivar opciones. Los demás perfiles consultan el catálogo según sus permisos. Una opción inactiva deja de ofrecerse para nuevos cambios y continúa identificando los registros anteriores.
+
+En la ficha del árbol, abre **Cambiar ubicación o datos de captura**, selecciona un **Tipo de cambio** activo y explica el **Motivo**. Para dejar constancia de una remoción puedes conservar la última ubicación conocida. Se registra un nuevo antecedente con responsable y fecha, aunque no cambien las coordenadas. Elegir **Remoción** no cambia automáticamente el estado del árbol; ese estado se gestiona en **Cambiar estado del árbol**.
+
+El código de cada tipo es permanente. Si se necesita un significado diferente, crea otra opción; cambiar su nombre solo actualiza la etiqueta visible. Consulta el [catálogo forestal](forestry-catalogs.md) y el [informe de esta entrega](change-catalog-bogota-20261109.md) para su configuración y estado de publicación.
+
+## Consultar y capturar horas de Bogotá
+
+Las horas visibles de registro, actualización, seguimiento, sesiones, importaciones, fotografías y confirmaciones profesionales usan **hora de Bogotá**. La conversión incluye registros anteriores y puede situar una hora UTC de madrugada en el día anterior de Colombia.
+
+En los calendarios de ubicación y fotografías escribe la hora local de Bogotá. Deja el dato vacío si se desconoce; no deduzcas la fecha de captura a partir de la fecha de subida. Las fechas de inspección y de programación o realización de mantenimientos siguen representando días de calendario.
+
+Los filtros **Desde** y **Hasta** de auditoría y fotografías incluyen los días completos de Bogotá. Por ejemplo, elegir el mismo día en ambos campos incluye desde las 00:00 hasta antes de las 00:00 del día siguiente. El Excel de auditoría y las horas de generación en PDF y Excel también identifican Bogotá.
+
 ## Elegir órganos y condiciones en la web
 
 En **Condiciones físico-mecánicas** y **Condiciones fitosanitarias**, elige primero uno o varios **Órganos o grupos**. Puedes buscar por nombre y mantener, por ejemplo, sistema radicular y ramas seleccionados a la vez. Cada órgano abre su propio selector de **Condiciones**, donde puedes elegir varios hallazgos. Las dos evaluaciones conservan selecciones independientes.
@@ -96,11 +112,25 @@ La vista previa vence a las 24 horas por defecto. Puedes cancelar un lote pendie
 
 El **Mapa general** privado y las bandejas comparten filtros. Los filtros de condición actual consultan la última inspección pertinente; seleccionar todas las condiciones exige que coincidan en esa misma visita. El mapa de calor representa densidad, no riesgo forestal. Los individuos sin coordenadas pueden aparecer en los conteos y listados sin generar un marcador.
 
-Para filtrar condiciones, elige varios órganos o grupos y después las condiciones concretas de cada uno, igual que en la captura. Elegir solo el órgano no añade un criterio. Puedes combinar condiciones físicas y fitosanitarias con **Cualquiera** o **Todas**; quitar un órgano limpia solo los criterios de ese órgano. Este control se comparte entre listados, mapas, análisis y reportes, con las opciones disponibles en cada alcance.
+En mapas y bandejas, elige varios órganos o grupos y después sus condiciones concretas. Elegir solo el órgano abre las opciones y no restringe los árboles. Puedes combinar condiciones físicas y fitosanitarias con **Cualquiera** o **Todas**; quitar un órgano limpia solo sus condiciones. Las gráficas y los reportes privados de condiciones permiten, además, elegir qué órganos o condiciones se muestran, como se explica a continuación.
 
 En **Reportes**, aplica los filtros y el alcance antes de descargar CSV, Excel, GeoJSON o PDF. La vista del mapa y su límite de marcadores no recortan las exportaciones. Los límites predeterminados son 50.000 filas privadas, 10.000 públicas y 200 para PDF tabular. Si se supera un límite, restringe los filtros; no se entrega un archivo silenciosamente truncado. Una ficha PDF individual contiene el perfil permitido completo. Un archivo de consulta exportado no sustituye la plantilla oficial de importación.
 
 Los mapas y reportes privados permiten consultar prioridad, stock de carbono y cobertura con los mismos filtros. El reporte distingue estimaciones provisionales y revisadas y conserva el aviso de cobertura en las descargas. Un PNG muestra **Sin estimación** para valores ausentes. El stock vivo solo suma la última visita compatible de árboles Sanos, En observación o Trasplantados; no suma visitas históricas ni representa una precisión certificada.
+
+## Gráficas web por órganos y condiciones
+
+En **Diagramas y gráficas**, abre los filtros de **Estado físico-mecánico y fitosanitario**. Para ver las condiciones de un órgano, selecciona, por ejemplo, **Fuste o estípite** y pulsa **Aplicar filtros**. La gráfica de esa evaluación muestra todas sus condiciones. Elegir únicamente el órgano conserva el conjunto de árboles; cambia lo que se representa.
+
+Si marcas condiciones concretas, la gráfica muestra únicamente esas. Por ejemplo, al elegir **Recto** y **Torcido**, aparecen esas dos condiciones, junto con sus cantidades. Las selecciones físicas y fitosanitarias se manejan por separado: marcar condiciones físicas no sustituye lo elegido para la gráfica fitosanitaria.
+
+Las condiciones marcadas también seleccionan los árboles según su última inspección. **Al menos una condición seleccionada** incluye un árbol si registra cualquiera; **Todas las condiciones seleccionadas** exige que registre cada una en esa misma visita. El modo se aplica conjuntamente a las condiciones físicas y fitosanitarias elegidas. Por tanto, si combinas ambos grupos, todas las gráficas usan el conjunto de árboles que cumple esa combinación. Una visita antigua no hace coincidir un árbol cuya última inspección ya no cumple.
+
+Cada condición cuenta árboles distintos. Un árbol puede aparecer en varias condiciones, por lo que sumar sus barras no da necesariamente el total de árboles. Se conservan las condiciones elegidas con valor **0**: significa que ningún árbol del conjunto filtrado la tiene registrada, sin certificar que se haya evaluado su ausencia. Si todas tienen cero, la pantalla explica por qué no hay barras.
+
+Cuando seleccionas órganos o condiciones, la gráfica correspondiente muestra toda esa selección, aunque supere 12 grupos. **Ver tabla de datos**, CSV, PNG y las descargas disponibles conservan las mismas condiciones y cantidades. La elección se mantiene al abrir el reporte y cambiar de página. Quitar un órgano limpia sus condiciones, conservando los demás órganos y la otra evaluación.
+
+La selección del órgano **Fuste o estípite** no representa la cantidad de troncos de un individuo: esa medida se registra por separado en **Número de fustes o estípites**. Este ajuste corresponde a la web privada; el portal público y SysForest Mobile mantienen sus controles actuales. El estado de verificación y activación está en [selección de condiciones en gráficas](selected-condition-charts-20261109.md).
 
 ## Publicar información ciudadana
 
@@ -112,7 +142,7 @@ Todo comienza privado. Autorizar un árbol no publica automáticamente sus notas
 
 ## Consultar auditoría y resolver conflictos
 
-**Auditoría** está reservada a SUPER_ADMIN y DEPARTMENT_ADMIN dentro de sus alcances. Los filtros Desde y Hasta usan fechas nativas y calendario UTC inclusivo; también se filtra por módulo, acción, usuario y organización autorizados. El detalle distingue valores anteriores y nuevos. Los eventos históricos sin captura de valores lo indican expresamente. La descarga Excel conserva los filtros e incluye Eventos, Cambios y Criterios; el límite predeterminado es 50.000 eventos y no se truncan resultados. El historial sigue siendo de solo lectura. Consulta [auditoría](audit.md).
+**Auditoría** está reservada a SUPER_ADMIN y DEPARTMENT_ADMIN dentro de sus alcances. Los filtros Desde y Hasta usan fechas nativas y calendario de Bogotá inclusivo; también se filtra por módulo, acción, usuario y organización autorizados. El detalle distingue valores anteriores y nuevos. Los eventos históricos sin captura de valores lo indican expresamente. La descarga Excel conserva los filtros e incluye Eventos, Cambios y Criterios; el límite predeterminado es 50.000 eventos y no se truncan resultados. El historial sigue siendo de solo lectura. Consulta [auditoría](audit.md).
 
 Si otra persona modificó un registro abierto en tu formulario, el sistema devuelve conflicto y evita sobrescribir su cambio. Conserva tus observaciones, abre la versión vigente, compara y vuelve a aplicar únicamente lo que siga siendo necesario. Reenviar una pestaña obsoleta no resuelve el conflicto. Consulta [concurrencia](concurrency.md).
 

@@ -6,7 +6,6 @@ namespace App\Repositories\Audit;
 
 use App\DTOs\Audit\AuditScope;
 use App\Auditing\AuditCatalog;
-use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -28,8 +27,8 @@ class AuditSourceRepository
     private function filtered(AuditScope $scope, array $filters): Builder
     {
         $query = $this->query($scope);
-        $query->where('a.occurred_at', '>=', $filters['date_from'].' 00:00:00+00')
-            ->where('a.occurred_at', '<', CarbonImmutable::parse($filters['date_to'], 'UTC')->addDay()->toDateString().' 00:00:00+00');
+        $query->where('a.occurred_at', '>=', \App\Support\Time\BogotaDateTime::startOfDayUtc($filters['date_from'])->toIso8601String())
+            ->where('a.occurred_at', '<', \App\Support\Time\BogotaDateTime::afterDayUtc($filters['date_to'])->toIso8601String());
         foreach (['organization_id', 'event', 'resource_type', 'resource_id'] as $key) {
             if (isset($filters[$key])) {
                 $query->where('a.'.$key, $filters[$key]);

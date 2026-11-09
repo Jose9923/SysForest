@@ -8,7 +8,8 @@ export const FILTER_KEYS = Object.freeze([
     'phytosanitary_condition_ids', 'condition_mode', 'maintenance_type_id',
     'maintenance_status', 'maintenance_priority', 'has_pending_maintenance',
 ]);
-export const ARRAY_KEYS = Object.freeze(['physical_condition_ids', 'phytosanitary_condition_ids']);
+export const ARRAY_KEYS = Object.freeze(['physical_condition_ids', 'phytosanitary_condition_ids',
+    'physical_condition_category_ids', 'phytosanitary_condition_category_ids']);
 export const MODES = Object.freeze(['points', 'clusters', 'heat']);
 
 export function cleanFilters(source = {}, keys = FILTER_KEYS) {

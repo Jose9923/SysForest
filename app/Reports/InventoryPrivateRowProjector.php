@@ -34,14 +34,14 @@ class InventoryPrivateRowProjector
         $values['risk_methodology'] = $risk?->result['methodology_code'] ?? null;
         $values['risk_explanation'] = $risk ? \App\Support\Risk\RiskPresentation::explanation($risk) : null;
         $values['risk_confirmed_by'] = $risk?->confirmed_by;
-        $values['risk_confirmed_at'] = $risk?->confirmed_at?->toIso8601String();
+        $values['risk_confirmed_at'] = \App\Support\Time\BogotaDateTime::iso($risk?->confirmed_at);
         $values['risk_observations'] = \App\Support\Imports\ExcelReferencePresentation::text($risk?->observations);
         $values['organization_code'] = $tree->getRelation('organization')->code;
         foreach (['external_number', 'coordinate_raw', 'coordinate_format', 'datum', 'accuracy_m',
             'gps_brand', 'gps_model', 'location_description'] as $field) {
             $values[$field] = $tree->getAttribute($field);
         }
-        $values['location_captured_at'] = $tree->captured_at?->utc()->format('Y-m-d\TH:i:s.u\Z');
+        $values['location_captured_at'] = \App\Support\Time\BogotaDateTime::iso($tree->captured_at);
         $values['classification_rule_version'] = \App\Support\Catalogs\ClassificationVersionPresentation::label(
             $inspection?->getRelation('classificationRuleVersion')?->code
         );

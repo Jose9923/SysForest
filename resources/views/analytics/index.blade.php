@@ -13,7 +13,7 @@
 <section class="general-map analytics-page" data-analytics-page>
     <header class="analytics-hero">
         <div><p class="eyebrow">INTELIGENCIA FORESTAL · {{ $scopeLabel }}</p><h1>Diagramas y gráficas</h1><p>Conoce la composición de tu arbolado, compara inventarios y explora sus registros en el tiempo.</p><span class="analytics-live"><i aria-hidden="true"></i> Datos de SysForest · consulta actual</span></div>
-        <div class="analytics-hero-actions"><a class="button" href="{{ route('maps.index', $filters) }}">Explorar cartografía ↗</a><a class="analytics-text-link" href="{{ route('reports.index', ['report' => 'species'] + $filters) }}">Ir a reportes y descargas →</a></div>
+        <div class="analytics-hero-actions"><a class="button" href="{{ route('maps.index', array_diff_key($filters, array_flip(['physical_condition_category_ids', 'phytosanitary_condition_category_ids']))) }}">Explorar cartografía ↗</a><a class="analytics-text-link" href="{{ route('reports.index', ['report' => 'species'] + $filters) }}">Ir a reportes y descargas →</a></div>
     </header>
     <div class="analytics-metrics" aria-label="Resumen del arbolado filtrado">
         <article><span>Árboles seleccionados</span><strong>{{ number_format($summary['totalTrees'], 0, ',', '.') }}</strong><small>Individuos únicos</small></article>

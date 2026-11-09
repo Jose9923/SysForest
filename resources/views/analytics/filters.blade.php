@@ -3,7 +3,7 @@
         'common_name', 'scientific_name', 'common_name_id', 'family_id', 'species_id', 'placement_id', 'growth_habit_id',
         'establishment_origin_id', 'biogeographic_origin_id', 'current_status', 'is_protected', 'is_heritage',
         'date_from', 'date_to', 'maturity_state_id', 'diameter_class_number', 'height_class_number',
-        'physical_condition_ids', 'phytosanitary_condition_ids', 'condition_mode', 'maintenance_type_id',
+        'physical_condition_ids', 'phytosanitary_condition_ids', 'physical_condition_category_ids', 'phytosanitary_condition_category_ids', 'condition_mode', 'maintenance_type_id',
         'maintenance_status', 'maintenance_priority', 'has_pending_maintenance'];
 @endphp
 <details class="map-filter-panel" data-map-filter-panel open>
@@ -20,8 +20,8 @@
             <details class="map-filter-group" data-report-condition-filters open>
                 <summary>Estado físico-mecánico y fitosanitario</summary>
                 <div class="map-fields">
-                    <p class="map-hint">Elige uno o varios órganos o grupos y después sus condiciones. Se filtran árboles por su última inspección.</p>
-                    @include('maps.condition-filter-fields', ['initialFilters' => $filters, 'publicMap' => false])
+                    <p class="map-hint">Elige órganos para graficar sus condiciones, o marca condiciones específicas para mostrar solo esas. Las condiciones marcadas filtran árboles por su última inspección; elegir únicamente órganos conserva el conjunto de árboles.</p>
+                    @include('maps.condition-filter-fields', ['initialFilters' => $filters, 'publicMap' => false, 'seriesFilterMode' => true])
                 </div>
             </details>
         @endif

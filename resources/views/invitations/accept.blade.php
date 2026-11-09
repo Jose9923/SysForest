@@ -33,5 +33,5 @@
             <button type="submit" class="button auth-primary">Aceptar invitación</button>
         </form>
     @endif
-    <p class="auth-help">Vencimiento del enlace: {{ $invitation->expires_at?->format('d/m/Y H:i') ?? 'Consulta el correo de invitación' }}.</p>
+    <p class="auth-help">Vencimiento del enlace (Bogotá): {{ \App\Support\Time\BogotaDateTime::format($invitation->expires_at) ?? 'Consulta el correo de invitación' }}.</p>
 @endsection

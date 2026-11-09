@@ -44,7 +44,7 @@ final class AuditXlsxWriter
             $events->setColumnWidth(39, 8, 11, 13);
             $events->setColumnWidth(58, 15);
             $writer->addRow($this->row([
-                'Fecha y hora (UTC)', 'Módulo', 'Acción', 'Código de acción', 'Usuario', 'Organización',
+                'Fecha y hora (Bogotá)', 'Módulo', 'Acción', 'Código de acción', 'Usuario', 'Organización',
                 'Tipo de recurso', 'Identificador del recurso', 'Identificador del usuario', 'Origen del registro',
                 'Identificador del registro', 'Versión', 'Identificador de petición', 'Valores antes y después', 'Información adicional',
             ], $header));
@@ -55,7 +55,7 @@ final class AuditXlsxWriter
             $changes->setColumnWidth(29, 2);
             $changes->setColumnWidth(38, 3);
             $changes->setColumnWidth(65, 4, 5);
-            $writer->addRow($this->row(['Identificador del registro', 'Fecha y hora (UTC)', 'Campo', 'Valor anterior', 'Valor posterior'], $header));
+            $writer->addRow($this->row(['Identificador del registro', 'Fecha y hora (Bogotá)', 'Campo', 'Valor anterior', 'Valor posterior'], $header));
 
             $count = 0;
             $changeCount = 0;

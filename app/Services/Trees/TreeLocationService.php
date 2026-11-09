@@ -8,6 +8,7 @@ use App\DTOs\Forestry\ParsedCoordinates;
 use App\Models\Trees\Tree;
 use App\Models\User;
 use App\Repositories\Auth\SecurityEventRepository;
+use App\Repositories\Catalogs\LocationChangeTypeRepository;
 use App\Repositories\Trees\TreeLocationRepository;
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
@@ -25,6 +26,7 @@ class TreeLocationService
         private TreeLocationRepository $locations,
         private SecurityEventRepository $events,
         private TreeCaptureDateService $captureDates,
+        private LocationChangeTypeRepository $changeTypes,
     ) {
     }
 
@@ -48,7 +50,8 @@ class TreeLocationService
             }
         }
         $metadata['coordinate_format'] = $coordinates?->format;
-        if ($before?->toArray() === $coordinates?->toArray() && $oldMetadata === $metadata) {
+        if ($before?->toArray() === $coordinates?->toArray() && $oldMetadata === $metadata
+            && ($initial || empty($values['location_change_type']))) {
             return false;
         }
 
@@ -84,7 +87,7 @@ class TreeLocationService
             'gps_brand' => ['nullable', 'string', 'max:100'],
             'gps_model' => ['nullable', 'string', 'max:100'],
             'captured_at' => ['nullable', 'date'],
-            'location_change_type' => ['nullable', 'in:correction,relocation,transplant'],
+            'location_change_type' => ['nullable', 'string', 'max:80'],
             'location_reason' => ['nullable', 'string', 'max:5000'],
         ], [
             'string' => 'El campo :attribute debe ser texto.',
@@ -95,6 +98,9 @@ class TreeLocationService
             'date' => 'Indica una fecha y hora de captura válidas.',
             'in' => 'Selecciona un tipo de cambio de ubicación válido.',
         ])->validate();
+        if (isset($values['location_change_type']) && ! $this->changeTypes->isActiveCode($values['location_change_type'])) {
+            throw ValidationException::withMessages(['location_change_type' => 'Selecciona un tipo de cambio activo del catálogo forestal.']);
+        }
         if (isset($values['coordinate_raw']) && trim($values['coordinate_raw']) !== '') {
             $this->parser->parse($values['coordinate_raw']);
         }

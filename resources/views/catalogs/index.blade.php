@@ -9,7 +9,7 @@
     <section class="panel">
         <form class="catalog-filters" method="GET" action="{{ route('catalogs.index', $catalog->key) }}">
             <x-field name="q" label="Buscar por nombre o código" :value="$filters['q'] ?? ''" maxlength="120" />
-            <div class="field"><label for="active">Disponibilidad</label><select id="active" name="active"><option value="">Todos</option value="1" @selected(($filters['active'] ?? '') === '1')>Activos</option><option value="0" @selected(($filters['active'] ?? '') === '0')>Inactivos</option></select></div>
+            <div class="field"><label for="active">Disponibilidad</label><select id="active" name="active"><option value="">Todos</option><option value="1" @selected(($filters['active'] ?? '') === '1')>Activos</option><option value="0" @selected(($filters['active'] ?? '') === '0')>Inactivos</option></select></div>
             <button class="button secondary">Buscar</button><a class="text-link" href="{{ route('catalogs.index', $catalog->key) }}">Limpiar</a>
         </form>
         <div class="catalog-table-wrap" tabindex="0" role="region" aria-label="Valores de {{ $catalog->title }}">

@@ -88,6 +88,18 @@ La consulta exige acceso vigente a la institución, inventario, árboles y mante
 
 La nueva app envía siempre `inspection` dentro del item de creación de árbol. No usa una segunda escritura para esa primera visita. El recibo devuelve `tree_id` e `inspection_id`; un reintento conserva UUID y contenido. Se mantiene el contrato compatible para capturas ya preparadas por versiones anteriores que no incluían inspección. Las inspecciones posteriores continúan por `POST /trees/{tree}/inspections`.
 
+## Catálogo de tipos de cambio de ubicación
+
+La ampliación del 9 de noviembre de 2026 añade `location_change_types` al arreglo `data.catalogs` de `GET /parameterizations`. `GET /parameterizations/location_change_types` devuelve las opciones activas paginadas mediante la misma proyección de referencias: `id`, `code`, `name`, `description`, `active`, `sort_order` y `updated_at`. Conserva autenticación, permisos, filtros y límites del contrato existente. Es un catálogo adicional; no sustituye los estados del árbol.
+
+Los códigos iniciales son `correction`, `relocation`, `transplant` y `removal`. El administrador nacional puede incorporar opciones con otros códigos estables y editar sus nombres. El cliente debe mostrar `name` y enviar **`code`**, no el UUID ni el nombre, en `changes.location_change_type` de `PATCH /trees/{tree}`. `changes.location_reason` conserva el motivo; `operation_id` y `lock_version` siguen siendo obligatorios para la mutación.
+
+El servidor admite solo tipos activos para operaciones nuevas. Un tipo desactivado continúa en los historiales, pero no aparece en la descarga de opciones activas. Un recibo ya confirmado conserva su respuesta original y las reglas de replay existentes; actualizar el catálogo no reescribe recibos ni autoriza a regenerar UUID.
+
+Un tipo y motivo explícitos pueden registrar el cambio aunque se conserven las coordenadas. `removal` no cambia `current_status`, no borra ubicación y no anula el árbol. Si se requiere otro estado, el cliente debe solicitarlo explícitamente mediante el flujo autorizado correspondiente.
+
+Los instantes de la API siguen usando ISO con zona y su normalización UTC. La presentación web en Bogotá y las migraciones `000033`/`000034` no modifican las fechas calendario, la semántica de sincronización ni los contratos de los pendientes móviles. Esta ampliación backend no acredita por sí misma un selector nuevo en las APK ya publicadas. La implementación fue verificada antes de publicación; el [informe conjunto](change-catalog-bogota-20261109.md) registra su activación.
+
 ## Sincronización
 
 El sobre contiene `items`, una lista de 1 a 100 capturas. Cada item contiene `client_id` UUID permanente generado al capturar, `tree` y opcionalmente `inspection`. La aplicación debe conservar la cuenta, organización, inventario, UUID y contenido de cada pendiente.

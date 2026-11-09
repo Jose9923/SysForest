@@ -70,8 +70,8 @@ class AuditFilterService
             && $values['organization_id'] !== $scope->organizationId) {
             throw ValidationException::withMessages(['organization_id' => 'La consulta está limitada a la organización seleccionada.']);
         }
-        $from = CarbonImmutable::parse($values['date_from'] ?? CarbonImmutable::now('UTC')->subDays(29)->toDateString(), 'UTC')->startOfDay();
-        $to = CarbonImmutable::parse($values['date_to'] ?? CarbonImmutable::now('UTC')->toDateString(), 'UTC')->startOfDay();
+        $from = CarbonImmutable::parse($values['date_from'] ?? CarbonImmutable::now(\App\Support\Time\BogotaDateTime::TIMEZONE)->subDays(29)->toDateString(), \App\Support\Time\BogotaDateTime::TIMEZONE)->startOfDay();
+        $to = CarbonImmutable::parse($values['date_to'] ?? CarbonImmutable::now(\App\Support\Time\BogotaDateTime::TIMEZONE)->toDateString(), \App\Support\Time\BogotaDateTime::TIMEZONE)->startOfDay();
         if ($from->greaterThan($to)) {
             throw ValidationException::withMessages(['date_to' => 'La fecha final debe ser igual o posterior a la fecha inicial.']);
         }

@@ -45,7 +45,7 @@ class RiskTreeRowProjector
             'organization' => $organization->name,
             'municipality' => $organization->getRelation('municipality')?->name,
             'risk_confirmed_by' => $risk?->priority === null ? null : $risk->getRelation('confirmer')?->name,
-            'risk_confirmed_at' => $risk?->priority === null ? null : $risk->confirmed_at?->utc()->toIso8601String(),
+            'risk_confirmed_at' => $risk?->priority === null ? null : \App\Support\Time\BogotaDateTime::iso($risk->confirmed_at),
             'risk_explanation' => $risk === null ? null : RiskPresentation::explanation($risk),
             'risk_observations' => ExcelReferencePresentation::text($risk?->observations),
         ]);

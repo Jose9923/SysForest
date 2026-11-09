@@ -72,10 +72,10 @@
         <section class="panel" aria-labelledby="processes-heading">
             <div class="panel-title"><h2 id="processes-heading">Evidencia de ejecución</h2></div>
             <dl>
-                <div class="probe"><dt>Última prueba procesada en cola</dt><dd>{{ $status->queueLastProcessedAt ?? 'Sin ejecución registrada' }}</dd></div>
-                <div class="probe"><dt>Última ejecución del programador</dt><dd>{{ $status->schedulerLastRunAt ?? 'Sin ejecución registrada' }}</dd></div>
+                <div class="probe"><dt>Última prueba procesada en cola</dt><dd>{{ \App\Support\Time\BogotaDateTime::format($status->queueLastProcessedAt, 'd/m/Y H:i:s') ?? 'Sin ejecución registrada' }}</dd></div>
+                <div class="probe"><dt>Última ejecución del programador</dt><dd>{{ \App\Support\Time\BogotaDateTime::format($status->schedulerLastRunAt, 'd/m/Y H:i:s') ?? 'Sin ejecución registrada' }}</dd></div>
             </dl>
-            <p class="note">Las fechas se muestran en UTC y conservan la última ejecución durante siete días. Una ejecución anterior no confirma que el proceso continúe activo. La información se consulta al cargar esta página.</p>
+            <p class="note">Las fechas se muestran en hora de Bogotá y conservan la última ejecución durante siete días. Una ejecución anterior no confirma que el proceso continúe activo. La información se consulta al cargar esta página.</p>
         </section>
 
         <nav class="links" aria-label="Comprobaciones de infraestructura">

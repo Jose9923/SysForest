@@ -16,7 +16,7 @@
             @if ($scope->kind === 'organization')<a class="button secondary" href="{{ route('audit.index') }}">{{ $canViewNational ? 'Auditoría nacional' : 'Auditoría departamental' }}</a>@endif
         </section>
         <section class="panel audit-filters" aria-labelledby="audit-filter-title">
-            <div class="audit-section-heading"><h2 id="audit-filter-title">Filtrar actividad</h2><span class="muted">Fechas y horas en UTC</span></div>
+            <div class="audit-section-heading"><h2 id="audit-filter-title">Filtrar actividad</h2><span class="muted">Fechas y horas en hora de Bogotá</span></div>
             <form method="GET" action="{{ route('audit.index') }}">
                 <input type="hidden" name="scope" value="{{ $scope->kind }}">
                 <div class="audit-filter-grid">
@@ -47,9 +47,9 @@
                 <div class="audit-empty"><h3>No hay eventos para esta consulta</h3><p class="muted">Revisa el intervalo de fechas o cambia los filtros para consultar otra actividad dentro de tu alcance.</p></div>
             @else
                 <div class="audit-table-scroll" tabindex="0" role="region" aria-label="Eventos de auditoría">
-                    <table class="audit-table"><thead><tr><th scope="col">Fecha y hora · UTC</th><th scope="col">Módulo</th><th scope="col">Acción y registro</th><th scope="col">Usuario</th>@if ($scope->kind !== 'organization')<th scope="col">Organización</th>@endif<th scope="col">Detalle</th></tr></thead><tbody>
+                    <table class="audit-table"><thead><tr><th scope="col">Fecha y hora · Bogotá</th><th scope="col">Módulo</th><th scope="col">Acción y registro</th><th scope="col">Usuario</th>@if ($scope->kind !== 'organization')<th scope="col">Organización</th>@endif<th scope="col">Detalle</th></tr></thead><tbody>
                         @foreach ($entries as $entry)
-                            <tr><td class="audit-date">{{ $entry['occurred_at'] }}</td><td>{{ $entry['module_label'] }}</td><th scope="row"><span class="audit-event-title">{{ $entry['event_label'] }}</span><span class="audit-resource-name">{{ $entry['resource_label'] }}</span>@if ($entry['resource_id'] ?? null)<span class="audit-id">{{ $entry['resource_id'] }}</span>@endif</th><td>{{ $entry['actor_name'] ?? 'No registrado' }}</td>@if ($scope->kind !== 'organization')<td>{{ $entry['organization_name'] ?? 'Sin organización' }}</td>@endif<td><a class="text-link audit-detail-link" href="{{ $entry['detail_url'] }}">Ver evento<span class="audit-sr-only">: {{ $entry['event_label'] }} del {{ $entry['occurred_at'] }} UTC</span> →</a></td></tr>
+                            <tr><td class="audit-date">{{ $entry['occurred_at'] }}</td><td>{{ $entry['module_label'] }}</td><th scope="row"><span class="audit-event-title">{{ $entry['event_label'] }}</span><span class="audit-resource-name">{{ $entry['resource_label'] }}</span>@if ($entry['resource_id'] ?? null)<span class="audit-id">{{ $entry['resource_id'] }}</span>@endif</th><td>{{ $entry['actor_name'] ?? 'No registrado' }}</td>@if ($scope->kind !== 'organization')<td>{{ $entry['organization_name'] ?? 'Sin organización' }}</td>@endif<td><a class="text-link audit-detail-link" href="{{ $entry['detail_url'] }}">Ver evento<span class="audit-sr-only">: {{ $entry['event_label'] }} del {{ $entry['occurred_at'] }} (Bogotá)</span> →</a></td></tr>
                         @endforeach
                     </tbody></table>
                 </div>

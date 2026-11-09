@@ -11,6 +11,7 @@ use App\Models\Catalogs\EvidenceType;
 use App\Models\Catalogs\FaunaCategory;
 use App\Models\Catalogs\GrowthHabit;
 use App\Models\Catalogs\MaintenanceType;
+use App\Models\Catalogs\LocationChangeType;
 use App\Models\Catalogs\MaturityState;
 use App\Models\Catalogs\Placement;
 
@@ -21,6 +22,7 @@ class CatalogRegistry
     public function all(): array
     {
         return [
+            new CatalogDefinition('location-change-types', 'Tipos de cambio de ubicación', 'Localización', 'Motivos de cambio de ubicación o datos de captura; no modifican el estado del individuo.', LocationChangeType::class),
             new CatalogDefinition('placements', 'Emplazamientos', 'Localización', 'Lista inicial ampliable de espacios donde se ubica el individuo.', Placement::class),
             new CatalogDefinition('establishment-origins', 'Origen de establecimiento', 'Caracterización', 'Forma de establecimiento: espontánea o plantada.', EstablishmentOrigin::class),
             new CatalogDefinition('biogeographic-origins', 'Origen biogeográfico', 'Caracterización', 'Clasificación de la procedencia biogeográfica del individuo.', BiogeographicOrigin::class),

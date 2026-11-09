@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Audit;
 
-use Carbon\CarbonImmutable;
+use App\Repositories\Catalogs\LocationChangeTypeRepository;
+use App\Support\Time\BogotaDateTime;
 
 /** Proyección de lectura independiente de Blade; conserva nulos, ceros y falsos sin convertirlos en ausencia. */
 class AuditPresentationService
@@ -16,6 +17,12 @@ class AuditPresentationService
         'inventory' => 'Inventario', 'inventory_tree' => 'Participación en inventario', 'tree' => 'Individuo forestal',
         'carbon_profile' => 'Referencia institucional de carbono', 'carbon_refresh_run' => 'Actualización de estimaciones de carbono', 'tree_inspection' => 'Inspección', 'evidence' => 'Evidencia fotográfica', 'maintenance' => 'Mantenimiento',
         'import_batch' => 'Lote de importación', 'catalog' => 'Catálogo', 'security_event' => 'Evento de seguridad',
+    ];
+
+    private const TIMESTAMP_FIELDS = [
+        'created_at', 'updated_at', 'changed_at', 'deleted_at', 'restored_at', 'captured_at',
+        'confirmed_at', 'email_verified_at', 'joined_at', 'left_at', 'assigned_at', 'revoked_at',
+        'expires_at', 'accepted_at', 'included_at', 'cancelled_at', 'sealed_at',
     ];
 
     private const LABELS = [
@@ -126,8 +133,10 @@ class AuditPresentationService
         'category_ids' => 'Categorías de fauna (identificadores)',
     ];
 
-    public function __construct(private \App\Auditing\AuditRecordProjection $snapshots)
-    {
+    public function __construct(
+        private \App\Auditing\AuditRecordProjection $snapshots,
+        private LocationChangeTypeRepository $locationChangeTypes,
+    ) {
     }
 
     public function row(object $record): array
@@ -137,7 +146,7 @@ class AuditPresentationService
             'user_id' => $record->actor_user_id === null ? null : (string) $record->actor_user_id,
             'module' => \App\Auditing\AuditCatalog::moduleFor($record->event),
             'module_label' => \App\Auditing\AuditCatalog::moduleLabel($record->event),
-            'occurred_at' => CarbonImmutable::parse($record->occurred_at)->utc()->format('Y-m-d H:i:s.u'),
+            'occurred_at' => BogotaDateTime::format($record->occurred_at, 'Y-m-d H:i:s.u'),
             'event' => $record->event, 'event_label' => $this->eventLabel($record->event),
             'resource_type' => $record->resource_type,
             'resource_label' => self::TYPES[$record->resource_type] ?? 'Recurso histórico', 'resource_id' => $record->resource_id,
@@ -214,6 +223,14 @@ class AuditPresentationService
     private function snapshotValue(string $key, mixed $value): string
     {
         $attribute = str_contains($key, '.') ? substr($key, strrpos($key, '.') + 1) : $key;
+        if (in_array($attribute, self::TIMESTAMP_FIELDS, true) && is_string($value)
+            && preg_match('/\A\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/', $value) === 1) {
+            try {
+                return BogotaDateTime::format($value, 'Y-m-d H:i:s.u P').' (Bogotá)';
+            } catch (\InvalidArgumentException) {
+                // Un valor histórico no interpretable conserva su representación original.
+            }
+        }
         if (in_array($attribute, ['description', 'general_observations', 'observations', 'reason'], true) && is_string($value)) {
             return \App\Support\Imports\ExcelReferencePresentation::text($value);
         }
@@ -242,11 +259,31 @@ class AuditPresentationService
             return \App\Support\Imports\ExcelReferencePresentation::text($value);
         }
         if ($key === 'change_type') {
-            return $value === null ? 'Captura inicial'
-                : (is_string($value) ? \App\Enums\Trees\LocationChangeType::tryFrom($value)?->label() : null) ?? 'No registrado';
+            if ($value === null) {
+                return 'Captura inicial';
+            }
+            if (!is_string($value) || $value === '') {
+                return 'No registrado';
+            }
+
+            return $this->locationChangeLabels()[$value]
+                ?? \App\Enums\Trees\LocationChangeType::tryFrom($value)?->label()
+                ?? $value;
         }
 
         return $this->value($value);
+    }
+
+    /** Una consulta por petición, incluso al exportar; conserva etiquetas de tipos inactivos. */
+    private function locationChangeLabels(): array
+    {
+        $request = request();
+        $key = 'sysforest.audit_location_change_labels';
+        if (!$request->attributes->has($key)) {
+            $request->attributes->set($key, $this->locationChangeTypes->labels());
+        }
+
+        return $request->attributes->get($key);
     }
 
     private function label(string $key): string

@@ -12,7 +12,7 @@
         @else
             <div class="import-table-scroll" tabindex="0" role="region" aria-label="Historial de lotes de importación"><table class="import-table"><thead><tr><th scope="col">Lote y archivo</th><th scope="col">Creado</th><th scope="col">Estado</th><th scope="col">Filas</th><th scope="col">Importadas</th><th scope="col">Detalle</th></tr></thead><tbody>
                 @foreach ($batches as $batch)
-                    <tr><th scope="row"><span class="import-code">{{ $batch->code }}</span><span class="import-file-name">{{ $batch->file_name }}</span></th><td>{{ $batch->created_at?->format('d/m/Y H:i') }} UTC</td><td><span class="pill">{{ $batch->status->label() }}</span></td><td>{{ $batch->total_rows }}</td><td>{{ $batch->imported_rows }}</td><td><a class="text-link" href="{{ route('imports.show', $batch->id) }}">Ver lote <span class="import-sr-only">{{ $batch->code }}</span>→</a></td></tr>
+                    <tr><th scope="row"><span class="import-code">{{ $batch->code }}</span><span class="import-file-name">{{ $batch->file_name }}</span></th><td>{{ \App\Support\Time\BogotaDateTime::format($batch->created_at) }} (Bogotá)</td><td><span class="pill">{{ $batch->status->label() }}</span></td><td>{{ $batch->total_rows }}</td><td>{{ $batch->imported_rows }}</td><td><a class="text-link" href="{{ route('imports.show', $batch->id) }}">Ver lote <span class="import-sr-only">{{ $batch->code }}</span>→</a></td></tr>
                 @endforeach
             </tbody></table></div>
             @include('partials.pagination', ['paginator' => $batches])

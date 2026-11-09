@@ -68,6 +68,20 @@ class InspectionConditionRepository
             && Condition::query()->whereIn('id', $ids)->where('assessment_type', $assessmentType)->count() === count($ids);
     }
 
+    /** La selección de órganos en reportes conserva referencias históricas inactivas. */
+    public function validateCategoriesForFilter(array $ids, string $assessmentType): bool
+    {
+        return $this->validIds($ids)
+            && in_array($assessmentType, ['physical_mechanical', 'phytosanitary'], true)
+            && ConditionCategory::query()->whereIn('id', $ids)->where('assessment_type', $assessmentType)->count() === count($ids);
+    }
+
+    public function conditionsBelongToCategories(array $conditionIds, array $categoryIds, string $assessmentType): bool
+    {
+        return Condition::query()->whereIn('id', $conditionIds)->where('assessment_type', $assessmentType)
+            ->whereIn('condition_category_id', $categoryIds)->count() === count($conditionIds);
+    }
+
     public function sync(string $organizationId, string $inspectionId, array $ids): void
     {
         $this->requireTransaction();

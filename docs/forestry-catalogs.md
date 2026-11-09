@@ -23,6 +23,7 @@ La [matriz del Excel](excel-field-mapping.md) documenta las 94 columnas, tipos, 
 | Tabla / estructura | Registros iniciales | Responsabilidad |
 | --- | --- | --- |
 | placements | 6 | Emplazamientos |
+| location_change_types | 4 | Tipos de cambio de ubicación; catálogo ampliable. |
 | establishment_origins | 2 | Origen de establecimiento |
 | biogeographic_origins | 4 | Origen biogeográfico |
 | growth_habits | 11 | Hábitos de crecimiento |
@@ -40,6 +41,27 @@ La [matriz del Excel](excel-field-mapping.md) documenta las 94 columnas, tipos, 
 | maturity_rule_bands | 4 | Clases 1–3, 4–6, 7–9 y ≥10. |
 
 No se crea una tabla de estados de desarrollo fenológico: CE/CF solicitan fecha y estimación libre, sin aportar opciones discretas. Tampoco se crea un catálogo de estados del árbol a partir de las etiquetas mezcladas del mockup.
+
+## Tipos de cambio de ubicación
+
+El catálogo nacional simple **Tipos de cambio de ubicación** se administra en `/admin/catalogs/location-change-types`. Su tabla `location_change_types` utiliza UUID, código estable, nombre, descripción, disponibilidad, orden y versión de concurrencia. No lleva `organization_id`. Conserva la autorización común: solo SUPER_ADMIN administra; los demás roles consultan dentro de sus permisos.
+
+| Código inicial | Nombre inicial |
+| --- | --- |
+| `correction` | Corrección |
+| `relocation` | Reubicación |
+| `transplant` | Trasplante |
+| `removal` | Remoción |
+
+Los tres primeros códigos conservan los valores históricos existentes; `removal` incorpora la opción solicitada. Estos cuatro códigos en minúsculas constituyen una excepción exacta de este catálogo. Los códigos de nuevas opciones siguen la regla habitual de mayúsculas, números y guion bajo, entre 2 y 80 caracteres y comenzando por letra. El código es inmutable; nombre, descripción, disponibilidad y orden son editables.
+
+La migración `000033` crea el catálogo y sus cuatro valores, amplía `tree_location_histories.change_type` a 80 caracteres y lo vincula mediante FK al código. Conserva las claves históricas, el antecedente inicial con tipo nulo y las restricciones del historial. No actualiza ni elimina antecedentes. `ForestryCatalogSeeder` incorpora valores ausentes y conserva las posteriores decisiones administrativas.
+
+Los selectores y escrituras nuevas admiten únicamente tipos activos. La validación bloquea la referencia mientras se confirma el cambio, evitando una desactivación concurrente. Las consultas históricas resuelven también tipos inactivos y muestran su nombre vigente; el código guardado permanece intacto. La FK impide eliminar o cambiar un código referenciado.
+
+Seleccionar un tipo y consignar un motivo permite registrar un antecedente aun conservando las coordenadas y los metadatos. **Remoción es únicamente una clasificación del cambio:** no modifica el estado del árbol, no borra su ubicación y no lo anula. Las operaciones de estado conservan su flujo independiente.
+
+La implementación y las migraciones `000033`/`000034` se verificaron antes de publicación. El [informe conjunto](change-catalog-bogota-20261109.md) registra la activación y sus comprobaciones finales.
 
 ## Emplazamientos, orígenes, hábitos y madurez
 

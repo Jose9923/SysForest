@@ -55,7 +55,7 @@
             <div class="identity-table-wrap" tabindex="0" role="region" aria-label="Invitaciones enviadas">
                 <table class="identity-table"><thead><tr><th scope="col">Correo</th><th scope="col">Estado</th><th scope="col">Vencimiento</th></tr></thead><tbody>
                     @forelse ($invitations as $invitation)
-                        <tr><td>{{ $invitation->email }}</td><td>{{ $invitation->accepted_at ? 'Aceptada' : ($invitation->revoked_at ? 'Revocada' : 'Enviada') }}</td><td>{{ $invitation->expires_at?->format('d/m/Y H:i') ?? 'No registrado' }}</td></tr>
+                        <tr><td>{{ $invitation->email }}</td><td>{{ $invitation->accepted_at ? 'Aceptada' : ($invitation->revoked_at ? 'Revocada' : 'Enviada') }}</td><td>{{ \App\Support\Time\BogotaDateTime::format($invitation->expires_at) ?? 'No registrado' }}</td></tr>
                     @empty
                         <tr><td colspan="3">No hay invitaciones registradas.</td></tr>
                     @endforelse

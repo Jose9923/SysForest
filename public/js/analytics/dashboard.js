@@ -82,6 +82,9 @@ function exportPng(instance, data, context) {
 }
 
 function makeChart(canvas, data) {
+    if (['physical_conditions', 'phytosanitary_conditions'].includes(data.key)) {
+        canvas.parentElement.style.height = `${Math.max(285, data.labels.length * 30 + 50)}px`;
+    }
     const doughnut = data.type === 'doughnut';
     const line = data.type === 'line';
     return new window.Chart(canvas, {
@@ -135,6 +138,8 @@ function initialize() {
         const filterKeys = (config.filter_keys ?? REPORT_FILTER_KEYS).filter(key => REPORT_FILTER_KEYS.includes(key));
         const normalize = input => cleanFilters({...input, scope: config.scope.mode}, filterKeys);
         const applied = normalize(boot.filters);
+        const hasConditionSelection = filters => ['physical_condition_ids', 'phytosanitary_condition_ids',
+            'physical_condition_category_ids', 'phytosanitary_condition_category_ids'].some(key => filters[key]?.length > 0);
         if (window.jQuery?.fn.select2) {
             const controls = new MapFilters({form, config, document, origin: location.origin, $: window.jQuery, filterKeys,
                 getAppliedFilters: () => applied,
@@ -146,6 +151,8 @@ function initialize() {
                         if (Array.isArray(value)) value.forEach(item => url.searchParams.append(`${key}[]`, item));
                         else url.searchParams.set(key, value);
                     }
+                    if (hasConditionSelection(filters)) url.hash = 'structure';
+                    else url.hash = location.hash;
                     location.assign(url.href);
                 }, onError: showError, onSearch: () => {},
             });
@@ -183,7 +190,8 @@ function initialize() {
             history.replaceState(null, '', url);
         }));
         const category = location.hash.slice(1);
-        render(['composition', 'structure', 'territory', 'timeline', 'all'].includes(category) ? category : 'composition');
+        render(['composition', 'structure', 'territory', 'timeline', 'all'].includes(category) ? category
+            : hasConditionSelection(applied) ? 'structure' : 'composition');
         if (!window.Chart) showError('Las gráficas no pudieron cargarse. Las tablas y las descargas de datos siguen disponibles.');
         cards.forEach(card => {
             const chart = data.get(card.dataset.chartCard);

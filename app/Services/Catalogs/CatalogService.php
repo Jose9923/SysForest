@@ -95,7 +95,7 @@ class CatalogService
                 $actor = $this->users->findForUpdate((int) $actor->id);
                 $this->access->authorizeManage($actor);
                 $entry = $id ? $this->entries->find($catalog, $id, true) : null;
-                $data = Validator::make($input, CatalogInput::rules($entry !== null))->validate();
+                $data = Validator::make($input, CatalogInput::rules($entry !== null, $catalog->key))->validate();
                 $data['name'] = trim($data['name']);
                 unset($data['organization_id']);
                 if ($entry && $entry->code !== $data['code']) {

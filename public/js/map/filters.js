@@ -70,7 +70,8 @@ export class MapFilters {
                 data: params => ({term: params.term || '', page: params.page || 1}),
                 transport: (params, success, failure) => {
                     const filters = search ? this.getAppliedFilters() : this.values();
-                    request.get(requestUrl(endpoint, this.origin, filters, params.data, this.filterKeys)).then(data => {
+                    const lookupKeys = this.filterKeys.filter(key => !['physical_condition_category_ids', 'phytosanitary_condition_category_ids'].includes(key));
+                    request.get(requestUrl(endpoint, this.origin, filters, params.data, lookupKeys)).then(data => {
                         if (data) success(data);
                     }).catch(error => { this.onError(error.message); failure(error); });
                     return {abort: () => request.cancel()};
@@ -102,7 +103,8 @@ export class MapFilters {
             } else element.value = value;
         }
         this.form.querySelectorAll('[data-condition-cascade]').forEach(cascade => {
-            this.document.defaultView.SysforestConditionCascade.setValues(cascade, values[cascade.dataset.conditionField] ?? []);
+            this.document.defaultView.SysforestConditionCascade.setValues(cascade, values[cascade.dataset.conditionField] ?? [],
+                values[cascade.dataset.conditionCategoryField] ?? []);
         });
         this.synchronizing = false;
         this.updateLegacyNotices();

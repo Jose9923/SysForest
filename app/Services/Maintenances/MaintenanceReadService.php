@@ -100,7 +100,7 @@ class MaintenanceReadService
             'from' => $entry->old_status?->label(),
             'to' => $entry->new_status->label(),
             'reason' => $entry->reason,
-            'changedAt' => $entry->changed_at->utc()->format('d/m/Y H:i').' UTC',
+            'changedAt' => \App\Support\Time\BogotaDateTime::format($entry->changed_at, 'd/m/Y H:i').' (Bogotá)',
             'changedBy' => $entry->changedBy?->name ?? 'No disponible',
             'version' => $entry->version,
         ]);
@@ -224,13 +224,13 @@ class MaintenanceReadService
             'assigneeName' => $maintenance->assignee?->name,
             'scheduledDate' => $maintenance->scheduled_date?->format('d/m/Y'),
             'performedDate' => $maintenance->performed_date?->format('d/m/Y'),
-            'createdAt' => $maintenance->created_at->utc()->format('d/m/Y H:i').' UTC',
-            'updatedAt' => $maintenance->updated_at->utc()->format('d/m/Y H:i').' UTC',
+            'createdAt' => \App\Support\Time\BogotaDateTime::format($maintenance->created_at, 'd/m/Y H:i').' (Bogotá)',
+            'updatedAt' => \App\Support\Time\BogotaDateTime::format($maintenance->updated_at, 'd/m/Y H:i').' (Bogotá)',
             'createdBy' => $maintenance->creator?->name ?? 'No disponible',
             'updatedBy' => $maintenance->updater?->name ?? 'No disponible',
             'notes' => $maintenance->notes, 'result' => $maintenance->result,
             'isVoided' => $maintenance->trashed(), 'deletionNotes' => $maintenance->deletion_notes,
-            'deletedAt' => $maintenance->deleted_at?->utc()->format('d/m/Y H:i'),
+            'deletedAt' => \App\Support\Time\BogotaDateTime::format($maintenance->deleted_at, 'd/m/Y H:i'),
             'deletedBy' => $maintenance->deleter?->name,
             'url' => route('maintenances.show', $maintenance->id),
         ];
@@ -283,7 +283,7 @@ class MaintenanceReadService
                     'maintenance.restored' => 'Registro restaurado',
                     default => 'Cambio registrado',
                 },
-                'changedAt' => $revision->changed_at->utc()->format('d/m/Y H:i').' UTC',
+                'changedAt' => \App\Support\Time\BogotaDateTime::format($revision->changed_at, 'd/m/Y H:i').' (Bogotá)',
                 'changedBy' => $revision->changedBy?->name ?? 'No disponible',
                 'differences' => $differences,
             ];
@@ -293,7 +293,7 @@ class MaintenanceReadService
     private function revisionValue(string $field, mixed $value, array $references): string
     {
         if ($field === 'deleted_at') {
-            return $value === null ? 'Vigente' : 'Anulado el '.\Carbon\CarbonImmutable::parse($value)->utc()->format('d/m/Y H:i').' UTC';
+            return $value === null ? 'Vigente' : 'Anulado el '.\App\Support\Time\BogotaDateTime::format($value).' (Bogotá)';
         }
         if ($value === null) {
             return 'No informado';

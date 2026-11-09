@@ -8,6 +8,7 @@ use App\Enums\Trees\TreeStatus;
 use App\Models\Trees\Tree;
 use App\Models\User;
 use App\Repositories\Inventories\InventoryRepository;
+use App\Repositories\Catalogs\LocationChangeTypeRepository;
 use App\Repositories\Trees\TreeCatalogRepository;
 use App\Repositories\Trees\TreeRepository;
 use Illuminate\Support\Facades\Gate;
@@ -30,7 +31,8 @@ class TreeReadService
         private MaintenanceReadService $maintenances,
         private TreeFilterService $filters,
         private TreeCaptureDateService $captureDates,
-        private ConditionFilterOptionsService $conditionOptions
+        private ConditionFilterOptionsService $conditionOptions,
+        private LocationChangeTypeRepository $changeTypes
     ) {
     }
 
@@ -88,6 +90,8 @@ class TreeReadService
         $summary = array_merge($this->inspections->treeSummary($actor, $tree), $this->maintenances->treeSummary($actor, $tree));
 
         return array_merge($this->shared($actor, $tree), $summary, ['organization' => $organization, 'tree' => $this->trees->detail($tree),
+            'locationChangeOptions' => $this->changeTypes->options(),
+            'locationLabels' => $this->changeTypes->labels(),
             'wholeTreePhoto' => $this->evidences->wholeTreePhoto($actor, $tree),
             'treeEvidenceGallery' => $this->evidences->gallery($actor, $tree),
             'latestInspectionEvidenceGallery' => $summary['latestInspection'] ? $this->evidences->gallery($actor, $summary['latestInspection']) : null]);

@@ -76,9 +76,9 @@
                         @forelse ($sessions as $session)
                             <tr>
                                 <td>@if ($session->id === $currentSessionId)<span class="pill">Esta sesión</span>@else<span>Otra sesión</span>@endif</td>
-                                <td class="identity-session-date">{{ $session->created_at?->format('d/m/Y H:i') ?? 'No registrado' }}</td>
-                                <td class="identity-session-date">{{ $session->last_used_at?->format('d/m/Y H:i') ?? 'Sin actividad registrada' }}</td>
-                                <td class="identity-session-date">{{ $session->expires_at?->format('d/m/Y H:i') ?? 'No registrado' }}</td>
+                                <td class="identity-session-date">{{ \App\Support\Time\BogotaDateTime::format($session->created_at) ?? 'No registrado' }}</td>
+                                <td class="identity-session-date">{{ \App\Support\Time\BogotaDateTime::format($session->last_used_at) ?? 'Sin actividad registrada' }}</td>
+                                <td class="identity-session-date">{{ \App\Support\Time\BogotaDateTime::format($session->expires_at) ?? 'No registrado' }}</td>
                                 <td><form method="POST" action="{{ route('sessions.destroy', $session->id) }}">@csrf @method('DELETE')<button type="submit" class="button secondary identity-danger">{{ $session->id === $currentSessionId ? 'Cerrar esta sesión' : 'Cerrar sesión' }}</button></form></td>
                             </tr>
                         @empty

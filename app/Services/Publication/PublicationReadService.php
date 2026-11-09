@@ -52,7 +52,7 @@ class PublicationReadService
                 $entry->tree_inspection_id !== null => 'Inspección',
                 default => 'Fotografía',
             },
-            'version' => $entry->version, 'date' => $entry->changed_at->utc()->format('Y-m-d H:i:s').' UTC',
+            'version' => $entry->version, 'date' => \App\Support\Time\BogotaDateTime::format($entry->changed_at, 'Y-m-d H:i:s').' (Bogotá)',
             'actor' => $entry->changedBy->name, 'before' => $entry->old_values, 'after' => $entry->new_values,
         ]));
         $revisions->appends($filters);

@@ -13,6 +13,8 @@ use App\Reports\ReportCatalog;
 use App\Validation\Maps\MapInput;
 use App\Validation\Trees\TreeFilterInput;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
+use App\Repositories\Inspections\InspectionConditionRepository;
 use App\Services\Maps\MapFilterService;
 use App\Services\PublicPortal\PublicTreeFilterService;
 
@@ -26,6 +28,7 @@ class ReportFilterService
         private PublicTreeFilterService $public,
         private ReportAccessService $access,
         private ReportCatalog $catalog,
+        private InspectionConditionRepository $conditions,
     ) {
     }
 
@@ -40,6 +43,7 @@ class ReportFilterService
     /** La bandeja conserva su permiso de consulta; no concede acceso a reportes ni descargas. */
     public function forRiskInbox(User $actor, array $input): ReportSelectionDTO
     {
+        $this->rejectConditionCategories($input);
         $selection = $this->privateSelection($actor, array_replace($input, ['scope' => 'organization']));
         $this->access->authorizeRiskInbox($actor, $selection);
 
@@ -49,6 +53,9 @@ class ReportFilterService
     private function privateSelection(User $actor, array $input): ReportSelectionDTO
     {
         $input = $this->input($input);
+        $categoryInput = array_intersect_key($input, ReportSelectionDTO::CONDITION_CATEGORY_FIELDS);
+        $input = array_diff_key($input, ReportSelectionDTO::CONDITION_CATEGORY_FIELDS);
+        $categoryValues = $this->conditionCategories($categoryInput);
         $allowed = array_filter(array_keys(TreeFilterInput::rules() + MapInput::rules(false)), fn (string $key) => !str_contains($key, '.'));
         $unknown = array_diff(array_keys($input), $allowed);
         if ($unknown !== []) {
@@ -56,13 +63,15 @@ class ReportFilterService
         }
         $context = $this->maps->context($actor, $input);
         $map = $context['filters'];
-        $values = $this->clean($map->trees->values());
+        $this->validateCategoryConditions($categoryValues, $map->trees);
+        $values = $this->clean($map->trees->values() + $categoryValues);
         $values['scope'] = $context['scope']->kind;
         return new ReportSelectionDTO($context['scope'], $this->filters($map), $this->radiusValues($values, $map));
     }
 
     public function forPublic(array $input, string $report = 'inventory'): ReportSelectionDTO
     {
+        $this->rejectConditionCategories($input);
         if (in_array($report, ['risk', 'risk_trees', 'carbon', 'carbon_coverage'], true)) {
             throw ValidationException::withMessages(['report' => 'Este reporte es exclusivamente privado.']);
         }
@@ -73,6 +82,45 @@ class ReportFilterService
         $public = $this->public->validate($this->input($input));
 
         return new ReportSelectionDTO(TreeReadScope::published(), $this->filters($public->map), $this->clean($public->publicValues));
+    }
+
+    private function conditionCategories(array $input): array
+    {
+        $rules = [];
+        foreach (ReportSelectionDTO::CONDITION_CATEGORY_FIELDS as $field => $type) {
+            $rules[$field] = ['nullable', 'array', 'max:100'];
+            $rules[$field.'.*'] = ['required', 'uuid', 'distinct:strict'];
+        }
+        $input = array_map(fn ($value) => $value === '' ? null : $value, $input);
+        $values = Validator::make($input, $rules, TreeFilterInput::messages())->validate();
+        foreach (ReportSelectionDTO::CONDITION_CATEGORY_FIELDS as $field => $type) {
+            if (!$this->conditions->validateCategoriesForFilter($values[$field] ?? [], $type)) {
+                throw ValidationException::withMessages([$field => 'Selecciona órganos existentes de la evaluación correspondiente.']);
+            }
+        }
+
+        return $this->clean($values);
+    }
+
+    private function validateCategoryConditions(array $categories, TreeFilterDTO $trees): void
+    {
+        foreach (ReportSelectionDTO::CONDITION_CATEGORY_FIELDS as $field => $type) {
+            $ids = $categories[$field] ?? [];
+            $conditionField = $type === 'physical_mechanical' ? 'physical_condition_ids' : 'phytosanitary_condition_ids';
+            $conditionIds = $trees->get($conditionField, []);
+            if ($ids !== [] && $conditionIds !== []
+                && !$this->conditions->conditionsBelongToCategories($conditionIds, $ids, $type)) {
+                throw ValidationException::withMessages([$conditionField => 'Las condiciones seleccionadas deben pertenecer a los órganos elegidos.']);
+            }
+        }
+    }
+
+    private function rejectConditionCategories(array $input): void
+    {
+        $keys = array_intersect_key($input, ReportSelectionDTO::CONDITION_CATEGORY_FIELDS);
+        if ($keys !== []) {
+            throw ValidationException::withMessages(array_fill_keys(array_keys($keys), 'La selección de órganos para las series solo está disponible en gráficas y reportes privados.'));
+        }
     }
 
     private function filters(MapTreeFilterDTO $filters): MapTreeFilterDTO

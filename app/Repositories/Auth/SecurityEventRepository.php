@@ -53,7 +53,10 @@ class SecurityEventRepository
                 $safe[$key] = mb_substr($value, 0, $key === 'reason' ? 5000 : 150);
             }
         }
-        if (array_key_exists('change_type', $safe) && !in_array($safe['change_type'], [null, 'correction', 'relocation', 'transplant'], true)) {
+        // El servicio de ubicación valida la selección; la auditoría conserva su código estable.
+        if (array_key_exists('change_type', $safe) && $safe['change_type'] !== null
+            && (!is_string($safe['change_type'])
+                || preg_match('/\A(?:correction|relocation|transplant|removal|[A-Z][A-Z0-9_]{1,79})\z/D', $safe['change_type']) !== 1)) {
             unset($safe['change_type']);
         }
         // El servidor genera la correlación; no copia cabeceras, cookies, IP ni parámetros del cliente.

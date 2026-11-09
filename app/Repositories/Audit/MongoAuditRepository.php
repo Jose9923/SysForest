@@ -7,7 +7,6 @@ namespace App\Repositories\Audit;
 use App\Auditing\AuditRecordProjection;
 use App\Auditing\AuditCatalog;
 use App\DTOs\Audit\AuditScope;
-use Carbon\CarbonImmutable;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -48,11 +47,11 @@ class MongoAuditRepository
     {
         $match = $this->scope($scope);
         $match['occurred_at_iso'] = [
-            '$gte' => CarbonImmutable::parse($filters['date_from'], 'UTC')->startOfDay()->format('Y-m-d\TH:i:s.u\Z'),
+            '$gte' => \App\Support\Time\BogotaDateTime::startOfDayUtc($filters['date_from'])->format('Y-m-d\TH:i:s.u\Z'),
         ];
         // El año 10000 no mantiene el orden lexicográfico de las fechas ISO de cuatro dígitos.
         if ($filters['date_to'] !== '9999-12-31') {
-            $match['occurred_at_iso']['$lt'] = CarbonImmutable::parse($filters['date_to'], 'UTC')->startOfDay()->addDay()->format('Y-m-d\TH:i:s.u\Z');
+            $match['occurred_at_iso']['$lt'] = \App\Support\Time\BogotaDateTime::afterDayUtc($filters['date_to'])->format('Y-m-d\TH:i:s.u\Z');
         }
         foreach (['organization_id', 'event', 'resource_type', 'resource_id'] as $key) {
             if (isset($filters[$key])) {

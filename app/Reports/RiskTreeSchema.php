@@ -26,7 +26,7 @@ class RiskTreeSchema
             $labels += [
                 'municipality' => 'Municipio',
                 'risk_confirmed_by' => 'Prioridad confirmada por',
-                'risk_confirmed_at' => 'Confirmación de prioridad (UTC)',
+                'risk_confirmed_at' => 'Confirmación de prioridad (Bogotá)',
                 'risk_explanation' => 'Explicación de la sugerencia',
                 'risk_observations' => 'Observaciones de la evaluación',
             ];

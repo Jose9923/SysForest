@@ -3,8 +3,9 @@ import {FILTER_KEYS, filterParams, sameOriginUrl} from '../map/state.js';
 const EXTRA_KEYS = ['sort', 'direction', 'cap_cm_min', 'cap_cm_max', 'dap_m_min', 'dap_m_max',
     'total_height_m_min', 'total_height_m_max', 'radius_latitude', 'radius_longitude', 'radius_meters',
     'west', 'south', 'east', 'north'];
-export const REPORT_FILTER_KEYS = Object.freeze([...FILTER_KEYS, ...EXTRA_KEYS]);
-export const PUBLIC_REPORT_FILTER_KEYS = Object.freeze(REPORT_FILTER_KEYS.filter(key => !['scope', 'maintenance_priority', 'has_pending_maintenance'].includes(key)));
+const CONDITION_SERIES_KEYS = ['physical_condition_category_ids', 'phytosanitary_condition_category_ids'];
+export const REPORT_FILTER_KEYS = Object.freeze([...FILTER_KEYS, ...EXTRA_KEYS, ...CONDITION_SERIES_KEYS]);
+export const PUBLIC_REPORT_FILTER_KEYS = Object.freeze(REPORT_FILTER_KEYS.filter(key => !['scope', 'maintenance_priority', 'has_pending_maintenance', ...CONDITION_SERIES_KEYS].includes(key)));
 
 /** Conserva filtros aplicados; no transporta página, modo del mapa, tokens ni parámetros desconocidos. */
 export function reportPageUrl(base, filters, {origin, isPublic = false, filterKeys = REPORT_FILTER_KEYS, report = 'inventory'} = {}) {

@@ -16,6 +16,6 @@ class CatalogEntryRequest extends FormRequest
 
     public function rules(): array
     {
-        return CatalogInput::rules($this->route('entry') !== null);
+        return CatalogInput::rules($this->route('entry') !== null, (string) $this->route('catalog'));
     }
 }

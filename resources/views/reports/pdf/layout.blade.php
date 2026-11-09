@@ -19,7 +19,7 @@
     .pdf-field { margin: 0 0 3mm; border-bottom: 1px solid #e1e8db; padding-bottom: 2mm; overflow-wrap: break-word; word-wrap: break-word; }.pdf-field dt { color: #66785e; font-size: 7pt; margin-bottom: 1mm; page-break-after: avoid; }.pdf-field dd { margin: 0; white-space: pre-wrap; orphans: 2; widows: 2; }.pdf-empty { padding: 5mm; background: #f4f7f0; color: #64745b; }
 </style></head><body>
     <header class="pdf-header"><table><tr><td>@if ($logoDataUri)<img src="{{ $logoDataUri }}" alt="SYSFOREST">@else<strong>SYSFOREST</strong>@endif</td><td class="pdf-brand">{{ $isPublic ? 'CONSULTA CIUDADANA · INFORMACIÓN PUBLICADA' : 'INVENTARIO FORESTAL INSTITUCIONAL' }}<br>{{ $scopeLabel }}</td></tr></table></header>
-    <footer class="pdf-footer">SYSFOREST · Generado: {{ $generatedAt }}</footer>
+    <footer class="pdf-footer">SYSFOREST · Generado (Bogotá): {{ \App\Support\Time\BogotaDateTime::format($generatedAt, 'd/m/Y H:i:s') }}</footer>
     <h1>{{ $title }}</h1><p class="pdf-subtitle">{{ $scopeLabel }}</p>
     <p class="pdf-meta">{{ $isPublic ? 'Información publicada. Mediciones de la última inspección publicada, cuando corresponde.' : 'Mediciones de la última inspección, cuando corresponde.' }} Los valores conservan la precisión registrada.</p>
     @if (count($appliedFilters))<section class="pdf-filters">@foreach ($appliedFilters as $filter)<p><strong>{{ $filter['label'] }}:</strong> {{ $filter['value'] }}</p>@endforeach</section>@endif

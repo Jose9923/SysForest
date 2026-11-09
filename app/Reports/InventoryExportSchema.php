@@ -115,7 +115,7 @@ class InventoryExportSchema
             $add('accuracy_m', 'Exactitud declarada', 'ubicación', 'decimal', 'm');
             $add('gps_brand', 'Marca del GPS', 'ubicación');
             $add('gps_model', 'Modelo del GPS', 'ubicación');
-            $add('location_captured_at', 'Fecha de captura de ubicación (UTC)', 'ubicación');
+            $add('location_captured_at', 'Fecha de captura de ubicación (Bogotá)', 'ubicación');
             $add('location_description', 'Descripción de ubicación', 'ubicación');
         }
         $add('common_name', 'Nombre común principal', 'taxonomía', source: 'Hoja1!D6');
@@ -168,7 +168,7 @@ class InventoryExportSchema
         if (!$public) {
             foreach (['risk_priority' => 'Prioridad fitosanitaria profesional', 'risk_suggestion' => 'Prioridad fitosanitaria sugerida',
                 'risk_methodology' => 'Versión de metodología fitosanitaria', 'risk_explanation' => 'Explicación de la sugerencia fitosanitaria',
-                'risk_confirmed_by' => 'Prioridad confirmada por (ID)', 'risk_confirmed_at' => 'Confirmación de prioridad (UTC)',
+                'risk_confirmed_by' => 'Prioridad confirmada por (ID)', 'risk_confirmed_at' => 'Confirmación de prioridad (Bogotá)',
                 'risk_observations' => 'Observaciones de la evaluación fitosanitaria'] as $field => $label) {
                 $add($field, $label, 'gestión del riesgo');
             }

@@ -73,8 +73,8 @@ class EvidenceInput
             'items.*.evidence_type_id.required' => 'El tipo de evidencia es obligatorio.',
             'evidence_type_id.required' => 'El tipo de evidencia es obligatorio.',
             '*.uuid' => 'Selecciona una referencia válida.', '*.prohibited' => 'Este dato se determina en el servidor.',
-            'captured_at.date_format' => 'Indica una fecha de captura válida en UTC.',
-            'items.*.captured_at.date_format' => 'Indica una fecha de captura válida en UTC.',
+            'captured_at.date_format' => 'Indica una fecha de captura válida en hora de Bogotá.',
+            'items.*.captured_at.date_format' => 'Indica una fecha de captura válida en hora de Bogotá.',
             '*.max' => 'El valor supera el límite permitido.', 'lock_version.required' => 'La versión del registro es obligatoria.'];
     }
 

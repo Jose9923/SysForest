@@ -11,7 +11,7 @@
         <section class="panel audit-summary" aria-labelledby="audit-summary-title">
             <h2 id="audit-summary-title">Detalle de la operación</h2>
             <dl class="audit-facts">
-                <div><dt>Fecha y hora · UTC</dt><dd>{{ $entry['occurred_at'] }}</dd></div>
+                <div><dt>Fecha y hora · Bogotá</dt><dd>{{ $entry['occurred_at'] }}</dd></div>
                 <div><dt>Usuario</dt><dd>{{ $entry['actor_name'] ?? 'No registrado' }}</dd></div>
                 <div><dt>Organización</dt><dd>{{ $entry['organization_name'] ?? 'Sin organización' }}</dd></div>
                 <div><dt>Módulo</dt><dd>{{ $entry['module_label'] }}</dd></div>
