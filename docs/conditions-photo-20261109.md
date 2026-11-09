@@ -21,3 +21,12 @@ Android 0.3.9+14 reutiliza estos datos: filtros de condiciones en Gráficas y nu
 - La vista previa Flutter usa tema real, Android/español y adaptadores locales ficticios. No acredita SQLite nativo, almacenamiento de imágenes Android ni teléfono físico. Durante QA se corrigió el encabezado de selección múltiple para texto ampliado. La evidencia final de compilación y publicación se registra al cerrar la entrega.
 
 No se necesitan migraciones ni seeders para este cambio. No se sustituyen inventarios, árboles ni inspecciones existentes.
+
+
+## Entrega productiva completada
+
+Activada el 09/11/2026, fuente `cde5585`, imagen `sha256:2c71a9533bccfeae23e81b6b60667b36fc9a611b71e54a710e2dba458094d723`. 846 archivos de runtime verificados y 195 rutas; los siete servicios saludables. Sin migraciones ni seeders. Entorno privado y 42 archivos de vendor/descargas conservados durante el despliegue. La web HTTPS respondió 200 y la metadata de foto sin sesión respondió 401.
+
+Respaldo previo: `/opt/sysforest/backups/conditions-photo-20261109t181417z`, con datos online, fuentes, imagen y etiqueta de reversión. La revisión productiva de solo lectura confirmó 3 árboles/3 inspecciones/3 evidencias, 2 portadas coincidentes entre ficha/mapa y 2 streams de imagen con tamaño/SHA256 correctos; la API móvil entrega código/tipo/fuente y capacidad de reportes. No se modificaron esos registros.
+
+[APK 0.3.9+14 publicada](https://sysforest.varcor.tech/descargas/SysForest-Mobile-0.3.9.apk), misma firma y permisos, 169119449 bytes, SHA256 `e9eb433f06972f5632024d703d03b9824083a0273874ec2a5781cca275e07bc5`. Tras instalar sobre la anterior, usar Sincronizar ahora para actualizar permisos, datos y fotos. Revisión visual y compilación aprobadas; teléfono físico pendiente. Durante la publicación de APK se conservaron las 11 versiones anteriores y no se reinició ni cambió el backend.
