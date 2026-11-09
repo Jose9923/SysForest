@@ -80,7 +80,7 @@ return new class () extends Migration {
         )");
 
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.protect_evidence_identity() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_evidence_identity() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     IF TG_OP = 'DELETE' THEN
         RAISE EXCEPTION 'Las evidencias se anulan sin borrar su registro ni su archivo.' USING ERRCODE = '23514';
@@ -103,7 +103,7 @@ $body$;
 CREATE TRIGGER evidence_identity_immutable BEFORE UPDATE OR DELETE ON evidences
 FOR EACH ROW EXECUTE FUNCTION public.protect_evidence_identity();
 
-CREATE FUNCTION public.validate_evidence_type_selection() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.validate_evidence_type_selection() RETURNS trigger LANGUAGE plpgsql AS $body$
 DECLARE
     type_active boolean;
 BEGIN
@@ -122,7 +122,7 @@ $body$;
 CREATE TRIGGER evidence_type_available BEFORE INSERT OR UPDATE OF evidence_type_id ON evidences
 FOR EACH ROW EXECUTE FUNCTION public.validate_evidence_type_selection();
 
-CREATE FUNCTION public.protect_evidence_revision() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_evidence_revision() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     RAISE EXCEPTION 'Las revisiones de evidencias solo admiten nuevos registros.' USING ERRCODE = '23514';
 END;

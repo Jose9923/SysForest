@@ -61,7 +61,7 @@ return new class () extends Migration {
         DB::statement("ALTER TABLE risk_evaluations ADD CHECK (inspection_version > 0 AND origin IN ('web','import','historical','mobile'))");
         DB::statement("ALTER TABLE risk_evaluations ADD CHECK ((priority IS NULL AND confirmed_by IS NULL AND confirmed_at IS NULL) OR (priority BETWEEN 1 AND 4 AND confirmed_by IS NOT NULL AND confirmed_at IS NOT NULL AND result->>'status' = 'valid'))");
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION sysforest_risk_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE OR REPLACE FUNCTION sysforest_risk_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
     RAISE EXCEPTION 'El historial de riesgo es inmutable; cree una nueva versión';
 END;

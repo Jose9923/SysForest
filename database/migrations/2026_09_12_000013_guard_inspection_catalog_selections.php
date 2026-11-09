@@ -9,7 +9,7 @@ return new class () extends Migration {
     public function up(): void
     {
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.validate_inspection_condition_selection() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.validate_inspection_condition_selection() RETURNS trigger LANGUAGE plpgsql AS $body$
 DECLARE
     condition_active boolean;
     category_active boolean;
@@ -30,7 +30,7 @@ $body$;
 CREATE TRIGGER inspection_condition_available BEFORE INSERT ON inspection_conditions
 FOR EACH ROW EXECUTE FUNCTION public.validate_inspection_condition_selection();
 
-CREATE FUNCTION public.validate_inspection_fauna_selection() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.validate_inspection_fauna_selection() RETURNS trigger LANGUAGE plpgsql AS $body$
 DECLARE
     category_active boolean;
 BEGIN
@@ -46,7 +46,7 @@ $body$;
 CREATE TRIGGER inspection_fauna_available BEFORE INSERT ON inspection_fauna
 FOR EACH ROW EXECUTE FUNCTION public.validate_inspection_fauna_selection();
 
-CREATE FUNCTION public.protect_inspection_selection() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_inspection_selection() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     RAISE EXCEPTION 'Una selección no se reasigna ni cambia su fecha original; la corrección utiliza nuevas relaciones auditadas.' USING ERRCODE = '23514';
 END;

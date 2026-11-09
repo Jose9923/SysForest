@@ -65,7 +65,7 @@ return new class () extends Migration {
             AND version >= 2 AND jsonb_typeof(old_values) = 'object' AND jsonb_typeof(new_values) = 'object'
         )");
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.protect_public_identity() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_public_identity() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     IF TG_TABLE_NAME = 'organizations' THEN
         IF OLD.public_code IS NOT NULL AND NEW.public_code IS DISTINCT FROM OLD.public_code THEN
@@ -82,7 +82,7 @@ FOR EACH ROW EXECUTE FUNCTION public.protect_public_identity();
 CREATE TRIGGER evidence_public_identity_immutable BEFORE UPDATE ON evidences
 FOR EACH ROW EXECUTE FUNCTION public.protect_public_identity();
 
-CREATE FUNCTION public.protect_publication_revision() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_publication_revision() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     RAISE EXCEPTION 'El historial de publicación solo admite nuevas revisiones.' USING ERRCODE = '23514';
 END;

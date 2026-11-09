@@ -171,7 +171,7 @@ return new class () extends Migration {
         }
 
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.protect_forestry_identity() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_forestry_identity() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     IF TG_OP = 'DELETE' THEN
         RAISE EXCEPTION 'Los individuos se anulan; no se eliminan físicamente.' USING ERRCODE = '23514';
@@ -191,7 +191,7 @@ FOR EACH ROW EXECUTE FUNCTION public.protect_forestry_identity();
 CREATE TRIGGER inventories_identity_immutable BEFORE UPDATE ON inventories
 FOR EACH ROW EXECUTE FUNCTION public.protect_forestry_identity();
 
-CREATE FUNCTION public.protect_forestry_history() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_forestry_history() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     RAISE EXCEPTION 'El historial forestal solo admite nuevos registros.' USING ERRCODE = '23514';
 END;

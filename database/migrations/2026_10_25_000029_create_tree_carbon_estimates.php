@@ -50,7 +50,7 @@ return new class () extends Migration {
         DB::statement("ALTER TABLE carbon_profiles ADD CHECK (NOT applicable OR (wood_density > 0 AND wood_density <= 2 AND max_diameter_cm >= 5 AND max_height_m > 0))");
         DB::statement("ALTER TABLE carbon_estimates ADD CHECK (inspection_version > 0 AND ((status = 'estimated' AND biomass_kg > 0 AND carbon_kg > 0 AND co2_kg > 0) OR (status <> 'estimated' AND biomass_kg IS NULL AND carbon_kg IS NULL AND co2_kg IS NULL)))");
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION sysforest_carbon_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE OR REPLACE FUNCTION sysforest_carbon_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
     RAISE EXCEPTION 'El historial de carbono es inmutable; agregue una nueva estimación o referencia';
 END;

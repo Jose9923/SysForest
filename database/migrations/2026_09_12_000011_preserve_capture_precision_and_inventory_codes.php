@@ -11,7 +11,7 @@ return new class () extends Migration {
         // Conserva la precisión recibida del GPS para comparar capturas sin falsos cambios.
         DB::statement('ALTER TABLE trees ALTER COLUMN captured_at TYPE timestamp(6) with time zone');
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.protect_inventory_code() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_inventory_code() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     IF NEW.code IS DISTINCT FROM OLD.code THEN
         RAISE EXCEPTION 'El código del inventario es inmutable.' USING ERRCODE = '23514';

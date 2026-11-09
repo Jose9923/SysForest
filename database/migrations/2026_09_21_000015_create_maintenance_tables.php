@@ -93,7 +93,7 @@ return new class () extends Migration {
             AND (new_status <> 'cancelled' OR length(btrim(coalesce(reason, ''))) > 0)
         )");
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.protect_maintenance_identity_and_workflow() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_maintenance_identity_and_workflow() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     IF TG_OP = 'DELETE' THEN
         RAISE EXCEPTION 'Los mantenimientos se anulan sin eliminar su historia.' USING ERRCODE = '23514';
@@ -131,7 +131,7 @@ $body$;
 CREATE TRIGGER maintenance_identity_and_workflow BEFORE INSERT OR UPDATE OR DELETE ON maintenances
 FOR EACH ROW EXECUTE FUNCTION public.protect_maintenance_identity_and_workflow();
 
-CREATE FUNCTION public.validate_maintenance_references() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.validate_maintenance_references() RETURNS trigger LANGUAGE plpgsql AS $body$
 DECLARE
     available boolean;
     check_assignee boolean;
@@ -167,7 +167,7 @@ $body$;
 CREATE TRIGGER maintenance_references_available BEFORE INSERT OR UPDATE ON maintenances
 FOR EACH ROW EXECUTE FUNCTION public.validate_maintenance_references();
 
-CREATE FUNCTION public.protect_maintenance_history() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_maintenance_history() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     RAISE EXCEPTION 'La historia del mantenimiento solo admite nuevos registros.' USING ERRCODE = '23514';
 END;

@@ -31,7 +31,7 @@ return new class () extends Migration {
             AND jsonb_typeof(context) = 'object'
         )");
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.protect_security_event() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_security_event() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     RAISE EXCEPTION 'Los eventos de auditoría solo admiten nuevos registros.' USING ERRCODE = '23514';
 END;

@@ -10,7 +10,7 @@ return new class () extends Migration {
     {
         DB::statement("CREATE UNIQUE INDEX import_batches_completed_source_unique ON import_batches (organization_id,file_sha256) WHERE status='completed'");
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.validate_completed_import_batch() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.validate_completed_import_batch() RETURNS trigger LANGUAGE plpgsql AS $body$
 DECLARE
     rows_total integer;
     rows_valid integer;

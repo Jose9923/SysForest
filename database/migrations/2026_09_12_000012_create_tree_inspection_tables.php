@@ -118,7 +118,7 @@ return new class () extends Migration {
             AND event IN ('inspection.created', 'inspection.updated')
         )");
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.protect_inspection_identity() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_inspection_identity() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     IF TG_OP = 'DELETE' THEN
         RAISE EXCEPTION 'Las inspecciones se corrigen con revisión; no se eliminan.' USING ERRCODE = '23514';
@@ -137,7 +137,7 @@ $body$;
 CREATE TRIGGER inspection_identity_immutable BEFORE UPDATE OR DELETE ON tree_inspections
 FOR EACH ROW EXECUTE FUNCTION public.protect_inspection_identity();
 
-CREATE FUNCTION public.protect_inspection_revision() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_inspection_revision() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     RAISE EXCEPTION 'Las revisiones de inspecciones solo admiten nuevos registros.' USING ERRCODE = '23514';
 END;

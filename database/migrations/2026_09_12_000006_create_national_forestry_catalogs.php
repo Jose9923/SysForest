@@ -17,7 +17,7 @@ return new class () extends Migration {
     {
         // La identidad técnica permanece estable incluso ante escrituras que omitan Eloquent.
         DB::unprepared(<<<'SQL'
-            CREATE FUNCTION protect_forestry_catalog_code() RETURNS trigger LANGUAGE plpgsql AS $$
+            CREATE OR REPLACE FUNCTION protect_forestry_catalog_code() RETURNS trigger LANGUAGE plpgsql AS $$
             BEGIN
                 IF NEW.code IS DISTINCT FROM OLD.code THEN
                     RAISE EXCEPTION 'El código del catálogo es inmutable' USING ERRCODE = '23514';

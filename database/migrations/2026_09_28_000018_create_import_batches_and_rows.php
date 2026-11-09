@@ -83,7 +83,7 @@ return new class () extends Migration {
         )");
         // El archivo no es autoridad para tenant/autores. También la base conserva los originales de auditoría.
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.protect_import_batch() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_import_batch() RETURNS trigger LANGUAGE plpgsql AS $body$
 BEGIN
     IF TG_OP = 'DELETE' THEN
         RAISE EXCEPTION 'El lote se cancela sin eliminar la trazabilidad.' USING ERRCODE = '23514';
@@ -103,7 +103,7 @@ $body$;
 CREATE TRIGGER import_batch_identity BEFORE UPDATE OR DELETE ON import_batches
 FOR EACH ROW EXECUTE FUNCTION public.protect_import_batch();
 
-CREATE FUNCTION public.protect_import_row() RETURNS trigger LANGUAGE plpgsql AS $body$
+CREATE OR REPLACE FUNCTION public.protect_import_row() RETURNS trigger LANGUAGE plpgsql AS $body$
 DECLARE
     batch_status text;
     inspection_tree uuid;

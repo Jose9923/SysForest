@@ -4,6 +4,16 @@ Inventario y gestión forestal institucional con mapas y portal ciudadano. El pr
 
 SYSFOREST utiliza Laravel 13, PHP 8.4, PostgreSQL/PostGIS y Redis. Mantiene MVC con el flujo `Controller → Service → Repository → Model`; Blade renderiza la interfaz y las plantillas de reportes/PDF. CSV, Excel y GeoJSON reutilizan los servicios, repositorios y filtros. Los comentarios útiles y la documentación se escriben en español; el código PHP sigue PSR-12.
 
+## Instalación base sin datos piloto
+
+`BaseSeeder` prepara el administrador inicial y los catálogos completos, incluidas **143 especies**, sin crear instituciones, inventarios piloto, árboles ni inspecciones. Configura las variables privadas `SYSFOREST_BASE_ADMIN_EMAIL`, `SYSFOREST_BASE_ADMIN_NAME` y `SYSFOREST_BASE_ADMIN_PASSWORD` y ejecuta con la conexión migradora:
+
+```bash
+php artisan migrate --seed --seeder=BaseSeeder --force
+```
+
+La repetición conserva la contraseña y la asignación del administrador existente válido; no lo reactiva ni restablece. La matriz de permisos de los roles sí se sincroniza con la definición vigente. Consulta el [alcance, configuración privada y comandos Docker](docs/base-seed-20261109.md). Verificación manual aislada aprobada el 09/11/2026; despliegue de esta entrega pendiente.
+
 ## Organización del código
 
 Las capas del backend están agrupadas por módulo, como las vistas Blade: `Http/Controllers/Trees`, `Services/Trees`, `Repositories/Trees`, `Models/Trees`, y sus equivalentes de inspecciones, inventarios, riesgo y demás módulos. Consulta la [estructura del proyecto y compatibilidad de autoload](docs/module-organization-20261105.md).
@@ -73,7 +83,7 @@ Para ejecutar únicamente la preparación de cuentas:
 docker compose exec -T app php artisan db:seed --class=DevelopmentIdentitySeeder --no-interaction
 ~~~
 
-Por solicitud expresa del usuario, `admin.inem@sysforest.test`, `funcionario.inem@sysforest.test` y `departamento.meta@sysforest.test` tienen la contraseña inicial específica autorizada en el código. El resto de las cuentas locales conserva el valor general anterior. Los nombres y correos se definen en el seeder y `DevelopmentPasswordService::passwordForEmail()` selecciona la clave de cada cuenta; la base almacena únicamente su hash. La documentación no duplica el valor de esa clave. No se utilizan credenciales de usuarios en `.env`. Este seeder también ejecuta `DevelopmentPasswordSeeder`, que restablece todas las cuentas existentes, incluidas las ajenas a sus cuatro perfiles, y revoca las sesiones de quienes cambian de contraseña. Ambos seeders se restringen a `local` o `testing`. Consulta [cuentas de desarrollo](docs/development-accounts.md). Las cuentas normales se incorporan mediante invitaciones, sin registro público abierto.
+Por solicitud expresa del usuario, `admin.inem@sysforest.test`, `funcionario.inem@sysforest.test` y `departamento.meta@sysforest.test` tienen la contraseña inicial específica autorizada en el código. El resto de las cuentas locales conserva el valor general anterior. Los nombres y correos se definen en el seeder y `DevelopmentPasswordService::passwordForEmail()` selecciona la clave de cada cuenta; la base almacena únicamente su hash. La documentación no duplica el valor de esa clave. Los seeders de desarrollo no toman credenciales de usuarios de `.env`; la configuración privada de `BaseSeeder` se documenta por separado. Este seeder también ejecuta `DevelopmentPasswordSeeder`, que restablece todas las cuentas existentes, incluidas las ajenas a sus cuatro perfiles, y revoca las sesiones de quienes cambian de contraseña. Ambos seeders se restringen a `local` o `testing`. Consulta [cuentas de desarrollo](docs/development-accounts.md). Las cuentas normales se incorporan mediante invitaciones, sin registro público abierto.
 
 Para restablecer únicamente las contraseñas locales, sin aprovisionar perfiles ni sincronizar roles:
 

@@ -51,7 +51,7 @@ return new class () extends Migration {
 
         // El sellado hace indivisible una versión: sus bandas deben cubrir todas las clases positivas.
         DB::unprepared(<<<'SQL'
-CREATE FUNCTION public.sysforest_guard_classification_rule() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.sysforest_guard_classification_rule() RETURNS trigger
 LANGUAGE plpgsql AS $body$
 DECLARE
     band record;
@@ -106,7 +106,7 @@ CREATE TRIGGER classification_rule_immutable
 BEFORE INSERT OR UPDATE OR DELETE ON public.classification_rule_versions
 FOR EACH ROW EXECUTE FUNCTION public.sysforest_guard_classification_rule();
 
-CREATE FUNCTION public.sysforest_guard_maturity_band() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.sysforest_guard_maturity_band() RETURNS trigger
 LANGUAGE plpgsql AS $body$
 DECLARE
     version_sealed_at timestamptz;
