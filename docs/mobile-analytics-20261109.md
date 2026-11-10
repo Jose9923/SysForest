@@ -1,6 +1,6 @@
 # Contexto móvil para gráficas sin conexión · 9 de noviembre de 2026
 
-La ampliación incorpora metadatos de lectura a los GET privados existentes para que Android pueda agrupar y filtrar la copia descargada con las mismas referencias y criterios del tablero web. No añade un módulo de Reportes a Android, endpoints públicos, permisos, reglas de cálculo, migraciones ni seeders. La implementación local está verificada; despliegue y comprobación HTTPS de esta ampliación permanecen pendientes al redactar.
+La ampliación incorpora metadatos de lectura a los GET privados existentes para que Android pueda agrupar y filtrar la copia descargada con las mismas referencias y criterios del tablero web. No añade un módulo de Reportes a Android, endpoints públicos, permisos, reglas de cálculo, migraciones ni seeders. El backend fue publicado, activado y verificado mediante HTTPS el 9 de noviembre de 2026. La evidencia de esta página corresponde al backend y a sus lecturas; la compilación/publicación de la APK se registra por separado.
 
 ## Contrato del manifiesto y catálogos
 
@@ -72,4 +72,20 @@ La verificación local del backend registró 30 comprobaciones manuales aprobada
 
 El helper de ausencias se observó mediante Dart real y un ejecutor en memoria, sin runner de pruebas; nueve observaciones preservaron las filas, pendientes y payloads. El lector tuvo una revisión independiente con observaciones de alias, ámbito, ausencias y retirada de riesgo. Esto no valida SQLite nativo, carreras de sincronización completas ni un teléfono físico. No se añadieron suites permanentes.
 
-El verificador HTTPS está preparado fuera del repositorio y aún no ejecutado: exige imagen activada/verificada y hashes de las ocho fuentes, usa credenciales existentes en memoria, limita los POST a autenticación/cierre y compara huellas de 17 tablas de negocio/recibos antes y después. Registra muestras y omisiones sin crear árboles, visitas, resultados o fixtures. El cierre definitivo debe incorporar el resultado real de despliegue/HTTPS; esta preparación no los acredita.
+El verificador HTTPS se ejecutó tras comprobar imagen activada/verificada y hashes de las ocho fuentes. Usó credenciales existentes únicamente en memoria y limitó sus POST a descubrimiento institucional, login y logout. Aprobó ocho grupos de comprobaciones: autenticación normal, manifiesto, los tres catálogos analíticos, lecturas existentes, rechazo sin Bearer y salud. Se descargaron completos 10 órganos, 23 condiciones físicas y 42 fitosanitarias, preservando el contrato activo de captura; en esta copia productiva no había referencias inactivas. Se revisaron dos árboles y dos visitas mediante listado y detalle, con identidad/versión, clasificación y contexto de carbono. Los casos inactivos se observaron previamente en memoria, no mediante fixtures productivos.
+
+La sesión temporal se cerró y su Bearer fue rechazado con HTTP 401. Las huellas y los conteos de 17 tablas de negocio/recibos fueron idénticos antes y después. No se consultó el preview de riesgo ni se crearon árboles, visitas, resultados, exportaciones o fixtures. No se modificaron roles para simular revocación en producción; esa guarda se comprobó en la revisión local. El muestreo HTTP no pretende cubrir todas las visitas ni validar SQLite nativo o un teléfono físico.
+
+## Despliegue y recuperación
+
+La actualización activó la imagen `sha256:4baf0a6f4f3454164ed0164a397194a4f1ef566fb1f6b5fdf56469f78d63415a` en app, queue y scheduler. La verificación del release confirmó siete servicios saludables, 195 rutas y coincidencia de las fuentes desplegadas. El entorno privado conservó su huella; 46 archivos protegidos de vendor/descargas permanecieron idénticos durante esta actualización del backend. No se ejecutaron migraciones, seeders, reinicialización de la base ni cambios de configuración.
+
+El respaldo privado está en `/opt/sysforest/backups/mobile-analytics-20261110t034232z` y la copia de datos online en `/opt/sysforest/backups/mobile-analytics-20261110t034232z/data/backup-20261110T034245Z-oSE3jz`. Se conservaron la fuente previa y la imagen anterior bajo `sysforest-app:before-mobile-analytics-20261110t034232z`. Estos respaldos permiten preparar una recuperación; no se ejecutó una restauración destructiva para validar esta entrega.
+
+La evidencia operativa se conservó fuera del repositorio en `.mobile-analytics-work/production-deployment-result.json` y `production-http-verification.json`. Los manifiestos y verificaciones locales del backend están en su subdirectorio `backend`; las observaciones de ausencias y del lector local están en `presence` y `review`. No se incluyen credenciales, tokens ni respuestas privadas en esos informes resumidos.
+
+## Instalación y actualización de la copia móvil
+
+La [APK Android 0.3.13+18](https://sysforest.varcor.tech/descargas/SysForest-Mobile-0.3.13.apk) quedó publicada y su descarga HTTPS fue verificada. Conserva la firma y los permisos de la versión anterior. Pesa 169194969 bytes y su SHA-256 es `53c34f537db4fb61937949f71f8dd6caea191fd6f674690dcce5f86a6c79726f`.
+
+Después de instalarla, abre la cuenta e institución correspondientes y pulsa **Sincronizar ahora**. Deja terminar la descarga para incorporar los catálogos analíticos, las referencias históricas y el contexto versionado de las visitas; la copia previa puede no contener esos campos. Gráficas utiliza después la copia local autorizada y su fecha de descarga, sin convertir resultados ausentes o incompatibles en ceros. La validación en un teléfono Android físico sigue pendiente.
