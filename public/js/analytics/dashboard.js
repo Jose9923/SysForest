@@ -14,7 +14,8 @@ export function csvCell(value) {
 
 export function chartCsv(chart, context) {
     const lines = [
-        ['SYSFOREST', chart.title], ['Alcance', context.scopeLabel], ['Generado', context.generatedAt],
+        ['SYSFOREST', chart.title], ...(chart.context ? [['Contexto', chart.context]] : []),
+        ['Alcance', context.scopeLabel], ['Generado', context.generatedAt],
         ...context.appliedFilters.map(item => [item.label, item.value]),
         ['Unidad', chart.unit], ...chart.notices.map(notice => ['Nota', notice]), [],
         chart.columns.map(column => column.label),
@@ -35,7 +36,20 @@ function downloadBlob(blob, filename) {
 function wrapText(context, value, width) {
     const lines = [];
     let current = '';
-    for (const word of String(value).split(/\s+/)) {
+    const words = String(value).split(/\s+/).flatMap(word => {
+        const chunks = [];
+        let chunk = '';
+        for (const character of word) {
+            if (chunk && context.measureText(chunk + character).width > width) {
+                chunks.push(chunk);
+                chunk = '';
+            }
+            chunk += character;
+        }
+        if (chunk) chunks.push(chunk);
+        return chunks;
+    });
+    for (const word of words) {
         const candidate = current ? `${current} ${word}` : word;
         if (current && context.measureText(candidate).width > width) {
             lines.push(current);
@@ -58,33 +72,88 @@ function exportPng(instance, data, context) {
     const width = Math.max(900, source.width);
     output.width = width;
     let painter = output.getContext('2d');
+    painter.font = 'bold 26px Arial';
+    const title = wrapText(painter, data.title, width - 72);
     painter.font = '18px Arial';
     const filterText = context.appliedFilters.map(item => `${item.label}: ${item.value}`).join(' · ') || 'Sin filtros adicionales';
-    const notes = wrapText(painter, `${context.scopeLabel} · ${filterText}`, width - 72);
-    const values = data.labels.flatMap((label, index) => wrapText(painter, `${label}: ${chartValueLabel(data.values[index], data.unit)}`, width - 72));
+    const notes = [
+        ...(data.context ? wrapText(painter, data.context, width - 72) : []),
+        ...wrapText(painter, `${context.scopeLabel} · ${filterText}`, width - 72),
+    ];
+    const values = data.labels.flatMap((label, index) =>
+        wrapText(painter, `${label}: ${chartValueLabel(data.values[index], data.unit)}`, width - 94)
+            .map((text, line) => ({text, color: data.type === 'doughnut' && line === 0
+                ? data.colors?.[index] || palette[index % palette.length] : null})));
     const foot = ['Valores representados', ...values, '', ...wrapText(painter,
         [...data.notices, `Consulta: ${context.generatedAt}. Fuente: SysForest.`].join(' '), width - 72)];
-    const graphHeight = Math.max(400, Math.round(source.height * ((width - 72) / source.width)));
-    const top = 96 + notes.length * 24;
-    output.height = top + graphHeight + 40 + foot.length * 24;
+    const graphHeight = Math.ceil(source.height * ((width - 72) / source.width));
+    const titleHeight = title.length * 32;
+    const top = 64 + titleHeight + notes.length * 24;
+    output.height = top + graphHeight + 48 + foot.length * 24;
     painter = output.getContext('2d');
     painter.fillStyle = '#ffffff';
     painter.fillRect(0, 0, output.width, output.height);
+    painter.textAlign = 'center';
     painter.fillStyle = '#204c39';
     painter.font = 'bold 26px Arial';
-    painter.fillText(data.title, 36, 44, width - 72);
+    title.forEach((line, index) => painter.fillText(line, width / 2, 40 + index * 32));
     painter.fillStyle = '#65766b';
     painter.font = '18px Arial';
-    notes.forEach((line, index) => painter.fillText(line, 36, 80 + index * 24));
+    notes.forEach((line, index) => painter.fillText(line, width / 2, 52 + titleHeight + index * 24));
     painter.drawImage(source, 36, top, width - 72, graphHeight);
-    foot.forEach((line, index) => painter.fillText(line, 36, top + graphHeight + 24 + index * 24));
+    painter.textAlign = 'left';
+    foot.forEach((line, index) => {
+        const y = top + graphHeight + 24 + index * 24;
+        if (line.color) {
+            painter.fillStyle = line.color;
+            painter.fillRect(36, y - 12, 12, 12);
+        }
+        painter.fillStyle = '#65766b';
+        painter.fillText(typeof line === 'string' ? line : line.text, typeof line === 'string' ? 36 : 58, y);
+    });
     output.toBlob(blob => { if (blob) downloadBlob(blob, `sysforest-${data.key}.png`); }, 'image/png');
 }
 
+/** Conserva las etiquetas completas y deja espacio para sus líneas en pantallas estrechas. */
+function barLabelLines(chart, label) {
+    const context = chart.ctx;
+    context.save();
+    context.font = '12px Arial';
+    const lines = wrapText(context, label, Math.max(65, Math.min(190, chart.width * 0.36)));
+    context.restore();
+    return lines;
+}
+
+function fitBars(chart, data) {
+    if (data.type !== 'bar') return;
+    const linesPerRow = data.labels.reduce((maximum, label) => Math.max(maximum, barLabelLines(chart, label).length + 1), 2);
+    const height = Math.max(300, data.labels.length * linesPerRow * 15 + 48);
+    const wrapper = chart.canvas.parentElement;
+    if (wrapper.style.height !== `${height}px`) wrapper.style.height = `${height}px`;
+}
+
+function addLegend(card, data) {
+    if (data.type !== 'doughnut' || card.querySelector('[data-chart-legend]')) return;
+    const list = document.createElement('ul');
+    list.className = 'analytics-chart-legend';
+    list.dataset.chartLegend = '';
+    list.setAttribute('aria-label', 'Valores de la gráfica');
+    data.labels.forEach((label, index) => {
+        const row = document.createElement('li');
+        const dot = document.createElement('i');
+        dot.setAttribute('aria-hidden', 'true');
+        dot.style.backgroundColor = data.colors?.[index] || palette[index % palette.length];
+        const text = document.createElement('span');
+        text.textContent = label;
+        const value = document.createElement('strong');
+        value.textContent = chartValueLabel(data.values[index], data.unit);
+        row.append(dot, text, value);
+        list.append(row);
+    });
+    card.querySelector('[data-chart-visual]').after(list);
+}
+
 function makeChart(canvas, data) {
-    if (['physical_conditions', 'phytosanitary_conditions'].includes(data.key)) {
-        canvas.parentElement.style.height = `${Math.max(285, data.labels.length * 30 + 50)}px`;
-    }
     const doughnut = data.type === 'doughnut';
     const line = data.type === 'line';
     return new window.Chart(canvas, {
@@ -98,6 +167,7 @@ function makeChart(canvas, data) {
                 fill: line, tension: 0, pointRadius: line ? 3 : undefined,
             }],
         },
+        plugins: [{id: 'readableBarLabels', beforeLayout: chart => fitBars(chart, data)}],
         options: {
             responsive: true, maintainAspectRatio: false,
             animation: false,
@@ -105,7 +175,7 @@ function makeChart(canvas, data) {
             locale: 'es-CO',
             cutout: doughnut ? '70%' : undefined,
             plugins: {
-                legend: {display: doughnut, position: 'bottom', labels: {usePointStyle: true, pointStyle: 'circle', boxWidth: 8, padding: 16, color: '#536a5c', font: {size: 11}}},
+                legend: {display: false},
                 tooltip: {backgroundColor: '#214637', padding: 12,
                     callbacks: {label: item => chartValueLabel(item.raw, data.unit)}},
             },
@@ -114,12 +184,10 @@ function makeChart(canvas, data) {
                     ticks: line ? {maxRotation: 45, autoSkip: true, maxTicksLimit: 12, color: '#6b7b70', font: {size: 10}}
                         : {precision: 0, color: '#7b8a7e', font: {size: 10}}},
                 y: {beginAtZero: line, border: {display: false}, grid: {display: line, color: '#edf1eb'},
-                    ticks: {precision: 0, color: '#526958', font: {size: 10}, autoSkip: false,
+                    ticks: {precision: 0, color: '#526958', font: {size: 12, family: 'Arial'}, autoSkip: false,
                         callback(value) {
                             if (line) return format.format(value);
-                            const label = this.getLabelForValue(value);
-                            const limit = this.chart.width < 400 ? 20 : 33;
-                            return label.length > limit ? `${label.slice(0, limit - 2)}…` : label;
+                            return barLabelLines(this.chart, this.getLabelForValue(value));
                         }}},
             },
         },
@@ -138,8 +206,9 @@ function initialize() {
         const filterKeys = (config.filter_keys ?? REPORT_FILTER_KEYS).filter(key => REPORT_FILTER_KEYS.includes(key));
         const normalize = input => cleanFilters({...input, scope: config.scope.mode}, filterKeys);
         const applied = normalize(boot.filters);
-        const hasConditionSelection = filters => ['physical_condition_ids', 'phytosanitary_condition_ids',
-            'physical_condition_category_ids', 'phytosanitary_condition_category_ids'].some(key => filters[key]?.length > 0);
+        const hasDomain = (filters, domain) => [`${domain}_condition_ids`, `${domain}_condition_category_ids`].some(key => filters[key]?.length > 0);
+        const conditionTopic = filters => hasDomain(filters, 'physical') ? 'physical'
+            : hasDomain(filters, 'phytosanitary') ? 'phytosanitary' : null;
         if (window.jQuery?.fn.select2) {
             const controls = new MapFilters({form, config, document, origin: location.origin, $: window.jQuery, filterKeys,
                 getAppliedFilters: () => applied,
@@ -151,8 +220,10 @@ function initialize() {
                         if (Array.isArray(value)) value.forEach(item => url.searchParams.append(`${key}[]`, item));
                         else url.searchParams.set(key, value);
                     }
-                    if (hasConditionSelection(filters)) url.hash = 'structure';
-                    else url.hash = location.hash;
+                    const changedDomain = ['physical', 'phytosanitary'].find(domain =>
+                        hasDomain(filters, domain) && ['ids', 'category_ids'].some(suffix =>
+                            JSON.stringify(filters[`${domain}_condition_${suffix}`] ?? []) !== JSON.stringify(applied[`${domain}_condition_${suffix}`] ?? [])));
+                    url.hash = changedDomain || location.hash || conditionTopic(filters) || 'composition';
                     location.assign(url.href);
                 }, onError: showError, onSearch: () => {},
             });
@@ -165,7 +236,16 @@ function initialize() {
         const data = new Map(boot.charts.map(chart => [chart.key, chart]));
         const cards = [...root.querySelectorAll('[data-chart-card]')];
         const tabs = root.querySelector('[data-analytics-tabs]');
+        const sections = [...root.querySelectorAll('[data-chart-section]')];
+        const categories = [...sections.map(section => section.dataset.chartSection), 'all'];
+        const selectedCategory = () => {
+            const hash = location.hash.slice(1);
+            // Los enlaces anteriores a la reorganización siguen llevando a condiciones.
+            const requested = hash === 'structure' ? (conditionTopic(applied) || 'physical') : hash;
+            return categories.includes(requested) ? requested : conditionTopic(applied) || categories[0];
+        };
         const render = category => {
+            sections.forEach(section => { section.hidden = category !== 'all' && section.dataset.chartSection !== category; });
             let count = 0;
             cards.forEach(card => {
                 const visible = category === 'all' || card.dataset.chartCategory === category;
@@ -175,7 +255,9 @@ function initialize() {
                 const canvas = card.querySelector('[data-chart]');
                 if (!canvas || !window.Chart) return;
                 card.querySelector('[data-chart-visual]').hidden = false;
-                if (!instances.has(canvas.dataset.chart)) instances.set(canvas.dataset.chart, makeChart(canvas, data.get(canvas.dataset.chart)));
+                const chart = data.get(canvas.dataset.chart);
+                addLegend(card, chart);
+                if (!instances.has(canvas.dataset.chart)) instances.set(canvas.dataset.chart, makeChart(canvas, chart));
                 else instances.get(canvas.dataset.chart).resize();
                 card.querySelector('[data-chart-png]')?.removeAttribute('hidden');
             });
@@ -189,9 +271,8 @@ function initialize() {
             url.hash = button.dataset.category;
             history.replaceState(null, '', url);
         }));
-        const category = location.hash.slice(1);
-        render(['composition', 'structure', 'territory', 'timeline', 'all'].includes(category) ? category
-            : hasConditionSelection(applied) ? 'structure' : 'composition');
+        render(selectedCategory());
+        window.addEventListener('hashchange', () => render(selectedCategory()));
         if (!window.Chart) showError('Las gráficas no pudieron cargarse. Las tablas y las descargas de datos siguen disponibles.');
         cards.forEach(card => {
             const chart = data.get(card.dataset.chartCard);

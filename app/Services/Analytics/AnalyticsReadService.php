@@ -13,6 +13,7 @@ use App\Repositories\Analytics\AnalyticsRepository;
 use App\Repositories\Reports\ReportRepository;
 use App\Repositories\Reports\ReportSnapshotRepository;
 use App\Tenancy\TenantContext;
+use App\Support\Conditions\ConditionChartPresentation;
 use Illuminate\Auth\Access\AuthorizationException;
 use App\Services\Auth\PermissionService;
 use App\Services\Reports\ReportAccessService;
@@ -98,6 +99,7 @@ class AnalyticsReadService
 
             return $this->presentation->metadata($actor, $selection, 'species') + [
                 'filters' => $selection->values, 'summary' => $summary, 'charts' => $charts,
+                'chartSections' => $this->chartSections($charts),
                 'capabilities' => ['inspections' => $inspections, 'maintenances' => $maintenances, 'inventories' => $inventories, 'export' => $export],
                 'coverage' => ['total' => $summary['totalTrees'], 'georeferenced' => $summary['georeferenced'],
                     'withoutGeometry' => $summary['withoutGeometry'], 'withInspection' => $summary['withInspection'],
@@ -118,19 +120,6 @@ class AnalyticsReadService
             'maintenances' => 'orders', 'carbon' => 'co2_kg', default => 'trees'
         };
         $rows = $data['rows'];
-        $labels = fn ($row) => match ($key) {
-            'diameter_classes', 'height_classes' => $row['rule_version'].' · '.$row['group'],
-            'phytosanitary_conditions', 'physical_conditions' => $row['category'].' · '.$row['group'],
-            'maintenances' => $row['type'].' · '.$row['status'],
-            'municipalities' => $row['department'].' · '.$row['group'],
-            'organizations' => $row['code'].' · '.$row['group'],
-            default => $row['group'],
-        };
-        $plotted = $rows;
-        $notices = $data['notices'];
-        if (!in_array($key, ['diameter_classes', 'height_classes'], true)) {
-            usort($plotted, fn ($left, $right) => $right[$metric] <=> $left[$metric] ?: strcmp($labels($left), $labels($right)));
-        }
         $conditionType = match ($key) {
             'physical_conditions' => 'physical_mechanical',
             'phytosanitary_conditions' => 'phytosanitary',
@@ -138,6 +127,29 @@ class AnalyticsReadService
         };
         $series = $conditionType === null ? [] : $selection->conditionSeries($conditionType);
         $selectedConditions = !empty($series['condition_ids']) || !empty($series['category_ids']);
+        $chartContext = $conditionType === null ? null : ConditionChartPresentation::context($rows, $selectedConditions);
+        $classChart = in_array($key, ['diameter_classes', 'height_classes'], true);
+        $classVersions = $classChart ? array_values(array_unique(array_column($rows, 'rule_version'))) : [];
+        if (count($classVersions) === 1) {
+            $chartContext = $classVersions[0];
+        }
+        $labels = fn ($row) => match ($key) {
+            'diameter_classes', 'height_classes' => (ctype_digit((string) $row['group']) ? 'Clase '.$row['group'] : $row['group'])
+                .(count($classVersions) > 1 ? ' · '.$row['rule_version'] : ''),
+            'phytosanitary_conditions', 'physical_conditions' => ConditionChartPresentation::label($row, $chartContext),
+            'maintenances' => $row['type'].' · '.$row['status'],
+            'municipalities' => $row['department'].' · '.$row['group'],
+            'organizations' => $row['code'].' · '.$row['group'],
+            default => $row['group'],
+        };
+        $plotted = $rows;
+        $notices = $data['notices'];
+        if ($classChart) {
+            $notices[] = 'Las clases agrupan medidas por intervalos según la regla de clasificación de cada inspección. El número de clase identifica un intervalo; la versión identifica la regla utilizada. Este detalle técnico complementa el resumen del inventario.';
+        }
+        if (!in_array($key, ['diameter_classes', 'height_classes'], true)) {
+            usort($plotted, fn ($left, $right) => $right[$metric] <=> $left[$metric] ?: strcmp($labels($left), $labels($right)));
+        }
         $limit = $selectedConditions ? count($plotted) : (in_array($key, ['species', 'families'], true) ? 10 : 12);
         $visible = array_slice($plotted, 0, $limit);
         if ($selectedConditions) {
@@ -178,12 +190,35 @@ class AnalyticsReadService
             $colors = array_map(fn (string $label) => $statusColors[$label], $chartLabels);
         }
 
-        return ['key' => $key, 'title' => $definition['title'], 'description' => $definition['description'],
+        return ['key' => $key, 'title' => match ($key) {
+            'diameter_classes' => 'Diámetro del tronco por clases',
+            'height_classes' => 'Altura total por clases',
+            default => $definition['title'],
+        }, 'description' => $definition['description'], 'context' => $chartContext,
             'type' => in_array($key, ['states', 'inspections'], true) ? 'doughnut' : 'bar',
             'labels' => $chartLabels, 'values' => $values, 'colors' => $colors, 'unit' => $definition['unit'],
             'rows' => $rows, 'columns' => $data['columns'], 'notices' => $notices, 'downloads' => $downloads,
             'exportable' => $canExport, 'reportUrl' => route('reports.index', ['report' => $key] + $selection->values, false),
             'totalGroups' => count($rows)];
+    }
+
+    /** Orden visual independiente de los filtros, permisos y agregaciones. */
+    private function chartSections(array $charts): array
+    {
+        $available = array_column($charts, 'key');
+        $sections = [
+            ['key' => 'composition', 'title' => 'Composición y estado', 'description' => 'Especies, familias y estado actual de los árboles.', 'charts' => ['states', 'species', 'families']],
+            ['key' => 'phytosanitary', 'title' => 'Condiciones fitosanitarias', 'description' => 'Condiciones de salud registradas en la última inspección pertinente.', 'charts' => ['phytosanitary_conditions']],
+            ['key' => 'physical', 'title' => 'Condiciones físico-mecánicas', 'description' => 'Condiciones estructurales por órgano en la última inspección pertinente.', 'charts' => ['physical_conditions']],
+            ['key' => 'risk', 'title' => 'Gestión del riesgo', 'description' => 'Prioridades de gestión de los árboles seleccionados.', 'charts' => ['risk']],
+            ['key' => 'carbon', 'title' => 'Carbono', 'description' => 'Estimaciones de carbono almacenado y cobertura de los datos utilizados.', 'charts' => ['carbon', 'carbon_coverage']],
+            ['key' => 'size', 'title' => 'Tamaño del arbolado', 'description' => 'Detalle técnico opcional: distribución del diámetro y la altura por clases. No es necesario consultarlo para revisar el estado del inventario.', 'charts' => ['diameter_classes', 'height_classes']],
+            ['key' => 'maintenances', 'title' => 'Mantenimientos', 'description' => 'Trabajos asociados con el conjunto de árboles seleccionado.', 'charts' => ['maintenances']],
+            ['key' => 'territory', 'title' => 'Inventarios y territorio', 'description' => 'Comparaciones entre inventarios, organizaciones y municipios autorizados.', 'charts' => ['inventories', 'organizations', 'municipalities']],
+            ['key' => 'timeline', 'title' => 'Inspecciones e historial', 'description' => 'Cobertura de inspecciones y distribución de sus registros históricos.', 'charts' => ['inspections', 'timeline']],
+        ];
+
+        return array_values(array_filter($sections, fn ($section) => array_intersect($section['charts'], $available) !== []));
     }
 
     private function customChart(
