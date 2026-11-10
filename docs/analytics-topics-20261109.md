@@ -22,4 +22,11 @@ Cuando hay un solo órgano seleccionado, el contexto muestra ese órgano y las b
 
 ## Publicación
 
-Pendiente de activación al registrar la verificación local. El manifiesto, respaldo y comprobaciones HTTP de producción se registran al completar la entrega.
+Publicado el 09/11/2026 (Bogotá) en `https://sysforest.varcor.tech`, desde el commit `68492e1` de `codex/organize-backend-modules`.
+
+- Respaldo previo verificado: `/opt/sysforest/backups/analytics-topics-20261110t023627z`; datos, fuente e imagen anterior conservados.
+- Imagen activa: `sha256:aa1288974136f93726ab87e3ba337bd14417380a9fc3fabf014b3e1c22e3929a`. Los 852 archivos del manifiesto coinciden con la fuente congelada; dependencias, configuración privada y 46 archivos protegidos de vendor/descargas se conservaron.
+- Aplicación, cola y scheduler activados; vistas compiladas limpiadas. Siete servicios saludables. Sin migraciones ni seeders.
+- 8 comprobaciones HTTP aprobadas, con login autorizado y logout confirmado: HTML y API privados, apartados y filtros por tema, selección de Fuste de ambas evaluaciones, etiquetas/contexto, tablas y vínculos de exportación, JS/CSS publicados. Al cerrar sesión, el API privado vuelve a responder 401. No se prepararon exportaciones ni se modificaron registros forestales.
+- La fuente productiva es una entrega empaquetada, no un checkout Git. El commit se publicó en GitHub y el servidor recibió el paquete verificado.
+- El servidor de previsualización, contenedor y base ficticia se retiraron; quedan únicamente evidencias JSON/HTML/CSV/logs y herramientas de entrega fuera del repositorio.
