@@ -14,7 +14,8 @@ final class MobileInspectionResults
 {
     public static function project(TreeInspection $inspection, bool $canViewRisk): array
     {
-        return ['risk' => $canViewRisk ? self::risk($inspection) : null, 'carbon' => self::carbon($inspection)];
+        return ['risk' => $canViewRisk ? self::risk($inspection) : null, 'carbon' => self::carbon($inspection),
+            'analytics' => MobileAnalyticsProjection::inspection($inspection)];
     }
 
     private static function risk(TreeInspection $inspection): array

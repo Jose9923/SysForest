@@ -25,32 +25,39 @@ class MobileTreeService
         private MobileTreeRepository $reads,
         private TreeService $writes,
         private MobileMutationService $mutations,
+        private \App\Repositories\Reports\ReportSnapshotRepository $snapshots,
     ) {
     }
 
     public function index(User $actor, string $inventoryId, array $input = []): array
     {
-        $organization = $this->access->organization($actor);
-        $inventory = $this->inventories->findForTenant($organization->id, $inventoryId);
-        Gate::forUser($actor)->authorize('view', $inventory);
-        Gate::forUser($actor)->authorize('viewAny', Tree::class);
-        $page = $this->reads->paginate($organization->id, $inventory->id, (int) ($input['per_page'] ?? 50), (int) ($input['page'] ?? 1));
+        return $this->snapshots->read(function () use ($actor, $inventoryId, $input): array {
+            $organization = $this->access->organization($actor);
+            $inventory = $this->inventories->findForTenant($organization->id, $inventoryId);
+            Gate::forUser($actor)->authorize('view', $inventory);
+            Gate::forUser($actor)->authorize('viewAny', Tree::class);
+            $page = $this->reads->paginate($organization->id, $inventory->id, (int) ($input['per_page'] ?? 50), (int) ($input['page'] ?? 1));
 
-        return ['inventory_id' => $inventory->id,
-            'data' => $page->getCollection()->map($this->projection(...))->all(),
-            'meta' => ['inventory_id' => $inventory->id, 'organization_id' => $organization->id,
-                'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
-                'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
-                'generated_at' => now()->toIso8601String()]];
+            return ['inventory_id' => $inventory->id,
+                'data' => $page->getCollection()->map(fn (Tree $tree): array => $this->projection($tree)
+                    + ['analytics_reference' => \App\Support\Mobile\MobileAnalyticsProjection::treeReference($tree)])->all(),
+                'meta' => ['inventory_id' => $inventory->id, 'organization_id' => $organization->id,
+                    'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+                    'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
+                    'generated_at' => now()->toIso8601String()]];
+        });
     }
 
     public function show(User $actor, string $id): array
     {
-        $organization = $this->access->organization($actor);
-        $tree = $this->trees->findForTenant($organization->id, $id);
-        Gate::forUser($actor)->authorize('view', $tree);
+        return $this->snapshots->read(function () use ($actor, $id): array {
+            $organization = $this->access->organization($actor);
+            $tree = $this->trees->findForTenant($organization->id, $id);
+            Gate::forUser($actor)->authorize('view', $tree);
 
-        return ['data' => $this->projection($tree)];
+            return ['data' => $this->projection($tree)
+                + ['analytics_reference' => \App\Support\Mobile\MobileAnalyticsProjection::treeReference($tree)]];
+        });
     }
 
     public function update(User $actor, string $id, array $input): array

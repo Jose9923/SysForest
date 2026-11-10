@@ -16,7 +16,8 @@ class MobileTreeRepository
             ->whereHas('inventories', fn (Builder $query) => $query->where('inventories.organization_id', $organizationId)
                 ->where('inventories.id', $inventoryId))
             ->select('trees.*')->selectRaw('ST_Y(geometry) AS latitude, ST_X(geometry) AS longitude')
-            ->with(['inventories' => fn ($query) => $query->where('inventories.organization_id', $organizationId)])
+            ->with(['inventories' => fn ($query) => $query->where('inventories.organization_id', $organizationId),
+                'species.family', 'species.commonNames', 'placement', 'growthHabit', 'establishmentOrigin', 'biogeographicOrigin'])
             ->orderBy('trees.code')->orderBy('trees.id')->paginate($perPage, ['*'], 'page', $page);
     }
 }

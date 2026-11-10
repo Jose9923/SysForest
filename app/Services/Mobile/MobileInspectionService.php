@@ -35,52 +35,59 @@ class MobileInspectionService
         private MobileInspectionRepository $reads,
         private TreeInspectionService $writes,
         private MobileMutationService $mutations,
+        private \App\Repositories\Reports\ReportSnapshotRepository $snapshots,
     ) {
     }
 
     public function index(User $actor, string $treeId, array $input = []): array
     {
-        $organization = $this->access->organization($actor);
-        $tree = $this->trees->findForTenant($organization->id, $treeId);
-        Gate::forUser($actor)->authorize('view', $tree);
-        Gate::forUser($actor)->authorize('viewAny', TreeInspection::class);
-        $page = $this->reads->paginate($organization->id, $tree->id, (int) ($input['per_page'] ?? 50), (int) ($input['page'] ?? 1));
+        return $this->snapshots->read(function () use ($actor, $treeId, $input): array {
+            $organization = $this->access->organization($actor);
+            $tree = $this->trees->findForTenant($organization->id, $treeId);
+            Gate::forUser($actor)->authorize('view', $tree);
+            Gate::forUser($actor)->authorize('viewAny', TreeInspection::class);
+            $page = $this->reads->paginate($organization->id, $tree->id, (int) ($input['per_page'] ?? 50), (int) ($input['page'] ?? 1));
 
-        $canViewRisk = Gate::forUser($actor)->allows('risk.view');
+            $canViewRisk = Gate::forUser($actor)->allows('risk.view');
 
-        return ['tree_id' => $tree->id, 'data' => $page->getCollection()->map(fn (TreeInspection $visit): array =>
-            $this->projection($visit) + \App\Support\Mobile\MobileInspectionResults::project($visit, $canViewRisk))->all(),
-            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
-                'per_page' => $page->perPage(), 'total' => $page->total()]];
+            return ['tree_id' => $tree->id, 'data' => $page->getCollection()->map(fn (TreeInspection $visit): array =>
+                $this->projection($visit) + \App\Support\Mobile\MobileInspectionResults::project($visit, $canViewRisk))->all(),
+                'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+                    'per_page' => $page->perPage(), 'total' => $page->total()]];
+        });
     }
 
     public function inventory(User $actor, string $inventoryId, array $input = []): array
     {
-        $data = MobileInventoryPageInput::validate($input);
-        $organization = $this->access->organization($actor);
-        $inventory = $this->inventories->findForTenant($organization->id, $inventoryId);
-        Gate::forUser($actor)->authorize('view', $inventory);
-        $this->access->authorize($actor, 'trees.view');
-        Gate::forUser($actor)->authorize('viewAny', TreeInspection::class);
-        $page = $this->reads->paginateForInventory($organization->id, $inventory->id, (int) ($data['per_page'] ?? 100), (int) ($data['page'] ?? 1));
-        $canViewRisk = $this->access->allows($actor, 'risk.view');
+        return $this->snapshots->read(function () use ($actor, $inventoryId, $input): array {
+            $data = MobileInventoryPageInput::validate($input);
+            $organization = $this->access->organization($actor);
+            $inventory = $this->inventories->findForTenant($organization->id, $inventoryId);
+            Gate::forUser($actor)->authorize('view', $inventory);
+            $this->access->authorize($actor, 'trees.view');
+            Gate::forUser($actor)->authorize('viewAny', TreeInspection::class);
+            $page = $this->reads->paginateForInventory($organization->id, $inventory->id, (int) ($data['per_page'] ?? 100), (int) ($data['page'] ?? 1));
+            $canViewRisk = $this->access->allows($actor, 'risk.view');
 
-        return ['data' => $page->getCollection()->map(fn (TreeInspection $visit): array =>
-            $this->projection($visit) + \App\Support\Mobile\MobileInspectionResults::project($visit, $canViewRisk))->all(),
-            'meta' => ['inventory_id' => $inventory->id, 'organization_id' => $organization->id,
-                'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
-                'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
-                'generated_at' => now()->toIso8601String()]];
+            return ['data' => $page->getCollection()->map(fn (TreeInspection $visit): array =>
+                $this->projection($visit) + \App\Support\Mobile\MobileInspectionResults::project($visit, $canViewRisk))->all(),
+                'meta' => ['inventory_id' => $inventory->id, 'organization_id' => $organization->id,
+                    'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+                    'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
+                    'generated_at' => now()->toIso8601String()]];
+        });
     }
 
     public function show(User $actor, string $id): array
     {
-        $organization = $this->access->organization($actor);
-        $inspection = $this->inspections->findForTenant($organization->id, $id);
-        Gate::forUser($actor)->authorize('view', $inspection);
+        return $this->snapshots->read(function () use ($actor, $id): array {
+            $organization = $this->access->organization($actor);
+            $inspection = $this->inspections->findForTenant($organization->id, $id);
+            Gate::forUser($actor)->authorize('view', $inspection);
 
-        return ['data' => $this->projection($inspection)
-            + \App\Support\Mobile\MobileInspectionResults::project($inspection, Gate::forUser($actor)->allows('risk.view'))];
+            return ['data' => $this->projection($inspection)
+                + \App\Support\Mobile\MobileInspectionResults::project($inspection, Gate::forUser($actor)->allows('risk.view'))];
+        });
     }
 
     public function create(User $actor, string $treeId, array $input): array

@@ -31,9 +31,12 @@ class MobileReferenceService
         $organization = $this->forestryAccess->organization($actor);
         $this->catalogAccess->authorizeView($actor);
 
+        $analytics = $this->canReadAnalyticsReferences($actor) ? array_keys(MobileReferenceRepository::ANALYTICS_CATALOGS) : [];
+
         return ['data' => [
             'organization_id' => $organization->id,
-            'catalogs' => array_keys(MobileReferenceRepository::CATALOGS),
+            'catalogs' => [...array_keys(MobileReferenceRepository::CATALOGS), ...$analytics],
+            'analytics_catalogs' => $analytics,
             'tree_statuses' => TreeStatus::options(),
             'inventory_statuses' => InventoryStatus::options(),
             'assessment_types' => ['physical_mechanical' => 'Físico-mecánico', 'phytosanitary' => 'Fitosanitario'],
@@ -41,6 +44,7 @@ class MobileReferenceService
             'cache_refresh' => 'full_replacement_after_all_pages',
             'active_only' => true,
             'classification' => 'server_computed',
+            'supports_analytics_context' => true,
             'supports_inventory_history_reads' => true,
             'supports_risk_inbox' => true,
             'supports_risk_preview' => true,
@@ -52,11 +56,16 @@ class MobileReferenceService
     {
         $this->forestryAccess->organization($actor);
         $this->catalogAccess->authorizeView($actor);
+        $historical = isset(MobileReferenceRepository::ANALYTICS_CATALOGS[$catalog]);
+        if ($historical) {
+            $this->forestryAccess->authorize($actor, 'trees.view');
+            $this->forestryAccess->authorize($actor, 'inspections.view');
+        }
         $filters = $this->filters($input);
         $page = $this->references->catalog($catalog, $filters);
 
         return ['data' => $page->getCollection()->map(fn (Model $record) => $this->reference($catalog, $record))->all(),
-            'meta' => $this->pagination($page) + ['catalog' => $catalog, 'active_only' => true]];
+            'meta' => $this->pagination($page) + ['catalog' => $catalog, 'active_only' => !$historical, 'analytics_only' => $historical]];
     }
 
     public function inventories(User $actor, array $input): array
@@ -106,8 +115,15 @@ class MobileReferenceService
         ]];
     }
 
+    private function canReadAnalyticsReferences(User $actor): bool
+    {
+        return $this->forestryAccess->allows($actor, 'trees.view')
+            && $this->forestryAccess->allows($actor, 'inspections.view');
+    }
+
     private function reference(string $catalog, Model $record): array
     {
+        $catalog = MobileReferenceRepository::ANALYTICS_CATALOGS[$catalog] ?? $catalog;
         $taxonomy = in_array($catalog, ['species', 'families'], true);
         $data = [
             'id' => $record->id,

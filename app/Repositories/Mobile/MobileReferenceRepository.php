@@ -44,10 +44,22 @@ class MobileReferenceRepository
         'maintenance_types' => MaintenanceType::class,
     ];
 
+    /** Solo lectura analítica: incluye referencias históricas, nunca se usa para validar capturas. */
+    public const ANALYTICS_CATALOGS = [
+        'analytics_condition_categories' => 'condition_categories',
+        'analytics_physical_conditions' => 'physical_conditions',
+        'analytics_phytosanitary_conditions' => 'phytosanitary_conditions',
+    ];
+
     public function catalog(string $catalog, array $filters): LengthAwarePaginator
     {
+        $historical = isset(self::ANALYTICS_CATALOGS[$catalog]);
+        $catalog = self::ANALYTICS_CATALOGS[$catalog] ?? $catalog;
         abort_unless(isset(self::CATALOGS[$catalog]), 404);
-        $query = self::CATALOGS[$catalog]::query()->where('active', true);
+        $query = self::CATALOGS[$catalog]::query();
+        if (!$historical) {
+            $query->where('active', true);
+        }
         $name = in_array($catalog, ['species', 'families'], true) ? 'scientific_name' : 'name';
 
         if ($catalog === 'species') {
@@ -60,8 +72,10 @@ class MobileReferenceRepository
         }
         if (in_array($catalog, ['physical_conditions', 'phytosanitary_conditions'], true)) {
             $type = $catalog === 'physical_conditions' ? 'physical_mechanical' : 'phytosanitary';
-            $query->where('assessment_type', $type)
-                ->whereHas('category', fn (Builder $category) => $category->where('active', true));
+            $query->where('assessment_type', $type);
+            if (!$historical) {
+                $query->whereHas('category', fn (Builder $category) => $category->where('active', true));
+            }
             if (!empty($filters['condition_category_id'])) {
                 $query->where('condition_category_id', $filters['condition_category_id']);
             }

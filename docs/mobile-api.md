@@ -100,6 +100,14 @@ Un tipo y motivo explícitos pueden registrar el cambio aunque se conserven las 
 
 Los instantes de la API siguen usando ISO con zona y su normalización UTC. La presentación web en Bogotá y las migraciones `000033`/`000034` no modifican las fechas calendario, la semántica de sincronización ni los contratos de los pendientes móviles. Esta ampliación backend no acredita por sí misma un selector nuevo en las APK ya publicadas. La implementación fue verificada antes de publicación; el [informe conjunto](change-catalog-bogota-20261109.md) registra su activación.
 
+## Contexto analítico offline · 9 de noviembre de 2026
+
+Los GET privados existentes incorporan datos de lectura para Gráficas en Android; no se añade un módulo Reportes ni se modifican los recibos. `GET /parameterizations` declara `supports_analytics_context: true` y, con consulta de árboles e inspecciones, añade los nombres `analytics_condition_categories`, `analytics_physical_conditions` y `analytics_phytosanitary_conditions` a `catalogs` y `analytics_catalogs`. Esas tres referencias incluyen inactivos y devuelven `meta.active_only: false`, `analytics_only: true`; los nombres originales siguen restringidos a activos para captura. Cada GET reautoriza institución, catálogos y ambos dominios.
+
+Los GET de árboles agregan `analytics_reference` con especie/familia, nombres comunes y referencias de emplazamiento, hábito y orígenes, incluidos antecedentes inactivos. Los GET de visitas agregan `analytics` con `schema_version: 1`, identidad/versión de visita y árbol, especie/hábito/estado actuales, clasificación `{id,code,label}`, madurez, condiciones con órgano y contexto de carbono. Las masas analíticas se incluyen solo para un resultado `estimated` compatible de un árbol vivo; de lo contrario son `null`. El `carbon` histórico y el `risk` superior conservan sus contratos, sin cálculo ni confirmación por consultar.
+
+El cliente debe validar IDs/versiones/insumos antes de sumar, mantener resultados pendientes separados y agrupar clase y versión como dimensiones distintas. La última visita es global del árbol antes de aplicar filtros; el historial por inventario incluye todas sus campañas autorizadas. Un snapshot de lectura por petición no garantiza la misma generación entre páginas distintas. Detalle de campos, permisos, catálogos, compatibilidad y comprobaciones: [contexto móvil para gráficas](mobile-analytics-20261109.md). Implementación local aprobada; publicación y HTTPS de esta ampliación pendientes al redactar.
+
 ## Sincronización
 
 El sobre contiene `items`, una lista de 1 a 100 capturas. Cada item contiene `client_id` UUID permanente generado al capturar, `tree` y opcionalmente `inspection`. La aplicación debe conservar la cuenta, organización, inventario, UUID y contenido de cada pendiente.

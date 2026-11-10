@@ -23,7 +23,8 @@ class MobileInspectionRepository
                 ->whereNull('trees.deleted_at')
                 ->whereHas('inventories', fn (Builder $inventory) => $inventory->where('inventories.organization_id', $organizationId)
                     ->where('inventories.id', $inventoryId)->where('inventory_trees.organization_id', $organizationId)))
-            ->with(['conditions', 'faunaCategories', 'inventoryTree', 'carbonEstimate', 'riskEvaluation.methodology']);
+            ->with(['conditions.category', 'faunaCategories', 'inventoryTree', 'carbonEstimate', 'riskEvaluation.methodology',
+                'tree', 'classificationRuleVersion', 'maturityState']);
 
         return $this->queries->ordered($query)->paginate($perPage, ['*'], 'page', $page);
     }
@@ -31,7 +32,8 @@ class MobileInspectionRepository
     public function paginate(string $organizationId, string $treeId, int $perPage, int $page): LengthAwarePaginator
     {
         $query = TreeInspection::query()->where('organization_id', $organizationId)->where('tree_id', $treeId)
-            ->with(['conditions', 'faunaCategories', 'inventoryTree', 'carbonEstimate', 'riskEvaluation.methodology']);
+            ->with(['conditions.category', 'faunaCategories', 'inventoryTree', 'carbonEstimate', 'riskEvaluation.methodology',
+                'tree', 'classificationRuleVersion', 'maturityState']);
 
         return $this->queries->ordered($query)->paginate($perPage, ['*'], 'page', $page);
     }
