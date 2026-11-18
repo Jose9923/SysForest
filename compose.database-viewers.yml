@@ -7,41 +7,31 @@ x-logging: &logging
     max-file: "3"
 
 services:
-  pgadmin:
-    image: dpage/pgadmin4:9.19@sha256:3591b3d02910dcd817dec6fcaa681c278ba6966945283dd0ea0042731c330c83
-    user: "5050:0"
+  phppgadmin:
+    image: sysforest-phppgadmin:f35f659-php83-v1
+    build:
+      context: ./docker/database-viewers
+      dockerfile: Dockerfile.phppgadmin
+    user: "1000:1000"
     init: true
     restart: unless-stopped
     ports:
       - "127.0.0.1:18084:8080"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?Configura el usuario inicial del visor en el archivo privado}
-      PGADMIN_DEFAULT_PASSWORD_FILE: /run/secrets/pgadmin_password
-      PGADMIN_LISTEN_ADDRESS: "0.0.0.0"
-      PGADMIN_LISTEN_PORT: "8080"
-      PGADMIN_DISABLE_POSTFIX: "true"
-      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
-      PGPASS_FILE: /run/secrets/postgres_viewer_pgpass
-      GUNICORN_ACCESS_LOGFILE: /dev/null
-    secrets:
-      - pgadmin_password
-      - postgres_viewer_pgpass
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-      - ./docker/database-viewers/pgadmin-servers.json:/pgadmin4/servers.json:ro
-      - ./docker/database-viewers/pgadmin-config.py:/pgadmin4/config_local.py:ro
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]
     pids_limit: 128
-    mem_limit: 768m
+    mem_limit: 256m
     logging: *logging
     healthcheck:
-      test: ["CMD", "/venv/bin/python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/misc/ping', timeout=3).read()"]
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8080/health.php')===false?1:0);"]
       interval: 15s
       timeout: 5s
       retries: 6
-      start_period: 60s
+      start_period: 30s
     networks: [backend]
 
   mongo-express:
@@ -77,22 +67,16 @@ services:
       start_period: 30s
     networks: [backend]
 
-volumes:
-  pgadmin_data:
-
 networks:
   backend:
     external: true
     name: sysforest-production_backend
 
 # Compose local monta archivos: el instalador conserva dueño/modo del origen.
-# pgAdmin: UID5050:0,0600; Mongo Express: UID1000:1000,0600.
+# Mongo Express: UID1000,0600. phpPgAdmin no recibe secretos ni autologin.
+# El contenedor/volumen pgAdmin anterior quedan fuera de Compose para recuperación.
 # Ningún secreto administrativo de PostgreSQL/MongoDB se monta en los visores.
 secrets:
-  pgadmin_password:
-    file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/pgadmin_password
-  postgres_viewer_pgpass:
-    file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/postgres_viewer_pgpass
   mongo_express_username:
     file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/mongo_express_username
   mongo_express_password:

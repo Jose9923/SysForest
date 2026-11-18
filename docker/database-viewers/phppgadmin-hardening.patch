@@ -1,0 +1,105 @@
+--- a/libraries/lib.inc.php
++++ b/libraries/lib.inc.php
+@@ -80,6 +80,8 @@
+ 		}
+ 	}
+ 
++	require_once('/opt/sysforest/phppgadmin-security.php');
++
+ 	$misc->setHREF();
+ 	$misc->setForm();
+ 
+@@ -94,6 +96,7 @@
+ 	if (isset($_POST['loginServer']) && isset($_POST['loginUsername']) &&
+ 		isset($_POST['loginPassword_'.md5($_POST['loginServer'])])) {
+ 
++		session_regenerate_id(true);
+ 		$_server_info = $misc->getServerInfo($_POST['loginServer']);
+ 
+ 		$_server_info['username'] = $_POST['loginUsername'];
+--- a/classes/Misc.php
++++ b/classes/Misc.php
+@@ -1482,7 +1482,7 @@
+ 			echo "<noscript><input type=\"submit\" value=\"Set Language\"></noscript>\n";
+ 			foreach ($_GET as $key => $val) {
+ 				if ($key == 'language') continue;
+-				echo "<input type=\"hidden\" name=\"$key\" value=\"", htmlspecialchars($val), "\" />\n";
++				echo "<input type=\"hidden\" name=\"", htmlspecialchars((string) $key), "\" value=\"", htmlspecialchars($val), "\" />\n";
+ 			}
+ 			echo "</form>\n";
+ 
+--- a/sql.php
++++ b/sql.php
+@@ -69,7 +69,11 @@
+ 	// We avoid GPC vars to avoid truncating long queries
+ 	if (isset($_REQUEST['subject']) && $_REQUEST['subject'] == 'history') {
+ 		// Or maybe we came from the history popup
+-		$_SESSION['sqlquery'] = $_SESSION['history'][$_REQUEST['server']][$_REQUEST['database']][$_GET['queryid']]['query'];
++		$queryId = $_GET['queryid'] ?? null;
++		if (!is_scalar($queryId) || !isset($_SESSION['history'][$_REQUEST['server']][$_REQUEST['database']][$queryId]['query'])) {
++			sysforestViewerReject(400);
++		}
++		$_SESSION['sqlquery'] = $_SESSION['history'][$_REQUEST['server']][$_REQUEST['database']][$queryId]['query'];
+ 	}
+ 	elseif (isset($_POST['query'])) {
+ 		// Or maybe we came from an sql form
+--- a/login.php
++++ b/login.php
+@@ -45,7 +45,7 @@
+ 	<table class="navbar" border="0" cellpadding="5" cellspacing="3">
+ 		<tr>
+ 			<td><?php echo $lang['strusername']; ?></td>
+-			<td><input type="text" name="loginUsername" value="<?php if (isset($_POST['loginUsername']) && is_scalar($_POST['loginUsername'])) echo htmlspecialchars((string) $_POST['loginUsername']); ?>" size="24" /></td>
++			<td><input type="text" name="loginUsername" value="sysforest_viewer" readonly="readonly" size="24" /></td>
+ 		</tr>
+ 		<tr>
+ 			<td><?php echo $lang['strpassword']; ?></td>
+--- a/index.php
++++ b/index.php
+@@ -16,7 +16,13 @@
+ 	$cols = $rtl ? '*,'.$conf['left_width'] : $conf['left_width'].',*';
+ 
+ 	if (($_SERVER["REQUEST_METHOD"] ?? '') == "POST" && isset($_POST['_originalPath'])) {
+-		$newPath = basename($_POST['_originalPath']);
++		$original = is_string($_POST['_originalPath']) ? parse_url($_POST['_originalPath']) : false;
++		$page = is_array($original) ? basename($original['path'] ?? '') : '';
++		if (!preg_match('/^[A-Za-z0-9_-]+\.php$/D', $page) || !is_file(__DIR__.'/'.$page)) {
++			$page = 'intro.php';
++			$original = [];
++		}
++		$newPath = htmlspecialchars($page.(isset($original['query']) ? '?'.$original['query'] : ''), ENT_QUOTES, 'UTF-8');
+ 		$mainframe = '<frame src="' . $newPath . '" name="detail" id="detail" frameborder="0" />';
+ 	} else {
+ 		$mainframe = '<frame src="intro.php" name="detail" id="detail" frameborder="0" />';
+--- a/logout.php
++++ b/logout.php
+@@ -10,6 +10,7 @@
+ 	session_name('PPA_ID'); 
+ 	session_start();
+ }
++require_once('/opt/sysforest/phppgadmin-security.php');
+ unset($_SESSION);
+ session_destroy();
+ 
+--- a/dbexport.php
++++ b/dbexport.php
+@@ -59,6 +59,8 @@
+ 				header('Content-Disposition: attachment; filename=dump.sql.gz');
+ 				break;
+ 		}
++
++		sysforestViewerStreamExport();
+ 
+ 		// Set environmental variables that pg_dump uses
+ 		putenv('PGPASSWORD=' . $server_info['password']);
+--- a/dataexport.php
++++ b/dataexport.php
+@@ -92,6 +92,8 @@
+ 			header('Content-Type: text/plain');
+ 		}
+ 	
++		sysforestViewerStreamExport();
++
+ 		if (isset($_REQUEST['query'])) $_REQUEST['query'] = trim(urldecode($_REQUEST['query']));
+ 
+ 		// Set the schema search path

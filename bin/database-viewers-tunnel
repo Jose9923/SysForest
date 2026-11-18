@@ -4,7 +4,7 @@ set -euo pipefail
 # Los puertos se enlazan únicamente al loopback de ambos equipos.
 target="${1:-root@179.66.133.169}"
 [[ "$target" =~ ^[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+$ ]] || { printf '%s\n' 'Usa usuario@servidor sin opciones ni espacios.' >&2; exit 1; }
-printf '%s\n' 'Conexión privada: http://127.0.0.1:18084 (pgAdmin) y http://127.0.0.1:18085 (MongoDB).'
+printf '%s\n' 'Conexión privada: http://127.0.0.1:18084 (phpPgAdmin) y http://127.0.0.1:18085 (MongoDB).'
 printf '%s\n' 'Mantén esta terminal abierta mientras usas los visores. Ctrl+C cierra el túnel.'
 exec ssh -o ForwardAgent=no -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 \
     -N -L 127.0.0.1:18084:127.0.0.1:18084 -L 127.0.0.1:18085:127.0.0.1:18085 "$target"

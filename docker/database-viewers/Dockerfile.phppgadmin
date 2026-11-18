@@ -1,0 +1,43 @@
+FROM php:8.3.36-apache-bookworm@sha256:a14446c32a3c8aeb9b4dac7fb73b03dfd8006e670d9b43ea7947e4030d3cbae6 AS build
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev patch \
+    && docker-php-ext-install -j2 pgsql
+ADD --checksum=sha256:ece40f966e901228a1bc70b8c92b384a360db355c2a46d1e2f420ff112bd19c6 https://codeload.github.com/ReimuHakurei/phpPgAdmin/tar.gz/f35f659463aed028f763343cb7cf3d44a36c121f /tmp/phppgadmin.tar.gz
+RUN mkdir /app && tar -xzf /tmp/phppgadmin.tar.gz --strip-components=1 -C /app
+COPY phppgadmin-hardening.patch /tmp/phppgadmin-hardening.patch
+RUN cd /app && patch --batch --fuzz=0 -p1 < /tmp/phppgadmin-hardening.patch
+
+FROM php:8.3.36-apache-bookworm@sha256:a14446c32a3c8aeb9b4dac7fb73b03dfd8006e670d9b43ea7947e4030d3cbae6
+LABEL org.opencontainers.image.title="SysForest phpPgAdmin (consulta privada)" \
+      org.opencontainers.image.source="https://github.com/ReimuHakurei/phpPgAdmin" \
+      org.opencontainers.image.revision="f35f659463aed028f763343cb7cf3d44a36c121f" \
+      org.opencontainers.image.version="7.14.8-mod-snapshot-f35f659-php8.3.36"
+RUN apt-get update && apt-get install -y --no-install-recommends libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 1000 viewer && useradd --uid 1000 --gid 1000 --no-create-home --shell /usr/sbin/nologin viewer \
+    && a2enmod headers && a2disconf other-vhosts-access-log \
+    && rm /etc/apache2/sites-enabled/000-default.conf \
+    && printf '%s\n' '# Listen is set by sysforest.conf' > /etc/apache2/ports.conf \
+    && sed -i 's|^ErrorLog .*|ErrorLog /dev/null|' /etc/apache2/apache2.conf
+COPY --from=build /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=build /usr/local/etc/php/conf.d/docker-php-ext-pgsql.ini /usr/local/etc/php/conf.d/
+COPY --from=build /app/ /var/www/html/
+COPY phppgadmin-config.php /var/www/html/conf/config.inc.php
+COPY phppgadmin-security.php /opt/sysforest/phppgadmin-security.php
+COPY phppgadmin-security.js /var/www/html/phppgadmin-security.js
+COPY phppgadmin-health.php /var/www/html/health.php
+COPY phppgadmin.ini /usr/local/etc/php/conf.d/zz-sysforest.ini
+COPY phppgadmin-apache.conf /etc/apache2/sites-enabled/sysforest.conf
+COPY --chmod=0555 phppgadmin-entrypoint.sh /usr/local/bin/sysforest-phppgadmin
+ENV APACHE_RUN_USER=viewer APACHE_RUN_GROUP=viewer \
+    APACHE_RUN_DIR=/tmp/apache2 APACHE_LOCK_DIR=/tmp/apache2 \
+    APACHE_PID_FILE=/tmp/apache2/apache2.pid APACHE_LOG_DIR=/tmp/apache2
+WORKDIR /var/www/html
+RUN find /var/www/html /opt/sysforest -type d -exec chmod 0755 {} + \
+    && find /var/www/html /opt/sysforest -type f -exec chmod 0644 {} + \
+    && php -l /opt/sysforest/phppgadmin-security.php \
+    && php -l /var/www/html/conf/config.inc.php
+USER 1000:1000
+EXPOSE 8080
+HEALTHCHECK --interval=20s --timeout=5s --start-period=10s --retries=3 \
+    CMD php -r '$r=@file_get_contents("http://127.0.0.1:8080/health.php"); exit($r === "{\"status\":\"ok\"}" ? 0 : 1);'
+ENTRYPOINT ["/usr/local/bin/sysforest-phppgadmin"]

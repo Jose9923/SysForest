@@ -17,7 +17,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = 'sysforest-database-viewers'
 NETWORK = 'sysforest-production_backend'
-PORTS = {'pgadmin': 18084, 'mongo-express': 18085}
+PORTS = {'phppgadmin': 18084, 'mongo-express': 18085}
 IDENTIFIER = re.compile(r'[a-zA-Z][a-zA-Z0-9_]{0,62}')
 
 
@@ -63,62 +63,191 @@ def read_private(path, uid=0):
 
 def save_report(path, report):
     temporary = path.with_name('.' + path.name + '.new')
-    require(not temporary.exists() and not temporary.is_symlink(), 'Existe un informe temporal pendiente de revisión.')
+    require(not temporary.exists() and not temporary.is_symlink(), 'Existe un informe temporal pendiente: conservarlo con otro nombre privado antes de repetir; no borrar el estado.')
     write_private(temporary, json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     os.replace(temporary, path)
 
 
-def ensure_pgadmin_server(email):
-    """Recupera solo la conexión gestionada; nunca reemplaza conexiones ajenas."""
-    container = f'{PROJECT}-pgadmin-1'
-    check = r'''
-import json, sqlite3, sys
-expected = next(iter(json.load(open('/pgadmin4/servers.json'))['Servers'].values()))
-db = sqlite3.connect('file:/var/lib/pgadmin/pgadmin4.db?mode=ro', uri=True)
-db.row_factory = sqlite3.Row
-users = db.execute('SELECT id FROM user WHERE email = ? AND active = 1', (sys.argv[1],)).fetchall()
-if len(users) != 1:
-    sys.exit(10)
-rows = db.execute("""
-SELECT s.name, g.name AS group_name, s.host, s.port, s.maintenance_db,
-       s.username, s.db_res, s.connection_params, s.service, s.role,
-       s.use_ssh_tunnel, s.shared, s.kerberos_conn, s.post_connection_sql
-FROM server s JOIN servergroup g ON g.id = s.servergroup_id
-WHERE s.user_id = ? AND (s.name = ? OR
-  (s.host = ? AND s.port = ? AND s.username = ? AND s.maintenance_db = ?))
-""", (users[0]['id'], expected['Name'], expected['Host'], expected['Port'],
-      expected['Username'], expected['MaintenanceDB'])).fetchall()
-if not rows:
-    print('missing')
-    sys.exit(0)
-if len(rows) != 1:
-    sys.exit(11)
-row = rows[0]
-fields = {'name': 'Name', 'group_name': 'Group', 'host': 'Host', 'port': 'Port',
-          'maintenance_db': 'MaintenanceDB', 'username': 'Username', 'db_res': 'DBRestriction'}
-params = json.loads(row['connection_params'] or '{}')
-valid = all(str(row[key]) == str(expected[value]) for key, value in fields.items())
-valid = valid and {key: str(value) for key, value in params.items()} == {
-    key: str(value) for key, value in expected['ConnectionParameters'].items()}
-valid = valid and not any(row[key] for key in [
-    'service', 'role', 'use_ssh_tunnel', 'shared', 'kerberos_conn', 'post_connection_sql'])
-if not valid:
-    sys.exit(12)
-print('present')
-'''
 
-    def state():
-        return run(['docker', 'exec', container, '/venv/bin/python3', '-c', check, email],
-                   phase='validación del servidor gestionado de pgAdmin; una conexión existente diferente requiere revisión').strip()
+def optional_container(service):
+    name = f'{PROJECT}-{service}-1'
+    matches = run(['docker', 'ps', '-a', '--filter', 'name=^/' + name + '$', '--format', '{{.ID}}'],
+                  phase='inventario del visor').splitlines()
+    require(len(matches) <= 1, 'Hay más de un contenedor con el nombre reservado.')
+    if not matches:
+        return None
+    value = inspected(matches[0])
+    labels = value['Config']['Labels'] or {}
+    require(value['Name'] == '/' + name and labels.get('com.docker.compose.project') == PROJECT
+            and labels.get('com.docker.compose.service') == service
+            and labels.get('com.docker.compose.project.working_dir') == str(ROOT),
+            'El nombre del visor pertenece a otro contexto; no se modifica.')
+    port = 18084 if service == 'pgadmin' else PORTS[service]
+    target = '8081/tcp' if service == 'mongo-express' else '8080/tcp'
+    require(value['HostConfig']['PortBindings'] == {target: [{'HostIp': '127.0.0.1', 'HostPort': str(port)}]},
+            'La publicación del visor existente no coincide con el puerto privado autorizado.')
+    require(NETWORK in value['NetworkSettings']['Networks'], 'El visor no está en la red autorizada.')
+    return value
 
-    current = state()
-    require(current in ['missing', 'present'], 'No se pudo validar la conexión gestionada de pgAdmin.')
-    if current == 'missing':
-        # Sin --replace: importa una conexión y conserva todos los grupos/servidores ajenos.
-        run(['docker', 'exec', container, '/venv/bin/python3', '/pgadmin4/setup.py',
-             'load-servers', '/pgadmin4/servers.json', '--user', email],
-            phase='recuperación de la conexión gestionada de pgAdmin')
-    require(state() == 'present', 'La conexión gestionada de pgAdmin no quedó validada; no se borra ni reemplaza configuración.')
+
+def free_port(port):
+    with socket.socket() as listener:
+        try:
+            listener.bind(('127.0.0.1', port))
+        except OSError:
+            raise InstallationError(f'El puerto privado {port} está ocupado por otro proceso; no se altera.') from None
+
+
+def identity(value):
+    return {'id': value['Id'], 'image': value['Image'], 'started': value['State']['StartedAt']}
+
+
+def healthy(value):
+    return value['State']['Running'] and value['State'].get('Health', {}).get('Status') == 'healthy'
+
+
+def wait_healthy(container, timeout=180):
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        value = inspected(container)
+        if healthy(value):
+            return value
+        require(value['State']['Running'], 'El visor salió antes de completar su arranque.')
+        time.sleep(2)
+    raise InstallationError('El visor no quedó saludable dentro del plazo; requiere revisión.')
+
+
+def backup_private(path):
+    """Una preimagen privada estable, sin modificar el archivo o sus secretos."""
+    if not path.exists():
+        return
+    text = read_private(path)
+    backup = path.with_name(path.stem + '.before-phppgadmin' + path.suffix)
+    if not backup.exists():
+        write_private(backup, path.read_text())
+    else:
+        read_private(backup)
+
+
+def replace_private(path, text):
+    temporary = path.with_name('.' + path.name + '.new')
+    require(not temporary.exists() and not temporary.is_symlink(), 'Hay un archivo temporal pendiente: conservarlo con otro nombre privado antes de repetir; no borrar el estado.')
+    if path.exists():
+        read_private(path)
+    write_private(temporary, text)
+    os.replace(temporary, path)
+
+
+def compose_hash(compose, env, service):
+    output = run(compose + ['config', '--hash', service], env=env, phase='huella de configuración del visor').strip().split()
+    require(len(output) == 2 and output[0] == service and re.fullmatch(r'[a-f0-9]{64}', output[1]),
+            'Compose no devolvió la huella esperada del servicio.')
+    return output[1]
+
+
+def same_viewer(value, spec, expected_hash):
+    image = json.loads(run(['docker', 'image', 'inspect', spec['image']], phase='identidad de imagen del visor'))[0]['Id']
+    require(value['Image'] == image and value['Config']['Labels'].get('com.docker.compose.config-hash') == expected_hash,
+            'El visor existente difiere de su imagen/configuración fijada; no se reconstruye ni reemplaza automáticamente.')
+    require(healthy(value), 'El visor existente debe estar saludable; no se reinicia implícitamente.')
+
+
+def candidate_check(image, password):
+    """Prueba el contenedor nuevo sin publicar puertos ni montar secretos."""
+    token = secrets.token_hex(8)
+    name = PROJECT + '-phppgadmin-candidate-' + token
+    container = None
+    try:
+        container = run(['docker', 'run', '-d', '--name', name, '--label', 'sysforest.viewer-candidate=' + token,
+                         '--network', NETWORK, '--user', '1000:1000', '--init', '--read-only',
+                         '--tmpfs', '/tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777',
+                         '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges:true',
+                         '--pids-limit', '128', '--memory', '256m', image], phase='arranque del candidato phpPgAdmin').strip()
+        require(bool(re.fullmatch(r'[a-f0-9]{64}', container)), 'No se identificó el candidato.')
+        health_php = "ini_set('display_errors','0');$v=@file_get_contents('http://127.0.0.1:8080/health.php');exit($v===false?1:0);"
+        deadline = time.monotonic() + 60
+        while True:
+            require(inspected(container)['State']['Running'], 'El candidato phpPgAdmin no permanece en ejecución.')
+            try:
+                run(['docker', 'exec', container, 'php', '-r', health_php], phase='salud del candidato', timeout=10)
+                break
+            except InstallationError:
+                require(time.monotonic() < deadline, 'El candidato no respondió antes del cambio de puerto.')
+                time.sleep(2)
+        # La clave viaja únicamente por stdin; no se monta ni entra en argumentos/env.
+        db_php = r"""
+ini_set('display_errors','0');ini_set('log_errors','0');
+$p=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR)['password'];
+if(!preg_match('/\A[a-f0-9]{64}\z/D',$p))exit(10);
+$c=@pg_connect('host=postgres port=5432 dbname=sysforest user=sysforest_viewer connect_timeout=5 password='.$p);
+unset($p);if(!$c)exit(11);
+$r=@pg_query($c,'BEGIN READ ONLY');if(!$r)exit(12);
+$r=@pg_query($c,"SELECT current_user AS u,current_database() AS d,rolsuper,rolcreaterole,rolcreatedb,rolreplication,rolbypassrls FROM pg_roles WHERE rolname=current_user");
+$row=$r?pg_fetch_assoc($r):false;
+$ok=$row&&$row['u']==='sysforest_viewer'&&$row['d']==='sysforest';
+foreach(['rolsuper','rolcreaterole','rolcreatedb','rolreplication','rolbypassrls'] as $f){$ok=$ok&&$row[$f]==='f';}
+@pg_query($c,'ROLLBACK');pg_close($c);exit($ok?0:13);
+"""
+        run(['docker', 'exec', '-i', container, 'php', '-r', db_php], payload=json.dumps({'password': password}),
+            phase='login PostgreSQL de consulta del candidato', timeout=30)
+    finally:
+        if container:
+            value = inspected(container)
+            require(value['Config']['Labels'].get('sysforest.viewer-candidate') == token,
+                    'El candidato cambió de propietario; no se retira.')
+            run(['docker', 'rm', '-f', container], phase='retirada exclusiva del candidato')
+
+
+def activate_postgres_viewer(compose, env, legacy, current, expected_image):
+    """El fallo de activación recupera solo el pgAdmin anterior que estaba activo."""
+    stopped_legacy = False
+    try:
+        if legacy and legacy['State']['Running']:
+            # La identidad/puerto y el volumen ya se validaron antes de construir.
+            stopped_legacy = True
+            run(['docker', 'stop', '--time', '30', legacy['Id']], phase='pausa del pgAdmin anterior')
+        if not current or not current['State']['Running']:
+            free_port(18084)
+        run(compose + ['up', '-d', '--no-deps', '--no-build', '--wait', '--wait-timeout', '180', 'phppgadmin'],
+            env=env, phase='activación exclusiva de phpPgAdmin', timeout=240)
+        value = optional_container('phppgadmin')
+        require(value is not None and value['Image'] == expected_image and healthy(value),
+                'La imagen nueva no quedó activa y saludable.')
+        return value
+    except (Exception, KeyboardInterrupt):
+        if stopped_legacy and not inspected(legacy['Id'])['State']['Running']:
+            new = optional_container('phppgadmin')
+            if new and new['State']['Running']:
+                run(['docker', 'stop', '--time', '30', new['Id']], phase='pausa del phpPgAdmin fallido')
+            free_port(18084)
+            run(['docker', 'start', legacy['Id']], phase='recuperación exclusiva del pgAdmin anterior')
+            wait_healthy(legacy['Id'])
+        raise
+
+
+def prepare_accounts(baseline, names, services, values):
+    pg_wrapper = '''set -eu
+    IFS= read -r SYSFOREST_VIEWER_PASSWORD
+    export SYSFOREST_VIEWER_PASSWORD
+    PGPASSWORD=$(cat "$POSTGRES_PASSWORD_FILE")
+    export PGPASSWORD
+    export DB_DATABASE="$1" DB_USERNAME="$2" DB_MIGRATOR_USERNAME="$3" PG_VIEWER_USERNAME=sysforest_viewer
+    exec psql --no-psqlrc --quiet --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" --dbname="$DB_DATABASE" --file=/dev/stdin
+    '''
+    pg_script = (ROOT / 'docker/database-viewers/postgres-readonly.sql').read_text()
+    run(['docker', 'exec', '-i', baseline['postgres']['id'], 'sh', '-c', pg_wrapper, 'sh',
+         names['database'], names['app_user'], names['migrator']],
+        payload=values['postgres_viewer_password'] + '\n' + pg_script,
+        phase='preparación del usuario PostgreSQL')
+    mongo_script = (ROOT / 'docker/database-viewers/mongo-readonly.js').read_text()
+    mongo_admin = services['mongodb']['environment']['MONGO_INITDB_ROOT_USERNAME']
+    require(IDENTIFIER.fullmatch(mongo_admin), 'El nombre administrativo de MongoDB no es válido.')
+    run(['docker', 'exec', '-i', '-e', 'MONGO_VIEWER_USERNAME=sysforest_audit_viewer',
+         '-e', f'MONGO_ROOT_USERNAME={mongo_admin}',
+         '-e', 'MONGO_ROOT_PASSWORD_FILE=/run/secrets/mongo_root_password',
+         baseline['mongodb']['id'], 'mongosh', '--quiet', '--norc', '--nodb', '--eval', mongo_script],
+        payload=json.dumps({'password': values['mongo_viewer_password']}),
+        phase='preparación del usuario MongoDB')
 
 
 def main():
@@ -178,9 +307,6 @@ def main():
     require(names['database'] == 'sysforest' and names['mongo_database'] == 'sysforest_audit'
             and names['mongo_collection'] == 'activity_logs',
             'Los visores versionados están preparados para sysforest y su colección activity_logs.')
-    email = app_env.get('SYSFOREST_BASE_ADMIN_EMAIL', '').strip()
-    require(bool(re.fullmatch(r'[A-Za-z0-9._+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}', email)),
-            'Configura SYSFOREST_BASE_ADMIN_EMAIL en el entorno privado para el acceso inicial a pgAdmin.')
     baseline = {}
     for service in ['app', 'queue', 'scheduler', 'nginx', 'postgres', 'mongodb', 'redis']:
         value = inspected(f'sysforest-production-{service}-1')
@@ -194,15 +320,6 @@ def main():
         baseline[service] = {'id': value['Id'], 'image': value['Image'], 'started': value['State']['StartedAt']}
     network = json.loads(run(['docker', 'network', 'inspect', NETWORK], phase='validación de red privada'))[0]
     require(network['Labels'].get('com.docker.compose.project') == 'sysforest-production', 'La red no pertenece a SysForest.')
-    known = run(['docker', 'ps', '-a', '--filter', f'label=com.docker.compose.project={PROJECT}',
-                 '--format', '{{.Names}}'], phase='inventario de visores').splitlines()
-    for service, port in PORTS.items():
-        if f'{PROJECT}-{service}-1' not in known:
-            with socket.socket() as listener:
-                try:
-                    listener.bind(('127.0.0.1', port))
-                except OSError:
-                    raise InstallationError(f'El puerto privado {port} ya está ocupado; no se altera ese servicio.') from None
 
     state.mkdir(mode=0o700, exist_ok=True)
     require(state.stat().st_uid == 0 and state.stat().st_mode & 0o777 == 0o700,
@@ -215,115 +332,157 @@ def main():
         settings_path = state / 'settings.json'
         if settings_path.exists():
             settings = json.loads(read_private(settings_path))
-            require(settings['format'] == 'SYSFOREST_DATABASE_VIEWERS_V1' and settings['names'] == names,
-                    'La instalación existente corresponde a otro contexto; no se reemplaza.')
-            email = settings['email']
+            require(settings.get('format') in ['SYSFOREST_DATABASE_VIEWERS_V1', 'SYSFOREST_DATABASE_VIEWERS_V2']
+                    and settings['names'] == names, 'La instalación existente corresponde a otro contexto; no se reemplaza.')
         else:
-            require(not any(state.iterdir()) or [p.name for p in state.iterdir()] == ['.install.lock'],
+            require([p.name for p in state.iterdir()] == ['.install.lock'],
                     'El directorio contiene archivos sin manifiesto; revisa antes de inicializar.')
-            settings = {'format': 'SYSFOREST_DATABASE_VIEWERS_V1', 'email': email, 'names': names,
+            settings = {'format': 'SYSFOREST_DATABASE_VIEWERS_V2', 'names': names, 'installation_completed': False,
                         'created_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}
             write_private(settings_path, json.dumps(settings, indent=2) + '\n')
-        secret_owners = {'pgadmin_password': 5050, 'postgres_viewer_password': 0,
-                         'mongo_express_password': 1000, 'mongo_viewer_password': 1000,
+        legacy_format = settings['format'] == 'SYSFOREST_DATABASE_VIEWERS_V1'
+        provision_accounts = not (state / 'installation.json').exists() and not settings.get('installation_completed', False)
+        secret_owners = {'postgres_viewer_password': 0, 'mongo_express_password': 1000, 'mongo_viewer_password': 1000,
                          'mongo_cookie_secret': 1000, 'mongo_session_secret': 1000}
+        if legacy_format or (state / 'pgadmin_password').exists():
+            secret_owners['pgadmin_password'] = 5050
         values = {}
         for filename, uid in secret_owners.items():
             path = state / filename
             if not path.exists():
+                require(provision_accounts and not legacy_format, 'Falta un secreto de la instalación anterior; no se regenera.')
                 write_private(path, secrets.token_hex(32) + '\n', uid)
             values[filename] = read_private(path, uid)
             require(bool(re.fullmatch(r'[a-f0-9]{64}', values[filename])), 'Un secreto existente no tiene el formato generado; no se cambia.')
         mongo_username = state / 'mongo_express_username'
         if not mongo_username.exists():
+            require(provision_accounts and not legacy_format, 'Falta el usuario web anterior; no se sustituye.')
             write_private(mongo_username, 'sysforest\n', 1000)
         require(read_private(mongo_username, 1000) == 'sysforest', 'El usuario web existente no coincide.')
-        pgpass = f"postgres:5432:{names['database']}:sysforest_viewer:{values['postgres_viewer_password']}"
-        if not (state / 'postgres_viewer_pgpass').exists():
-            write_private(state / 'postgres_viewer_pgpass', pgpass + '\n', 5050)
-        require(read_private(state / 'postgres_viewer_pgpass', 5050) == pgpass,
-                'El pgpass existente no coincide con su cuenta; no se rota automáticamente.')
-        # Git respeta el umask del operador. Estos dos archivos versionados no
-        # contienen secretos y el UID5050 debe poder leer sus bind mounts.
-        for filename in ['pgadmin-config.py', 'pgadmin-servers.json']:
-            public_config = ROOT / 'docker/database-viewers' / filename
-            require(public_config.is_file() and not public_config.is_symlink(),
-                    'La configuración pública de pgAdmin debe ser un archivo regular versionado.')
-            public_config.chmod(0o644)
-        compose_env = dict(os.environ, SYSFOREST_VIEWERS_SECRETS_DIR=str(state), PGADMIN_DEFAULT_EMAIL=email)
+        if legacy_format or (state / 'postgres_viewer_pgpass').exists():
+            pgpass = f"postgres:5432:{names['database']}:sysforest_viewer:{values['postgres_viewer_password']}"
+            require(read_private(state / 'postgres_viewer_pgpass', 5050) == pgpass,
+                    'El pgpass anterior no coincide; se conserva sin rotación.')
+        preserved_secrets = {name: hashlib.sha256((state / name).read_bytes()).hexdigest()
+                             for name in [*secret_owners, 'mongo_express_username']}
+        if (state / 'postgres_viewer_pgpass').exists():
+            preserved_secrets['postgres_viewer_pgpass'] = hashlib.sha256((state / 'postgres_viewer_pgpass').read_bytes()).hexdigest()
+        compose_env = dict(os.environ, SYSFOREST_VIEWERS_SECRETS_DIR=str(state), COMPOSE_IGNORE_ORPHANS='true')
         compose = ['docker', 'compose', '--project-name', PROJECT, '--project-directory', str(ROOT),
                    '-f', str(ROOT / 'compose.database-viewers.yml')]
         viewer_config = json.loads(run(compose + ['config', '--format', 'json'], env=compose_env,
                                        phase='validación del Compose de visores'))
-        require(set(viewer_config['services']) == set(PORTS), 'El Compose debe contener solo los dos visores.')
-        required_secrets = {'pgadmin_password', 'postgres_viewer_pgpass', 'mongo_express_username',
-                            'mongo_express_password', 'mongo_viewer_password', 'mongo_cookie_secret', 'mongo_session_secret'}
+        require(set(viewer_config['services']) == set(PORTS), 'El Compose debe contener solo los dos visores actuales.')
+        required_secrets = {'mongo_express_username', 'mongo_express_password', 'mongo_viewer_password',
+                            'mongo_cookie_secret', 'mongo_session_secret'}
         require(set(viewer_config['secrets']) == required_secrets
-                and all(Path(viewer_config['secrets'][name]['file']).resolve() == state / name
-                        for name in required_secrets), 'Los secretos del Compose no coinciden con el directorio privado seleccionado.')
+                and all(Path(viewer_config['secrets'][name]['file']).resolve() == state / name for name in required_secrets),
+                'Los secretos del Compose no coinciden con el directorio privado seleccionado.')
         require(viewer_config['networks']['backend'].get('external') is True
-                and viewer_config['networks']['backend']['name'] == NETWORK,
-                'Los visores deben usar la red privada existente de SysForest.')
+                and viewer_config['networks']['backend']['name'] == NETWORK, 'La red de los visores no coincide.')
         for service, port in PORTS.items():
             entries = viewer_config['services'][service]['ports']
-            require(len(entries) == 1 and entries[0]['host_ip'] == '127.0.0.1'
-                    and int(entries[0]['published']) == port, 'Los visores solo pueden publicarse en loopback.')
-
-        print('Descargando pgAdmin y construyendo el visor MongoDB...', flush=True)
-        run(compose + ['pull', 'pgadmin'], env=compose_env, phase='descarga de pgAdmin', timeout=900)
-        run(compose + ['build', 'mongo-express'], env=compose_env, phase='compilación de Mongo Express', timeout=1200)
-        print('Preparando las cuentas exclusivas de consulta...', flush=True)
-        pg_wrapper = '''set -eu
-IFS= read -r SYSFOREST_VIEWER_PASSWORD
-export SYSFOREST_VIEWER_PASSWORD
-PGPASSWORD=$(cat "$POSTGRES_PASSWORD_FILE")
-export PGPASSWORD
-export DB_DATABASE="$1" DB_USERNAME="$2" DB_MIGRATOR_USERNAME="$3" PG_VIEWER_USERNAME=sysforest_viewer
-exec psql --no-psqlrc --quiet --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" --dbname="$DB_DATABASE" --file=/dev/stdin
-'''
-        pg_script = (ROOT / 'docker/database-viewers/postgres-readonly.sql').read_text()
-        run(['docker', 'exec', '-i', baseline['postgres']['id'], 'sh', '-c', pg_wrapper, 'sh',
-             names['database'], names['app_user'], names['migrator']],
-            payload=values['postgres_viewer_password'] + '\n' + pg_script,
-            phase='preparación del usuario PostgreSQL')
-        mongo_script = (ROOT / 'docker/database-viewers/mongo-readonly.js').read_text()
-        mongo_admin = services['mongodb']['environment']['MONGO_INITDB_ROOT_USERNAME']
-        require(IDENTIFIER.fullmatch(mongo_admin), 'El nombre administrativo de MongoDB no es válido.')
-        run(['docker', 'exec', '-i', '-e', 'MONGO_VIEWER_USERNAME=sysforest_audit_viewer',
-             '-e', f'MONGO_ROOT_USERNAME={mongo_admin}',
-             '-e', 'MONGO_ROOT_PASSWORD_FILE=/run/secrets/mongo_root_password',
-             baseline['mongodb']['id'], 'mongosh', '--quiet', '--norc', '--nodb', '--eval', mongo_script],
-            payload=json.dumps({'password': values['mongo_viewer_password']}),
-            phase='preparación del usuario MongoDB')
-        print('Iniciando los dos visores privados...', flush=True)
-        run(compose + ['up', '-d', '--no-deps', '--wait', '--wait-timeout', '180'],
-            env=compose_env, phase='arranque de los visores', timeout=240)
-        ensure_pgadmin_server(email)
+            require(len(entries) == 1 and entries[0]['host_ip'] == '127.0.0.1' and int(entries[0]['published']) == port
+                    and int(entries[0]['target']) == (8080 if service == 'phppgadmin' else 8081),
+                    'Los visores solo pueden publicarse en sus puertos loopback autorizados.')
+        pg_spec = viewer_config['services']['phppgadmin']
+        require(pg_spec['user'] == '1000:1000' and pg_spec.get('read_only') is True
+                and not pg_spec.get('secrets') and not pg_spec.get('volumes') and not pg_spec.get('environment'),
+                'phpPgAdmin debe usar UID1000, filesystem de lectura y ningún secreto/volumen/entorno de acceso.')
+        require(set(pg_spec.get('cap_drop', [])) == {'ALL'}
+                and 'no-new-privileges:true' in pg_spec.get('security_opt', [])
+                and pg_spec.get('tmpfs') == ['/tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777'],
+                'Los límites del contenedor phpPgAdmin no coinciden con el contrato revisado.')
+        current = optional_container('phppgadmin')
+        legacy = optional_container('pgadmin')
+        mongo = optional_container('mongo-express')
+        require(not (current and current['State']['Running'] and legacy and legacy['State']['Running']),
+                'Ambos visores PostgreSQL figuran activos; revisar antes de cambiar el puerto.')
+        if legacy:
+            require(legacy_format or settings.get('legacy_pgadmin', {}).get('id') == legacy['Id'],
+                    'El pgAdmin existente no está registrado para esta instalación.')
+            mounts = [m for m in legacy['Mounts'] if m['Destination'] == '/var/lib/pgadmin']
+            require(len(mounts) == 1 and mounts[0]['Type'] == 'volume'
+                    and mounts[0]['Name'] == PROJECT + '_pgadmin_data', 'El volumen pgAdmin anterior no es el esperado.')
+            volume = json.loads(run(['docker', 'volume', 'inspect', mounts[0]['Name']], phase='propietario del volumen pgAdmin'))[0]
+            require((volume.get('Labels') or {}).get('com.docker.compose.project') == PROJECT
+                    and (volume.get('Labels') or {}).get('com.docker.compose.volume') == 'pgadmin_data',
+                    'El volumen anterior pertenece a otro proyecto; no se modifica.')
+            if legacy['State']['Running']:
+                require(healthy(legacy), 'El pgAdmin anterior debe estar saludable para una recuperación segura.')
+        if not any(v and v['State']['Running'] for v in [legacy, current]):
+            free_port(18084)
+        mongo_hash = compose_hash(compose, compose_env, 'mongo-express')
+        mongo_baseline = None
+        if mongo:
+            same_viewer(mongo, viewer_config['services']['mongo-express'], mongo_hash)
+            mongo_baseline = identity(mongo)
+        else:
+            free_port(18085)
+        print('Preparando y comprobando phpPgAdmin antes de cambiar el visor activo...', flush=True)
+        run(compose + ['build', 'phppgadmin'], env=compose_env, phase='compilación de phpPgAdmin', timeout=1200)
+        if provision_accounts:
+            print('Preparando las cuentas exclusivas de consulta de la instalación inicial...', flush=True)
+            prepare_accounts(baseline, names, services, values)
+        candidate_check(pg_spec['image'], values['postgres_viewer_password'])
+        expected_image = json.loads(run(['docker', 'image', 'inspect', pg_spec['image']], phase='imagen phpPgAdmin'))[0]['Id']
+        # Mongo existente nunca recibe build/up/restart. Si cambia su contrato se abortó arriba.
+        if not mongo:
+            run(compose + ['build', 'mongo-express'], env=compose_env, phase='compilación inicial de Mongo Express', timeout=1200)
+            run(compose + ['up', '-d', '--no-deps', '--no-build', '--wait', '--wait-timeout', '180', 'mongo-express'],
+                env=compose_env, phase='arranque inicial de Mongo Express', timeout=240)
+            mongo = optional_container('mongo-express')
+        for filename in ['settings.json', 'installation.json', 'access.txt']:
+            backup_private(state / filename)
+        # Revalidar propietarios/puertos justo antes de pausar el único visor reemplazado.
+        require((optional_container('pgadmin') or {}).get('Id') == (legacy or {}).get('Id'), 'pgAdmin cambió durante la preparación.')
+        require((optional_container('phppgadmin') or {}).get('Id') == (current or {}).get('Id'), 'phpPgAdmin cambió durante la preparación.')
+        if current and healthy(current) and current['Image'] == expected_image:
+            same_viewer(current, pg_spec, compose_hash(compose, compose_env, 'phppgadmin'))
+            pg = current
+        else:
+            pg = activate_postgres_viewer(compose, compose_env, legacy, current, expected_image)
         after = {}
         for service, previous in baseline.items():
             value = inspected(previous['id'])
-            current = {'id': value['Id'], 'image': value['Image'], 'started': value['State']['StartedAt']}
-            require(current == previous and value['State']['Running'], 'Un servicio productivo cambió durante la instalación; revisa concurrencia.')
-            after[service] = current
-        require(hashlib.sha256(private_env.read_bytes()).hexdigest() == before_env,
-                'El entorno productivo cambió durante la instalación; revisa concurrencia.')
-        ui = {}
-        for service, port in PORTS.items():
-            value = inspected(f'{PROJECT}-{service}-1')
-            require(value['State']['Health']['Status'] == 'healthy', f'El visor {service} no está saludable.')
-            ui[service] = {'image': value['Image'], 'url': f'http://127.0.0.1:{port}', 'healthy': True}
+            require(identity(value) == previous and healthy(value), 'Un servicio productivo cambió durante la instalación; revisa concurrencia.')
+            after[service] = identity(value)
+        require(hashlib.sha256(private_env.read_bytes()).hexdigest() == before_env, 'El entorno productivo cambió durante la instalación.')
+        if mongo_baseline:
+            require(identity(optional_container('mongo-express')) == mongo_baseline and healthy(optional_container('mongo-express')),
+                    'Mongo Express cambió durante el reemplazo; requiere revisión.')
+        for name, checksum in preserved_secrets.items():
+            require(hashlib.sha256((state / name).read_bytes()).hexdigest() == checksum, 'Un secreto previo cambió; no se publica el acceso.')
+        if legacy:
+            require(not inspected(legacy['Id'])['State']['Running'], 'pgAdmin anterior debe permanecer detenido para recuperación.')
+            settings['legacy_pgadmin'] = {'id': legacy['Id'], 'image': legacy['Image'], 'volume': PROJECT + '_pgadmin_data',
+                                         'retained_stopped': True}
+        ui = {s: {'image': optional_container(s)['Image'], 'url': f'http://127.0.0.1:{port}', 'healthy': healthy(optional_container(s))}
+              for s, port in PORTS.items()}
+        require(all(v['healthy'] for v in ui.values()), 'Un visor no está saludable al cerrar la instalación.')
         access = (f'SYSFOREST · acceso privado a visores\n\n'
-                  f'pgAdmin: http://127.0.0.1:18084\nUsuario: {email}\nContraseña inicial: {values["pgadmin_password"]}\n\n'
+                  f'phpPgAdmin: http://127.0.0.1:18084\nServidor: SysForest\nBase: sysforest\n'
+                  f'Usuario PostgreSQL: sysforest_viewer\nContraseña: {values["postgres_viewer_password"]}\n\n'
                   f'Mongo Express: http://127.0.0.1:18085\nUsuario: sysforest\nContraseña: {values["mongo_express_password"]}\n\n'
-                  'Abre primero el túnel SSH desde tu equipo. Estas cuentas de base consultan datos de SysForest; no son roles de la aplicación.\n')
-        if not (state / 'access.txt').exists():
-            write_private(state / 'access.txt', access)
-        report = {'format': 'SYSFOREST_DATABASE_VIEWERS_INSTALL_V1', 'installed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                  'Abre primero el túnel SSH. phpPgAdmin usa login nativo de base, sin acceso automático. '
+                  'Estas cuentas consultan datos de distintas instituciones; no son roles de la aplicación.\n')
+        # Desde aquí ambos visores ya están saludables. Un fallo de publicación
+        # privada no revierte el servicio ni toca Mongo: repetir install completa
+        # settings/access/informe. Conservar cualquier .new incompleto por separado
+        # antes de repetir; nunca borrar settings, secretos ni el volumen anterior.
+        if not (state / 'access.txt').exists() or (state / 'access.txt').read_text() != access:
+            replace_private(state / 'access.txt', access)
+        settings.update({'format': 'SYSFOREST_DATABASE_VIEWERS_V2', 'installation_completed': True,
+                         'postgres_panel': 'phppgadmin'})
+        save_report(settings_path, settings)
+        report = {'format': 'SYSFOREST_DATABASE_VIEWERS_INSTALL_V2',
+                  'installed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
                   'source': str(ROOT), 'panels': ui, 'production_containers_unchanged': after,
-                  'environment_unchanged': True, 'no_migrations_or_seeders': True,
-                  'credentials_file': str(state / 'access.txt')}
+                  'mongo_express_unchanged': mongo_baseline is not None, 'preserved_secret_files': len(preserved_secrets),
+                  'legacy_pgadmin': settings.get('legacy_pgadmin'), 'environment_unchanged': True,
+                  'no_migrations_or_seeders': True, 'credentials_file': str(state / 'access.txt')}
         save_report(state / 'installation.json', report)
-        print('Visores saludables. Servicios y entorno de SysForest conservados.')
+        print('phpPgAdmin y Mongo Express saludables. Servicios y entorno de SysForest conservados.')
         print(f'Accesos privados guardados en {state / "access.txt"}; no se imprimieron contraseñas.')
         print('Para abrirlos desde tu equipo: bin/database-viewers-tunnel root@TU_SERVIDOR')
 
@@ -331,7 +490,7 @@ exec psql --no-psqlrc --quiet --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" 
 if __name__ == '__main__':
     try:
         main()
-    except (InstallationError, KeyError, ValueError) as error:
+    except (InstallationError, KeyError, ValueError, OSError) as error:
         message = str(error) if isinstance(error, InstallationError) else 'Configuración inesperada; no se muestran datos privados.'
         print('Error: ' + message, file=sys.stderr)
         sys.exit(1)

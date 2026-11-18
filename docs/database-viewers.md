@@ -1,34 +1,53 @@
 # Visores privados de PostgreSQL y MongoDB
 
-Entrega autorizada el **18/11/2026**: modificar/versionar el repositorio, publicar y actualizar su checkout en el servidor e instalar pgAdmin y Mongo Express como servicios privados persistentes. **Instalados y verificados en producción el 18/11/2026:** ambos visores saludables, autenticación/conexión aprobadas y una segunda ejecución del instalador completada sin cambiar los archivos privados ni reiniciar servicios de negocio. El cierre y sus límites constan al final de esta guía.
+Por solicitud explícita del **18/11/2026**, phpPgAdmin sustituye a pgAdmin; Mongo Express conserva su configuración. Esta guía describe el instalador actualizado. El cierre del cambio y sus verificaciones se registran abajo, separados de la instalación inicial de pgAdmin.
 
-## Separación entre fuente, aplicación y visores
+## Fuente y alcance
 
-La fuente canónica sigue siendo `/home/josev/SYSFOREST`. En producción existe un checkout dedicado en `/opt/sysforest/source`; el release de la aplicación continúa en `/opt/sysforest/releases/20261104-initial`, sin `.git`. Esta entrega dejó el checkout fuente siguiendo `codex/organize-backend-modules`, con push/pull verificados hasta el código operativo `74af8aea20f98109e431aee3afbef0d2715e365e`. No se inicializa Git sobre el release ni se copia el árbol completo del checkout al runtime.
+La fuente canónica es `/home/josev/SYSFOREST`. En producción se actualiza por fast-forward `/opt/sysforest/source`, rama `codex/organize-backend-modules`. La aplicación continúa en `/opt/sysforest/releases/20261104-initial`, sin Git; no copiar todo el checkout al release.
 
-La revisión inicial del 18/11 encontró el checkout limpio, incluidos archivos sin seguimiento, en `main`/`origin/main`, commit `84894106c19ec23d3fb29ff454c50c3505318759`; esa versión es antecesora de la rama canónica. Después se completaron el cambio de rama y la actualización fast-forward autorizados, conservando el release activo. No se encontraron montajes Docker ni referencias directas systemd/cron al checkout en la inspección realizada; eso no acredita la ausencia de automatización externa.
+`compose.database-viewers.yml` define el proyecto `sysforest-database-viewers` con dos servicios: `phppgadmin` y `mongo-express`, conectados a la red externa `sysforest-production_backend`. No crea bases, redes ni volúmenes de negocio, no ejecuta comandos Laravel ni reinicia app, queue, scheduler, nginx, PostgreSQL, MongoDB, Redis o el proxy compartido.
 
-`compose.database-viewers.yml` es un proyecto independiente, `sysforest-database-viewers`, con solo dos servicios. Se conecta a la red externa existente `sysforest-production_backend` para consultar las bases; no crea ni reemplaza la red, las bases o volúmenes de negocio. No llama migraciones, seeders ni comandos Laravel; tampoco reconstruye/reinicia app, queue, scheduler, Nginx o el proxy compartido. La preparación crea o comprueba únicamente las identidades y permisos de consulta de las bases.
+## Acceso
 
-## Acceso y alcance de lectura
+| Visor | Dirección por túnel | Cuenta |
+| --- | --- | --- |
+| phpPgAdmin | http://127.0.0.1:18084 | Login PostgreSQL nativo `sysforest_viewer`, base `sysforest`. |
+| Mongo Express | http://127.0.0.1:18085 | Login web `sysforest`; cuenta DB `sysforest_audit_viewer`, limitada a la auditoría autorizada. |
 
-| Componente | Acceso y alcance |
-| --- | --- |
-| pgAdmin | Login web propio, separado de la cuenta de la aplicación; servidor PostgreSQL preconfigurado. La cuenta DB `sysforest_viewer` consulta las tablas autorizadas de SysForest. |
-| Mongo Express | Autenticación web propia y cuenta DB `sysforest_audit_viewer`. Lee la colección `sysforest_audit.activity_logs` y los metadatos necesarios del visor, sin acceso a colecciones ajenas. |
-| Operador | Acceso administrativo privado a datos de las organizaciones presentes en esas bases. No aplica el tenant ni la matriz de roles web de un usuario de SysForest. No compartir estos accesos con usuarios de una institución. |
+phpPgAdmin ya no utiliza el correo y la contraseña web de pgAdmin. Reutiliza la contraseña existente de la cuenta PostgreSQL, disponible solo en el archivo privado del servidor. El panel no recibe secretos montados ni autologin. Las sesiones son temporales en `/tmp`, por lo que reiniciar el visor exige iniciar sesión nuevamente. Mongo Express conserva sus credenciales actuales.
 
-Las cuentas de base son exclusivas de los visores; no se reutilizan las del runtime, migrador o administrador. PostgreSQL concede SELECT sobre las tablas autorizadas de la aplicación y futuras tablas del migrador, sin privilegios de escritura sobre ellas, creación de esquemas/tablas temporales, avance de secuencias, superusuario, membresías ni bypass de RLS. Una función SECURITY DEFINER accesible que requiera revisión bloquea la preparación. MongoDB impone un rol específico de lectura; las opciones visuales de solo lectura complementan los permisos reales, no los sustituyen.
+Desde una terminal privada del servidor:
 
-**Límite PostgreSQL:** `default_transaction_read_only` y los timeouts son valores iniciales de sesión que el usuario puede modificar, no barreras inmutables. Las ACL protegen las tablas de la aplicación, pero no se han revocado globalmente todas las funciones incorporadas ni sus efectos laterales; por ejemplo, puede estar disponible la creación de objetos grandes propios. No se presenta esta cuenta como un aislamiento general de SQL ni como una garantía absoluta de ausencia de escrituras de cualquier clase. Las futuras funciones SECURITY DEFINER accesibles requieren revisión antes de desplegarse.
+```bash
+sudo /opt/sysforest/source/bin/database-viewers credentials
+```
 
-El login de pgAdmin no es un login Laravel y su contraseña inicial se genera aparte. Las credenciales web y de base permanecen en archivos privados; no se muestran durante `install` ni `status`, ni se versionan. Los servicios no reciben la clave administrativa de las bases. El instalador usa las credenciales administrativas ya configuradas únicamente para preparar las identidades restringidas.
+Este comando muestra contraseñas: no compartir su salida ni ejecutarlo en informes automatizados. `status` e `install` no las imprimen. Estos accesos son administrativos y abarcan las instituciones presentes; no aplican el tenant ni los roles Laravel de una cuenta de SysForest.
 
-## Instalación en el servidor
+Los paneles solo escuchan en loopback. Abrir el túnel desde Linux/WSL con el checkout:
 
-Requiere root, Docker/Compose, los siete servicios productivos saludables, la red existente y el checkout de fuente actualizado/revisado. Los puertos **18084 y 18085** deben estar disponibles. La revisión inicial los encontró libres; el instalador vuelve a comprobarlos. El entorno productivo permanece fuera del repositorio.
+```bash
+bin/database-viewers-tunnel usuario@servidor
+```
 
-Desde el checkout fuente aprobado:
+O desde Windows PowerShell:
+
+```powershell
+.\bin\database-viewers-connect.ps1 -SshTarget usuario@servidor
+```
+
+El helper Bash permanece en primer plano; `Ctrl+C` cierra el túnel. El helper Windows usa la identidad SSH existente en WSL, abre las direcciones tras conectar y reutiliza un socket privado. No configura tareas de inicio. Para cerrar ese túnel:
+
+```powershell
+wsl -d Ubuntu-24.04 -- ssh -S '~/.ssh/sysforest-database-viewers-%C.sock' -O exit usuario@servidor
+```
+
+Cerrar el túnel no detiene los visores del servidor. No publicar estos puertos, añadir rutas públicas ni habilitar reenvío de agente.
+
+## Instalar o actualizar
+
+Requiere root, Docker/Compose, la red existente y los siete servicios de producción saludables. Desde el checkout revisado:
 
 ```bash
 cd /opt/sysforest/source
@@ -36,66 +55,37 @@ sudo bin/database-viewers install
 sudo bin/database-viewers status
 ```
 
-Rutas predeterminadas:
+Rutas predeterminadas: release `/opt/sysforest/releases/20261104-initial`, entorno `/opt/sysforest/private/production.env`, estado `/opt/sysforest/private/database-viewers`. Se pueden indicar `--production-dir`, `--env-file`, `--state-dir`; el instalador valida el contexto y rechaza colisiones ajenas. El estado debe estar directamente bajo `/opt/sysforest/private`, root:0700, y sus archivos en 0600. Mongo Express lee sus secretos como UID 1000; la contraseña PostgreSQL queda root:0600.
 
-- Release: `/opt/sysforest/releases/20261104-initial`.
-- Entorno productivo: `/opt/sysforest/private/production.env`.
-- Estado privado de los visores: `/opt/sysforest/private/database-viewers`.
+En una instalación nueva se preparan solo las cuentas restringidas de consulta. En una instalación existente se conservan las cuentas y secretos, sin repetir esa preparación. El candidato phpPgAdmin se construye y comprueba sin publicar puertos: HTTP y conexión a PostgreSQL con la cuenta autorizada. Solo después se detiene pgAdmin y se publica phpPgAdmin en el mismo puerto 18084. Mongo Express existente debe coincidir con su imagen/configuración y estar saludable; si difiere se aborta en lugar de reemplazarlo.
 
-`install` admite `--production-dir`, `--env-file` y `--state-dir`; valida las rutas y el contexto en lugar de sustituir instalaciones ajenas. El estado debe estar directamente bajo `/opt/sysforest/private`, fuera del checkout, con propietario root y modo 0700. Los archivos se crean en modo 0600, con el UID requerido cuando el servicio debe leerlos: 5050 para pgAdmin y 1000 para Mongo Express. Se conserva la contraseña PostgreSQL fuera del panel y se entrega un passfile privado al usuario de pgAdmin.
+La actualización V1→V2 conserva los ocho archivos privados anteriores (incluidos clave/passfile de pgAdmin) y guarda `access.before-phppgadmin.txt`, `settings.before-phppgadmin.json` e `installation.before-phppgadmin.json`. Conserva el contenedor `sysforest-database-viewers-pgadmin-1` **detenido**, su imagen y el volumen `sysforest-database-viewers_pgadmin_data`. No usar `--remove-orphans`, `down -v`, borrado de secretos ni limpieza global de Docker.
 
-El instalador guarda `settings.json`, secretos, `access.txt` y `installation.json`. El correo inicial de pgAdmin se toma de `SYSFOREST_BASE_ADMIN_EMAIL` del entorno privado; no convierte ese usuario de la aplicación en una sesión web del visor ni reutiliza su contraseña. Las contraseñas son aleatorias y distintas. `access.txt` es privado y no debe copiarse a la documentación, Git, un enlace público ni un log.
+Una repetición comprueba configuración, salud, secretos, entorno y las identidades de los siete servicios. No rota contraseñas ni reinicia Mongo Express. El instalador conserva estado tras un fallo para corregir la causa y reintentar; no garantiza una transacción global entre archivos, cuentas y Docker. Un fallo durante la activación recupera el pgAdmin anterior si estaba activo; un fallo posterior al activar requiere consultar `status` y revisar el estado antes de repetir. No borrar el directorio privado para forzar una instalación nueva.
 
-## Persistencia y repetición
+## Recuperar el visor anterior
 
-Los visores permanecen ejecutándose en el servidor; cerrar el túnel solo cierra el acceso desde el equipo del operador. El volumen de pgAdmin conserva su configuración y cuentas. Mongo Express conserva sus secretos web/sesión y vuelve a consultar MongoDB; no crea una segunda copia del historial.
+El contenedor/volumen anterior y las preimágenes se conservan para una recuperación manual revisada. Con `phppgadmin` detenido, el puerto 18084 libre y el ID de pgAdmin comparado contra `settings.json.legacy_pgadmin`, se puede iniciar ese mismo contenedor con `docker start`. Usar el acceso previo guardado en `access.before-phppgadmin.txt`. No restaurar ni migrar la base para volver de visor. Revisar el manifiesto antes de volver a ejecutar el instalador; no mezclar instrucciones de login de ambos paneles.
 
-Repetir `install` reutiliza el manifiesto y secretos existentes, comprueba formato/propietarios y vuelve a asegurar permisos de las cuentas gestionadas. No rota contraseñas automáticamente, borra bases ni recrea volúmenes de negocio. Una identidad preexistente ajena al instalador o un estado privado incompatible provoca un error en lugar de una sustitución silenciosa. Puede recrear **solo los contenedores de los dos visores** cuando su configuración o imagen cambia.
+## Permisos y límites
 
-Si una inicialización parcial dejó ausente la conexión gestionada de pgAdmin, el instalador recupera únicamente ese registro para el usuario esperado mediante `load-servers`, sin `--replace`. Si existe un registro incompatible, aborta; no sustituye otras conexiones, grupos, usuarios o claves ni borra el volumen. Esta recuperación se verificó en el cierre de producción.
+PostgreSQL concede SELECT sobre las tablas autorizadas y futuras tablas del migrador, sin permisos de INSERT/UPDATE/DELETE/TRUNCATE, creación de esquemas/tablas temporales, avance de secuencias, superusuario o bypass RLS. MongoDB impone un rol de consulta limitado. Ningún visor recibe credenciales administrativas.
 
-Un fallo conserva el estado privado para reintentar. La preparación PostgreSQL es transaccional; MongoDB administra únicamente su rol/usuario y puede repetirse. No se promete una transacción única entre ambas bases o entre bases y Docker. Si falta una parte después de un fallo, corregir la causa y repetir; no eliminar el directorio privado para forzar una instalación nueva.
+`default_transaction_read_only` y los timeouts son valores iniciales modificables por la sesión. Las ACL protegen las tablas de la aplicación, pero no se han revocado globalmente todas las funciones incorporadas ni efectos como crear objetos grandes propios. Esta cuenta no es un aislamiento absoluto de SQL. Revisar futuras funciones SECURITY DEFINER accesibles.
 
-El passfile de pgAdmin se copia al almacenamiento del usuario en su primera inicialización. Una rotación futura de credenciales requiere coordinar la cuenta de base, el secreto y esa copia; una nueva ejecución no es un procedimiento de rotación. Si se cambia la contraseña del login web dentro de pgAdmin, la «contraseña inicial» conservada en `access.txt` deja de ser la contraseña vigente de esa cuenta.
+phpPgAdmin conserva la consola SQL y las exportaciones sujetas a esas ACL. La exportación de datos de una tabla utiliza los formatos nativos CSV y SQL. Se deja `pg_dump_path` vacío: el respaldo administrativo con `pg_dump` necesita permisos sobre secuencias y tablas excluidas que esta cuenta no tiene. Ese rechazo se comprobó en la base desechable; no se amplían ACL. El visor no ofrece respaldos completos y no sustituye el procedimiento administrativo de copia de seguridad. La configuración restringe servidor/base/usuario; los parches pequeños incorporan token CSRF para POST, validación de origen/destino, rotación de sesión al login, escape de un nombre de campo y validación del índice del historial. No constituyen una auditoría integral del upstream. El acceso continúa siendo exclusivamente privado por SSH.
 
-## Abrir desde el equipo del operador
+## Versiones fijadas
 
-Las dos interfaces escuchan exclusivamente en loopback del servidor. No se añaden dominios, rutas Caddy ni puertos públicos de bases o paneles. El navegador accede a HTTP local protegido durante el trayecto remoto por SSH.
+phpPgAdmin se construye desde el [snapshot ReimuHakurei f35f659463aed028f763343cb7cf3d44a36c121f](https://github.com/ReimuHakurei/phpPgAdmin/commit/f35f659463aed028f763343cb7cf3d44a36c121f), posterior al soporte de columnas IDENTITY; no se presenta como una release estable. Archivo fuente SHA256 `ece40f966e901228a1bc70b8c92b384a360db355c2a46d1e2f420ff112bd19c6`. PHP Apache 8.3.36 Bookworm se fija por digest en `Dockerfile.phppgadmin`; no se incluye el cliente pg_dump. UID 1000, filesystem de lectura, tmpfs de 64 MiB, sin capacidades Linux ni privilegios nuevos. La salud es `/health.php`.
 
-En Linux, macOS o WSL con el checkout y OpenSSH:
+Mongo Express conserva el snapshot oficial `6b0fc653660f9862a23f4b111eaa4daa0a3a6e2a` (paquete 1.1.0-rc-4), Node 22.23.5 y sus huellas en `Dockerfile.mongo-express`. Tampoco se presenta como release estable. No hay actualizaciones automáticas. Revisar los cambios de fuente, dependencias y permisos y comprobar login, BIGINT/IDENTITY, navegación y exportación antes de actualizar pins.
 
-```bash
-bin/database-viewers-tunnel usuario@servidor
-```
+## Verificación del cambio a phpPgAdmin
 
-En Windows PowerShell, desde el checkout y con la identidad SSH existente en WSL (Ubuntu-24.04 por defecto):
+Preparación en curso. Registrar aquí el commit, la verificación aislada y el cierre productivo cuando realmente se completen. El preflight encontró dos árboles, un inventario, dos inspecciones, siete evidencias y dos asociaciones inventario/árbol, sin referencias huérfanas. Los siete servicios de negocio y ambos visores iniciales estaban saludables; la cuenta PostgreSQL tenía SELECT y ningún permiso de escritura sobre tablas.
 
-```powershell
-.\bin\database-viewers-connect.ps1 -SshTarget usuario@servidor
-```
-
-El helper Linux/WSL permanece en primer plano: mantener su terminal abierta y usar `Ctrl+C` para cerrarlo. El helper PowerShell usa WSL, deja un túnel SSH en segundo plano y abre las dos URLs solo después de conectar; repetirlo reutiliza el socket de control privado y no añade tareas al inicio. Admite `-Distribution` para otra distribución de WSL. Para cerrar ese túnel persistente desde PowerShell:
-
-```powershell
-wsl -d Ubuntu-24.04 -- ssh -S '~/.ssh/sysforest-database-viewers-%C.sock' -O exit usuario@servidor
-```
-
-El túnel enlaza solo `127.0.0.1` en ambos extremos. Las claves SSH se gestionan mediante la configuración existente del operador; no incluir contraseñas, tokens ni claves privadas en argumentos. No usar reenvío de agente. Si el puerto local ya está ocupado, el helper falla sin sustituir el servicio que lo utiliza.
-
-- pgAdmin: `http://127.0.0.1:18084`.
-- Mongo Express: `http://127.0.0.1:18085`.
-
-Para consultar los accesos desde una terminal privada en el servidor, un operador root puede ejecutar `sudo /opt/sysforest/source/bin/database-viewers credentials`. Este comando **muestra credenciales** de forma explícita; no ejecutarlo en sesiones grabadas, informes de automatización o capturas compartidas. `status` informa salud y URLs sin contraseñas.
-
-## Versiones y actualizaciones
-
-pgAdmin se fija en `dpage/pgadmin4:9.19` con digest `sha256:3591b3d02910dcd817dec6fcaa681c278ba6966945283dd0ea0042731c330c83`. Node usa `22.23.5-bookworm-slim` con digest `sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee`. El archivo fuente, Yarn y lock de Mongo Express también se comprueban por huella en su Dockerfile. No se usa actualización automática ni tags flotantes como `latest`. Cambiar un pin requiere revisar la nueva versión, dependencias, permisos efectivos, compatibilidad de secretos/volumen y acceso por túnel antes de publicar el cambio.
-
-Mongo Express se construye desde el snapshot oficial **`6b0fc653660f9862a23f4b111eaa4daa0a3a6e2a`**, cuyo paquete indica **1.1.0-rc-4**, sobre **Node 22.23.5**. No se presenta como una release estable de Mongo Express. El snapshot evita reutilizar la versión estable antigua con su árbol de dependencias pendiente; se conserva el origen y pin para revisar una futura actualización estable. La auditoría del árbol seleccionado reportó cero vulnerabilidades altas/críticas y un aviso moderado de deprecación de `csurf`; es una observación de esta entrega, no una garantía permanente.
-
-Antes de una actualización manual, conservar el estado privado y el volumen de pgAdmin, revisar el diff y confirmar el commit aprobado. Actualizar la rama de fuente por fast-forward, volver a ejecutar `install` y comprobar los dos visores, sus permisos y que los servicios de negocio no cambiaron. No usar `down -v`, `git clean` sobre datos, borrado de secretos ni copia indiscriminada del checkout al release como mecanismo de actualización.
-
-## Verificaciones y límites actuales
+## Evidencia histórica de la instalación inicial de pgAdmin
 
 Revisión independiente de infraestructura por SSH, solo lectura: release sin Git, checkout fuente limpio, puertos 18084/18085 libres, red backend existente y siete servicios saludables. En esa observación había aproximadamente 13,4 GiB de RAM disponible y 166,5 GiB de disco libre; son valores puntuales, no una reserva de capacidad. Los proyectos compartidos y el proxy se mantienen independientes. Evidencia externa al repo: `.private-admin-tools-work/review/`.
 
@@ -103,7 +93,7 @@ Las observaciones manuales aisladas de preparación de cuentas aprobaron **20/20
 
 La revisión independiente del instalador confirmó resueltos tres desajustes: conexión explícita al ejecutar `mongosh --nodb`, correspondencia entre variables administrativas MongoDB y nombre uniforme `SYSFOREST_VIEWERS_SECRETS_DIR`. El instalador comprueba que los siete secretos del Compose resuelven al estado seleccionado y que usa la red externa exacta. La integración local de paneles comprobó login, registro PostgreSQL importado, passfile, persistencia y rechazos de autenticación; su evidencia es `.database-viewers-work/local-http.json`. El cierre productivo siguiente es independiente de las 20 observaciones de cuentas aisladas. No se añadieron ni ejecutaron suites permanentes.
 
-## Cierre productivo · 18/11/2026
+## Cierre histórico de pgAdmin · 18/11/2026
 
 Código operativo `74af8aea20f98109e431aee3afbef0d2715e365e` publicado y actualizado en `/opt/sysforest/source`, con tracking de `codex/organize-backend-modules`. La aplicación continúa usando `/opt/sysforest/releases/20261104-initial`. El respaldo previo está en `/opt/sysforest/backups/database-viewers-20261118t182429z/backup-20261118T182431Z-CroPle`; conservarlo junto con el estado privado y el volumen de pgAdmin. No se afirma un ensayo de restauración de ese respaldo.
 
