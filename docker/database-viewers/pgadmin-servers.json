@@ -1,0 +1,19 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "SysForest · PostgreSQL (consulta)",
+      "Group": "SysForest producción",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "sysforest",
+      "Username": "sysforest_viewer",
+      "DBRestriction": "sysforest",
+      "ConnectionParameters": {
+        "sslmode": "prefer",
+        "connect_timeout": 10,
+        "passfile": ".pgpass"
+      },
+      "Comment": "Cuenta de consulta separada de la aplicación y de los administradores. Los permisos PostgreSQL son la barrera de escritura."
+    }
+  }
+}

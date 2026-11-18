@@ -24,6 +24,10 @@ Las capas del backend están agrupadas por módulo, como las vistas Blade: `Http
 
 La plataforma está disponible en [https://sysforest.varcor.tech](https://sysforest.varcor.tech). Consulta el [despliegue del 4 de noviembre de 2026](docs/production-deployment-20261104.md) para datos trasladados, verificaciones y pendientes, y el [procedimiento productivo](docker/production/README.md) para operar el servidor. Los comandos de la sección siguiente preparan exclusivamente el entorno local.
 
+### Visores privados de bases de datos · 18/11/2026
+
+pgAdmin y Mongo Express se preparan como servicios persistentes independientes, accesibles solo por túnel SSH en `127.0.0.1:18084` y `127.0.0.1:18085`. Sus cuentas de consulta de base están separadas de las de la aplicación y abarcan los datos autorizados al operador administrativo, incluidas distintas instituciones. No se ejecutan migraciones ni se reinician los servicios de negocio. Fuente productiva en `/opt/sysforest/source`; el release activo se conserva. En Windows se abre con `bin/database-viewers-connect.ps1 -SshTarget usuario@servidor`; Linux/WSL dispone de `bin/database-viewers-tunnel`. Las ACL PostgreSQL restringen las tablas de la aplicación; el ajuste read_only es auxiliar y no una barrera general frente a todas las funciones SQL. Consulta [instalación, acceso, repetición y actualización manual](docs/database-viewers.md). **Instalación productiva pendiente de verificación al redactar.**
+
 ## Manuales de la aplicación
 
 Los [manuales de SysForest](docs/manuales.md) reúnen la documentación técnica y los procedimientos de usuario de la edición del 13 de octubre de 2026, contrastada con la implementación revisada:

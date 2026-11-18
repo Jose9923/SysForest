@@ -1,0 +1,105 @@
+name: sysforest-database-viewers
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  pgadmin:
+    image: dpage/pgadmin4:9.19@sha256:3591b3d02910dcd817dec6fcaa681c278ba6966945283dd0ea0042731c330c83
+    user: "5050:0"
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18084:8080"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?Configura el usuario inicial del visor en el archivo privado}
+      PGADMIN_DEFAULT_PASSWORD_FILE: /run/secrets/pgadmin_password
+      PGADMIN_LISTEN_ADDRESS: "0.0.0.0"
+      PGADMIN_LISTEN_PORT: "8080"
+      PGADMIN_DISABLE_POSTFIX: "true"
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+      PGPASS_FILE: /run/secrets/postgres_viewer_pgpass
+      GUNICORN_ACCESS_LOGFILE: /dev/null
+    secrets:
+      - pgadmin_password
+      - postgres_viewer_pgpass
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./docker/database-viewers/pgadmin-servers.json:/pgadmin4/servers.json:ro
+      - ./docker/database-viewers/pgadmin-config.py:/pgadmin4/config_local.py:ro
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    pids_limit: 128
+    mem_limit: 768m
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "/venv/bin/python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/misc/ping', timeout=3).read()"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
+    networks: [backend]
+
+  mongo-express:
+    image: sysforest-mongo-express:6b0fc653-node22.23.5
+    build:
+      context: ./docker/database-viewers
+      dockerfile: Dockerfile.mongo-express
+    user: "1000:1000"
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18085:8081"
+    secrets:
+      - mongo_express_username
+      - mongo_express_password
+      - mongo_viewer_password
+      - mongo_cookie_secret
+      - mongo_session_secret
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    pids_limit: 128
+    mem_limit: 512m
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/status',{signal:AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks: [backend]
+
+volumes:
+  pgadmin_data:
+
+networks:
+  backend:
+    external: true
+    name: sysforest-production_backend
+
+# Compose local monta archivos: el instalador conserva dueño/modo del origen.
+# pgAdmin: UID5050:0,0600; Mongo Express: UID1000:1000,0600.
+# Ningún secreto administrativo de PostgreSQL/MongoDB se monta en los visores.
+secrets:
+  pgadmin_password:
+    file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/pgadmin_password
+  postgres_viewer_pgpass:
+    file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/postgres_viewer_pgpass
+  mongo_express_username:
+    file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/mongo_express_username
+  mongo_express_password:
+    file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/mongo_express_password
+  mongo_viewer_password:
+    file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/mongo_viewer_password
+  mongo_cookie_secret:
+    file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/mongo_cookie_secret
+  mongo_session_secret:
+    file: ${SYSFOREST_VIEWERS_SECRETS_DIR:-/opt/sysforest/private/database-viewers}/mongo_session_secret

@@ -1,0 +1,275 @@
+#!/usr/bin/env python3
+"""Instala o consulta los visores privados, sin migrar ni recrear datos."""
+import argparse
+import datetime
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import secrets
+import socket
+import subprocess
+import sys
+import time
+
+ROOT = Path(__file__).resolve().parents[1]
+PROJECT = 'sysforest-database-viewers'
+NETWORK = 'sysforest-production_backend'
+PORTS = {'pgadmin': 18084, 'mongo-express': 18085}
+IDENTIFIER = re.compile(r'[a-zA-Z][a-zA-Z0-9_]{0,62}')
+
+
+class InstallationError(Exception):
+    pass
+
+
+def require(condition, message):
+    if not condition:
+        raise InstallationError(message)
+
+
+def run(command, *, payload=None, env=None, phase='operación', timeout=300):
+    try:
+        result = subprocess.run(command, input=payload, env=env, text=True,
+                                capture_output=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired):
+        raise InstallationError(f'No se completó {phase}; no se muestran secretos ni salida privada.') from None
+    require(result.returncode == 0,
+            f'Falló {phase} (código {result.returncode}). Se conservó la configuración privada para reintentar.')
+    return result.stdout
+
+
+def inspected(container):
+    return json.loads(run(['docker', 'inspect', container], phase='lectura del contenedor'))[0]
+
+
+def write_private(path, text, uid=0):
+    require(not path.exists() and not path.is_symlink(), f'El archivo {path.name} ya existe; no se sobrescribe.')
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, 'w') as handle:
+        handle.write(text)
+    os.chown(path, uid, 0)
+
+
+def read_private(path, uid=0):
+    require(path.is_file() and not path.is_symlink(), f'Falta el archivo privado {path.name}.')
+    info = path.stat()
+    require(info.st_uid == uid and info.st_mode & 0o777 == 0o600,
+            f'El propietario o los permisos de {path.name} no son los esperados.')
+    return path.read_text().strip()
+
+
+def save_report(path, report):
+    temporary = path.with_name('.' + path.name + '.new')
+    require(not temporary.exists() and not temporary.is_symlink(), 'Existe un informe temporal pendiente de revisión.')
+    write_private(temporary, json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+    os.replace(temporary, path)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('action', choices=['install', 'status', 'credentials'])
+    parser.add_argument('--production-dir', default='/opt/sysforest/releases/20261104-initial')
+    parser.add_argument('--env-file', default='/opt/sysforest/private/production.env')
+    parser.add_argument('--state-dir', default='/opt/sysforest/private/database-viewers')
+    args = parser.parse_args()
+    require(os.geteuid() == 0, 'Ejecuta este comando como root en el servidor.')
+    os.umask(0o077)
+    state = Path(args.state_dir)
+    require(state.is_absolute() and not state.is_symlink(), 'El directorio privado debe ser absoluto y no un enlace.')
+    require(state.resolve() == state and state.parent == Path('/opt/sysforest/private'),
+            'El directorio de estado debe estar directamente bajo /opt/sysforest/private.')
+    require(not state.is_relative_to(ROOT), 'Los secretos deben quedar fuera del repositorio.')
+    if args.action == 'credentials':
+        print(read_private(state / 'access.txt'))
+        return
+    if args.action == 'status':
+        for service, port in PORTS.items():
+            value = inspected(f'{PROJECT}-{service}-1')
+            print(f"{service}: {value['State']['Status']} / {value['State'].get('Health', {}).get('Status', 'sin healthcheck')} · http://127.0.0.1:{port}")
+        return
+
+    production = Path(args.production_dir)
+    private_env = Path(args.env_file)
+    require(production.is_absolute() and production.resolve() == production,
+            'El release debe ser una ruta absoluta real.')
+    require((production / 'compose.production.yml').is_file(), 'No existe el Compose productivo indicado.')
+    require(private_env.is_absolute() and private_env.is_file() and not private_env.is_symlink(),
+            'No se encontró el entorno privado.')
+    require(private_env.stat().st_uid == 0 and private_env.stat().st_mode & 0o077 == 0,
+            'El entorno privado debe pertenecer a root y no ser accesible a otros usuarios.')
+    require(not private_env.is_relative_to(ROOT), 'El entorno de producción no puede estar en el repositorio.')
+    before_env = hashlib.sha256(private_env.read_bytes()).hexdigest()
+    env = dict(os.environ, SYSFOREST_ENV_FILE=str(private_env))
+    production_compose = ['docker', 'compose', '--project-name', 'sysforest-production',
+                          '--project-directory', str(production), '--env-file', str(private_env),
+                          '-f', str(production / 'compose.production.yml')]
+    config = json.loads(run(production_compose + ['config', '--format', 'json'],
+                            env=env, phase='validación de configuración productiva'))
+    services = config['services']
+    app_env = services['app']['environment']
+    require(app_env['APP_ENV'] == 'production', 'La configuración no es productiva.')
+    names = {
+        'database': app_env['DB_DATABASE'],
+        'app_user': app_env['DB_USERNAME'],
+        'migrator': services['migrate']['environment']['DB_USERNAME'],
+        'mongo_database': services['mongodb']['environment']['AUDIT_MONGO_DATABASE'],
+        'mongo_collection': services['mongodb']['environment']['AUDIT_MONGO_COLLECTION'],
+        'mongo_app_user': services['mongodb']['environment']['AUDIT_MONGO_USERNAME'],
+    }
+    require(all(isinstance(value, str) and IDENTIFIER.fullmatch(value) for value in names.values()),
+            'Hay identificadores de base no admitidos.')
+    require(names['database'] == 'sysforest' and names['mongo_database'] == 'sysforest_audit'
+            and names['mongo_collection'] == 'activity_logs',
+            'Los visores versionados están preparados para sysforest y su colección activity_logs.')
+    email = app_env.get('SYSFOREST_BASE_ADMIN_EMAIL', '').strip()
+    require(bool(re.fullmatch(r'[A-Za-z0-9._+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}', email)),
+            'Configura SYSFOREST_BASE_ADMIN_EMAIL en el entorno privado para el acceso inicial a pgAdmin.')
+    baseline = {}
+    for service in ['app', 'queue', 'scheduler', 'nginx', 'postgres', 'mongodb', 'redis']:
+        value = inspected(f'sysforest-production-{service}-1')
+        labels = value['Config']['Labels']
+        require(labels.get('com.docker.compose.project') == 'sysforest-production'
+                and labels.get('com.docker.compose.service') == service
+                and labels.get('com.docker.compose.project.working_dir') == str(production),
+                'El release no coincide con los contenedores de producción.')
+        require(value['State']['Running'] and value['State'].get('Health', {}).get('Status') == 'healthy',
+                f'El servicio {service} debe estar saludable antes de instalar.')
+        baseline[service] = {'id': value['Id'], 'image': value['Image'], 'started': value['State']['StartedAt']}
+    network = json.loads(run(['docker', 'network', 'inspect', NETWORK], phase='validación de red privada'))[0]
+    require(network['Labels'].get('com.docker.compose.project') == 'sysforest-production', 'La red no pertenece a SysForest.')
+    known = run(['docker', 'ps', '-a', '--filter', f'label=com.docker.compose.project={PROJECT}',
+                 '--format', '{{.Names}}'], phase='inventario de visores').splitlines()
+    for service, port in PORTS.items():
+        if f'{PROJECT}-{service}-1' not in known:
+            with socket.socket() as listener:
+                try:
+                    listener.bind(('127.0.0.1', port))
+                except OSError:
+                    raise InstallationError(f'El puerto privado {port} ya está ocupado; no se altera ese servicio.') from None
+
+    state.mkdir(mode=0o700, exist_ok=True)
+    require(state.stat().st_uid == 0 and state.stat().st_mode & 0o777 == 0o700,
+            'El directorio privado debe pertenecer a root y tener modo0700.')
+    with (state / '.install.lock').open('a') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise InstallationError('Hay otra instalación de visores en curso.') from None
+        settings_path = state / 'settings.json'
+        if settings_path.exists():
+            settings = json.loads(read_private(settings_path))
+            require(settings['format'] == 'SYSFOREST_DATABASE_VIEWERS_V1' and settings['names'] == names,
+                    'La instalación existente corresponde a otro contexto; no se reemplaza.')
+            email = settings['email']
+        else:
+            require(not any(state.iterdir()) or [p.name for p in state.iterdir()] == ['.install.lock'],
+                    'El directorio contiene archivos sin manifiesto; revisa antes de inicializar.')
+            settings = {'format': 'SYSFOREST_DATABASE_VIEWERS_V1', 'email': email, 'names': names,
+                        'created_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}
+            write_private(settings_path, json.dumps(settings, indent=2) + '\n')
+        secret_owners = {'pgadmin_password': 5050, 'postgres_viewer_password': 0,
+                         'mongo_express_password': 1000, 'mongo_viewer_password': 1000,
+                         'mongo_cookie_secret': 1000, 'mongo_session_secret': 1000}
+        values = {}
+        for filename, uid in secret_owners.items():
+            path = state / filename
+            if not path.exists():
+                write_private(path, secrets.token_hex(32) + '\n', uid)
+            values[filename] = read_private(path, uid)
+            require(bool(re.fullmatch(r'[a-f0-9]{64}', values[filename])), 'Un secreto existente no tiene el formato generado; no se cambia.')
+        mongo_username = state / 'mongo_express_username'
+        if not mongo_username.exists():
+            write_private(mongo_username, 'sysforest\n', 1000)
+        require(read_private(mongo_username, 1000) == 'sysforest', 'El usuario web existente no coincide.')
+        pgpass = f"postgres:5432:{names['database']}:sysforest_viewer:{values['postgres_viewer_password']}"
+        if not (state / 'postgres_viewer_pgpass').exists():
+            write_private(state / 'postgres_viewer_pgpass', pgpass + '\n', 5050)
+        require(read_private(state / 'postgres_viewer_pgpass', 5050) == pgpass,
+                'El pgpass existente no coincide con su cuenta; no se rota automáticamente.')
+        compose_env = dict(os.environ, SYSFOREST_VIEWERS_SECRETS_DIR=str(state), PGADMIN_DEFAULT_EMAIL=email)
+        compose = ['docker', 'compose', '--project-name', PROJECT, '--project-directory', str(ROOT),
+                   '-f', str(ROOT / 'compose.database-viewers.yml')]
+        viewer_config = json.loads(run(compose + ['config', '--format', 'json'], env=compose_env,
+                                       phase='validación del Compose de visores'))
+        require(set(viewer_config['services']) == set(PORTS), 'El Compose debe contener solo los dos visores.')
+        required_secrets = {'pgadmin_password', 'postgres_viewer_pgpass', 'mongo_express_username',
+                            'mongo_express_password', 'mongo_viewer_password', 'mongo_cookie_secret', 'mongo_session_secret'}
+        require(set(viewer_config['secrets']) == required_secrets
+                and all(Path(viewer_config['secrets'][name]['file']).resolve() == state / name
+                        for name in required_secrets), 'Los secretos del Compose no coinciden con el directorio privado seleccionado.')
+        require(viewer_config['networks']['backend'].get('external') is True
+                and viewer_config['networks']['backend']['name'] == NETWORK,
+                'Los visores deben usar la red privada existente de SysForest.')
+        for service, port in PORTS.items():
+            entries = viewer_config['services'][service]['ports']
+            require(len(entries) == 1 and entries[0]['host_ip'] == '127.0.0.1'
+                    and int(entries[0]['published']) == port, 'Los visores solo pueden publicarse en loopback.')
+
+        print('Descargando pgAdmin y construyendo el visor MongoDB...', flush=True)
+        run(compose + ['pull', 'pgadmin'], env=compose_env, phase='descarga de pgAdmin', timeout=900)
+        run(compose + ['build', 'mongo-express'], env=compose_env, phase='compilación de Mongo Express', timeout=1200)
+        print('Preparando las cuentas exclusivas de consulta...', flush=True)
+        pg_wrapper = '''set -eu
+IFS= read -r SYSFOREST_VIEWER_PASSWORD
+export SYSFOREST_VIEWER_PASSWORD
+PGPASSWORD=$(cat "$POSTGRES_PASSWORD_FILE")
+export PGPASSWORD
+export DB_DATABASE="$1" DB_USERNAME="$2" DB_MIGRATOR_USERNAME="$3" PG_VIEWER_USERNAME=sysforest_viewer
+exec psql --no-psqlrc --quiet --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" --dbname="$DB_DATABASE" --file=/dev/stdin
+'''
+        pg_script = (ROOT / 'docker/database-viewers/postgres-readonly.sql').read_text()
+        run(['docker', 'exec', '-i', baseline['postgres']['id'], 'sh', '-c', pg_wrapper, 'sh',
+             names['database'], names['app_user'], names['migrator']],
+            payload=values['postgres_viewer_password'] + '\n' + pg_script,
+            phase='preparación del usuario PostgreSQL')
+        mongo_script = (ROOT / 'docker/database-viewers/mongo-readonly.js').read_text()
+        mongo_admin = services['mongodb']['environment']['MONGO_INITDB_ROOT_USERNAME']
+        require(IDENTIFIER.fullmatch(mongo_admin), 'El nombre administrativo de MongoDB no es válido.')
+        run(['docker', 'exec', '-i', '-e', 'MONGO_VIEWER_USERNAME=sysforest_audit_viewer',
+             '-e', f'MONGO_ROOT_USERNAME={mongo_admin}',
+             '-e', 'MONGO_ROOT_PASSWORD_FILE=/run/secrets/mongo_root_password',
+             baseline['mongodb']['id'], 'mongosh', '--quiet', '--norc', '--nodb', '--eval', mongo_script],
+            payload=json.dumps({'password': values['mongo_viewer_password']}),
+            phase='preparación del usuario MongoDB')
+        print('Iniciando los dos visores privados...', flush=True)
+        run(compose + ['up', '-d', '--no-deps', '--wait', '--wait-timeout', '180'],
+            env=compose_env, phase='arranque de los visores', timeout=240)
+        after = {}
+        for service, previous in baseline.items():
+            value = inspected(previous['id'])
+            current = {'id': value['Id'], 'image': value['Image'], 'started': value['State']['StartedAt']}
+            require(current == previous and value['State']['Running'], 'Un servicio productivo cambió durante la instalación; revisa concurrencia.')
+            after[service] = current
+        require(hashlib.sha256(private_env.read_bytes()).hexdigest() == before_env,
+                'El entorno productivo cambió durante la instalación; revisa concurrencia.')
+        ui = {}
+        for service, port in PORTS.items():
+            value = inspected(f'{PROJECT}-{service}-1')
+            require(value['State']['Health']['Status'] == 'healthy', f'El visor {service} no está saludable.')
+            ui[service] = {'image': value['Image'], 'url': f'http://127.0.0.1:{port}', 'healthy': True}
+        access = (f'SYSFOREST · acceso privado a visores\n\n'
+                  f'pgAdmin: http://127.0.0.1:18084\nUsuario: {email}\nContraseña inicial: {values["pgadmin_password"]}\n\n'
+                  f'Mongo Express: http://127.0.0.1:18085\nUsuario: sysforest\nContraseña: {values["mongo_express_password"]}\n\n'
+                  'Abre primero el túnel SSH desde tu equipo. Estas cuentas de base consultan datos de SysForest; no son roles de la aplicación.\n')
+        if not (state / 'access.txt').exists():
+            write_private(state / 'access.txt', access)
+        report = {'format': 'SYSFOREST_DATABASE_VIEWERS_INSTALL_V1', 'installed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                  'source': str(ROOT), 'panels': ui, 'production_containers_unchanged': after,
+                  'environment_unchanged': True, 'no_migrations_or_seeders': True,
+                  'credentials_file': str(state / 'access.txt')}
+        save_report(state / 'installation.json', report)
+        print('Visores saludables. Servicios y entorno de SysForest conservados.')
+        print(f'Accesos privados guardados en {state / "access.txt"}; no se imprimieron contraseñas.')
+        print('Para abrirlos desde tu equipo: bin/database-viewers-tunnel root@TU_SERVIDOR')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except (InstallationError, KeyError, ValueError) as error:
+        message = str(error) if isinstance(error, InstallationError) else 'Configuración inesperada; no se muestran datos privados.'
+        print('Error: ' + message, file=sys.stderr)
+        sys.exit(1)

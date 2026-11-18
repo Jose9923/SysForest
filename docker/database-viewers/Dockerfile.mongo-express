@@ -1,0 +1,37 @@
+FROM node:22.23.5-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee AS build
+
+# Snapshot upstream posterior a v1.1.0-rc-4 con correcciones de seguridad.
+# No sigue master al construir: fuente, Yarn y lock quedan fijados por huella.
+ADD --checksum=sha256:498a40b00407be19b0c6e1fe4dca2594cead014ce04fab883855c87246d7908b https://codeload.github.com/mongo-express/mongo-express/tar.gz/6b0fc653660f9862a23f4b111eaa4daa0a3a6e2a /tmp/mongo-express.tar.gz
+WORKDIR /app
+RUN tar -xzf /tmp/mongo-express.tar.gz --strip-components=1 -C /app \
+    && rm /tmp/mongo-express.tar.gz \
+    && printf '%s  %s\n' \
+       '1757df266011680d1876ee587d17ccd4b5bf79cde5760ca427ba9e2945d5d47a' 'yarn.lock' \
+       '1fe4e1193cbcd13a48d8f436bb17d3c672b049a5e32a758aab9866a073db1702' '.yarn/releases/yarn-4.12.0.cjs' \
+       | sha256sum -c -
+ENV CYPRESS_INSTALL_BINARY=0 \
+    MONGOMS_DISABLE_POSTINSTALL=1 \
+    HUSKY=0 \
+    YARN_ENABLE_IMMUTABLE_INSTALLS=true
+RUN node .yarn/releases/yarn-4.12.0.cjs install --immutable \
+    && node .yarn/releases/yarn-4.12.0.cjs build \
+    && node .yarn/releases/yarn-4.12.0.cjs workspaces focus --all --production \
+    && printf '%s  %s\n' '1757df266011680d1876ee587d17ccd4b5bf79cde5760ca427ba9e2945d5d47a' 'yarn.lock' | sha256sum -c -
+
+FROM node:22.23.5-bookworm-slim@sha256:e9f565d32859f0cbfb52125eafe8be39390f24dac302dc3cdf566e8ba3ab21ee
+LABEL org.opencontainers.image.title="SysForest Mongo Express (consulta privada)" \
+      org.opencontainers.image.source="https://github.com/mongo-express/mongo-express" \
+      org.opencontainers.image.revision="6b0fc653660f9862a23f4b111eaa4daa0a3a6e2a" \
+      org.opencontainers.image.version="1.1.0-rc-4-snapshot-6b0fc653-node22.23.5"
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/app.js /app/config.default.js /app/package.json /app/build-assets.json /app/LICENSE.md ./
+COPY --from=build /app/lib ./lib
+COPY --from=build /app/build ./build
+COPY --from=build /app/public ./public
+COPY --chmod=0555 mongo-express-entrypoint.sh /usr/local/bin/sysforest-mongo-express
+USER 1000:1000
+EXPOSE 8081
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/sysforest-mongo-express"]
