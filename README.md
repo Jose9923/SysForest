@@ -1,6 +1,6 @@
 # SYSFOREST
 
-Preparación 18/11/2026: [claves SQL BIGINT con identidad externa y antecedentes conservados](docs/bigint-identifiers-20261118.md). Revisión aislada; activación pendiente.
+Actualización productiva del 18/11/2026 completada: [claves SQL BIGINT con identidad externa y antecedentes conservados](docs/bigint-identifiers-20261118.md). Se preservaron los dos árboles, el inventario, las visitas y fotografías existentes; 96 comprobaciones HTTPS web/móviles aprobadas. La fuente canónica local también quedó actualizada, con ocho servicios saludables y sus datos preservados.
 
 Actualización 09/11/2026: [filtros de condiciones, foto del árbol completo y paridad móvil](docs/conditions-photo-20261109.md).
 

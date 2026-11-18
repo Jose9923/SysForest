@@ -1,6 +1,6 @@
 # Identificadores internos BIGINT y compatibilidad externa
 
-Estado al 18/11/2026: implementación y revisión en un checkout aislado. No se ha activado esta migración ni modificado datos productivos. Esta autorización cambia la elección inicial de UUID como clave SQL; no autoriza reiniciar bases ni perder antecedentes.
+Estado al 18/11/2026: migración incremental `000035` activada en producción y verificada por HTTPS. Los datos, relaciones, historiales y archivos existentes se conservaron. La fuente canónica local `/home/josev/SYSFOREST` también quedó actualizada y verificada; el checkout de revisión permanece separado. Esta autorización cambió la elección inicial de UUID como clave SQL, sin reiniciar la base ni eliminar antecedentes.
 
 ## Contrato de identidad
 
@@ -45,7 +45,7 @@ Se realizaron estas observaciones manuales desechables:
 
 - **37 comprobaciones aisladas sin red ni DB**: referencias tipadas e idempotencia de captura, condiciones/fauna, catálogos, revisiones, filtros autorizados/ajenos, alcance vacío, estructura SQL y hashes de fixtures de las siete fuentes.
 - **23 comprobaciones integradas de auditoría**: dos copias independientes de PostgreSQL, anterior y posterior a `000035`, produjeron exactamente los mismos 16.802 IDs/documentos/hash, sin diferencias ni entradas adicionales. Deduplicación y conteos por fuente coinciden; los recibos existentes enlazan por BIGINT y no aparecen pendientes. Alcances, opciones UUID, nuevos recibos e idempotencia aprobados. Las nuevas filas SQL se revirtieron.
-- **MongoDB efímero** con cuenta real limitada a find/insert: siete documentos ficticios, uno por fuente. Repetir la entrega tras agregar referencias internas conserva el documento sin duplicarlo; otro contenido bajo la misma identidad se rechaza y no sustituye el original. Ámbito vacío rechazado. No se consultó ni modificó MongoDB productivo.
+- **MongoDB efímero** con cuenta real limitada a find/insert: siete documentos ficticios, uno por fuente. Repetir la entrega tras agregar referencias internas conserva el documento sin duplicarlo; otro contenido bajo la misma identidad se rechaza y no sustituye el original. Ámbito vacío rechazado. Ese ensayo aislado no consultó ni modificó MongoDB productivo.
 - **14 comprobaciones integradas de carbono/riesgo**: las 2.855 huellas de entrada históricas se reconstruyen sin diferencias; la consulta mantiene carbono en 2.855 árboles del clon. Una muestra compatible conserva el resultado científico y repetir su cálculo reutiliza la misma estimación. Se verificaron historia, perfil, metodología vigente, UUID de tareas anteriores y continuidad del cursor. Las operaciones temporales se revirtieron y los conteos de siete tablas permanecieron iguales.
 
 Evidencias en el workspace de la entrega: `.bigint-identifiers-work/audit/manual-observations.json`, `audit-database-observations.json`, `carbon-database-observations.json` y manifiestos/huellas asociados. Los fixtures se limitaron al entorno aislado; las cifras describen esas copias y no una lectura de producción.
@@ -54,17 +54,44 @@ La integración paralela también registra **12 comprobaciones DDL aprobadas** s
 
 La revisión final de web corrigió los guards del mapa privado: «Ver ficha» y los contenidos de fotografías aceptan IDs BIGINT como texto, incluido `9223372036854775807`, sin pasar por Number/parseInt. **23 observaciones de JavaScript real con DOM/fetch ficticios** verificaron aceptación de 1/máximo y rechazo de UUID, cero, ceros iniciales, negativos, overflow y IDs codificados, conservando origen, scope, query, hash, correspondencia de metadata y permiso de foto. No sustituyen revisión visual de navegador. Evidencia: `.bigint-identifiers-work/audit/map-id-observations.json`. Los guards de organización/membresía también pasaron **10 comprobaciones**, rechazando referencias no canónicas antes de SQL, con cero consultas en los rechazos (`.bigint-migration-work/route-id-observations.json`).
 
-El cierre de formato pasó **169 archivos en Pint**, y la sintaxis final pasó **621 archivos PHP**. El build del target de producción del Dockerfile terminó correctamente, con dependencias `--no-dev` y autoload de **6.398 clases**. La imagen verificada mediante `docker image inspect` es `sha256:7d6fa07aa5aaaa9c927251ac9e868dc3b61ab0a3d667efebb5e25e93605a56a5`. Su prueba de arranque pasó **10 comprobaciones de contenedor y 21 de runtime**, incluidas cachés y lecturas SQL, con **cero escrituras SQL**. Evidencia: `.bigint-migration-work/production-image-observations.json`. La integración final queda aprobada en el entorno aislado. La limpieza de QA también terminó: se retiraron cinco contenedores, la red interna, tres bases en tmpfs y siete archivos privados. La imagen, el checkout y las evidencias se conservaron; la fuente canónica y producción permanecen intactas. Evidencia: `.bigint-migration-work/integrated-qa-cleanup.json`.
+El cierre de formato pasó **169 archivos en Pint**, y la sintaxis final pasó **621 archivos PHP**. El build del target de producción del Dockerfile terminó correctamente, con dependencias `--no-dev` y autoload de **6.398 clases**. La imagen verificada mediante `docker image inspect` es `sha256:7d6fa07aa5aaaa9c927251ac9e868dc3b61ab0a3d667efebb5e25e93605a56a5`. Su prueba de arranque pasó **10 comprobaciones de contenedor y 21 de runtime**, incluidas cachés y lecturas SQL, con **cero escrituras SQL**. Evidencia: `.bigint-migration-work/production-image-observations.json`. La integración final queda aprobada en el entorno aislado. La limpieza de QA también terminó: se retiraron cinco contenedores, la red interna, tres bases en tmpfs y siete archivos privados. La imagen, el checkout y las evidencias se conservaron; al terminar esa revisión aislada, la fuente canónica y producción todavía permanecían intactas. Evidencia: `.bigint-migration-work/integrated-qa-cleanup.json`.
 
-No se ha hecho push ni activado el código en la fuente canónica o producción. La integración global está aprobada en el entorno aislado; el corte coordinado y la activación siguen pendientes al redactar. Estas comprobaciones no acreditan compatibilidad física de Android ni publicación. La activación requiere respaldo verificado y cierre de los demás contratos de la entrega, conservando relaciones, historiales, recibos y archivos. No ejecutar seeders ni eliminar recibos/documentos para resolver incompatibilidades.
+## Corte productivo completado
 
-## Corte futuro y recuperación
+El 18/11/2026 se actualizó el checkout fuente `/opt/sysforest/source` al commit `4e3eceb84abde002055ac813e7dea2fb117486f5` y se activó la imagen `sha256:7d6fa07aa5aaaa9c927251ac9e868dc3b61ab0a3d667efebb5e25e93605a56a5`. El release conserva sus 171 archivos de runtime aprobados y los dos módulos JavaScript del mapa con sus hashes exactos. Se recrearon únicamente aplicación, cola y scheduler; Nginx volvió a iniciarse en su contenedor existente. Los siete servicios quedaron saludables. PostgreSQL, MongoDB, Redis, los visores y los demás contenedores conservaron sus identidades, imágenes y tiempos de inicio; `production.env` permaneció idéntico. No se ejecutaron `fresh`, seeders, recálculos ni limpiezas globales de caché.
 
-La activación debe prepararse como una operación coordinada, todavía no ejecutada:
+Antes del corte, un ensayo restauró una **copia previa de producción** en servicios aislados y aprobó la migración y comparación. Durante la pausa de los escritores se obtuvo un respaldo final independiente en:
 
-1. Obtener un respaldo nuevo y verificar su recuperación, incluyendo PostgreSQL, las referencias externas y los archivos/estado necesarios para la versión anterior.
-2. Pausar la aplicación, cola y scheduler para impedir que código anterior y nuevo escriban simultáneamente durante el cambio de esquema.
-3. Ejecutar la migración incremental `000035` con la identidad migradora y el respaldo confirmado. No usar `migrate:fresh`, seeders ni recálculos de resultados para actualizar una instalación existente.
-4. Activar la imagen compatible con BIGINT, preparar sus cachés y comprobar salud, permisos, relaciones, recibos y lecturas antes de reanudar los procesos.
+`/opt/sysforest/backups/bigint-20261118-4e3eceb/backup-20261118T213905Z-REc7R8`
 
-Si se requiere volver atrás, recuperar el respaldo verificado y la versión anterior como un conjunto coherente. El rollback no consiste en ejecutar `down()` ni en reconvertir IDs en la base ya modificada. Conservar los respaldos y registrar el resultado del corte antes de dar la activación por terminada.
+El respaldo final tiene `COMPLETE` y sus archivos pasaron la verificación de `SHA256SUMS`; la huella del manifiesto es `91936f2fcbd279af5e17a5f237dce2630885dfc5846a47f079deab1c8038e578`. Se preservaron también el entorno privado, las preimágenes del código y la imagen anterior `sysforest-app:before-bigint-20261118-4e3eceb`. **No se afirma que se haya restaurado este respaldo final**: la restauración comprobada corresponde a la copia previa del ensayo. Redis permaneció en ejecución con su volumen original, sin recreación, vaciado ni nuevo respaldo RDB.
+
+La captura PDO de solo lectura anterior y posterior al cambio confirmó 55 entidades convertidas, **71 tablas y 2.008 filas lógicas idénticas**, normalizando los nuevos IDs internos a sus UUID externos para comparar. La única migración añadida fue `000035`. Se conservaron exactamente:
+
+| Datos existentes | Antes y después |
+| --- | ---: |
+| Árboles | 2 |
+| Inventarios | 1 |
+| Participaciones árbol–inventario | 2 |
+| Inspecciones | 2 |
+| Fotografías/evidencias | 7 |
+| Condiciones de inspección | 18 |
+| Registros de fauna de inspección | 2 |
+
+`storage/app` conservó sus **24 archivos y 43.173.340 bytes**, con huella idéntica `9309cd5e01e00014347e4e1443a78eeac5c238d7f8c9577d8a1daa805eaf76a2`. La colección de auditoría Mongo conservó durante el corte **17.040 documentos** y la misma huella `d30c9d8a25e44071f7ed39e552f87bc7071e5b02ed568d17ae2bd3f56b530045`. Después de reabrir la aplicación, la auditoría puede crecer por accesos y uso normal; ese crecimiento no se confunde con pérdida o reescritura del historial.
+
+La verificación HTTPS posterior pasó **96 de 96 comprobaciones**, con inicio de sesión normal web y móvil, consultas privadas autorizadas, IDs numéricos en la web y UUID externos en la API móvil, rechazos de identidades/rutas no admitidas y verificación de los dos JavaScript publicados. Las siete fotografías se consultaron por ambos contratos y conservaron tamaño, bytes y SHA. Se cerraron las dos sesiones propias. La comprobación hizo **cero escrituras de negocio**, sin cambiar contraseñas/roles ni enviar mensajes; el inicio y cierre de sesión sí producen el estado y la auditoría normales de autenticación.
+
+Evidencia: `.bigint-migration-work/production-rehearsal-result.json`, `production-cutover-result.json` y `production-http-verification.json`. No se añadieron suites permanentes. HTTPS no sustituye una comprobación física de Android. La actualización local se completó por separado, con evidencia propia descrita a continuación.
+
+## Activación canónica local completada
+
+La fuente `/home/josev/SYSFOREST` avanzó por fast-forward al mismo commit `4e3eceb`. En la base **local**, que contiene datos distintos de producción, se aplicaron `000033`, `000034` y `000035` sin `fresh` ni seeders. Al comparar inmediatamente antes y después de `000035`, sus **71 tablas y 90.070 filas lógicas** permanecieron idénticas: **2.855 árboles, 2.855 inspecciones, dos inventarios y cuatro evidencias**, entre otros antecedentes. Estas cifras pertenecen exclusivamente al entorno local; no reemplazan los dos árboles y el inventario conservados en producción.
+
+Los tres servicios PHP locales usan la imagen `sha256:808c79e9167e588aa06803b7c6cc5261a5ae1ebe40b69a322040af16866328fe`. Los ocho servicios locales están saludables, los otros cinco conservan sus IDs e imágenes, y no quedan migraciones pendientes. `DB_TEST` y `.env` permanecen intactos. El respaldo local está fuera de OneDrive, en `/home/josev/.local/state/sysforest/backups/bigint-20261118-4e3eceb`. Evidencia: `.bigint-migration-work/local-activation-result.json`.
+
+## Recuperación y actualizaciones posteriores
+
+Conservar el respaldo verificado, el entorno privado y la imagen anterior como un conjunto. Si fuera necesaria una recuperación, pausar los escritores y restaurar los datos y la versión compatibles mediante un procedimiento revisado. El rollback no consiste en ejecutar `down()` ni en reconvertir IDs sobre la base modificada. No ejecutar seeders ni eliminar recibos/documentos para resolver incompatibilidades.
+
+Las próximas actualizaciones deben volver a coordinar respaldo, versión de código, migraciones incrementales y procesos. No reutilizar el respaldo de este corte como si fuera una copia actual de los datos posteriores.
