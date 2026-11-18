@@ -105,6 +105,7 @@ def main():
     env = dict(os.environ, SYSFOREST_ENV_FILE=str(private_env))
     production_compose = ['docker', 'compose', '--project-name', 'sysforest-production',
                           '--project-directory', str(production), '--env-file', str(private_env),
+                          '--profile', 'maintenance',
                           '-f', str(production / 'compose.production.yml')]
     config = json.loads(run(production_compose + ['config', '--format', 'json'],
                             env=env, phase='validación de configuración productiva'))
