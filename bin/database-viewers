@@ -68,6 +68,59 @@ def save_report(path, report):
     os.replace(temporary, path)
 
 
+def ensure_pgadmin_server(email):
+    """Recupera solo la conexión gestionada; nunca reemplaza conexiones ajenas."""
+    container = f'{PROJECT}-pgadmin-1'
+    check = r'''
+import json, sqlite3, sys
+expected = next(iter(json.load(open('/pgadmin4/servers.json'))['Servers'].values()))
+db = sqlite3.connect('file:/var/lib/pgadmin/pgadmin4.db?mode=ro', uri=True)
+db.row_factory = sqlite3.Row
+users = db.execute('SELECT id FROM user WHERE email = ? AND active = 1', (sys.argv[1],)).fetchall()
+if len(users) != 1:
+    sys.exit(10)
+rows = db.execute("""
+SELECT s.name, g.name AS group_name, s.host, s.port, s.maintenance_db,
+       s.username, s.db_res, s.connection_params, s.service, s.role,
+       s.use_ssh_tunnel, s.shared, s.kerberos_conn, s.post_connection_sql
+FROM server s JOIN servergroup g ON g.id = s.servergroup_id
+WHERE s.user_id = ? AND (s.name = ? OR
+  (s.host = ? AND s.port = ? AND s.username = ? AND s.maintenance_db = ?))
+""", (users[0]['id'], expected['Name'], expected['Host'], expected['Port'],
+      expected['Username'], expected['MaintenanceDB'])).fetchall()
+if not rows:
+    print('missing')
+    sys.exit(0)
+if len(rows) != 1:
+    sys.exit(11)
+row = rows[0]
+fields = {'name': 'Name', 'group_name': 'Group', 'host': 'Host', 'port': 'Port',
+          'maintenance_db': 'MaintenanceDB', 'username': 'Username', 'db_res': 'DBRestriction'}
+params = json.loads(row['connection_params'] or '{}')
+valid = all(str(row[key]) == str(expected[value]) for key, value in fields.items())
+valid = valid and {key: str(value) for key, value in params.items()} == {
+    key: str(value) for key, value in expected['ConnectionParameters'].items()}
+valid = valid and not any(row[key] for key in [
+    'service', 'role', 'use_ssh_tunnel', 'shared', 'kerberos_conn', 'post_connection_sql'])
+if not valid:
+    sys.exit(12)
+print('present')
+'''
+
+    def state():
+        return run(['docker', 'exec', container, '/venv/bin/python3', '-c', check, email],
+                   phase='validación del servidor gestionado de pgAdmin; una conexión existente diferente requiere revisión').strip()
+
+    current = state()
+    require(current in ['missing', 'present'], 'No se pudo validar la conexión gestionada de pgAdmin.')
+    if current == 'missing':
+        # Sin --replace: importa una conexión y conserva todos los grupos/servidores ajenos.
+        run(['docker', 'exec', container, '/venv/bin/python3', '/pgadmin4/setup.py',
+             'load-servers', '/pgadmin4/servers.json', '--user', email],
+            phase='recuperación de la conexión gestionada de pgAdmin')
+    require(state() == 'present', 'La conexión gestionada de pgAdmin no quedó validada; no se borra ni reemplaza configuración.')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=['install', 'status', 'credentials'])
@@ -245,6 +298,7 @@ exec psql --no-psqlrc --quiet --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" 
         print('Iniciando los dos visores privados...', flush=True)
         run(compose + ['up', '-d', '--no-deps', '--wait', '--wait-timeout', '180'],
             env=compose_env, phase='arranque de los visores', timeout=240)
+        ensure_pgadmin_server(email)
         after = {}
         for service, previous in baseline.items():
             value = inspected(previous['id'])
