@@ -7,6 +7,7 @@ namespace App\Repositories\Audit;
 use App\Auditing\AuditRecordProjection;
 use App\Auditing\AuditCatalog;
 use App\DTOs\Audit\AuditScope;
+use App\Repositories\Identifiers\IdentifierRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class MongoAuditRepository
 {
     private ?MongoCollection $collection = null;
 
-    public function __construct(private AuditRecordProjection $projection)
+    public function __construct(private AuditRecordProjection $projection, private IdentifierRepository $identifiers)
     {
     }
 
@@ -108,10 +109,15 @@ class MongoAuditRepository
     private function scope(AuditScope $scope): array
     {
         if ($scope->kind === 'organization' && $scope->organizationId !== null) {
-            return ['organization_id' => $scope->organizationId];
+            return ['organization_id' => $this->identifiers->external('organizations', $scope->organizationId)];
         }
         if ($scope->kind === 'department') {
-            return ['organization_id' => ['$in' => $scope->organizationIds]];
+            $this->identifiers->prime('organizations', $scope->organizationIds);
+
+            return ['organization_id' => ['$in' => array_map(
+                fn (string $id): string => $this->identifiers->external('organizations', $id),
+                $scope->organizationIds,
+            )]];
         }
         if ($scope->kind !== 'national') {
             throw new RuntimeException('La consulta de auditoría necesita un alcance válido.');
@@ -157,7 +163,7 @@ class MongoAuditRepository
     {
         $rows = collect($documents);
         $actors = DB::table('users')->whereIn('id', $rows->pluck('actor_user_id')->filter()->unique())->pluck('name', 'id');
-        $organizations = DB::table('organizations')->whereIn('id', $rows->pluck('organization_id')->filter()->unique())->pluck('name', 'id');
+        $organizations = DB::table('organizations')->whereIn('external_id', $rows->pluck('organization_id')->filter()->unique())->pluck('name', 'external_id');
 
         return $rows->map(function (array $document) use ($actors, $organizations): object {
             $document['occurred_at'] = $document['occurred_at_iso'];

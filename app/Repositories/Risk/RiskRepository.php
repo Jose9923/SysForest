@@ -34,7 +34,7 @@ class RiskRepository
     {
         $setting = $this->settings($organizationId);
 
-        return $setting ? $this->methodology($organizationId, $setting->methodology_id) : null;
+        return $setting ? $this->methodology($organizationId, (string) $setting->methodology_id) : null;
     }
 
     public function methodology(string $organizationId, string $id): RiskMethodology

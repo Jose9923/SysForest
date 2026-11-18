@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models\Risk;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 
 /** Registro institucional inmutable; las modificaciones generan una nueva versión. */
 class RiskEvaluation extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     public $timestamps = false;
 

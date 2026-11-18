@@ -59,7 +59,7 @@ class RiskController extends Controller
     public function previewRegistration(Request $request, RiskEvaluationService $service): JsonResponse
     {
         $data = $request->validate(['phytosanitary_condition_ids' => ['sometimes', 'array', 'max:100'],
-            'phytosanitary_condition_ids.*' => ['uuid', 'distinct'], 'inspection_id' => ['prohibited']]);
+            'phytosanitary_condition_ids.*' => ['record_id', 'distinct'], 'inspection_id' => ['prohibited']]);
 
         return response()->json($service->previewRegistration($request->user(), $data));
     }
@@ -67,7 +67,7 @@ class RiskController extends Controller
     public function preview(Request $request, string $tree, RiskEvaluationService $service): JsonResponse
     {
         $data = $request->validate(['phytosanitary_condition_ids' => ['sometimes', 'array', 'max:100'],
-            'phytosanitary_condition_ids.*' => ['uuid', 'distinct'], 'inspection_id' => ['nullable', 'uuid']]);
+            'phytosanitary_condition_ids.*' => ['record_id', 'distinct'], 'inspection_id' => ['nullable', 'record_id']]);
 
         return response()->json($service->preview($request->user(), $tree, $data));
     }

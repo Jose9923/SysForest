@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\Audit;
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use App\Support\Identifiers\RecordIdentifier;
 use InvalidArgumentException;
 
 /** Recibos técnicos; el contenido de auditoría permanece en su registro transaccional original. */
@@ -13,7 +13,7 @@ class AuditDeliveryRepository
 {
     public function acknowledge(string $source, string $id): void
     {
-        if (!in_array($source, AuditSourceRepository::SOURCES, true) || !Str::isUuid($id)) {
+        if (!in_array($source, AuditSourceRepository::SOURCES, true) || !RecordIdentifier::isValid($id)) {
             throw new InvalidArgumentException('Referencia de auditoría inválida.');
         }
         DB::table('audit_deliveries')->insertOrIgnore([

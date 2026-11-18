@@ -11,5 +11,5 @@ Route::post('/active-organization', TenantSelectionController::class)->name('ten
 Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
 Route::get('/organizations/create', [OrganizationController::class, 'create'])->name('organizations.create');
 Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
-Route::get('/administration/organizations/{organization}/edit', [OrganizationAdministrationController::class, 'edit'])->whereUuid('organization')->name('administration.organizations.edit');
-Route::put('/administration/organizations/{organization}', [OrganizationAdministrationController::class, 'update'])->whereUuid('organization')->name('administration.organizations.update');
+Route::get('/administration/organizations/{organization}/edit', [OrganizationAdministrationController::class, 'edit'])->whereNumber('organization')->name('administration.organizations.edit');
+Route::put('/administration/organizations/{organization}', [OrganizationAdministrationController::class, 'update'])->whereNumber('organization')->name('administration.organizations.update');

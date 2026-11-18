@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use LogicException;
 use App\Repositories\Trees\TreeQueryRepository;
 
@@ -141,7 +140,7 @@ class TreeInspectionRepository
     public function validateInventoryTree(string $organizationId, string $treeId, string $id, bool $lock = false): ?InventoryTree
     {
         foreach ([$organizationId, $treeId, $id] as $value) {
-            if (!Str::isUuid($value)) {
+            if (!\App\Support\Identifiers\RecordIdentifier::isValid($value)) {
                 return null;
             }
         }
@@ -165,7 +164,7 @@ class TreeInspectionRepository
 
     private function requireUuid(string $id): void
     {
-        if (!Str::isUuid($id)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
             throw (new ModelNotFoundException())->setModel(TreeInspection::class);
         }
     }

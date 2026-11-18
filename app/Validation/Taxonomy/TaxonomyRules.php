@@ -21,9 +21,9 @@ class TaxonomyRules
             'organization_id' => ['prohibited'], 'id' => ['prohibited'],
         ];
         if ($catalog === TaxonomyCatalog::Species) {
-            $rules['family_id'] = [...$required, 'uuid'];
+            $rules['family_id'] = [...$required, 'record_id'];
         } elseif ($catalog === TaxonomyCatalog::CommonNames) {
-            $rules['species_id'] = [...$required, 'uuid'];
+            $rules['species_id'] = [...$required, 'record_id'];
             $rules['is_primary'] = ['sometimes', 'boolean'];
         }
 

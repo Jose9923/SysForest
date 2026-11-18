@@ -74,7 +74,7 @@ class SessionContinuityService
 
         if ($this->shouldRenew($session, $expiration)) {
             // La familia del refresh debe coincidir incluso cuando el access todavía es válido.
-            $this->authenticateRefresh($request, $session->id, allowConsumed: true);
+            $this->authenticateRefresh($request, $session->external_id, allowConsumed: true);
             try {
                 $pair = $this->refresh->rotate((string) $request->cookie(config('security.refresh_cookie')));
             } catch (AuthenticationException) {
@@ -185,6 +185,9 @@ class SessionContinuityService
 
     private function assertFamily(string $bound, string $candidate): void
     {
+        if (\App\Support\Identifiers\RecordIdentifier::isValid($candidate)) {
+            $candidate = app(\App\Repositories\Identifiers\IdentifierRepository::class)->external('auth_sessions', $candidate);
+        }
         if (!hash_equals($bound, $candidate)) {
             throw new SessionContinuityException(
                 'context_changed',

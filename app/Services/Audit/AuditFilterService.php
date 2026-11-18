@@ -6,6 +6,7 @@ namespace App\Services\Audit;
 
 use App\DTOs\Audit\AuditScope;
 use App\Auditing\AuditCatalog;
+use App\Repositories\Identifiers\IdentifierRepository;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -15,6 +16,10 @@ use Illuminate\Validation\ValidationException;
 class AuditFilterService
 {
     public const KEYS = ['scope', 'organization_id', 'actor', 'user_id', 'module', 'event', 'resource_type', 'resource_id', 'date_from', 'date_to', 'page'];
+
+    public function __construct(private IdentifierRepository $identifiers)
+    {
+    }
 
     public function validate(array $input): array
     {
@@ -45,6 +50,9 @@ class AuditFilterService
             'integer' => 'La página debe ser un número entero.',
             'in' => 'El alcance solicitado no está disponible.',
         ])->validate();
+        if (isset($values['organization_id'])) {
+            $values['organization_id'] = strtolower($values['organization_id']);
+        }
         if (isset($values['user_id'])) {
             $values['user_id'] = (string) $values['user_id'];
         }
@@ -62,12 +70,14 @@ class AuditFilterService
     public function resolve(array $input, AuditScope $scope): array
     {
         $values = $this->validate($input);
-        if ($scope->kind === 'department' && !empty($values['organization_id'])
-            && !in_array($values['organization_id'], $scope->organizationIds, true)) {
+        $organizationId = isset($values['organization_id'])
+            ? $this->identifiers->internal('organizations', $values['organization_id']) : null;
+        if ($scope->kind === 'department' && $organizationId !== null
+            && !in_array($organizationId, $scope->organizationIds, true)) {
             throw ValidationException::withMessages(['organization_id' => 'Selecciona una institución de tus departamentos autorizados.']);
         }
-        if ($scope->kind === 'organization' && !empty($values['organization_id'])
-            && $values['organization_id'] !== $scope->organizationId) {
+        if ($scope->kind === 'organization' && $organizationId !== null
+            && $organizationId !== $scope->organizationId) {
             throw ValidationException::withMessages(['organization_id' => 'La consulta está limitada a la organización seleccionada.']);
         }
         $from = CarbonImmutable::parse($values['date_from'] ?? CarbonImmutable::now(\App\Support\Time\BogotaDateTime::TIMEZONE)->subDays(29)->toDateString(), \App\Support\Time\BogotaDateTime::TIMEZONE)->startOfDay();

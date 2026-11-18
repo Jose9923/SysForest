@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use App\Models\Trees\Tree;
 use App\Models\User;
 use App\Repositories\Inventories\InventoryRepository;
@@ -33,15 +34,17 @@ class MobileTreeService
     {
         return $this->snapshots->read(function () use ($actor, $inventoryId, $input): array {
             $organization = $this->access->organization($actor);
-            $inventory = $this->inventories->findForTenant($organization->id, $inventoryId);
+            $inventory = $this->inventories->findForTenant($organization->id, Ids::internal('inventories', $inventoryId));
             Gate::forUser($actor)->authorize('view', $inventory);
             Gate::forUser($actor)->authorize('viewAny', Tree::class);
             $page = $this->reads->paginate($organization->id, $inventory->id, (int) ($input['per_page'] ?? 50), (int) ($input['page'] ?? 1));
 
-            return ['inventory_id' => $inventory->id,
+            Ids::prime($page->getCollection());
+
+            return ['inventory_id' => Ids::id($inventory),
                 'data' => $page->getCollection()->map(fn (Tree $tree): array => $this->projection($tree)
                     + ['analytics_reference' => \App\Support\Mobile\MobileAnalyticsProjection::treeReference($tree)])->all(),
-                'meta' => ['inventory_id' => $inventory->id, 'organization_id' => $organization->id,
+                'meta' => ['inventory_id' => Ids::id($inventory), 'organization_id' => Ids::id($organization),
                     'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
                     'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
                     'generated_at' => now()->toIso8601String()]];
@@ -52,8 +55,10 @@ class MobileTreeService
     {
         return $this->snapshots->read(function () use ($actor, $id): array {
             $organization = $this->access->organization($actor);
-            $tree = $this->trees->findForTenant($organization->id, $id);
+            $tree = $this->trees->findForTenant($organization->id, Ids::internal('trees', $id));
             Gate::forUser($actor)->authorize('view', $tree);
+
+            Ids::prime([$tree]);
 
             return ['data' => $this->projection($tree)
                 + ['analytics_reference' => \App\Support\Mobile\MobileAnalyticsProjection::treeReference($tree)]];
@@ -65,11 +70,11 @@ class MobileTreeService
         $data = Validator::make($input, MobileMutationInput::treeUpdate(), MobileMutationInput::messages())->validate();
 
         return $this->mutations->run($actor, 'tree.update', $id, 'trees.update', $data, function (User $actor) use ($id, $data): array {
-            $tree = $this->writes->update($actor, $id, ['lock_version' => $data['lock_version']] + $data['changes']);
+            $tree = $this->writes->update($actor, Ids::internal('trees', $id), ['lock_version' => $data['lock_version']] + Ids::input($data['changes']));
 
             return ['tree_id' => $tree->id, 'data' => $this->projection($tree)];
         }, function (User $actor, string $organizationId) use ($id): void {
-            Gate::forUser($actor)->authorize('update', $this->trees->findForTenant($organizationId, $id));
+            Gate::forUser($actor)->authorize('update', $this->trees->findForTenant($organizationId, Ids::internal('trees', $id)));
         });
     }
 
@@ -90,12 +95,12 @@ class MobileTreeService
         foreach (['captured_at', 'created_at', 'updated_at'] as $field) {
             $data[$field] = $tree->getAttribute($field)?->toISOString();
         }
-        $data['inventories'] = $tree->inventories->sortBy('id')->values()->map(fn ($inventory) => [
-            'inventory_id' => $inventory->id, 'inventory_tree_id' => $inventory->pivot->id,
+        $data['inventories'] = $tree->inventories->sortBy(fn ($inventory) => Ids::id($inventory))->values()->map(fn ($inventory) => [
+            'inventory_id' => Ids::id($inventory), 'inventory_tree_id' => Ids::external('inventory_trees', $inventory->pivot->id),
             'code' => $inventory->code, 'name' => $inventory->name,
             'status' => $inventory->status->value, 'active' => $inventory->active,
         ])->all();
 
-        return $data;
+        return Ids::output($data, 'trees');
     }
 }

@@ -91,10 +91,10 @@ class RiskDecisionService
         $rules = array_intersect_key(TreeInspectionInput::rules(true), array_fill_keys([
             'lock_version', 'risk_priority', 'risk_confirmed', 'risk_methodology_id', 'general_observations',
         ], true));
-        $rules['inspection_id'] = ['required', 'uuid'];
+        $rules['inspection_id'] = ['required', 'record_id'];
         $rules['risk_priority'] = ['required', 'integer', 'between:1,4'];
         $rules['risk_confirmed'] = ['required', 'boolean', 'accepted'];
-        $rules['risk_methodology_id'] = ['required', 'uuid'];
+        $rules['risk_methodology_id'] = ['required', 'record_id'];
         if (array_diff(array_keys($input), array_keys($rules), ['_token', '_method']) !== []) {
             throw ValidationException::withMessages(['decision' => 'Esta pantalla solo permite cambiar la prioridad profesional y las observaciones.']);
         }

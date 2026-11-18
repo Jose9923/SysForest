@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Inspections;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -23,7 +23,7 @@ use App\Models\User;
 
 class TreeInspection extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $guarded = ['*'];
 
@@ -53,7 +53,7 @@ class TreeInspection extends Model
             ->whereColumn('carbon_estimates.organization_id', 'carbon_visit.organization_id')
             ->whereColumn('carbon_estimates.inspection_version', 'carbon_visit.lock_version')
             ->whereRaw('carbon_estimates.species_id IS NOT DISTINCT FROM carbon_tree.species_id')
-            ->whereRaw("carbon_estimates.inputs->>'growth_habit_id' IS NOT DISTINCT FROM carbon_tree.growth_habit_id::text")
+            ->whereRaw("carbon_estimates.inputs->>'growth_habit_id' IS NOT DISTINCT FROM (SELECT carbon_habit.external_id::text FROM growth_habits AS carbon_habit WHERE carbon_habit.id = carbon_tree.growth_habit_id)")
             ->orderByDesc('carbon_estimates.id');
     }
 

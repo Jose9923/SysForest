@@ -8,14 +8,13 @@ use App\Services\Territories\TerritoryService;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ActiveMunicipality implements ValidationRule
 {
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!is_string($value) || !Str::isUuid($value)) {
+        if (!is_string($value) || !\App\Support\Identifiers\RecordIdentifier::isValid($value)) {
             $fail('Selecciona un municipio válido.');
 
             return;

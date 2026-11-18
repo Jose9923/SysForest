@@ -23,7 +23,7 @@ class TreeLocationRepository
     public function snapshot(string $organizationId, string $treeId): Tree
     {
         $this->requireTransaction();
-        if (! Str::isUuid($treeId)) {
+        if (! \App\Support\Identifiers\RecordIdentifier::isValid($treeId)) {
             throw (new ModelNotFoundException())->setModel(Tree::class);
         }
 
@@ -50,9 +50,9 @@ class TreeLocationRepository
         $oldPoint = $initial ? 'NULL' : 'trees.geometry';
         $oldRaw = $initial ? 'NULL' : 'trees.coordinate_raw';
         $changedAt = now();
-        $historyId = (string) Str::uuid();
+        $historyExternalId = (string) Str::uuid();
         $bindings = array_merge(
-            [$historyId],
+            [$historyExternalId],
             $pointBindings,
             [
                 $coordinates?->raw,
@@ -62,14 +62,14 @@ class TreeLocationRepository
                 $current->organization_id, $current->id,
             ],
         );
-        DB::insert(
+        $history = DB::selectOne(
             'INSERT INTO tree_location_histories
-                (id, organization_id, tree_id, old_geometry, new_geometry,
+                (external_id, organization_id, tree_id, old_geometry, new_geometry,
                  old_coordinate_raw, new_coordinate_raw, old_metadata, new_metadata,
                  change_type, reason, changed_by, changed_at)
              SELECT ?, trees.organization_id, trees.id, '.$oldPoint.', '.$point.',
                     '.$oldRaw.', ?, CAST(? AS jsonb), CAST(? AS jsonb), ?, ?, ?, ?
-             FROM trees WHERE organization_id = ? AND id = ? AND deleted_at IS NULL',
+             FROM trees WHERE organization_id = ? AND id = ? AND deleted_at IS NULL RETURNING id',
             $bindings,
         );
 
@@ -82,7 +82,11 @@ class TreeLocationRepository
             array_merge($pointBindings, [$coordinates?->raw], $values, [$changedAt, $current->organization_id, $current->id]),
         );
 
-        return $historyId;
+        if ($history === null) {
+            throw new LogicException('No se pudo registrar el historial de ubicación.');
+        }
+
+        return (string) $history->id;
     }
 
     public function withinBoundingBox(
@@ -142,7 +146,7 @@ class TreeLocationRepository
         $query = Tree::query()->where('trees.organization_id', $organizationId)
             ->select('trees.*')->selectRaw('ST_Y(trees.geometry) AS latitude, ST_X(trees.geometry) AS longitude');
         if ($inventoryId !== null) {
-            if (! Str::isUuid($inventoryId)) {
+            if (! \App\Support\Identifiers\RecordIdentifier::isValid($inventoryId)) {
                 throw ValidationException::withMessages(['inventory_id' => 'Selecciona un inventario válido.']);
             }
             $query->whereHas('inventories', fn (Builder $inventories) => $inventories

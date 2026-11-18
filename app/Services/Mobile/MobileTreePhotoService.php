@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use App\Exceptions\Mobile\MobileIdempotencyConflictException;
 use App\Models\Evidences\Evidence;
 use App\Models\User;
@@ -57,7 +58,7 @@ class MobileTreePhotoService
 
     public function upload(User $actor, string $treeId, array $input): array
     {
-        $treeId = strtolower($treeId);
+        $treeId = Ids::internal('trees', strtolower($treeId));
         $owner = $this->owners->resolve($actor, $treeId, null);
         Gate::forUser($actor)->authorize('create', [Evidence::class, $owner]);
         $validator = Validator::make($input, MobileTreePhotoInput::rules(), MobileTreePhotoInput::messages());
@@ -90,6 +91,7 @@ class MobileTreePhotoService
 
                     return ['client_id' => $clientId, 'status' => 'replayed', 'photo' => $receipt->result];
                 }
+                $metadata = Ids::input($metadata);
                 if (!$this->types->validate($metadata['evidence_type_id'], null, true)) {
                     throw ValidationException::withMessages(['evidence_type_id' => 'Selecciona un tipo de evidencia activo.']);
                 }
@@ -98,7 +100,7 @@ class MobileTreePhotoService
                 $this->evidences->lockStorageOperation($id);
                 $reference = $this->storage->store($data['file'], $owner->organization_id, $technical, $id);
                 $evidence = $this->evidences->create($technical + $metadata + [
-                    'id' => $id, 'organization_id' => $owner->organization_id,
+                    'external_id' => $id, 'organization_id' => $owner->organization_id,
                     'tree_id' => $owner->id, 'tree_inspection_id' => null, 'maintenance_id' => null,
                     'disk' => $reference['disk'], 'path' => $reference['path'],
                     'uploaded_by' => $actor->id, 'updated_by' => $actor->id, 'lock_version' => 1,
@@ -128,13 +130,15 @@ class MobileTreePhotoService
 
     public function index(User $actor, string $treeId, array $input): array
     {
-        $owner = $this->owners->resolve($actor, strtolower($treeId), null);
+        $owner = $this->owners->resolve($actor, Ids::internal('trees', strtolower($treeId)), null);
         Gate::forUser($actor)->authorize('viewAny', Evidence::class);
         Validator::make($input, ['page' => ['sometimes', 'integer', 'min:1', 'max:1000000']])->validate();
         $page = $this->evidences->paginateForOwner($owner->organization_id, $owner->id, null);
 
+        Ids::prime($page->getCollection());
+
         return ['data' => $page->getCollection()->map($this->photo(...))->all(), 'meta' => [
-            'tree_id' => $owner->id, 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
+            'tree_id' => Ids::id($owner), 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
             'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
         ]];
     }
@@ -144,7 +148,7 @@ class MobileTreePhotoService
     {
         $data = MobileInventoryPageInput::validate($input);
         $organization = $this->access->organization($actor);
-        $inventory = $this->inventories->findForTenant($organization->id, strtolower($inventoryId));
+        $inventory = $this->inventories->findForTenant($organization->id, Ids::internal('inventories', strtolower($inventoryId)));
         Gate::forUser($actor)->authorize('view', $inventory);
         $this->access->authorize($actor, 'trees.view');
         Gate::forUser($actor)->authorize('viewAny', Evidence::class);
@@ -157,12 +161,14 @@ class MobileTreePhotoService
             $this->access->allows($actor, 'maintenances.view'),
         );
 
+        Ids::prime($page->getCollection());
+
         return ['data' => $page->getCollection()->map(fn (Evidence $photo): array => array_replace($this->photo($photo), [
-            'tree_id' => $photo->getAttribute('mobile_tree_id'),
-            'tree_inspection_id' => $photo->tree_inspection_id, 'maintenance_id' => $photo->maintenance_id,
+            'tree_id' => Ids::external('trees', $photo->getAttribute('mobile_tree_id')),
+            'tree_inspection_id' => Ids::external('tree_inspections', $photo->tree_inspection_id), 'maintenance_id' => Ids::external('maintenances', $photo->maintenance_id),
             'source_kind' => $photo->tree_id !== null ? 'tree' : ($photo->tree_inspection_id !== null ? 'inspection' : 'maintenance'),
         ]))->all(), 'meta' => [
-            'organization_id' => $organization->id, 'inventory_id' => $inventory->id,
+            'organization_id' => Ids::id($organization), 'inventory_id' => Ids::id($inventory),
             'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
             'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
             'generated_at' => now()->toIso8601String(),
@@ -171,7 +177,7 @@ class MobileTreePhotoService
 
     public function content(User $actor, string $photoId): StreamedResponse
     {
-        $photo = $this->reader->authorizeExisting($actor, strtolower($photoId));
+        $photo = $this->reader->authorizeExisting($actor, Ids::internal('evidences', strtolower($photoId)));
         abort_if($photo->trashed(), 404);
 
         return $this->delivery->response($actor, $photo->id);
@@ -189,18 +195,18 @@ class MobileTreePhotoService
 
     private function photo(Evidence $photo): array
     {
-        return [
+        return Ids::output([
             'id' => $photo->id, 'tree_id' => $photo->tree_id, 'evidence_type_id' => $photo->evidence_type_id,
             'evidence_type_code' => $photo->evidenceType?->code, 'evidence_type_name' => $photo->evidenceType?->name,
             'source_kind' => $photo->tree_id !== null ? 'tree' : ($photo->tree_inspection_id !== null ? 'inspection' : 'maintenance'),
-            'tree_inspection_id' => $photo->tree_inspection_id, 'maintenance_id' => $photo->maintenance_id,
+            'tree_inspection_id' => Ids::external('tree_inspections', $photo->tree_inspection_id), 'maintenance_id' => Ids::external('maintenances', $photo->maintenance_id),
             'caption' => $photo->caption, 'notes' => $photo->notes,
             'captured_at' => $photo->captured_at?->utc()->format('Y-m-d\TH:i:s.u\Z'),
             'mime_type' => $photo->mime_type, 'size_bytes' => $photo->size_bytes,
             'width' => $photo->width, 'height' => $photo->height, 'checksum_sha256' => $photo->checksum_sha256,
             'created_at' => $photo->created_at?->utc()->format('Y-m-d\TH:i:s.u\Z'),
             'uploaded_by' => $photo->uploaded_by,
-            'content_url' => route('mobile.photos.content', $photo->id, false),
-        ];
+            'content_url' => route('mobile.photos.content', Ids::id($photo), false),
+        ], 'evidences');
     }
 }

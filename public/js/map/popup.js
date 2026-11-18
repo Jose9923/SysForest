@@ -1,6 +1,6 @@
 import {sameOriginUrl} from './state.js';
 import {treePopupContent} from './popup-content.js';
-import {attachTreePhoto} from './tree-photo.js';
+import {attachTreePhoto, isMapRecordId} from './tree-photo.js';
 
 export function treePopup(properties, {document, csrf, origin, map}) {
     const box = treePopupContent(properties, {document});
@@ -23,7 +23,8 @@ export function treePopup(properties, {document, csrf, origin, map}) {
             const queryKeys = [...url.searchParams.keys()];
             const hasSafeScope = queryKeys.length === 0 || (queryKeys.length === 1 && queryKeys[0] === 'scope'
                 && ['organization', 'department', 'national'].includes(url.searchParams.get('scope')));
-            if (!/^\/map\/trees\/[0-9a-f-]{36}\/open$/i.test(url.pathname) || !hasSafeScope || url.hash) return box;
+            const match = url.pathname.match(/^\/map\/trees\/([1-9][0-9]{0,18})\/open$/);
+            if (!match || !isMapRecordId(match[1]) || !hasSafeScope || url.hash) return box;
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = url.href;

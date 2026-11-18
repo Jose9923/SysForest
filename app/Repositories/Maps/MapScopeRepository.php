@@ -8,7 +8,6 @@ use App\DTOs\Trees\TreeReadScope;
 use App\Models\Organizations\Organization;
 use App\Models\Trees\Tree;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 use App\Repositories\PublicPortal\PublicVisibilityRepository;
 
@@ -59,7 +58,7 @@ class MapScopeRepository
     /** La navegación del mapa excluye árboles anulados incluso para administradores. */
     public function findTree(TreeReadScope $scope, string $treeId): Tree
     {
-        if (! Str::isUuid($treeId)) {
+        if (! \App\Support\Identifiers\RecordIdentifier::isValid($treeId)) {
             throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(Tree::class);
         }
 

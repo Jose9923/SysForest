@@ -70,7 +70,7 @@ class EvidenceService
                     $reference = $this->storage->store($item['file'], $owner->organization_id, $technical[$index], $id);
                     $references[] = $reference;
                     $evidence = $this->evidences->create($technical[$index] + $this->metadata($item) + [
-                        'id' => $id, 'organization_id' => $owner->organization_id,
+                        'external_id' => $id, 'organization_id' => $owner->organization_id,
                         'tree_id' => $owner instanceof Tree ? $owner->id : null,
                         'tree_inspection_id' => $owner instanceof TreeInspection ? $owner->id : null,
                         'maintenance_id' => $owner instanceof Maintenance ? $owner->id : null,

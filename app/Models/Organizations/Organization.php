@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Organizations;
 
 use App\Enums\Organizations\OrganizationType;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -17,7 +17,7 @@ use App\Models\User;
 
 class Organization extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
     use SoftDeletes;
 
     // settings y logo_path se gestionarán por casos de uso propios; no llegan de formularios arbitrarios.

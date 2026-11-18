@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Models\Trees;
 
 use App\Enums\Trees\TreeStatus;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
 
 class TreeStatusHistory extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     public $timestamps = false;
 

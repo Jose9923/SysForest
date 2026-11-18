@@ -16,7 +16,6 @@ use App\Repositories\Users\UserRepository;
 use App\Tenancy\TenantContext;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Services\Audit\AuditSnapshotService;
 use App\Services\Tenancy\TenantContextService;
@@ -71,7 +70,7 @@ class RoleAssignmentService
             $actor = $this->users->findForUpdate((int) $actor->id);
             $this->authorizeNational($actor, 'roles.assign-department');
 
-            if (!Str::isUuid($departmentId)) {
+            if (!\App\Support\Identifiers\RecordIdentifier::isValid($departmentId)) {
                 throw ValidationException::withMessages(['department_id' => 'Selecciona un departamento válido.']);
             }
 

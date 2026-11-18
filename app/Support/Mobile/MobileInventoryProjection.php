@@ -10,7 +10,7 @@ final class MobileInventoryProjection
 {
     public static function make(Inventory $inventory): array
     {
-        return ['id' => $inventory->id, 'organization_id' => $inventory->organization_id,
+        return ['id' => MobileIdentifiers::id($inventory), 'organization_id' => MobileIdentifiers::external('organizations', $inventory->organization_id),
             'code' => $inventory->code, 'name' => $inventory->name, 'description' => $inventory->description,
             'starts_at' => $inventory->starts_at?->format('Y-m-d'),
             'ends_at' => $inventory->ends_at?->format('Y-m-d'),

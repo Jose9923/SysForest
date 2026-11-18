@@ -10,7 +10,6 @@ use App\Models\Trees\Tree;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Str;
 
 /** Todas las lecturas operativas exigen el tenant; el UUID por sí solo nunca resuelve un individuo. */
 class TreeRepository
@@ -28,7 +27,7 @@ class TreeRepository
 
     public function findForTenant(string $organizationId, string $id, bool $lock = false, bool $withTrashed = false): Tree
     {
-        if (!Str::isUuid($id)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
             throw (new ModelNotFoundException())->setModel(Tree::class);
         }
         $query = $this->queryForTenant($organizationId)->whereKey($id);

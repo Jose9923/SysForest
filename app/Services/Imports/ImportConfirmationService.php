@@ -11,6 +11,7 @@ use App\Models\Imports\ImportBatch;
 use App\Models\User;
 use App\Repositories\Imports\ImportBatchRepository;
 use App\Repositories\Imports\ImportRowRepository;
+use App\Repositories\Imports\ImportNormalizedIdentifierRepository;
 use App\Repositories\Inventories\InventoryRepository;
 use App\Repositories\Auth\SecurityEventRepository;
 use App\Repositories\Users\UserRepository;
@@ -27,6 +28,7 @@ class ImportConfirmationService
         private ImportRowWriteService $writes,
         private ImportBatchRepository $batches,
         private ImportRowRepository $rows,
+        private ImportNormalizedIdentifierRepository $normalizedIdentifiers,
         private InventoryRepository $inventories,
         private UserRepository $users,
         private SecurityEventRepository $audit,
@@ -72,7 +74,8 @@ class ImportConfirmationService
             $invalid = count(array_filter($results, fn (array $row): bool => $row['errors'] !== []));
             $changed = false;
             foreach ($results as $index => $result) {
-                $changed = $changed || $this->fingerprint($result['normalized_values']) !== $this->fingerprint($saved[$index]->normalized_values);
+                $changed = $changed || $this->fingerprint($this->normalizedIdentifiers->forComparison($result['normalized_values']))
+                    !== $this->fingerprint($this->normalizedIdentifiers->forComparison($saved[$index]->normalized_values));
             }
             if ($invalid > 0 || $changed) {
                 foreach ($results as $index => $result) {

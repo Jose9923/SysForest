@@ -16,7 +16,6 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as ModelCollection;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 use App\Repositories\Maps\MapTreeRepository;
 use App\Repositories\PublicPortal\PublicTreeRepository;
@@ -106,7 +105,7 @@ class ExportReadRepository
                 'organization',
                 fn (Builder $organization) => $organization->where('public_code', $organizationPublicCode)
             );
-        } elseif (Str::isUuid($treeIdOrCode)) {
+        } elseif (\App\Support\Identifiers\RecordIdentifier::isValid($treeIdOrCode)) {
             $query->where('trees.id', $treeIdOrCode);
         } else {
             // Un código puede repetirse entre organizaciones; no se escoge arbitrariamente una coincidencia.

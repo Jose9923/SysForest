@@ -11,7 +11,6 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 use LogicException;
 
@@ -19,7 +18,7 @@ class ClassificationRuleRepository
 {
     public function find(string $id, bool $lock = false): ClassificationRuleVersion
     {
-        if (! Str::isUuid($id)) {
+        if (! \App\Support\Identifiers\RecordIdentifier::isValid($id)) {
             throw (new ModelNotFoundException())->setModel(ClassificationRuleVersion::class, [$id]);
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Evidences;
 
 use App\Models\Evidences\Evidence;
+use App\Repositories\Identifiers\IdentifierRepository;
 use Illuminate\Http\UploadedFile;
 use RuntimeException;
 use Throwable;
@@ -12,14 +13,14 @@ use Throwable;
 /** Encapsula Filesystem. El coordinador mantiene el lock PostgreSQL de cada operación. */
 class EvidenceStorageService
 {
-    public function __construct(private EvidenceStorageJournal $journal)
+    public function __construct(private EvidenceStorageJournal $journal, private IdentifierRepository $identifiers)
     {
     }
 
     /** operationId es único por archivo; el lote conserva una lista de estas referencias. */
     public function store(UploadedFile $file, string $organizationId, array $technical, string $operationId): array
     {
-        $reference = $this->journal->reference($organizationId, $operationId, $technical['extension'] ?? '');
+        $reference = $this->journal->reference($this->identifiers->external('organizations', $organizationId), $operationId, $technical['extension'] ?? '');
         $this->journal->begin($reference);
         $stream = null;
         try {
@@ -124,7 +125,7 @@ class EvidenceStorageService
         $reference = $this->journal->validateReference([
             'disk' => $evidence->disk, 'path' => $evidence->path, 'operation_id' => $parts[1],
         ]);
-        if (! str_starts_with($reference['path'], 'organizations/'.strtolower((string) $evidence->organization_id).'/')) {
+        if (! str_starts_with($reference['path'], 'organizations/'.strtolower($this->identifiers->external('organizations', $evidence->organization_id)).'/')) {
             throw new RuntimeException('La ubicación de la evidencia no corresponde a su organización.');
         }
 

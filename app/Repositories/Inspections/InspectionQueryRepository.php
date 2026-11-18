@@ -22,7 +22,7 @@ class InspectionQueryRepository
     {
         $this->requireAlias($alias);
 
-        return $query->orderByDesc($alias.'.inspection_date')->orderByDesc($alias.'.created_at')->orderByDesc($alias.'.id');
+        return $query->orderByDesc($alias.'.inspection_date')->orderByDesc($alias.'.created_at')->orderByDesc($alias.'.external_id');
     }
 
     /** Publicación delimita el universo antes del LIMIT; los filtros forestales siempre van después. */
@@ -42,7 +42,7 @@ class InspectionQueryRepository
                 ->whereColumn('ce.inspection_id', 'tree_inspections.id')
                 ->whereColumn('ce.inspection_version', 'tree_inspections.lock_version')
                 ->whereRaw('ce.species_id IS NOT DISTINCT FROM trees.species_id')
-                ->whereRaw("ce.inputs->>'growth_habit_id' IS NOT DISTINCT FROM trees.growth_habit_id::text")
+                ->whereRaw("ce.inputs->>'growth_habit_id' IS NOT DISTINCT FROM (SELECT carbon_habit.external_id::text FROM growth_habits AS carbon_habit WHERE carbon_habit.id = trees.growth_habit_id)")
                 ->orderByDesc('ce.id')->limit(1);
             $query->leftJoinLateral($carbon, 'visit_carbon')->addSelect(
                 DB::raw("visit_carbon.method->'profile'->>'validation_status' as carbon_validation_status"),

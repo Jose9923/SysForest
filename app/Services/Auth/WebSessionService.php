@@ -20,11 +20,11 @@ class WebSessionService
     {
         $pendingInvitation = $request->session()->get('pending_invitation');
         $pendingVerification = $request->session()->get('pending_verification');
-        $selected = $renewal && $request->session()->get('auth_session_id') === $pair->session->id
+        $selected = $renewal && $request->session()->get('auth_session_id') === $pair->session->external_id
             ? $request->session()->get('active_organization_id') : null;
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        $request->session()->put('auth_session_id', $pair->session->id);
+        $request->session()->put('auth_session_id', $pair->session->external_id);
         if ($selected !== null) {
             $request->session()->put('active_organization_id', $selected);
         }

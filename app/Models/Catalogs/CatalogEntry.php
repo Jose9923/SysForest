@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Catalogs;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 
 /** Metadatos compartidos por valores nacionales independientes, sin pertenencia institucional. */
 abstract class CatalogEntry extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['code', 'name', 'description', 'active', 'sort_order'];
 

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models\Auth;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
 
 class NationalRoleAssignment extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['user_id', 'role_id', 'scope', 'active', 'assigned_at', 'revoked_at'];
 

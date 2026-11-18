@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use App\Models\Maintenances\Maintenance;
 use App\Models\Trees\Tree;
 use App\Models\User;
@@ -33,7 +34,7 @@ class MobileMaintenanceService
     public function index(User $actor, string $inventoryId, array $input = []): array
     {
         $organization = $this->access->organization($actor);
-        $inventory = $this->inventories->findForTenant($organization->id, $inventoryId);
+        $inventory = $this->inventories->findForTenant($organization->id, Ids::internal('inventories', $inventoryId));
         Gate::forUser($actor)->authorize('view', $inventory);
         Gate::forUser($actor)->authorize('viewAny', Tree::class);
         Gate::forUser($actor)->authorize('viewAny', Maintenance::class);
@@ -41,6 +42,7 @@ class MobileMaintenanceService
             throw ValidationException::withMessages(['filters' => 'La consulta contiene filtros no permitidos.']);
         }
         $filters = Validator::make(MaintenanceInput::normalize($input), MobileMaintenanceInput::rules(), MaintenanceInput::messages())->validate();
+        $filters = Ids::input($filters);
         if (isset($filters['date_from'], $filters['date_to']) && $filters['date_from'] > $filters['date_to']) {
             throw ValidationException::withMessages(['date_to' => 'La fecha final no puede preceder a la inicial.']);
         }
@@ -52,10 +54,11 @@ class MobileMaintenanceService
         $page = $this->maintenances->paginate($organization->id, $filters + [
             'inventory_id' => $inventory->id, 'include_voided_trees' => false,
         ]);
+        Ids::prime($page->getCollection());
         $records = $page->getCollection()->map(function (Maintenance $record) use ($actor): array {
             Gate::forUser($actor)->authorize('view', $record);
 
-            return ['id' => $record->id, 'code' => $record->code,
+            return Ids::output(['id' => $record->id, 'code' => $record->code,
                 'tree_id' => $record->tree_id, 'tree_code' => $record->tree->code,
                 'maintenance_type_id' => $record->maintenance_type_id, 'type_name' => $record->maintenanceType->name,
                 'status' => $record->status->value, 'status_label' => $record->status->label(),
@@ -63,11 +66,11 @@ class MobileMaintenanceService
                 'scheduled_date' => $record->scheduled_date?->format('Y-m-d'),
                 'performed_date' => $record->performed_date?->format('Y-m-d'),
                 'assignee_name' => $record->assignee?->name, 'notes' => $record->notes, 'result' => $record->result,
-                'updated_at' => $record->updated_at?->toIso8601String()];
+                'updated_at' => $record->updated_at?->toIso8601String()], 'maintenances');
         })->all();
 
-        return ['data' => $records, 'meta' => ['organization_id' => $organization->id,
-            'inventory_id' => $inventory->id, 'current_page' => $page->currentPage(),
+        return ['data' => $records, 'meta' => ['organization_id' => Ids::id($organization),
+            'inventory_id' => Ids::id($inventory), 'current_page' => $page->currentPage(),
             'last_page' => $page->lastPage(), 'per_page' => $page->perPage(),
             'total' => $page->total(), 'has_more' => $page->hasMorePages()]];
     }

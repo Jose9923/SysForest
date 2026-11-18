@@ -15,7 +15,7 @@ class BackfillCarbonEstimates extends Command
     public function handle(CarbonEstimationService $service): int
     {
         $organization = $this->option('organization');
-        if ($organization !== null && !\Illuminate\Support\Str::isUuid($organization)) {
+        if ($organization !== null && !\App\Support\Identifiers\RecordIdentifier::isValid($organization)) {
             $this->error('La institución debe ser un UUID.');
 
             return self::FAILURE;

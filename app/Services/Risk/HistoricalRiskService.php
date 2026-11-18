@@ -6,7 +6,6 @@ namespace App\Services\Risk;
 
 use App\Repositories\Risk\RiskRepository;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /** Proyecta visitas existentes sin actualizar su versión, condiciones ni auditoría histórica. */
@@ -18,7 +17,7 @@ class HistoricalRiskService
 
     public function backfill(?string $organizationId = null): int
     {
-        if ($organizationId !== null && !Str::isUuid($organizationId)) {
+        if ($organizationId !== null && !\App\Support\Identifiers\RecordIdentifier::isValid($organizationId)) {
             throw ValidationException::withMessages(['organization' => 'Indica un UUID institucional válido.']);
         }
         $count = 0;

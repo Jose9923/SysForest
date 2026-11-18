@@ -20,7 +20,7 @@ class EvidenceInput
 
     public static function metadataRules(): array
     {
-        return ['evidence_type_id' => ['required', 'uuid'], 'caption' => ['nullable', 'string', 'max:2000'],
+        return ['evidence_type_id' => ['required', 'record_id'], 'caption' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:20000'],
             'captured_at' => ['nullable', 'date_format:Y-m-d\TH:i']];
     }
@@ -59,7 +59,7 @@ class EvidenceInput
 
     public static function filters(): array
     {
-        return ['evidence_type_id' => ['nullable', 'uuid'], 'trashed' => ['nullable', 'in:only'],
+        return ['evidence_type_id' => ['nullable', 'record_id'], 'trashed' => ['nullable', 'in:only'],
             'date_from' => ['nullable', 'date_format:Y-m-d'], 'date_to' => ['nullable', 'date_format:Y-m-d']];
     }
 
@@ -72,7 +72,7 @@ class EvidenceInput
             'items.*.file.max' => 'La imagen supera el tamaño máximo permitido.',
             'items.*.evidence_type_id.required' => 'El tipo de evidencia es obligatorio.',
             'evidence_type_id.required' => 'El tipo de evidencia es obligatorio.',
-            '*.uuid' => 'Selecciona una referencia válida.', '*.prohibited' => 'Este dato se determina en el servidor.',
+            '*.record_id' => 'Selecciona una referencia válida.', '*.prohibited' => 'Este dato se determina en el servidor.',
             'captured_at.date_format' => 'Indica una fecha de captura válida en hora de Bogotá.',
             'items.*.captured_at.date_format' => 'Indica una fecha de captura válida en hora de Bogotá.',
             '*.max' => 'El valor supera el límite permitido.', 'lock_version.required' => 'La versión del registro es obligatoria.'];
@@ -84,7 +84,7 @@ class EvidenceInput
             throw ValidationException::withMessages(['owner' => 'La evidencia debe pertenecer exactamente a un árbol, una inspección o un mantenimiento.']);
         }
         Validator::make(['tree_id' => $treeId, 'tree_inspection_id' => $inspectionId, 'maintenance_id' => $maintenanceId], [
-            'tree_id' => ['nullable', 'uuid'], 'tree_inspection_id' => ['nullable', 'uuid'], 'maintenance_id' => ['nullable', 'uuid'],
+            'tree_id' => ['nullable', 'record_id'], 'tree_inspection_id' => ['nullable', 'record_id'], 'maintenance_id' => ['nullable', 'record_id'],
         ], self::messages())->validate();
     }
 }

@@ -16,7 +16,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use LogicException;
 
 /** Consultas explícitas; ningún nombre de tabla o columna procede del navegador. */
@@ -145,7 +144,7 @@ class PublicationRepository
 
     private function find(Builder $query, string $organizationId, string $id, bool $lock): Model
     {
-        if (!Str::isUuid($organizationId) || !Str::isUuid($id)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($organizationId) || !\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
             throw new ModelNotFoundException();
         }
         $query->where('organization_id', $organizationId)->whereKey($id);

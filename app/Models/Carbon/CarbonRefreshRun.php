@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models\Carbon;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 
 class CarbonRefreshRun extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $guarded = ['*'];
     protected $dateFormat = 'Y-m-d H:i:s.u';

@@ -8,6 +8,6 @@ Route::prefix('conditions')->name('conditions.')->where(['catalog' => 'categorie
     Route::get('/{catalog}', [\App\Http\Controllers\Conditions\ConditionCatalogController::class, 'index'])->name('index');
     Route::get('/{catalog}/create', [\App\Http\Controllers\Conditions\ConditionCatalogController::class, 'create'])->name('create');
     Route::post('/{catalog}', [\App\Http\Controllers\Conditions\ConditionCatalogController::class, 'store'])->name('store');
-    Route::get('/{catalog}/{record}/edit', [\App\Http\Controllers\Conditions\ConditionCatalogController::class, 'edit'])->whereUuid('record')->name('edit');
-    Route::put('/{catalog}/{record}', [\App\Http\Controllers\Conditions\ConditionCatalogController::class, 'update'])->whereUuid('record')->name('update');
+    Route::get('/{catalog}/{record}/edit', [\App\Http\Controllers\Conditions\ConditionCatalogController::class, 'edit'])->whereNumber('record')->name('edit');
+    Route::put('/{catalog}/{record}', [\App\Http\Controllers\Conditions\ConditionCatalogController::class, 'update'])->whereNumber('record')->name('update');
 });

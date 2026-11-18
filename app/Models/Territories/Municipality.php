@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Territories;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +12,7 @@ use App\Models\Organizations\Organization;
 
 class Municipality extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['department_id', 'code', 'name', 'active'];
     protected $hidden = ['geometry'];

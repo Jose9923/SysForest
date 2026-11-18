@@ -71,7 +71,7 @@ class AuditSourceRepository
             throw new \InvalidArgumentException('El alcance de auditoría no es válido.');
         }
 
-        return $query->orderBy('name')->get(['id', 'name']);
+        return $query->orderBy('name')->get(['external_id as id', 'name']);
     }
 
     public function options(AuditScope $scope): array
@@ -98,7 +98,7 @@ class AuditSourceRepository
     {
         return $this->ordered($this->timeline()->whereNotExists(function (Builder $query): void {
             $query->selectRaw('1')->from('audit_deliveries as d')
-                ->whereColumn('d.source', 'a.source')->whereColumn('d.entry_id', 'a.id');
+                ->whereColumn('d.source', 'a.source')->whereColumn('d.entry_id', 'a.internal_id');
         }))->limit($this->batchLimit($limit))->get();
     }
 
@@ -128,7 +128,7 @@ class AuditSourceRepository
     {
         return $this->timeline()->whereNotExists(function (Builder $query): void {
             $query->selectRaw('1')->from('audit_deliveries as d')
-                ->whereColumn('d.source', 'a.source')->whereColumn('d.entry_id', 'a.id');
+                ->whereColumn('d.source', 'a.source')->whereColumn('d.entry_id', 'a.internal_id');
         })->exists();
     }
 
@@ -136,7 +136,7 @@ class AuditSourceRepository
     {
         return $this->timeline()->whereNotExists(function (Builder $query): void {
             $query->selectRaw('1')->from('audit_deliveries as d')
-                ->whereColumn('d.source', 'a.source')->whereColumn('d.entry_id', 'a.id');
+                ->whereColumn('d.source', 'a.source')->whereColumn('d.entry_id', 'a.internal_id');
         })->count();
     }
 
@@ -159,12 +159,12 @@ class AuditSourceRepository
     {
         $query = $this->timeline()
             ->leftJoin('users as u', 'u.id', '=', 'a.actor_user_id')
-            ->leftJoin('organizations as o', 'o.id', '=', 'a.organization_id')
+            ->leftJoin('organizations as o', 'o.id', '=', 'a.internal_organization_id')
             ->select('a.*', 'u.name as actor_name', 'o.name as organization_name');
         if ($scope->kind === 'organization') {
-            $query->where('a.organization_id', $scope->organizationId);
+            $query->where('a.internal_organization_id', $scope->organizationId);
         } elseif ($scope->kind === 'department') {
-            $query->whereIn('a.organization_id', $scope->organizationIds);
+            $query->whereIn('a.internal_organization_id', $scope->organizationIds);
         } elseif ($scope->kind !== 'national') {
             throw new \InvalidArgumentException('El alcance de auditoría no es válido.');
         }
@@ -174,47 +174,62 @@ class AuditSourceRepository
 
     private function timeline(): Builder
     {
-        $union = DB::table('security_events')->selectRaw("id AS id, 'events'::text AS source, organization_id, actor_user_id,
+        $organization = $this->externalExpression('organizations', 'organization_id');
+        $union = DB::table('security_events')->selectRaw("id AS internal_id, external_id::text AS id,
+            'events'::text AS source, organization_id AS internal_organization_id, {$organization} AS organization_id, actor_user_id,
             created_at AS occurred_at, event, COALESCE(resource_type, 'security_event') AS resource_type,
             resource_id, before_values, after_values, metadata, context, NULL::integer AS version");
-        foreach (['inspections' => ['inspection_revisions', 'inspection_id', 'tree_inspection'],
-            'evidences' => ['evidence_revisions', 'evidence_id', 'evidence'],
-            'maintenances' => ['maintenance_revisions', 'maintenance_id', 'maintenance']] as $source => [$table, $subject, $type]) {
-            $union->unionAll($this->legacy($table, "'{$type}'", "r.{$subject}::text", 'r.event')->selectRaw("r.id, '{$source}'::text, r.organization_id, r.changed_by,
-                r.changed_at, r.event, '{$type}'::text, r.{$subject}::text, r.old_values, r.new_values,
+        $organization = $this->externalExpression('organizations', 'r.organization_id');
+        foreach (['inspections' => ['inspection_revisions', 'inspection_id', 'tree_inspections', 'tree_inspection'],
+            'evidences' => ['evidence_revisions', 'evidence_id', 'evidences', 'evidence'],
+            'maintenances' => ['maintenance_revisions', 'maintenance_id', 'maintenances', 'maintenance']] as $source => [$table, $subject, $subjectTable, $type]) {
+            $externalSubject = $this->externalExpression($subjectTable, "r.{$subject}");
+            $union->unionAll($this->legacy($table, "'{$type}'", $externalSubject, 'r.event')->selectRaw("r.id, r.external_id::text,
+                '{$source}'::text, r.organization_id, {$organization}, r.changed_by,
+                r.changed_at, r.event, '{$type}'::text, {$externalSubject}, r.old_values, r.new_values,
                 '{}'::jsonb, '{}'::jsonb, r.version"));
         }
-        $union->unionAll($this->legacy(
-            'publication_revisions',
-            "CASE WHEN r.organization_subject_id IS NOT NULL THEN 'organization' WHEN r.inventory_id IS NOT NULL THEN 'inventory' WHEN r.tree_id IS NOT NULL THEN 'tree' WHEN r.tree_inspection_id IS NOT NULL THEN 'tree_inspection' ELSE 'evidence' END",
-            'COALESCE(r.organization_subject_id, r.inventory_id, r.tree_id, r.tree_inspection_id, r.evidence_id)::text',
-            "'publication.changed'"
-        )->selectRaw("r.id, 'publications'::text, r.organization_id, r.changed_by,
-            r.changed_at, 'publication.changed'::text,
-            CASE WHEN r.organization_subject_id IS NOT NULL THEN 'organization' WHEN r.inventory_id IS NOT NULL THEN 'inventory'
-                WHEN r.tree_id IS NOT NULL THEN 'tree' WHEN r.tree_inspection_id IS NOT NULL THEN 'tree_inspection' ELSE 'evidence' END,
-            COALESCE(r.organization_subject_id, r.inventory_id, r.tree_id, r.tree_inspection_id, r.evidence_id)::text,
-            r.old_values, r.new_values, '{}'::jsonb, '{}'::jsonb, r.version"));
-        $union->unionAll($this->legacy('tree_status_histories', "'tree'", 'r.tree_id::text', "'tree.status_changed'")->selectRaw("r.id, 'statuses'::text, r.organization_id, r.changed_by,
-            r.changed_at, 'tree.status_changed'::text, 'tree'::text, r.tree_id::text,
-            jsonb_build_object('current_status', r.from_status), jsonb_build_object('current_status', r.to_status),
-            jsonb_build_object('reason', r.reason), '{}'::jsonb, NULL::integer"));
-        $union->unionAll($this->legacy('tree_location_histories', "'tree'", 'r.tree_id::text', "'tree.location_changed'")->selectRaw("r.id, 'locations'::text, r.organization_id, r.changed_by,
-            r.changed_at, 'tree.location_changed'::text, 'tree'::text, r.tree_id::text,
-            jsonb_build_object('coordinate_raw', r.old_coordinate_raw, 'location', ST_AsGeoJSON(r.old_geometry)::jsonb, 'location_metadata', r.old_metadata),
-            jsonb_build_object('coordinate_raw', r.new_coordinate_raw, 'location', ST_AsGeoJSON(r.new_geometry)::jsonb, 'location_metadata', r.new_metadata),
-            jsonb_build_object('reason', r.reason, 'change_type', r.change_type), '{}'::jsonb, NULL::integer"));
+        $publicationType = "CASE WHEN r.organization_subject_id IS NOT NULL THEN 'organization' WHEN r.inventory_id IS NOT NULL THEN 'inventory' WHEN r.tree_id IS NOT NULL THEN 'tree' WHEN r.tree_inspection_id IS NOT NULL THEN 'tree_inspection' ELSE 'evidence' END";
+        $publicationSubject = 'COALESCE('.implode(', ', [
+            $this->externalExpression('organizations', 'r.organization_subject_id'),
+            $this->externalExpression('inventories', 'r.inventory_id'),
+            $this->externalExpression('trees', 'r.tree_id'),
+            $this->externalExpression('tree_inspections', 'r.tree_inspection_id'),
+            $this->externalExpression('evidences', 'r.evidence_id'),
+        ]).')';
+        $union->unionAll($this->legacy('publication_revisions', $publicationType, $publicationSubject, "'publication.changed'")
+            ->selectRaw("r.id, r.external_id::text, 'publications'::text, r.organization_id, {$organization}, r.changed_by,
+                r.changed_at, 'publication.changed'::text, {$publicationType}, {$publicationSubject},
+                r.old_values, r.new_values, '{}'::jsonb, '{}'::jsonb, r.version"));
+        $tree = $this->externalExpression('trees', 'r.tree_id');
+        $union->unionAll($this->legacy('tree_status_histories', "'tree'", $tree, "'tree.status_changed'")
+            ->selectRaw("r.id, r.external_id::text, 'statuses'::text, r.organization_id, {$organization}, r.changed_by,
+                r.changed_at, 'tree.status_changed'::text, 'tree'::text, {$tree},
+                jsonb_build_object('current_status', r.from_status), jsonb_build_object('current_status', r.to_status),
+                jsonb_build_object('reason', r.reason), '{}'::jsonb, NULL::integer"));
+        $union->unionAll($this->legacy('tree_location_histories', "'tree'", $tree, "'tree.location_changed'")
+            ->selectRaw("r.id, r.external_id::text, 'locations'::text, r.organization_id, {$organization}, r.changed_by,
+                r.changed_at, 'tree.location_changed'::text, 'tree'::text, {$tree},
+                jsonb_build_object('coordinate_raw', r.old_coordinate_raw, 'location', ST_AsGeoJSON(r.old_geometry)::jsonb, 'location_metadata', r.old_metadata),
+                jsonb_build_object('coordinate_raw', r.new_coordinate_raw, 'location', ST_AsGeoJSON(r.new_geometry)::jsonb, 'location_metadata', r.new_metadata),
+                jsonb_build_object('reason', r.reason, 'change_type', r.change_type), '{}'::jsonb, NULL::integer"));
+
         return DB::query()->fromSub($union, 'a')->select('a.*');
+    }
+
+    /** Tabla y columna proceden exclusivamente del contrato cerrado de las siete fuentes. */
+    private function externalExpression(string $table, string $column): string
+    {
+        return "(SELECT audit_ref.external_id::text FROM {$table} AS audit_ref WHERE audit_ref.id = {$column})";
     }
 
     private function legacy(string $table, string $type, string $subject, string $event): Builder
     {
-        // Únicamente una referencia explícita sustituye la revisión por el evento nuevo.
-        // Dos acciones simultáneas nunca se fusionan por coincidencia de fecha o actor.
+        // La referencia explícita externa conserva la deduplicación y los documentos ya entregados.
         return DB::table($table.' as r')->whereNotExists(function (Builder $query) use ($type, $subject, $event): void {
             $query->selectRaw('1')->from('security_events as e')
                 ->whereColumn('e.organization_id', 'r.organization_id')
-                ->whereRaw("e.metadata->>'revision_id' = r.id::text")
+                ->whereRaw("e.metadata->>'revision_id' = r.external_id::text")
                 ->whereNotNull('e.before_values')
                 ->whereRaw("e.resource_type = {$type} AND e.resource_id = {$subject} AND e.event = {$event}");
         });

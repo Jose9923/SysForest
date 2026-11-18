@@ -20,7 +20,7 @@ class MaintenanceInput
     public static function rules(bool $updating = false): array
     {
         return self::guards() + [
-            'maintenance_type_id' => ['required', 'uuid'],
+            'maintenance_type_id' => ['required', 'record_id'],
             'priority' => ['required', Rule::enum(MaintenancePriority::class)],
             'scheduled_date' => ['nullable', 'date_format:Y-m-d'],
             'assigned_to' => ['nullable', ...self::userIdRules()],
@@ -57,8 +57,8 @@ class MaintenanceInput
 
     public static function filters(): array
     {
-        return ['q' => ['nullable', 'string', 'max:200'], 'tree_id' => ['nullable', 'uuid'],
-            'maintenance_type_id' => ['nullable', 'uuid'], 'status' => ['nullable', Rule::enum(MaintenanceStatus::class)],
+        return ['q' => ['nullable', 'string', 'max:200'], 'tree_id' => ['nullable', 'record_id'],
+            'maintenance_type_id' => ['nullable', 'record_id'], 'status' => ['nullable', Rule::enum(MaintenanceStatus::class)],
             'priority' => ['nullable', Rule::enum(MaintenancePriority::class)],
             'assigned_to' => ['nullable', ...self::userIdRules()], 'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date_format:Y-m-d'], 'trashed' => ['nullable', 'in:only']];
@@ -78,7 +78,7 @@ class MaintenanceInput
     public static function messages(): array
     {
         return ['required' => 'Este dato es obligatorio.', 'required_if' => 'Este dato es obligatorio para el estado elegido.',
-            'uuid' => 'Selecciona una referencia válida.', 'integer' => 'Introduce un entero válido.',
+            'record_id' => 'Selecciona una referencia válida.', 'integer' => 'Introduce un entero válido.',
             'min' => 'El valor está por debajo del mínimo permitido.', 'max' => 'El valor supera el límite permitido.',
             'enum' => 'Selecciona una opción válida.', 'in' => 'Selecciona una opción válida.', 'string' => 'Introduce un texto válido.',
             'date_format' => 'Introduce una fecha válida con formato AAAA-MM-DD.',

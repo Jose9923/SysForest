@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use App\Enums\Inventories\InventoryStatus;
 use App\Enums\Trees\TreeStatus;
 use App\Support\Mobile\MobileInventoryProjection;
@@ -34,7 +35,7 @@ class MobileReferenceService
         $analytics = $this->canReadAnalyticsReferences($actor) ? array_keys(MobileReferenceRepository::ANALYTICS_CATALOGS) : [];
 
         return ['data' => [
-            'organization_id' => $organization->id,
+            'organization_id' => Ids::id($organization),
             'catalogs' => [...array_keys(MobileReferenceRepository::CATALOGS), ...$analytics],
             'analytics_catalogs' => $analytics,
             'tree_statuses' => TreeStatus::options(),
@@ -64,6 +65,8 @@ class MobileReferenceService
         $filters = $this->filters($input);
         $page = $this->references->catalog($catalog, $filters);
 
+        Ids::prime($page->getCollection());
+
         return ['data' => $page->getCollection()->map(fn (Model $record) => $this->reference($catalog, $record))->all(),
             'meta' => $this->pagination($page) + ['catalog' => $catalog, 'active_only' => !$historical, 'analytics_only' => $historical]];
     }
@@ -84,8 +87,10 @@ class MobileReferenceService
             $photoSources[] = 'maintenance';
         }
 
+        Ids::prime($page->getCollection());
+
         return ['data' => $page->getCollection()->map(MobileInventoryProjection::make(...))->all(), 'meta' => $this->pagination($page) + [
-            'organization_id' => $organization->id,
+            'organization_id' => Ids::id($organization),
             'supports_inventory_creation' => true,
             'supports_inventory_history_reads' => true,
             'can_view_inventory_trees' => $canReadTrees,
@@ -126,7 +131,7 @@ class MobileReferenceService
         $catalog = MobileReferenceRepository::ANALYTICS_CATALOGS[$catalog] ?? $catalog;
         $taxonomy = in_array($catalog, ['species', 'families'], true);
         $data = [
-            'id' => $record->id,
+            'id' => Ids::id($record),
             'code' => $record->code,
             'name' => $taxonomy ? $record->scientific_name : $record->name,
             'description' => \App\Support\Imports\ExcelReferencePresentation::text($record->description),
@@ -140,7 +145,7 @@ class MobileReferenceService
         if ($catalog === 'species') {
             $data['family_id'] = $record->family_id;
             $data['common_names'] = $record->commonNames->map(fn (Model $name) => [
-                'id' => $name->id, 'code' => $name->code, 'name' => $name->name, 'is_primary' => (bool) $name->is_primary,
+                'id' => Ids::id($name), 'code' => $name->code, 'name' => $name->name, 'is_primary' => (bool) $name->is_primary,
             ])->all();
         }
         if (in_array($catalog, ['condition_categories', 'physical_conditions', 'phytosanitary_conditions'], true)) {
@@ -150,7 +155,7 @@ class MobileReferenceService
             $data['condition_category_id'] = $record->condition_category_id;
         }
 
-        return $data;
+        return Ids::output($data);
     }
 
     private function filters(array $input, bool $inventories = false): array
@@ -158,7 +163,7 @@ class MobileReferenceService
         $filters = Validator::make($input, MobileReferenceInput::rules($inventories), MobileReferenceInput::messages())->validate();
         $filters['q'] = trim($filters['q'] ?? '');
 
-        return $filters;
+        return Ids::input($filters);
     }
 
     private function pagination(LengthAwarePaginator $page): array

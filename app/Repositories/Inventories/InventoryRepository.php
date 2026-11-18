@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class InventoryRepository
@@ -95,7 +94,7 @@ class InventoryRepository
         ?string $notes = null,
     ): InventoryTree {
         $this->findForTenant($organizationId, $inventoryId);
-        if (! Str::isUuid($treeId)) {
+        if (! \App\Support\Identifiers\RecordIdentifier::isValid($treeId)) {
             throw (new ModelNotFoundException())->setModel(Tree::class, [$treeId]);
         }
         Tree::query()->where('organization_id', $organizationId)->whereKey($treeId)->firstOrFail();
@@ -119,7 +118,7 @@ class InventoryRepository
 
     private function requireUuid(string $id): void
     {
-        if (! Str::isUuid($id)) {
+        if (! \App\Support\Identifiers\RecordIdentifier::isValid($id)) {
             throw (new ModelNotFoundException())->setModel(Inventory::class, [$id]);
         }
     }

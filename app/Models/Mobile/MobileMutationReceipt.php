@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Mobile;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 
 /** Conserva el resultado exacto confirmado aunque existan revisiones posteriores. */
 class MobileMutationReceipt extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $guarded = ['*'];
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Trees;
 
 use App\Enums\Trees\TreeStatus;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -26,7 +26,7 @@ use App\Models\User;
 
 class Tree extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
     use SoftDeletes;
 
     /** Los repositorios reciben exclusivamente atributos preparados por los servicios autorizados. */
@@ -106,7 +106,7 @@ class Tree extends Model
 
     public function inspections(): HasMany
     {
-        return $this->hasMany(TreeInspection::class)->orderByDesc('inspection_date')->orderByDesc('created_at')->orderByDesc('id');
+        return $this->hasMany(TreeInspection::class)->orderByDesc('inspection_date')->orderByDesc('created_at')->orderByDesc('external_id');
     }
 
     public function statusHistories(): HasMany

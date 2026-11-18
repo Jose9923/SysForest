@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Mobile;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 
 /** Resultado durable del alta; se conserva aunque la campaña cambie después. */
 class MobileInventoryReceipt extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $guarded = ['*'];
 

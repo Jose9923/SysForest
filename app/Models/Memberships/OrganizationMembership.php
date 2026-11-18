@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Memberships;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -14,7 +14,7 @@ use App\Models\User;
 
 class OrganizationMembership extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['user_id', 'organization_id', 'active', 'joined_at', 'left_at'];
 

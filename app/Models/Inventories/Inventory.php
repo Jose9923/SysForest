@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Models\Inventories;
 
 use App\Enums\Inventories\InventoryStatus;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -16,7 +16,7 @@ use App\Models\User;
 
 class Inventory extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['code', 'name', 'description', 'starts_at', 'ends_at', 'status', 'active'];
 

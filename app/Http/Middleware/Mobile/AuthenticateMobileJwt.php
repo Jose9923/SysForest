@@ -43,7 +43,7 @@ class AuthenticateMobileJwt
 
             $claims = $this->tokens->decode($matches[1], 'mobile');
             $session = $this->sessions->authenticate($claims['sid'], (int) $claims['sub']);
-            if ($session->client_type !== 'mobile' || $session->organization_id !== $claims['org']) {
+            if ($session->client_type !== 'mobile' || app(\App\Repositories\Identifiers\IdentifierRepository::class)->external('organizations', $session->organization_id) !== $claims['org']) {
                 throw new AuthenticationException('No fue posible autenticar la solicitud.');
             }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Invitations;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Organizations\Organization;
@@ -13,7 +13,7 @@ use App\Models\User;
 
 class Invitation extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['organization_id', 'email', 'role_id', 'scope', 'invited_by', 'token_hash', 'expires_at', 'accepted_at', 'revoked_at'];
     protected $hidden = ['token_hash'];

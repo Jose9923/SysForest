@@ -23,7 +23,7 @@ class TokenService
         if ((int) $session->user_id !== (int) $user->id || ! $user->active
             || $session->revoked_at !== null || $session->expires_at->lessThanOrEqualTo(now())
             || ! in_array($clientType, ['web', 'mobile'], true)
-            || ($clientType === 'mobile' && ! Str::isUuid((string) $session->organization_id))) {
+            || ($clientType === 'mobile' && ! \App\Support\Identifiers\RecordIdentifier::isValid($session->organization_id))) {
             throw new AuthenticationException('No fue posible autenticar la solicitud.');
         }
 
@@ -32,7 +32,7 @@ class TokenService
             $claims = [
                 'iss' => (string) config('security.issuer'),
                 'aud' => [$this->audience($clientType)],
-                'sid' => $session->id,
+                'sid' => $session->external_id,
                 'exp' => min(
                     now()->addMinutes((int) config('security.access_ttl_minutes'))->getTimestamp(),
                     $session->expires_at->getTimestamp(),
@@ -40,7 +40,7 @@ class TokenService
             ];
             if ($clientType === 'mobile') {
                 $claims['client'] = 'mobile';
-                $claims['org'] = $session->organization_id;
+                $claims['org'] = app(\App\Repositories\Identifiers\IdentifierRepository::class)->external('organizations', $session->organization_id);
             }
 
             return $this->jwt->claims($claims)->fromUser($user);

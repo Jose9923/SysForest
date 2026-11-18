@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use App\Auth\TokenPair;
 use App\Models\Auth\AuthSession;
 use App\Models\User;
@@ -31,13 +32,13 @@ class MobileAuthService
         return $this->auth->withVerifiedMobileUser(
             $email,
             $password,
-            fn (User $user): array => $this->organizations->mobileOptions($user),
+            fn (User $user): array => array_map(fn (array $row): array => Ids::output($row, 'organizations'), $this->organizations->mobileOptions($user)),
         );
     }
 
     public function login(string $email, #[\SensitiveParameter] string $password, string $organizationId): array
     {
-        return $this->credentials($this->auth->login($email, $password, strtolower($organizationId)));
+        return $this->credentials($this->auth->login($email, $password, Ids::internal('organizations', strtolower($organizationId))));
     }
 
     public function refresh(#[\SensitiveParameter] string $refreshToken): array
@@ -60,8 +61,8 @@ class MobileAuthService
 
         return [
             'user' => ['id' => (int) $user->id, 'name' => $user->name, 'email' => $user->email],
-            'organization' => ['id' => $organization->id, 'name' => $organization->name, 'code' => $organization->code],
-            'session_id' => $session->id,
+            'organization' => ['id' => Ids::id($organization), 'name' => $organization->name, 'code' => $organization->code],
+            'session_id' => Ids::id($session),
             'session_expires_at' => $session->expires_at->toIso8601String(),
         ];
     }

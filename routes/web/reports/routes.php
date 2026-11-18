@@ -10,5 +10,5 @@ Route::middleware('throttle:reports.download')->group(function (): void {
     Route::get('/reports/download/{format}', [ExportController::class, 'download'])
         ->where('format', 'csv|xlsx|geojson|pdf')->name('reports.download');
     Route::get('/reports/trees/{tree}/pdf', [ExportController::class, 'tree'])
-        ->whereUuid('tree')->name('reports.trees.pdf');
+        ->whereNumber('tree')->name('reports.trees.pdf');
 });

@@ -6,13 +6,14 @@ namespace App\Services\Inspections;
 
 use App\Models\Inspections\TreeInspection;
 use App\Models\User;
+use App\Services\Audit\AuditSnapshotService;
 use App\Repositories\Inspections\InspectionRevisionRepository;
 use App\Repositories\Auth\SecurityEventRepository;
 
 /** La revisión completa queda estructurada por dominio y se confirma en la transacción de escritura. */
 class InspectionAuditService
 {
-    public function __construct(private InspectionRevisionRepository $revisions, private SecurityEventRepository $events)
+    public function __construct(private InspectionRevisionRepository $revisions, private SecurityEventRepository $events, private AuditSnapshotService $snapshots)
     {
     }
 
@@ -46,7 +47,7 @@ class InspectionAuditService
         $snapshot['fauna'] = ['category_ids' => $inspection->faunaCategories->modelKeys(), 'observations' => $inspection->fauna_observations];
         sort($snapshot['fauna']['category_ids']);
 
-        return $snapshot;
+        return $this->snapshots->sanitize('tree_inspection', $snapshot);
     }
 
     public function record(User $actor, TreeInspection $inspection, array $old, string $event): void

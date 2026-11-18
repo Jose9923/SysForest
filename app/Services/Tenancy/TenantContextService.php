@@ -34,7 +34,14 @@ class TenantContextService
         $this->context->clear();
         $this->requireEligibleActor($actor);
 
-        if (!Str::isUuid($organizationId)) {
+        if (Str::isUuid($organizationId)) {
+            try {
+                $organizationId = app(\App\Repositories\Identifiers\IdentifierRepository::class)->internal('organizations', $organizationId);
+            } catch (ModelNotFoundException) {
+                throw new AuthorizationException('La organización solicitada no está autorizada.');
+            }
+        }
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($organizationId)) {
             throw new AuthorizationException('La organización solicitada no está autorizada.');
         }
 
@@ -140,7 +147,7 @@ class TenantContextService
     private function assertActor(User $actor): void
     {
         if (!$this->context->isActive() || $this->context->actorId() !== (int) $actor->id
-            || !Str::isUuid($this->context->organizationId())) {
+            || !\App\Support\Identifiers\RecordIdentifier::isValid($this->context->organizationId())) {
             throw new AuthorizationException('El actor no coincide con un contexto institucional válido.');
         }
 

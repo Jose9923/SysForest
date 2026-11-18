@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Conditions;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Condition extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['code', 'name', 'assessment_type', 'condition_category_id', 'description', 'active', 'sort_order'];
 

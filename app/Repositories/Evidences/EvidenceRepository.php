@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\Evidences;
 
 use App\Models\Evidences\Evidence;
+use App\Support\Identifiers\RecordIdentifier;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -22,8 +23,8 @@ class EvidenceRepository
 
     public function findForTenant(string $organizationId, string $id, bool $lock = false, bool $withTrashed = false): Evidence
     {
-        $this->requireUuid($organizationId);
-        $this->requireUuid($id);
+        $this->requireRecordId($organizationId);
+        $this->requireRecordId($id);
         $query = $this->queryForTenant($organizationId)->whereKey($id);
         if ($withTrashed) {
             $query->withTrashed();
@@ -87,8 +88,8 @@ class EvidenceRepository
         bool $includeInspections = false,
         bool $includeMaintenances = false,
     ): LengthAwarePaginator {
-        $this->requireUuid($organizationId);
-        $this->requireUuid($inventoryId);
+        $this->requireRecordId($organizationId);
+        $this->requireRecordId($inventoryId);
         if ($page < 1 || $page > 1000000 || $perPage < 1 || $perPage > 100) {
             throw new InvalidArgumentException('La página debe ser válida y contener entre 1 y 100 fotografías.');
         }
@@ -120,15 +121,15 @@ class EvidenceRepository
                 ->whereColumn('photo_participation.tree_id', 'photo_tree.id')
                 ->where('photo_participation.inventory_id', $inventoryId))
             ->select('evidences.*')->addSelect('photo_tree.id as mobile_tree_id')
-            ->orderByDesc('evidences.created_at')->orderByDesc('evidences.id')
+            ->orderByDesc('evidences.created_at')->orderByDesc('evidences.external_id')
             ->paginate($perPage, ['*'], 'page', $page);
     }
 
     /** Portada explícita: árbol o sus visitas autorizadas; nunca mantenimientos ni anuladas. */
     public function wholeTreePhoto(string $organizationId, string $treeId, bool $includeInspections = false): ?Evidence
     {
-        $this->requireUuid($organizationId);
-        $this->requireUuid($treeId);
+        $this->requireRecordId($organizationId);
+        $this->requireRecordId($treeId);
 
         return $this->queryForTenant($organizationId)
             ->whereHas('evidenceType', fn (Builder $type) => $type->where('code', 'EVD_WHOLE_TREE'))
@@ -142,7 +143,7 @@ class EvidenceRepository
                 }
             })
             ->orderByRaw('COALESCE(captured_at, created_at) DESC NULLS LAST')
-            ->orderByDesc('created_at')->orderByDesc('id')->first();
+            ->orderByDesc('created_at')->orderByDesc('external_id')->first();
     }
 
     /** La ficha muestra una muestra acotada y el total; la página solicitada no altera este resumen. */
@@ -158,9 +159,9 @@ class EvidenceRepository
     /** Prepara galerías por lotes para árboles, inspecciones y mantenimientos, sin consultar desde Blade. */
     public function forOwners(string $organizationId, array $treeIds = [], array $inspectionIds = [], array $filters = [], array $maintenanceIds = []): Collection
     {
-        $this->requireUuid($organizationId);
+        $this->requireRecordId($organizationId);
         foreach (array_merge($treeIds, $inspectionIds, $maintenanceIds) as $id) {
-            $this->requireUuid($id);
+            $this->requireRecordId($id);
         }
         if ($treeIds === [] && $inspectionIds === [] && $maintenanceIds === []) {
             return new Collection();
@@ -184,17 +185,17 @@ class EvidenceRepository
     public function lockStorageOperation(string $id): void
     {
         $this->requireTransaction();
-        $this->requireUuid($id);
+        $this->requireOperationUuid($id);
         DB::selectOne("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", ['sysforest:evidence:'.strtolower($id)]);
     }
 
     private function ownerQuery(string $organizationId, ?string $treeId, ?string $inspectionId, array $filters, ?string $maintenanceId): Builder
     {
-        $this->requireUuid($organizationId);
+        $this->requireRecordId($organizationId);
         if (count(array_filter([$treeId, $inspectionId, $maintenanceId], fn ($id) => $id !== null)) !== 1) {
             throw new InvalidArgumentException('La consulta de evidencias requiere exactamente un propietario.');
         }
-        $this->requireUuid($treeId ?? $inspectionId ?? $maintenanceId);
+        $this->requireRecordId($treeId ?? $inspectionId ?? $maintenanceId);
         $query = $this->queryForTenant($organizationId);
         foreach (['tree_id' => $treeId, 'tree_inspection_id' => $inspectionId, 'maintenance_id' => $maintenanceId] as $column => $id) {
             $id === null ? $query->whereNull($column) : $query->where($column, $id);
@@ -216,7 +217,7 @@ class EvidenceRepository
             $query->withTrashed();
         }
         if (!empty($filters['evidence_type_id'])) {
-            $this->requireUuid($filters['evidence_type_id']);
+            $this->requireRecordId($filters['evidence_type_id']);
             $query->where('evidence_type_id', $filters['evidence_type_id']);
         }
         if (isset($filters['date_from']) && $filters['date_from'] !== '') {
@@ -228,7 +229,7 @@ class EvidenceRepository
         $sort = in_array($filters['sort'] ?? '', ['created_at', 'captured_at'], true) ? $filters['sort'] : 'created_at';
         $direction = ($filters['direction'] ?? '') === 'asc' ? 'asc' : 'desc';
 
-        return $query->orderByRaw($sort.' '.$direction.' NULLS LAST')->orderBy('id', $direction);
+        return $query->orderByRaw($sort.' '.$direction.' NULLS LAST')->orderBy('external_id', $direction);
     }
 
     private function persist(Evidence $evidence, array $attributes): Evidence
@@ -239,7 +240,14 @@ class EvidenceRepository
         return $this->findForTenant($evidence->organization_id, $evidence->id, false, true);
     }
 
-    private function requireUuid(mixed $id): void
+    private function requireRecordId(mixed $id): void
+    {
+        if (!RecordIdentifier::isValid($id)) {
+            throw (new ModelNotFoundException())->setModel(Evidence::class);
+        }
+    }
+
+    private function requireOperationUuid(mixed $id): void
     {
         if (!is_string($id) || !Str::isUuid($id)) {
             throw (new ModelNotFoundException())->setModel(Evidence::class);

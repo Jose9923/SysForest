@@ -16,14 +16,22 @@ class AuthSessionRepository
 
     public function find(string $id, bool $lock = false): ?AuthSession
     {
-        $query = AuthSession::query()->whereKey($id);
+        if (!\Illuminate\Support\Str::isUuid($id) && !\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
+            return null;
+        }
+
+        $query = AuthSession::query()->where(\Illuminate\Support\Str::isUuid($id) ? 'external_id' : 'id', $id);
 
         return ($lock ? $query->lockForUpdate() : $query)->first();
     }
 
     public function findForUser(string $id, int $userId): ?AuthSession
     {
-        return AuthSession::query()->with('user')->whereKey($id)->where('user_id', $userId)->first();
+        if (!\Illuminate\Support\Str::isUuid($id) && !\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
+            return null;
+        }
+
+        return AuthSession::query()->with('user')->where(\Illuminate\Support\Str::isUuid($id) ? 'external_id' : 'id', $id)->where('user_id', $userId)->first();
     }
 
     /** @return Collection<int, AuthSession> */

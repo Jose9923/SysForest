@@ -13,7 +13,7 @@ class TreeRegistrationInput
     {
         return array_replace(TreeInput::rules(), TreeInspectionInput::rules(), [
             'inventory_tree_id' => ['prohibited'],
-            'first_inspection_inventory_id' => ['nullable', 'uuid'],
+            'first_inspection_inventory_id' => ['nullable', 'record_id'],
         ]);
     }
 

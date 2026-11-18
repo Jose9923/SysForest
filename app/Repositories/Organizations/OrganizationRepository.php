@@ -13,6 +13,9 @@ class OrganizationRepository
 {
     public function find(string $id, bool $lock = false): Organization
     {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
+            throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(Organization::class);
+        }
         $query = Organization::query()->with('municipality.department.country');
 
         return ($lock ? $query->lockForUpdate() : $query)->findOrFail($id);

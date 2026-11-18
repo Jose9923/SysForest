@@ -45,7 +45,7 @@ class CarbonProfileService
             $this->access->authorize($actor, 'carbon.manage');
             $this->repository->lockOrganization($organization->id);
             $data = Validator::make($input, [
-                'species_id' => ['required', 'uuid', Rule::in($this->repository->species()->where('active', true)->modelKeys())],
+                'species_id' => ['required', 'record_id', Rule::in($this->repository->species()->where('active', true)->modelKeys())],
                 'settings_version' => ['required', 'integer', 'min:0'], 'applicable' => ['required', 'boolean'],
                 'wood_density' => ['nullable', 'required_if:applicable,1', 'numeric', 'gt:0', 'max:2', 'decimal:0,6'],
                 'max_diameter_cm' => ['nullable', 'required_if:applicable,1', 'numeric', 'min:5', 'max:10000', 'decimal:0,3'],
@@ -73,7 +73,7 @@ class CarbonProfileService
                 'carbon_profile',
                 (string) $profile->id,
                 [],
-                ['configuration_json' => json_encode($profile->attributesToArray(), JSON_UNESCAPED_UNICODE)],
+                ['configuration_json' => json_encode($this->repository->profileSnapshot($profile), JSON_UNESCAPED_UNICODE)],
                 ['resource_id' => (string) $profile->id]
             );
         }, 3);

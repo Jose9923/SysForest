@@ -1,7 +1,13 @@
 import {sameOriginUrl} from './state.js';
 
 const scopes = ['organization', 'department', 'national'];
-const uuid = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const recordId = '[1-9][0-9]{0,18}';
+
+/** Se compara como texto para conservar todo el intervalo BIGINT de PostgreSQL. */
+export function isMapRecordId(value) {
+    return typeof value === 'string' && /^[1-9][0-9]{0,18}$/.test(value)
+        && (value.length < 19 || value <= '9223372036854775807');
+}
 const imageTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
 /** Se crea únicamente al abrir un individuo; las colecciones de puntos no descargan fotografías. */
@@ -9,9 +15,9 @@ export function attachTreePhoto(box, properties, {document, origin, map}) {
     let endpoint;
     try {
         const open = sameOriginUrl(properties.open_url, origin);
-        const match = open.pathname.match(new RegExp(`^/map/trees/(${uuid})/open$`, 'i'));
+        const match = open.pathname.match(new RegExp(`^/map/trees/(${recordId})/open$`));
         const scope = open.searchParams.get('scope');
-        if (!match || open.hash || [...open.searchParams.keys()].some(key => key !== 'scope')
+        if (!match || !isMapRecordId(match[1]) || open.hash || [...open.searchParams.keys()].some(key => key !== 'scope')
             || open.searchParams.getAll('scope').length > 1 || !scopes.includes(scope)) return;
         endpoint = new URL(`/api/v1/map/trees/${match[1]}/whole-tree-photo`, origin);
         endpoint.searchParams.set('scope', scope);
@@ -73,9 +79,9 @@ export function attachTreePhoto(box, properties, {document, origin, map}) {
             }
             const data = payload.data;
             const content = sameOriginUrl(data.url, origin);
-            const pattern = new RegExp(`^${endpoint.pathname}/(${uuid})/content$`, 'i');
+            const pattern = new RegExp(`^${endpoint.pathname}/(${recordId})/content$`);
             const match = content.pathname.match(pattern);
-            if (!match || match[1].toLowerCase() !== String(data.id).toLowerCase() || content.hash
+            if (!match || !isMapRecordId(match[1]) || match[1] !== String(data.id) || content.hash
                 || content.searchParams.get('scope') !== endpoint.searchParams.get('scope')
                 || [...content.searchParams.keys()].length !== 1) throw new Error('content-url');
             const imageResponse = await fetch(content, {signal: controller.signal, credentials: 'same-origin', cache: 'no-store',

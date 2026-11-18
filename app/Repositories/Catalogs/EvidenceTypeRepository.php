@@ -9,7 +9,6 @@ use App\Models\Catalogs\EvidenceType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use LogicException;
 
 class EvidenceTypeRepository
@@ -32,7 +31,7 @@ class EvidenceTypeRepository
     /** currentId procede de la evidencia autorizada, nunca de un campo libre del navegador. */
     public function validate(string $id, ?string $currentId = null, bool $lock = false): bool
     {
-        if (!Str::isUuid($id)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
             return false;
         }
         if ($lock && DB::transactionLevel() < 1) {

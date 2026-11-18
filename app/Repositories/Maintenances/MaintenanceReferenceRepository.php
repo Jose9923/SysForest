@@ -10,7 +10,6 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use LogicException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -62,7 +61,7 @@ class MaintenanceReferenceRepository
 
     public function validType(string $id, ?string $currentId = null, bool $lock = false): bool
     {
-        if (!Str::isUuid($id)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
             return false;
         }
         $query = MaintenanceType::query()->whereKey($id);

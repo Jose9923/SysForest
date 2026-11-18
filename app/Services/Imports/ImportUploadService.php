@@ -179,7 +179,7 @@ class ImportUploadService
             $invalid = count(array_filter($results, fn (array $row): bool => $row['errors'] !== []));
             $id = (string) Str::uuid();
             $batch = $this->batches->create([
-                'id' => $id, 'organization_id' => $organization->id, 'inventory_id' => $inventory->id,
+                'external_id' => $id, 'organization_id' => $organization->id, 'inventory_id' => $inventory->id,
                 'code' => 'IMP-'.now()->format('Ymd').'-'.strtoupper(substr(str_replace('-', '', $id), -12)),
                 // Las celdas XLSX se normalizan al contrato vigente; el contrato CLI conserva su versión.
                 'schema_version' => $reusePrepared ? ImportTemplateSchema::LEGACY_VERSION : ImportTemplateSchema::VERSION, 'file_name' => $name, 'file_sha256' => $hash,

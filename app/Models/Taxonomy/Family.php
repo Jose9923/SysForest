@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Taxonomy;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Family extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['code', 'scientific_name', 'description', 'active', 'sort_order'];
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Carbon;
 
 use App\Repositories\Carbon\CarbonRepository;
+use App\Repositories\Identifiers\IdentifierRepository;
 use App\Repositories\Auth\SecurityEventRepository;
 use Illuminate\Support\Facades\DB;
 use LogicException;
@@ -14,7 +15,7 @@ class CarbonReferenceSeedService
 {
     private const PACKAGE_HASH = '943fcb1c8e11e3ff25527da5b6838675597638f252a018541cf70e3f816a90f9';
 
-    public function __construct(private CarbonRepository $repository, private SecurityEventRepository $events)
+    public function __construct(private CarbonRepository $repository, private SecurityEventRepository $events, private IdentifierRepository $identifiers)
     {
     }
 
@@ -58,7 +59,7 @@ class CarbonReferenceSeedService
                         organizationId: $organization->id,
                         metadata: ['reason' => 'Precarga bibliográfica provisional solicitada; sin aprobación profesional local.'],
                         resourceType: 'carbon_profile',
-                        resourceId: $organization->id,
+                        resourceId: $this->identifiers->external('organizations', $organization->id),
                         beforeValues: [],
                         afterValues: ['configuration_json' => json_encode(['source_package' => $package['version'],
                             'package_sha256' => self::PACKAGE_HASH, 'counts' => $counts], JSON_UNESCAPED_UNICODE)]

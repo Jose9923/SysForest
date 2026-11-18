@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Auth;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\Organizations\Organization;
@@ -12,7 +12,7 @@ use App\Models\Memberships\OrganizationMembership;
 
 class OrganizationRoleAssignment extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['organization_id', 'membership_id', 'role_id', 'scope', 'active', 'assigned_at', 'revoked_at'];
 

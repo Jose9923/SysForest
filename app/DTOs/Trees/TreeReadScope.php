@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\DTOs\Trees;
 
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /** Describe un alcance de consulta; nunca sustituye la autorización del actor en el Service. */
@@ -33,7 +32,7 @@ final readonly class TreeReadScope
 
         foreach ($departmentIds as $departmentId) {
             if (! is_string($departmentId)) {
-                throw new InvalidArgumentException('El departamento debe ser un UUID.');
+                throw new InvalidArgumentException('El identificador del departamento no es válido.');
             }
             self::requireUuid($departmentId);
         }
@@ -57,8 +56,8 @@ final readonly class TreeReadScope
 
     private static function requireUuid(string $id): void
     {
-        if (! Str::isUuid($id)) {
-            throw new InvalidArgumentException('El alcance requiere identificadores UUID válidos.');
+        if (! \App\Support\Identifiers\RecordIdentifier::isValid($id)) {
+            throw new InvalidArgumentException('El alcance requiere identificadores numéricos válidos.');
         }
     }
 }

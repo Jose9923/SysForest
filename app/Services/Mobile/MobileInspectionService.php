@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use App\Models\Inspections\TreeInspection;
 use App\Models\User;
 use App\Repositories\Inventories\InventoryRepository;
@@ -43,14 +44,16 @@ class MobileInspectionService
     {
         return $this->snapshots->read(function () use ($actor, $treeId, $input): array {
             $organization = $this->access->organization($actor);
-            $tree = $this->trees->findForTenant($organization->id, $treeId);
+            $tree = $this->trees->findForTenant($organization->id, Ids::internal('trees', $treeId));
             Gate::forUser($actor)->authorize('view', $tree);
             Gate::forUser($actor)->authorize('viewAny', TreeInspection::class);
             $page = $this->reads->paginate($organization->id, $tree->id, (int) ($input['per_page'] ?? 50), (int) ($input['page'] ?? 1));
 
             $canViewRisk = Gate::forUser($actor)->allows('risk.view');
 
-            return ['tree_id' => $tree->id, 'data' => $page->getCollection()->map(fn (TreeInspection $visit): array =>
+            Ids::prime($page->getCollection());
+
+            return ['tree_id' => Ids::id($tree), 'data' => $page->getCollection()->map(fn (TreeInspection $visit): array =>
                 $this->projection($visit) + \App\Support\Mobile\MobileInspectionResults::project($visit, $canViewRisk))->all(),
                 'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
                     'per_page' => $page->perPage(), 'total' => $page->total()]];
@@ -62,16 +65,18 @@ class MobileInspectionService
         return $this->snapshots->read(function () use ($actor, $inventoryId, $input): array {
             $data = MobileInventoryPageInput::validate($input);
             $organization = $this->access->organization($actor);
-            $inventory = $this->inventories->findForTenant($organization->id, $inventoryId);
+            $inventory = $this->inventories->findForTenant($organization->id, Ids::internal('inventories', $inventoryId));
             Gate::forUser($actor)->authorize('view', $inventory);
             $this->access->authorize($actor, 'trees.view');
             Gate::forUser($actor)->authorize('viewAny', TreeInspection::class);
             $page = $this->reads->paginateForInventory($organization->id, $inventory->id, (int) ($data['per_page'] ?? 100), (int) ($data['page'] ?? 1));
             $canViewRisk = $this->access->allows($actor, 'risk.view');
 
+            Ids::prime($page->getCollection());
+
             return ['data' => $page->getCollection()->map(fn (TreeInspection $visit): array =>
                 $this->projection($visit) + \App\Support\Mobile\MobileInspectionResults::project($visit, $canViewRisk))->all(),
-                'meta' => ['inventory_id' => $inventory->id, 'organization_id' => $organization->id,
+                'meta' => ['inventory_id' => Ids::id($inventory), 'organization_id' => Ids::id($organization),
                     'current_page' => $page->currentPage(), 'last_page' => $page->lastPage(),
                     'per_page' => $page->perPage(), 'total' => $page->total(), 'has_more' => $page->hasMorePages(),
                     'generated_at' => now()->toIso8601String()]];
@@ -82,8 +87,10 @@ class MobileInspectionService
     {
         return $this->snapshots->read(function () use ($actor, $id): array {
             $organization = $this->access->organization($actor);
-            $inspection = $this->inspections->findForTenant($organization->id, $id);
+            $inspection = $this->inspections->findForTenant($organization->id, Ids::internal('tree_inspections', $id));
             Gate::forUser($actor)->authorize('view', $inspection);
+
+            Ids::prime([$inspection]);
 
             return ['data' => $this->projection($inspection)
                 + \App\Support\Mobile\MobileInspectionResults::project($inspection, Gate::forUser($actor)->allows('risk.view'))];
@@ -95,24 +102,26 @@ class MobileInspectionService
         $data = Validator::make($input, MobileMutationInput::inspectionCreate(), MobileMutationInput::messages())->validate();
 
         return $this->mutations->run($actor, 'inspection.create', $treeId, 'inspections.create', $data, function (User $actor, string $organizationId) use ($treeId, $data): array {
-            $tree = $this->trees->findForTenant($organizationId, $treeId);
+            $tree = $this->trees->findForTenant($organizationId, Ids::internal('trees', $treeId));
             Gate::forUser($actor)->authorize('create', [TreeInspection::class, $tree]);
-            $inventory = $this->inventories->findForTenant($organizationId, $data['inventory_id']);
+            $inventory = $this->inventories->findForTenant($organizationId, Ids::internal('inventories', $data['inventory_id']));
             Gate::forUser($actor)->authorize('view', $inventory);
             try {
                 $participation = $this->participations->participation($organizationId, $inventory->id, $tree->id);
             } catch (ModelNotFoundException) {
                 throw ValidationException::withMessages(['inventory_id' => 'El árbol debe pertenecer a este inventario antes de registrar la visita.']);
             }
-            $inspection = $this->writes->create($actor, $tree->id, $data['inspection'] + ['inventory_tree_id' => $participation->id], 'mobile');
+            $inspection = $this->writes->create($actor, $tree->id, Ids::input($data['inspection']) + ['inventory_tree_id' => $participation->id], 'mobile');
+
+            Ids::prime([$inspection]);
 
             return ['tree_id' => $tree->id, 'data' => $this->projection($inspection)];
         }, function (User $actor, string $organizationId) use ($treeId, $data): void {
             if (MobileRiskInput::hasDecision($data['inspection'])) {
                 $this->access->authorize($actor, 'risk.view');
             }
-            Gate::forUser($actor)->authorize('create', [TreeInspection::class, $this->trees->findForTenant($organizationId, $treeId)]);
-            Gate::forUser($actor)->authorize('view', $this->inventories->findForTenant($organizationId, $data['inventory_id']));
+            Gate::forUser($actor)->authorize('create', [TreeInspection::class, $this->trees->findForTenant($organizationId, Ids::internal('trees', $treeId))]);
+            Gate::forUser($actor)->authorize('view', $this->inventories->findForTenant($organizationId, Ids::internal('inventories', $data['inventory_id'])));
         });
     }
 
@@ -122,20 +131,20 @@ class MobileInspectionService
 
         return $this->mutations->run($actor, 'inspection.update', $id, 'inspections.update', $data, function (User $actor, string $organizationId) use ($id, $data): array {
             if ($data['require_latest_inspection'] ?? false) {
-                $reference = $this->inspections->findForTenant($organizationId, $id);
+                $reference = $this->inspections->findForTenant($organizationId, Ids::internal('tree_inspections', $id));
                 $this->trees->findForTenant($organizationId, $reference->tree_id, true);
                 if ($this->inspections->latestForTree($organizationId, $reference->tree_id)?->id !== $reference->id) {
                     throw new \App\Exceptions\Inspections\StaleInspectionException();
                 }
             }
-            $inspection = $this->writes->update($actor, $id, ['lock_version' => $data['lock_version']] + $data['changes'], 'mobile');
+            $inspection = $this->writes->update($actor, Ids::internal('tree_inspections', $id), ['lock_version' => $data['lock_version']] + Ids::input($data['changes']), 'mobile');
 
             return ['tree_id' => $inspection->tree_id, 'data' => $this->projection($inspection)];
         }, function (User $actor, string $organizationId) use ($id, $data): void {
             if (MobileRiskInput::hasDecision($data['changes'])) {
                 $this->access->authorize($actor, 'risk.view');
             }
-            Gate::forUser($actor)->authorize('update', $this->inspections->findForTenant($organizationId, $id));
+            Gate::forUser($actor)->authorize('update', $this->inspections->findForTenant($organizationId, Ids::internal('tree_inspections', $id)));
         });
     }
 
@@ -161,10 +170,10 @@ class MobileInspectionService
         foreach (['created_at', 'updated_at'] as $field) {
             $data[$field] = $inspection->getAttribute($field)?->toISOString();
         }
-        $data['physical_condition_ids'] = $inspection->conditions->where('assessment_type', 'physical_mechanical')->sortBy('id')->values()->modelKeys();
-        $data['phytosanitary_condition_ids'] = $inspection->conditions->where('assessment_type', 'phytosanitary')->sortBy('id')->values()->modelKeys();
-        $data['fauna_category_ids'] = $inspection->faunaCategories->sortBy('id')->values()->modelKeys();
+        $data['physical_condition_ids'] = $inspection->conditions->where('assessment_type', 'physical_mechanical')->map(fn ($record) => Ids::id($record))->sort()->values()->all();
+        $data['phytosanitary_condition_ids'] = $inspection->conditions->where('assessment_type', 'phytosanitary')->map(fn ($record) => Ids::id($record))->sort()->values()->all();
+        $data['fauna_category_ids'] = $inspection->faunaCategories->map(fn ($record) => Ids::id($record))->sort()->values()->all();
 
-        return $data;
+        return Ids::output($data, 'tree_inspections');
     }
 }

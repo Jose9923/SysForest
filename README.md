@@ -1,5 +1,7 @@
 # SYSFOREST
 
+Preparación 18/11/2026: [claves SQL BIGINT con identidad externa y antecedentes conservados](docs/bigint-identifiers-20261118.md). Revisión aislada; activación pendiente.
+
 Actualización 09/11/2026: [filtros de condiciones, foto del árbol completo y paridad móvil](docs/conditions-photo-20261109.md).
 
 Inventario y gestión forestal institucional con mapas y portal ciudadano. El proyecto está en **`/home/josev/SYSFOREST`, Ubuntu-24.04 WSL**; esa carpeta es la fuente de verdad.

@@ -41,7 +41,7 @@ class AuditSyncService
                 foreach ($records as $record) {
                     // No se mantiene una transacción PostgreSQL mientras se espera a MongoDB.
                     $this->mongo->store($record);
-                    $this->deliveries->acknowledge($record->source, $record->id);
+                    $this->deliveries->acknowledge($record->source, (string) $record->internal_id);
                     $result['processed']++;
                     $cursor = ['occurred_at' => $record->occurred_at, 'source' => $record->source, 'id' => $record->id];
                 }

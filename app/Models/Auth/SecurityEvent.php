@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Auth;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 
 /** Bitácora privada de solo anexado; PostgreSQL impide modificar o borrar eventos existentes. */
 class SecurityEvent extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     public $timestamps = false;
     protected $guarded = ['*'];

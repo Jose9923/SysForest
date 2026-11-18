@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use App\Exceptions\Mobile\MobileIdempotencyConflictException;
 use App\Models\User;
 use App\Repositories\Mobile\MobileMutationRepository;
@@ -24,7 +25,7 @@ class MobileMutationService
 
     public function run(User $actor, string $action, string $targetId, string $permission, array $input, Closure $write, Closure $authorize): array
     {
-        $targetId = strtolower($targetId);
+        $targetId = Ids::internal($action === 'inspection.update' ? 'tree_inspections' : 'trees', strtolower($targetId));
         $operationId = strtolower($input['operation_id']);
         unset($input['operation_id']);
         $hash = hash('sha256', json_encode($this->canonical($input), JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION));

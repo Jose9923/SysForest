@@ -9,7 +9,7 @@ use App\Models\Evidences\EvidenceRevision;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use App\Support\Identifiers\RecordIdentifier;
 use LogicException;
 
 class EvidenceRevisionRepository
@@ -48,7 +48,7 @@ class EvidenceRevisionRepository
 
     private function requireIds(string $organizationId, string $evidenceId): void
     {
-        if (!Str::isUuid($organizationId) || !Str::isUuid($evidenceId)) {
+        if (!RecordIdentifier::isValid($organizationId) || !RecordIdentifier::isValid($evidenceId)) {
             throw (new ModelNotFoundException())->setModel(EvidenceRevision::class);
         }
     }

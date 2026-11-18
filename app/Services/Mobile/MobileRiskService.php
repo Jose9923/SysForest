@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use App\Exceptions\Inspections\StaleInspectionException;
 use App\Models\Inspections\TreeInspection;
 use App\Models\User;
@@ -36,6 +37,7 @@ class MobileRiskService
         $data = Validator::make($input, MobileRiskInput::preview($input))->validate();
         $organization = $this->access->organization($actor);
         $this->access->authorize($actor, 'risk.view');
+        $data = Ids::input($data);
         $inspection = null;
         $treeId = isset($data['tree_id']) ? strtolower($data['tree_id']) : null;
         if (($data['inspection_id'] ?? null) !== null) {
@@ -66,8 +68,10 @@ class MobileRiskService
         // Igual que el formulario web: prepara la versión inicial solo cuando no existe ninguna.
         $this->methods->initialize($organization->id);
 
-        return $treeId === null
+        $result = $treeId === null
             ? $this->risks->previewRegistration($actor, $data)
             : $this->risks->preview($actor, $treeId, $data);
+
+        return Ids::output($result);
     }
 }

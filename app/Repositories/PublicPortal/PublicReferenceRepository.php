@@ -85,7 +85,7 @@ class PublicReferenceRepository
         }
         $criteria = array_filter(
             array_intersect_key($filters, array_flip($fields)),
-            fn ($value) => is_string($value) && \Illuminate\Support\Str::isUuid($value)
+            fn ($value) => is_string($value) && \App\Support\Identifiers\RecordIdentifier::isValid($value)
         );
         $query = $this->options->query($kind, TreeReadScope::published(), $criteria);
         return match ($kind) {

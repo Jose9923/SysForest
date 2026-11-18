@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repositories\Carbon;
 
 use App\Models\Carbon\CarbonEstimate;
+use App\Repositories\Identifiers\IdentifierRepository;
 use App\Models\Carbon\CarbonProfile;
 use App\Models\Organizations\Organization;
 use App\Models\Taxonomy\Species;
@@ -15,6 +16,36 @@ use Illuminate\Support\Collection;
 /** El alcance institucional se exige incluso para las operaciones de mantenimiento. */
 class CarbonRepository
 {
+    public function __construct(private IdentifierRepository $identifiers)
+    {
+    }
+
+    /** El JSON conserva las referencias externas usadas por las huellas anteriores a BIGINT. */
+    public function inputReferences(TreeInspection $inspection): array
+    {
+        return [
+            'species_id' => $inspection->tree->species_id === null ? null
+                : $this->identifiers->external('species', $inspection->tree->species_id),
+            'growth_habit_id' => $inspection->tree->growth_habit_id === null ? null
+                : $this->identifiers->external('growth_habits', $inspection->tree->growth_habit_id),
+        ];
+    }
+
+    public function profileSnapshot(?CarbonProfile $profile): ?array
+    {
+        if ($profile === null) {
+            return null;
+        }
+        $values = $profile->attributesToArray();
+        foreach (['organization_id' => 'organizations', 'species_id' => 'species'] as $field => $table) {
+            if (isset($values[$field])) {
+                $values[$field] = $this->identifiers->external($table, $values[$field]);
+            }
+        }
+
+        return $values;
+    }
+
     public function organizations(?string $id = null): Collection
     {
         return Organization::withTrashed()->when($id !== null, fn ($q) => $q->whereKey($id))->orderBy('id')->get();

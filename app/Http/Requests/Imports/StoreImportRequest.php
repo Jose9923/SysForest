@@ -19,7 +19,7 @@ class StoreImportRequest extends FormRequest
     {
         return [
             'file' => ['required', 'file', 'extensions:xlsx', 'max:'.(int) config('imports.max_upload_kb', 5120)],
-            'inventory_id' => ['required', 'uuid'],
+            'inventory_id' => ['required', 'record_id'],
             'organization_id' => ['prohibited'], 'user_id' => ['prohibited'], 'created_by' => ['prohibited'],
             'path' => ['prohibited'], 'disk' => ['prohibited'],
         ];
@@ -33,7 +33,7 @@ class StoreImportRequest extends FormRequest
             'file.extensions' => 'Carga un libro Excel con extensión .xlsx de la plantilla oficial.',
             'file.max' => 'El archivo supera el tamaño permitido.',
             'inventory_id.required' => 'Selecciona el inventario de destino.',
-            'inventory_id.uuid' => 'El inventario seleccionado no es válido.',
+            'inventory_id.record_id' => 'El inventario seleccionado no es válido.',
             '*.prohibited' => 'Este dato lo determina el servidor y no puede enviarse desde el formulario.',
         ];
     }

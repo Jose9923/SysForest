@@ -36,7 +36,7 @@ class AuditScopeRepository
                 ->whereHas('permissions', fn (Builder $permissions) => $permissions->where('code', 'audit.view')))
             ->whereHas('department', fn (Builder $query) => $query->where('active', true)
                 ->whereHas('country', fn (Builder $country) => $country->where('active', true)))
-            ->pluck('department_id')->map(fn (string $id): string => strtolower($id))->unique()->values()->all();
+            ->pluck('department_id')->map(fn ($id): string => (string) $id)->unique()->values()->all();
         sort($ids, SORT_STRING);
 
         return $ids;
@@ -49,6 +49,6 @@ class AuditScopeRepository
     public function organizationIds(array $departmentIds): array
     {
         return DB::table('organizations as o')->join('municipalities as m', 'm.id', '=', 'o.municipality_id')
-            ->whereIn('m.department_id', $departmentIds)->orderBy('o.id')->pluck('o.id')->all();
+            ->whereIn('m.department_id', $departmentIds)->orderBy('o.id')->pluck('o.id')->map(fn ($id): string => (string) $id)->all();
     }
 }

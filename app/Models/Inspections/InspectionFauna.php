@@ -14,6 +14,7 @@ class InspectionFauna extends Pivot
 
     protected function casts(): array
     {
-        return ['created_at' => 'immutable_datetime'];
+        return ['organization_id' => 'string', 'inspection_id' => 'string', 'fauna_category_id' => 'string',
+            'created_at' => 'immutable_datetime'];
     }
 }

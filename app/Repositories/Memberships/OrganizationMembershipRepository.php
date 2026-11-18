@@ -23,6 +23,9 @@ class OrganizationMembershipRepository
     /** El ID de recurso siempre se combina con el tenant verificado; no hay bypass implícito. */
     public function findForTenant(string $organizationId, string $membershipId, bool $lock = false): OrganizationMembership
     {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($membershipId)) {
+            throw (new \Illuminate\Database\Eloquent\ModelNotFoundException())->setModel(OrganizationMembership::class);
+        }
         $query = OrganizationMembership::query()->with(['user', 'organization', 'roleAssignment.role'])
             ->where('organization_id', $organizationId)->whereKey($membershipId);
 

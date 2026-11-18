@@ -16,11 +16,11 @@ class SwitchOrganizationRequest extends FormRequest
     public function messages(): array
     {
         return ['organization_id.required' => 'Selecciona una organización.',
-            'organization_id.uuid' => 'El identificador de la organización no es válido.'];
+            'organization_id.record_id' => 'El identificador de la organización no es válido.'];
     }
 
     public function rules(): array
     {
-        return ['organization_id' => ['required', 'uuid']];
+        return ['organization_id' => ['required', 'record_id']];
     }
 }

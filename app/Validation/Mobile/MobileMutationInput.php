@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Validation\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use Closure;
 use App\Validation\Trees\TreeInput;
 use App\Validation\Inspections\TreeInspectionInput;
@@ -13,7 +14,7 @@ final class MobileMutationInput
 {
     public static function treeUpdate(): array
     {
-        $fields = self::editable(TreeInput::rules(true), ['lock_version', 'inventory_ids', 'captured_at_local']);
+        $fields = self::editable(Ids::publicRules(TreeInput::rules(true)), ['lock_version', 'inventory_ids', 'captured_at_local']);
         $fields['captured_at'] = ['nullable', 'date', 'regex:/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})\z/D'];
 
         return self::updateEnvelope($fields);
@@ -21,13 +22,13 @@ final class MobileMutationInput
 
     public static function inspectionUpdate(): array
     {
-        return self::updateEnvelope(self::editable(TreeInspectionInput::rules(true), ['lock_version', 'inventory_tree_id']))
+        return self::updateEnvelope(self::editable(Ids::publicRules(TreeInspectionInput::rules(true)), ['lock_version', 'inventory_tree_id']))
             + ['require_latest_inspection' => ['sometimes', 'boolean']];
     }
 
     public static function inspectionCreate(): array
     {
-        $fields = self::editable(TreeInspectionInput::rules(), ['inventory_tree_id']);
+        $fields = self::editable(Ids::publicRules(TreeInspectionInput::rules()), ['inventory_tree_id']);
 
         return ['operation_id' => ['required', 'uuid'], 'inventory_id' => ['required', 'uuid']]
             + self::nested('inspection', $fields);

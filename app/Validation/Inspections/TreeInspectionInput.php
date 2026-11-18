@@ -17,10 +17,10 @@ class TreeInspectionInput
     {
         $rules = DendrometryInput::rules() + [
             'inspection_date' => [$updating ? 'sometimes' : 'required', 'date_format:Y-m-d'],
-            'inventory_tree_id' => ['nullable', 'uuid'],
+            'inventory_tree_id' => ['nullable', 'record_id'],
             'risk_priority' => ['nullable', 'integer', 'between:1,4'],
             'risk_confirmed' => ['nullable', 'boolean'],
-            'risk_methodology_id' => ['nullable', 'uuid'],
+            'risk_methodology_id' => ['nullable', 'record_id'],
             'lock_version' => $updating ? ['required', 'integer', 'min:1', 'max:2147483646'] : ['prohibited'],
         ];
         foreach (self::TEXT_FIELDS as $field) {
@@ -31,7 +31,7 @@ class TreeInspectionInput
         }
         foreach (self::LIST_FIELDS as $field) {
             $rules[$field] = ['sometimes', 'array', 'max:100'];
-            $rules[$field.'.*'] = ['required', 'uuid', 'distinct:strict'];
+            $rules[$field.'.*'] = ['required', 'record_id', 'distinct:strict'];
         }
         foreach (['is_public', 'publication_version', 'id', 'organization_id', 'tree_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'deleted_at'] as $field) {
             $rules[$field] = ['prohibited'];
@@ -47,14 +47,14 @@ class TreeInspectionInput
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'date_format:Y-m-d']];
         foreach (['inventory_id', 'species_id', 'common_name_id', 'maturity_state_id', 'tree_id'] as $field) {
-            $rules[$field] = ['nullable', 'uuid'];
+            $rules[$field] = ['nullable', 'record_id'];
         }
         foreach (['diameter_class_number', 'height_class_number'] as $field) {
             $rules[$field] = ['nullable', 'integer', 'min:1', 'max:9223372036854775807'];
         }
         foreach (['physical_condition_ids', 'phytosanitary_condition_ids'] as $field) {
             $rules[$field] = ['nullable', 'array', 'max:100'];
-            $rules[$field.'.*'] = ['uuid', 'distinct:strict'];
+            $rules[$field.'.*'] = ['record_id', 'distinct:strict'];
         }
         foreach (['cap_cm', 'dap_m', 'total_height_m'] as $field) {
             $rules[$field.'_min'] = ['nullable', 'numeric', 'min:0', 'regex:/\A\d{1,12}(?:\.\d{1,12})?\z/D'];
@@ -69,7 +69,7 @@ class TreeInspectionInput
         return DendrometryInput::messages() + [
             'required' => 'El campo :attribute es obligatorio.',
             'date_format' => 'El campo :attribute debe ser una fecha válida (AAAA-MM-DD).',
-            'uuid' => 'La referencia seleccionada no es válida.',
+            'record_id' => 'La referencia seleccionada no es válida.',
             'array' => 'Las selecciones deben enviarse como una lista.',
             'distinct' => 'No se permite seleccionar dos veces la misma opción.',
             'prohibited' => 'El campo :attribute es interno y no puede modificarse.',

@@ -27,7 +27,7 @@ class DendrometryPreviewRequest extends FormRequest
 
     public function rules(): array
     {
-        return DendrometryInput::rules() + ['inspection_id' => ['nullable', 'uuid']];
+        return DendrometryInput::rules() + ['inspection_id' => ['nullable', 'record_id']];
     }
 
     public function messages(): array

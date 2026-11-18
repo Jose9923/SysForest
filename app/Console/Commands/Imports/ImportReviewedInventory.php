@@ -6,7 +6,6 @@ namespace App\Console\Commands\Imports;
 
 use App\Services\Imports\PreparedInventoryImportService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -27,7 +26,7 @@ class ImportReviewedInventory extends Command
         $actor = filter_var($this->option('actor'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         $organization = (string) $this->option('organization');
         $inventory = (string) $this->option('inventory');
-        if ($actor === false || !Str::isUuid($organization) || !Str::isUuid($inventory)) {
+        if ($actor === false || !\App\Support\Identifiers\RecordIdentifier::isValid($organization) || !\App\Support\Identifiers\RecordIdentifier::isValid($inventory)) {
             $this->error('Indica --actor con ID entero positivo y --organization/--inventory con UUID válidos.');
 
             return self::INVALID;

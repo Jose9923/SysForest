@@ -89,7 +89,7 @@ class ReportFilterService
         $rules = [];
         foreach (ReportSelectionDTO::CONDITION_CATEGORY_FIELDS as $field => $type) {
             $rules[$field] = ['nullable', 'array', 'max:100'];
-            $rules[$field.'.*'] = ['required', 'uuid', 'distinct:strict'];
+            $rules[$field.'.*'] = ['required', 'record_id', 'distinct:strict'];
         }
         $input = array_map(fn ($value) => $value === '' ? null : $value, $input);
         $values = Validator::make($input, $rules, TreeFilterInput::messages())->validate();

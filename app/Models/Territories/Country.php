@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Territories;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Country extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['code', 'name', 'iso_alpha_2', 'iso_alpha_3', 'active'];
 

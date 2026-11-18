@@ -7,7 +7,6 @@ namespace App\Repositories\Imports;
 use App\Models\Imports\ImportBatch;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Str;
 
 /** Nunca resuelve un lote solo por su UUID: toda consulta recibe organización autorizada. */
 class ImportBatchRepository
@@ -20,7 +19,7 @@ class ImportBatchRepository
 
     public function find(string $organizationId, string $id, bool $lock = false): ImportBatch
     {
-        if (!Str::isUuid($id)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
             throw (new ModelNotFoundException())->setModel(ImportBatch::class);
         }
         $query = ImportBatch::query()->where('organization_id', $organizationId)->whereKey($id);

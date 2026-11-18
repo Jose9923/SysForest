@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Auth;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +12,7 @@ use App\Models\User;
 
 class AuthSession extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['user_id', 'client_type', 'organization_id', 'expires_at', 'last_used_at', 'revoked_at', 'revocation_reason'];
 

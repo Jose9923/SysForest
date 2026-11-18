@@ -10,7 +10,6 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Str;
 
 /** Consultas comunes únicamente sobre modelos tipados del registro de catálogos simples. */
 class CatalogRepository
@@ -44,7 +43,7 @@ class CatalogRepository
 
     public function find(CatalogDefinition $catalog, string $id, bool $lock = false): CatalogEntry
     {
-        if (!Str::isUuid($id)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($id)) {
             throw (new ModelNotFoundException())->setModel($catalog->modelClass, [$id]);
         }
         $query = $this->query($catalog)->whereKey($id);

@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Route;
 
 // Estas rutas heredan JWT, sesión y verificación. El alcance amplio se reautoriza en cada Service.
 Route::get('/map', [MapController::class, 'index'])->name('maps.index');
-Route::post('/map/trees/{tree}/open', [MapController::class, 'open'])->whereUuid('tree')->name('maps.open');
+Route::post('/map/trees/{tree}/open', [MapController::class, 'open'])->whereNumber('tree')->name('maps.open');
 Route::prefix('/api/v1/map')->middleware('throttle:maps.read')->group(function (): void {
     Route::get('/trees', [MapController::class, 'trees'])->name('maps.trees');
-    Route::get('/trees/{tree}/whole-tree-photo', [MapTreePhotoController::class, 'show'])->whereUuid('tree')->name('maps.tree-photo');
-    Route::get('/trees/{tree}/whole-tree-photo/{evidence}/content', [MapTreePhotoController::class, 'content'])->whereUuid(['tree', 'evidence'])->name('maps.tree-photo.content');
+    Route::get('/trees/{tree}/whole-tree-photo', [MapTreePhotoController::class, 'show'])->whereNumber('tree')->name('maps.tree-photo');
+    Route::get('/trees/{tree}/whole-tree-photo/{evidence}/content', [MapTreePhotoController::class, 'content'])->whereNumber(['tree', 'evidence'])->name('maps.tree-photo.content');
     Route::get('/clusters', [MapController::class, 'clusters'])->name('maps.clusters');
     Route::get('/heat', [MapController::class, 'heat'])->name('maps.heat');
     Route::get('/extent', [MapController::class, 'extent'])->name('maps.extent');

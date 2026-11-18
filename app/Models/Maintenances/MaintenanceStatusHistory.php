@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Models\Maintenances;
 
 use App\Enums\Maintenances\MaintenanceStatus;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
 
 class MaintenanceStatusHistory extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $table = 'maintenance_status_histories';
     public $timestamps = false;

@@ -65,7 +65,7 @@ class MobileReferenceRepository
         if ($catalog === 'species') {
             $query->whereHas('family', fn (Builder $family) => $family->where('active', true))
                 ->with(['commonNames' => fn (HasMany $names) => $names->where('active', true)
-                    ->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('name')->orderBy('id')]);
+                    ->orderByDesc('is_primary')->orderBy('sort_order')->orderBy('name')->orderBy('external_id')]);
             if (!empty($filters['family_id'])) {
                 $query->where('family_id', $filters['family_id']);
             }
@@ -82,7 +82,7 @@ class MobileReferenceRepository
         }
         $this->search($query, $filters['q'] ?? '', $name, $catalog === 'species');
 
-        return $query->orderBy('sort_order')->orderBy($name)->orderBy('id')->paginate(
+        return $query->orderBy('sort_order')->orderBy($name)->orderBy('external_id')->paginate(
             (int) ($filters['per_page'] ?? 100),
             ['*'],
             'page',
@@ -99,9 +99,9 @@ class MobileReferenceRepository
         }
         $this->search($query, $filters['q'] ?? '', 'name');
 
-        return $query->orderBy('name')->orderBy('id')->paginate(
+        return $query->orderBy('name')->orderBy('external_id')->paginate(
             (int) ($filters['per_page'] ?? 100),
-            ['id', 'organization_id', 'code', 'name', 'description', 'starts_at', 'ends_at', 'status', 'active', 'updated_at'],
+            ['id', 'external_id', 'organization_id', 'code', 'name', 'description', 'starts_at', 'ends_at', 'status', 'active', 'updated_at'],
             'page',
             (int) ($filters['page'] ?? 1),
         );

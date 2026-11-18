@@ -14,6 +14,7 @@ class InspectionCondition extends Pivot
 
     protected function casts(): array
     {
-        return ['created_at' => 'immutable_datetime'];
+        return ['organization_id' => 'string', 'inspection_id' => 'string', 'condition_id' => 'string',
+            'created_at' => 'immutable_datetime'];
     }
 }

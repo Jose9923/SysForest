@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models\Evidences;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
 
 class EvidenceRevision extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     public $timestamps = false;
     protected $guarded = ['*'];

@@ -21,15 +21,15 @@ final class MobileAnalyticsProjection
 
         return [
             'species' => $species === null ? null : [
-                'id' => $species->id, 'scientific_name' => $species->scientific_name,
-                'family_id' => $species->family_id, 'active' => (bool) $species->active,
-                'common_names' => $species->getRelation('commonNames')->sortBy('id')->values()->map(fn (Model $name): array => [
-                    'id' => $name->id, 'code' => $name->code, 'name' => $name->name,
+                'id' => MobileIdentifiers::id($species), 'scientific_name' => $species->scientific_name,
+                'family_id' => MobileIdentifiers::external('families', $species->family_id), 'active' => (bool) $species->active,
+                'common_names' => $species->getRelation('commonNames')->sortBy(fn (Model $record) => MobileIdentifiers::id($record))->values()->map(fn (Model $name): array => [
+                    'id' => MobileIdentifiers::id($name), 'code' => $name->code, 'name' => $name->name,
                     'is_primary' => (bool) $name->is_primary, 'active' => (bool) $name->active,
                 ])->all(),
             ],
             'family' => $family === null ? null : [
-                'id' => $family->id, 'scientific_name' => $family->scientific_name, 'active' => (bool) $family->active,
+                'id' => MobileIdentifiers::id($family), 'scientific_name' => $family->scientific_name, 'active' => (bool) $family->active,
             ],
             'placement' => self::reference($tree->getRelation('placement')),
             'growth_habit' => self::reference($tree->getRelation('growthHabit')),
@@ -47,31 +47,31 @@ final class MobileAnalyticsProjection
         // atribuir un resultado a otro individuo/versión incluso en consumidores aislados.
         $compatible = $estimate !== null && $tree !== null
             && $estimate->inspection_version === $inspection->lock_version
-            && $estimate->species_id === $tree->species_id
-            && ($estimate->inputs['growth_habit_id'] ?? null) === $tree->growth_habit_id;
+            && (string) $estimate->species_id === (string) $tree->species_id
+            && MobileIdentifiers::external('growth_habits', $estimate->inputs['growth_habit_id'] ?? null) === MobileIdentifiers::external('growth_habits', $tree->growth_habit_id);
         $live = $tree !== null && in_array($tree->current_status->value, ['active', 'under_observation', 'transplanted'], true);
         $status = !$live ? 'excluded_status' : ($compatible ? $estimate->status : 'unprocessed');
         $included = $compatible && $live && $status === 'estimated';
 
         return [
-            'schema_version' => 1, 'inspection_id' => $inspection->id, 'inspection_version' => $inspection->lock_version,
-            'tree_id' => $inspection->tree_id, 'tree_lock_version' => $tree?->lock_version,
-            'tree_species_id' => $tree?->species_id, 'tree_growth_habit_id' => $tree?->growth_habit_id,
+            'schema_version' => 1, 'inspection_id' => MobileIdentifiers::id($inspection), 'inspection_version' => $inspection->lock_version,
+            'tree_id' => MobileIdentifiers::external('trees', $inspection->tree_id), 'tree_lock_version' => $tree?->lock_version,
+            'tree_species_id' => MobileIdentifiers::external('species', $tree?->species_id), 'tree_growth_habit_id' => MobileIdentifiers::external('growth_habits', $tree?->growth_habit_id),
             'tree_current_status' => $tree?->current_status?->value,
             'classification' => $rule === null ? null : [
-                'id' => $rule->id, 'code' => $rule->code, 'label' => ClassificationVersionPresentation::label($rule->code),
+                'id' => MobileIdentifiers::id($rule), 'code' => $rule->code, 'label' => ClassificationVersionPresentation::label($rule->code),
             ],
             'maturity_state' => self::reference($inspection->getRelation('maturityState')),
-            'conditions' => $inspection->getRelation('conditions')->sortBy('id')->values()->map(fn (Model $condition): array => [
+            'conditions' => $inspection->getRelation('conditions')->sortBy(fn (Model $record) => MobileIdentifiers::id($record))->values()->map(fn (Model $condition): array => [
                 ...self::reference($condition), 'assessment_type' => $condition->assessment_type,
-                'condition_category_id' => $condition->condition_category_id,
+                'condition_category_id' => MobileIdentifiers::external('condition_categories', $condition->condition_category_id),
                 'category' => self::reference($condition->getRelation('category')),
             ])->all(),
             'carbon' => [
                 'status' => $status, 'label' => CarbonPresentation::label($status), 'compatible' => $compatible,
                 'included_in_live_stock' => $included,
-                'inputs_species_id' => $compatible ? $estimate->species_id : null,
-                'inputs_growth_habit_id' => $compatible ? ($estimate->inputs['growth_habit_id'] ?? null) : null,
+                'inputs_species_id' => $compatible ? MobileIdentifiers::external('species', $estimate->species_id) : null,
+                'inputs_growth_habit_id' => $compatible ? MobileIdentifiers::external('growth_habits', $estimate->inputs['growth_habit_id'] ?? null) : null,
                 'reference_status' => $compatible ? ($estimate->method['profile']['validation_status'] ?? null) : null,
                 'biomass_kg' => $included ? $estimate->biomass_kg : null,
                 'carbon_kg' => $included ? $estimate->carbon_kg : null,
@@ -83,7 +83,7 @@ final class MobileAnalyticsProjection
     private static function reference(?Model $record): ?array
     {
         return $record === null ? null : [
-            'id' => $record->id, 'code' => $record->code,
+            'id' => MobileIdentifiers::id($record), 'code' => $record->code,
             'name' => ExcelReferencePresentation::text($record->name), 'active' => (bool) $record->active,
         ];
     }

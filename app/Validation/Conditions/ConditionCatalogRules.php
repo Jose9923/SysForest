@@ -22,7 +22,7 @@ class ConditionCatalogRules
             'organization_id' => ['prohibited'], 'id' => ['prohibited'],
         ];
         if ($catalog === ConditionCatalogKind::Items) {
-            $rules['condition_category_id'] = [...$required, 'uuid'];
+            $rules['condition_category_id'] = [...$required, 'record_id'];
         }
 
         return $rules + VersionInput::rules($update);

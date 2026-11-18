@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Catalogs;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MaturityRuleBand extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $fillable = ['rule_version_id', 'maturity_state_id', 'min_class', 'max_class'];
 

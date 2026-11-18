@@ -14,9 +14,9 @@ class BindAuthenticatedSession
     {
         $session = $request->attributes->get('auth_session');
         // La selección institucional nunca se hereda de otra identidad o sesión autenticada.
-        if ($session && $request->session()->get('auth_session_id') !== $session->id) {
+        if ($session && $request->session()->get('auth_session_id') !== $session->external_id) {
             $request->session()->forget('active_organization_id');
-            $request->session()->put('auth_session_id', $session->id);
+            $request->session()->put('auth_session_id', $session->external_id);
         }
 
         $continuity = app(\App\Services\Auth\SessionContinuityService::class);

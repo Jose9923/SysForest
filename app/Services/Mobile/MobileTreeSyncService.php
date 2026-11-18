@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Mobile;
 
+use App\Support\Mobile\MobileIdentifiers as Ids;
 use App\Enums\Inventories\InventoryStatus;
 use App\Models\Trees\Tree;
 use App\Models\User;
@@ -38,7 +39,7 @@ class MobileTreeSyncService
 
     public function sync(User $actor, string $inventoryId, array $items): array
     {
-        $inventoryId = strtolower($inventoryId);
+        $inventoryId = Ids::internal('inventories', strtolower($inventoryId));
         $organization = $this->access->organization($actor);
         $inventory = $this->inventories->findForTenant($organization->id, $inventoryId);
         Gate::forUser($actor)->authorize('view', $inventory);
@@ -61,7 +62,7 @@ class MobileTreeSyncService
         }
 
         return [
-            'inventory_id' => $inventoryId, 'organization_id' => $organization->id,
+            'inventory_id' => Ids::id($inventory), 'organization_id' => Ids::id($organization),
             'summary' => [
                 'received' => count($results),
                 'created' => count(array_filter($results, fn (array $row) => $row['status'] === 'created')),
@@ -103,13 +104,17 @@ class MobileTreeSyncService
                 throw ValidationException::withMessages(['inventory_id' => 'Solo se pueden enviar capturas nuevas a inventarios activos.']);
             }
             $data = $this->validateItem($item);
+            $data['tree'] = Ids::input($data['tree']);
+            if (isset($data['inspection'])) {
+                $data['inspection'] = Ids::input($data['inspection']);
+            }
             $tree = $this->trees->create($actor, array_merge($data['tree'], ['inventory_ids' => [$inventoryId]]));
             $participation = $this->receipts->participation($organization->id, $inventoryId, $tree->id);
             $inspection = isset($data['inspection'])
                 ? $this->inspections->create($actor, $tree->id, array_merge($data['inspection'], ['inventory_tree_id' => $participation->id]), 'mobile')
                 : null;
-            $result = ['tree_id' => $tree->id, 'tree_code' => $tree->code,
-                'inventory_tree_id' => $participation->id, 'inspection_id' => $inspection?->id,
+            $result = ['tree_id' => Ids::id($tree), 'tree_code' => $tree->code,
+                'inventory_tree_id' => Ids::id($participation), 'inspection_id' => Ids::id($inspection),
                 'created_by' => (int) $actor->id];
             $this->receipts->confirm([
                 'organization_id' => $organization->id, 'inventory_id' => $inventoryId,
@@ -123,13 +128,13 @@ class MobileTreeSyncService
 
     private function validateItem(array $item): array
     {
-        $treeRules = TreeInput::rules();
+        $treeRules = Ids::publicRules(TreeInput::rules());
         // El inventario viene de la ruta y la identidad del JWT, nunca de un árbol del lote.
         $treeRules['inventory_ids'] = ['prohibited'];
         unset($treeRules['inventory_ids.*']);
         $treeRules['captured_at_local'] = ['prohibited'];
         $treeRules['captured_at'] = ['nullable', 'date', 'regex:/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})\z/D'];
-        $inspectionRules = TreeInspectionInput::rules();
+        $inspectionRules = Ids::publicRules(TreeInspectionInput::rules());
         $inspectionRules['inventory_tree_id'] = ['prohibited'];
         foreach ([$treeRules, $inspectionRules] as $index => $fieldRules) {
             foreach ($fieldRules as $field => $constraints) {

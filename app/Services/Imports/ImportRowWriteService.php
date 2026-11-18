@@ -59,7 +59,7 @@ class ImportRowWriteService
             throw new LogicException('La creación no produjo la participación institucional requerida.');
         }
         $inspectionInput = $validated['inspection'];
-        $inspectionInput['inventory_tree_id'] = $participation;
+        $inspectionInput['inventory_tree_id'] = (string) $participation;
         $origin = app(HistoricalRiskImportScope::class)->matches($inventory->organization_id, $inventory->id) ? 'historical' : 'import';
         $inspection = $this->inspections->create($actor, $tree->id, $inspectionInput, $origin);
 

@@ -18,7 +18,7 @@ class OrganizationRules
             'required' => 'El campo :attribute es obligatorio.',
             'string' => 'El campo :attribute debe ser texto.',
             'max.string' => 'El campo :attribute no debe superar :max caracteres.',
-            'uuid' => 'El identificador de :attribute no tiene un formato válido.',
+            'record_id' => 'El identificador de :attribute no tiene un formato válido.',
             'enum' => 'Selecciona un tipo de organización válido.',
             'regex' => 'El campo :attribute solo permite letras mayúsculas, números y guiones entre segmentos.',
             'email' => 'Introduce un correo electrónico válido.',
@@ -33,7 +33,7 @@ class OrganizationRules
         return [
             'name' => ['required', 'string', 'max:200'],
             'short_name' => ['nullable', 'string', 'max:80'],
-            'municipality_id' => ['bail', 'required', 'uuid', new ActiveMunicipality()],
+            'municipality_id' => ['bail', 'required', 'record_id', new ActiveMunicipality()],
             'type' => ['required', Rule::enum(OrganizationType::class)],
             'code' => ['bail', 'required', 'string', 'max:40', 'regex:/^[A-Z0-9]+(-[A-Z0-9]+)*$/', new UniqueOrganizationValue('code', $exceptId)],
             'tree_code_prefix' => ['bail', 'required', 'string', 'max:60', 'regex:/^[A-Z0-9]+(-[A-Z0-9]+)*$/', new UniqueOrganizationValue('tree_code_prefix', $exceptId)],

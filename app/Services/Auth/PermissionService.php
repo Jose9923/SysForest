@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Repositories\Auth\RoleAssignmentRepository;
 use App\Repositories\Users\UserRepository;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Str;
 
 class PermissionService
 {
@@ -30,7 +29,7 @@ class PermissionService
 
     public function allowsDepartment(User $actor, string $permission, string $departmentId): bool
     {
-        if (!Str::isUuid($departmentId) || !$this->eligible($actor) || !$this->assignments->activeDepartment($departmentId)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($departmentId) || !$this->eligible($actor) || !$this->assignments->activeDepartment($departmentId)) {
             return false;
         }
 
@@ -40,7 +39,7 @@ class PermissionService
 
     public function allowsOrganization(User $actor, string $permission, string $organizationId): bool
     {
-        if (!Str::isUuid($organizationId) || !$this->eligible($actor) || !$this->assignments->activeOrganization($organizationId)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($organizationId) || !$this->eligible($actor) || !$this->assignments->activeOrganization($organizationId)) {
             return false;
         }
 
@@ -51,7 +50,7 @@ class PermissionService
 
     public function hasOrganizationRole(User $actor, string $organizationId): bool
     {
-        return Str::isUuid($organizationId) && $this->eligible($actor)
+        return \App\Support\Identifiers\RecordIdentifier::isValid($organizationId) && $this->eligible($actor)
             && $this->assignments->hasOrganizationRole((int) $actor->id, $organizationId);
     }
 

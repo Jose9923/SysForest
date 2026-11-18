@@ -36,7 +36,7 @@ final class MobileInspectionResults
 
         return ['scope' => 'phytosanitary_management_priority', 'status' => $status,
             'label' => RiskPresentation::label($evaluation), 'inspection_version' => $inspection->lock_version,
-            'methodology' => $methodology === null ? null : ['id' => $methodology->id, 'version' => $methodology->version,
+            'methodology' => $methodology === null ? null : ['id' => MobileIdentifiers::id($methodology), 'version' => $methodology->version,
                 'name' => $methodology->name, 'code' => $result['methodology_code']],
             'suggested_priority' => $result['priority'] ?? null, 'suggested_label' => $result['priority_label'] ?? null,
             'confirmed_priority' => $evaluation?->priority,

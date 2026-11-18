@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Models\Imports;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 
 /** Conserva la fila recibida y la proyección validada, sin convertir decimales en float. */
 class ImportRow extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     protected $guarded = ['*'];
 

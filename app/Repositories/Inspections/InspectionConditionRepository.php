@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use LogicException;
 
 class InspectionConditionRepository
@@ -105,7 +104,7 @@ class InspectionConditionRepository
 
     private function validIds(array $ids): bool
     {
-        return array_all($ids, fn ($id): bool => is_string($id) && Str::isUuid($id))
+        return array_all($ids, fn ($id): bool => is_string($id) && \App\Support\Identifiers\RecordIdentifier::isValid($id))
             && count(array_unique($ids)) === count($ids);
     }
 

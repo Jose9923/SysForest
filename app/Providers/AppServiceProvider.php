@@ -23,11 +23,18 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(TenantContext::class);
+        $this->app->scoped(\App\Repositories\Identifiers\IdentifierRepository::class);
         $this->app->scoped(\App\Services\Risk\HistoricalRiskImportScope::class);
     }
 
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Validator::extend(
+            'record_id',
+            static fn ($attribute, $value): bool => \App\Support\Identifiers\RecordIdentifier::isValid($value),
+            'La referencia seleccionada no es válida.'
+        );
+
         // El guard conserva identidad solo durante la petición validada por JWT.
         Auth::viaRequest('jwt-context', fn (Request $request) => null);
         Gate::define('audit.view', fn (User $actor) => app(\App\Services\Audit\AuditAccessService::class)->canView($actor)

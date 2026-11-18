@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models\Publication;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Concerns\HasNumericIdentifiers;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
@@ -12,7 +12,7 @@ use App\Models\User;
 /** Historial privado con sujetos referenciados mediante claves foráneas reales. */
 class PublicationRevision extends Model
 {
-    use HasUuids;
+    use HasNumericIdentifiers;
 
     public $timestamps = false;
     protected $guarded = ['*'];

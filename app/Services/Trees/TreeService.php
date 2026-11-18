@@ -101,7 +101,7 @@ class TreeService
     {
         return $this->writes->run($actor, $id, 'update', $input['lock_version'] ?? null, function (Tree $tree, User $actor) use ($input): void {
             $data = Validator::make($input, ['inventory_ids' => ['required', 'array', 'min:1', 'max:50'],
-                'inventory_ids.*' => ['required', 'uuid', 'distinct'], 'notes' => ['nullable', 'string', 'max:2000']], TreeInput::messages())->validate();
+                'inventory_ids.*' => ['required', 'record_id', 'distinct'], 'notes' => ['nullable', 'string', 'max:2000']], TreeInput::messages())->validate();
             $this->relations->include($tree, $actor, $data['inventory_ids'], $data['notes'] ?? null);
         }, false, 'tree.inventory_included');
     }

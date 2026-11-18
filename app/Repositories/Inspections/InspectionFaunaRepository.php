@@ -9,7 +9,6 @@ use App\Models\Inspections\TreeInspection;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use LogicException;
 
 class InspectionFaunaRepository
@@ -28,7 +27,7 @@ class InspectionFaunaRepository
 
     public function validate(array $ids, ?TreeInspection $inspection = null): bool
     {
-        if (!array_all($ids, fn ($id): bool => is_string($id) && Str::isUuid($id))
+        if (!array_all($ids, fn ($id): bool => is_string($id) && \App\Support\Identifiers\RecordIdentifier::isValid($id))
             || count(array_unique($ids)) !== count($ids)) {
             return false;
         }

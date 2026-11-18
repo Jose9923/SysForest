@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use LogicException;
 
 class MaintenanceRepository
@@ -19,8 +18,8 @@ class MaintenanceRepository
 
     public function findForTenant(string $organizationId, string $id, bool $lock = false, bool $withTrashed = false): Maintenance
     {
-        $this->uuid($organizationId);
-        $this->uuid($id);
+        $this->identifier($organizationId);
+        $this->identifier($id);
         $query = $this->query($organizationId)->whereKey($id);
         if ($withTrashed) {
             $query->withTrashed();
@@ -37,7 +36,7 @@ class MaintenanceRepository
 
     public function paginate(string $organizationId, array $filters = []): LengthAwarePaginator
     {
-        $this->uuid($organizationId);
+        $this->identifier($organizationId);
         $query = $this->query($organizationId);
         // Este indicador solo procede del Service autorizado; no es un filtro del navegador.
         if (($filters['include_voided_trees'] ?? false) !== true) {
@@ -47,14 +46,14 @@ class MaintenanceRepository
             $query->onlyTrashed();
         }
         if (!empty($filters['inventory_id'])) {
-            $this->uuid($filters['inventory_id']);
+            $this->identifier($filters['inventory_id']);
             $query->whereHas('tree', fn (Builder $tree) => $tree->where('trees.organization_id', $organizationId)
                 ->whereHas('inventories', fn (Builder $inventory) => $inventory
                     ->where('inventories.organization_id', $organizationId)->where('inventories.id', $filters['inventory_id'])));
         }
         foreach (['tree_id', 'maintenance_type_id'] as $key) {
             if (!empty($filters[$key])) {
-                $this->uuid($filters[$key]);
+                $this->identifier($filters[$key]);
                 $query->where($key, $filters[$key]);
             }
         }
@@ -84,8 +83,8 @@ class MaintenanceRepository
 
     public function timelineForTree(string $organizationId, string $treeId): Collection
     {
-        $this->uuid($organizationId);
-        $this->uuid($treeId);
+        $this->identifier($organizationId);
+        $this->identifier($treeId);
 
         return $this->query($organizationId)->where('tree_id', $treeId)
             ->orderByDesc('created_at')->orderByDesc('id')->limit(10)->get();
@@ -138,9 +137,9 @@ class MaintenanceRepository
         return $this->findForTenant($maintenance->organization_id, $maintenance->id, false, true);
     }
 
-    private function uuid(string $value): void
+    private function identifier(string $value): void
     {
-        if (!Str::isUuid($value)) {
+        if (!\App\Support\Identifiers\RecordIdentifier::isValid($value)) {
             throw (new ModelNotFoundException())->setModel(Maintenance::class);
         }
     }

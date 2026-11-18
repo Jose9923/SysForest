@@ -6,7 +6,8 @@ namespace App\Repositories\Auth;
 
 use App\Models\Auth\SecurityEvent;
 use App\Models\User;
-use App\Auditing\AuditSnapshot;
+use App\Services\Audit\AuditSnapshotService;
+use App\Repositories\Audit\AuditReferenceRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -14,7 +15,7 @@ use LogicException;
 
 class SecurityEventRepository
 {
-    public function __construct(private AuditSnapshot $snapshots)
+    public function __construct(private AuditSnapshotService $snapshots, private AuditReferenceRepository $references)
     {
     }
 
@@ -52,6 +53,10 @@ class SecurityEventRepository
                 // El motivo forestal conserva la extensión admitida por el servicio de ubicación.
                 $safe[$key] = mb_substr($value, 0, $key === 'reason' ? 5000 : 150);
             }
+        }
+        $safe = $this->references->metadata($event, $resourceType, $safe);
+        if ($resourceType !== null && $resourceId !== null) {
+            $resourceId = $this->references->resource($resourceType, $resourceId, $safe['catalog_key'] ?? null);
         }
         // El servicio de ubicación valida la selección; la auditoría conserva su código estable.
         if (array_key_exists('change_type', $safe) && $safe['change_type'] !== null

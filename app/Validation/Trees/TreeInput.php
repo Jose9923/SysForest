@@ -15,13 +15,13 @@ class TreeInput
         return array_merge(self::identityGuards(), self::locationRules(), [
             'external_number' => ['nullable', 'string', 'max:100'],
             'location_description' => ['nullable', 'string', 'max:2000'],
-            'placement_id' => ['nullable', 'uuid'], 'species_id' => ['nullable', 'uuid'],
-            'growth_habit_id' => ['nullable', 'uuid'], 'establishment_origin_id' => ['nullable', 'uuid'],
-            'biogeographic_origin_id' => ['nullable', 'uuid'],
+            'placement_id' => ['nullable', 'record_id'], 'species_id' => ['nullable', 'record_id'],
+            'growth_habit_id' => ['nullable', 'record_id'], 'establishment_origin_id' => ['nullable', 'record_id'],
+            'biogeographic_origin_id' => ['nullable', 'record_id'],
             'current_status' => [$updating ? 'sometimes' : 'required', Rule::enum(TreeStatus::class)],
             'is_protected' => ['sometimes', 'boolean'], 'is_heritage' => ['sometimes', 'boolean'],
             'inventory_ids' => [$updating ? 'sometimes' : 'required', 'array', $updating ? 'min:0' : 'min:1', 'max:50'],
-            'inventory_ids.*' => ['required', 'uuid', 'distinct'],
+            'inventory_ids.*' => ['required', 'record_id', 'distinct'],
             'reason' => ['nullable', 'string', 'max:2000'],
             'lock_version' => [$updating ? 'required' : 'prohibited', 'integer', 'min:1'],
         ]);
@@ -54,7 +54,7 @@ class TreeInput
     public static function voidRules(): array
     {
         return array_merge(self::identityGuards(), ['lock_version' => ['required', 'integer', 'min:1'],
-            'deletion_reason_id' => ['required', 'uuid'], 'deletion_notes' => ['nullable', 'string', 'max:2000']]);
+            'deletion_reason_id' => ['required', 'record_id'], 'deletion_notes' => ['nullable', 'string', 'max:2000']]);
     }
 
     public static function filters(): array
@@ -64,7 +64,7 @@ class TreeInput
 
     public static function messages(): array
     {
-        return ['required' => 'El campo :attribute es obligatorio.', 'uuid' => 'La referencia seleccionada no es válida.',
+        return ['required' => 'El campo :attribute es obligatorio.', 'record_id' => 'La referencia seleccionada no es válida.',
             'prohibited' => 'El campo :attribute es administrado por el sistema.', 'enum' => 'El estado seleccionado no es válido.',
             'in' => 'La selección de :attribute no es válida.', 'integer' => 'El campo :attribute debe ser un entero.',
             'numeric' => 'El campo :attribute debe ser numérico.', 'boolean' => 'La selección debe ser sí o no.',
