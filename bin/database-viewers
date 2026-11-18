@@ -190,6 +190,13 @@ def main():
             write_private(state / 'postgres_viewer_pgpass', pgpass + '\n', 5050)
         require(read_private(state / 'postgres_viewer_pgpass', 5050) == pgpass,
                 'El pgpass existente no coincide con su cuenta; no se rota automáticamente.')
+        # Git respeta el umask del operador. Estos dos archivos versionados no
+        # contienen secretos y el UID5050 debe poder leer sus bind mounts.
+        for filename in ['pgadmin-config.py', 'pgadmin-servers.json']:
+            public_config = ROOT / 'docker/database-viewers' / filename
+            require(public_config.is_file() and not public_config.is_symlink(),
+                    'La configuración pública de pgAdmin debe ser un archivo regular versionado.')
+            public_config.chmod(0o644)
         compose_env = dict(os.environ, SYSFOREST_VIEWERS_SECRETS_DIR=str(state), PGADMIN_DEFAULT_EMAIL=email)
         compose = ['docker', 'compose', '--project-name', PROJECT, '--project-directory', str(ROOT),
                    '-f', str(ROOT / 'compose.database-viewers.yml')]
