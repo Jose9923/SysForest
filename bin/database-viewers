@@ -145,8 +145,45 @@ def compose_hash(compose, env, service):
     return output[1]
 
 
-def same_viewer(value, spec, expected_hash):
-    image = json.loads(run(['docker', 'image', 'inspect', spec['image']], phase='identidad de imagen del visor'))[0]['Id']
+def runtime_image_id(image):
+    """Docker puede exponer un índice OCI en image.Id y su configuración en container.Image."""
+    descriptor = json.loads(run(['docker', 'image', 'inspect', image], phase='descriptor de imagen del visor'))[0]
+    require(not descriptor['Config'].get('Volumes'), 'La imagen declara volúmenes implícitos; no se crea la sonda.')
+    require(bool(re.fullmatch(r'sha256:[a-f0-9]{64}', descriptor['Id'])), 'El descriptor local de imagen no es válido.')
+    token = secrets.token_hex(12)
+    name = PROJECT + '-image-identity-' + token
+    label = 'sysforest.viewer-image-identity'
+    container = None
+    try:
+        # Crear no ejecuta el entrypoint. La identidad inmutable evita cambios del tag entre lecturas.
+        container = run(['docker', 'create', '--pull', 'never', '--name', name, '--label', label + '=' + token,
+                         '--network', 'none', '--read-only', '--user', '1000:1000', '--cap-drop', 'ALL',
+                         '--security-opt', 'no-new-privileges:true', '--entrypoint', '/bin/true', descriptor['Id']],
+                        phase='creación sin arranque de sonda de imagen').strip()
+        require(bool(re.fullmatch(r'[a-f0-9]{64}', container)), 'No se identificó la sonda de imagen.')
+        value = inspected(container)
+        require(value['Name'] == '/' + name and value['Config']['Labels'].get(label) == token
+                and value['State']['Status'] == 'created' and not value['State']['Running']
+                and value['HostConfig']['NetworkMode'] == 'none' and value['HostConfig']['ReadonlyRootfs']
+                and not value['Mounts'], 'La sonda no coincide con el contexto sin ejecución aprobado.')
+        require(bool(re.fullmatch(r'sha256:[a-f0-9]{64}', value['Image'])), 'La identidad de ejecución no es válida.')
+        return value['Image']
+    finally:
+        if container is None:
+            # También retirar una creación que completó Docker pero cuya respuesta se interrumpió.
+            matches = run(['docker', 'ps', '-a', '-q', '--no-trunc', '--filter', 'name=^/' + name + '$',
+                           '--filter', 'label=' + label + '=' + token], phase='localización de sonda propia').splitlines()
+            require(len(matches) <= 1, 'Hay una colisión en la identidad de la sonda; requiere revisión.')
+            container = matches[0] if matches else None
+        if container:
+            value = inspected(container)
+            require(value['Name'] == '/' + name and value['Config']['Labels'].get(label) == token
+                    and not value['State']['Running'], 'La sonda cambió de propietario/estado; no se retira.')
+            run(['docker', 'rm', container], phase='retirada exclusiva de sonda sin iniciar')
+
+
+def same_viewer(value, spec, expected_hash, execution_image=None):
+    image = execution_image if execution_image is not None else runtime_image_id(spec['image'])
     require(value['Image'] == image and value['Config']['Labels'].get('com.docker.compose.config-hash') == expected_hash,
             'El visor existente difiere de su imagen/configuración fijada; no se reconstruye ni reemplaza automáticamente.')
     require(healthy(value), 'El visor existente debe estar saludable; no se reinicia implícitamente.')
@@ -190,6 +227,9 @@ foreach(['rolsuper','rolcreaterole','rolcreatedb','rolreplication','rolbypassrls
 """
         run(['docker', 'exec', '-i', container, 'php', '-r', db_php], payload=json.dumps({'password': password}),
             phase='login PostgreSQL de consulta del candidato', timeout=30)
+        execution_image = inspected(container)['Image']
+        require(bool(re.fullmatch(r'sha256:[a-f0-9]{64}', execution_image)), 'La identidad de imagen del candidato no es válida.')
+        return execution_image
     finally:
         if container:
             value = inspected(container)
@@ -424,8 +464,7 @@ def main():
         if provision_accounts:
             print('Preparando las cuentas exclusivas de consulta de la instalación inicial...', flush=True)
             prepare_accounts(baseline, names, services, values)
-        candidate_check(pg_spec['image'], values['postgres_viewer_password'])
-        expected_image = json.loads(run(['docker', 'image', 'inspect', pg_spec['image']], phase='imagen phpPgAdmin'))[0]['Id']
+        expected_image = candidate_check(pg_spec['image'], values['postgres_viewer_password'])
         # Mongo existente nunca recibe build/up/restart. Si cambia su contrato se abortó arriba.
         if not mongo:
             run(compose + ['build', 'mongo-express'], env=compose_env, phase='compilación inicial de Mongo Express', timeout=1200)
@@ -438,7 +477,7 @@ def main():
         require((optional_container('pgadmin') or {}).get('Id') == (legacy or {}).get('Id'), 'pgAdmin cambió durante la preparación.')
         require((optional_container('phppgadmin') or {}).get('Id') == (current or {}).get('Id'), 'phpPgAdmin cambió durante la preparación.')
         if current and healthy(current) and current['Image'] == expected_image:
-            same_viewer(current, pg_spec, compose_hash(compose, compose_env, 'phppgadmin'))
+            same_viewer(current, pg_spec, compose_hash(compose, compose_env, 'phppgadmin'), expected_image)
             pg = current
         else:
             pg = activate_postgres_viewer(compose, compose_env, legacy, current, expected_image)
