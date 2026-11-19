@@ -59,6 +59,8 @@ Rutas predeterminadas: release `/opt/sysforest/releases/20261104-initial`, entor
 
 En una instalación nueva se preparan solo las cuentas restringidas de consulta. En una instalación existente se conservan las cuentas y secretos, sin repetir esa preparación. El candidato phpPgAdmin se construye y comprueba sin publicar puertos: HTTP y conexión a PostgreSQL con la cuenta autorizada. Solo después se detiene pgAdmin y se publica phpPgAdmin en el mismo puerto 18084. Mongo Express existente debe coincidir con su imagen/configuración y estar saludable; si difiere se aborta en lugar de reemplazarlo.
 
+La identidad Docker se valida con el descriptor completo del manifiesto de plataforma (`ImageManifestDescriptor`): digest, tamaño, tipo y plataforma deben coincidir, junto con la configuración de Compose. Un índice multi-plataforma no se acepta como ese manifiesto. En motores sin descriptor en ambos lados se exige igualdad de Image; un descriptor ausente solo en un lado o distinto provoca rechazo. Esta distinción corrige la comparación entre el Image de un contenedor y el índice de la etiqueta sin recrear Mongo Express ni omitir la comprobación de configuración.
+
 La actualización V1→V2 conserva los ocho archivos privados anteriores (incluidos clave/passfile de pgAdmin) y guarda `access.before-phppgadmin.txt`, `settings.before-phppgadmin.json` e `installation.before-phppgadmin.json`. Conserva el contenedor `sysforest-database-viewers-pgadmin-1` **detenido**, su imagen y el volumen `sysforest-database-viewers_pgadmin_data`. No usar `--remove-orphans`, `down -v`, borrado de secretos ni limpieza global de Docker.
 
 Una repetición comprueba configuración, salud, secretos, entorno y las identidades de los siete servicios. No rota contraseñas ni reinicia Mongo Express. El instalador conserva estado tras un fallo para corregir la causa y reintentar; no garantiza una transacción global entre archivos, cuentas y Docker. Un fallo durante la activación recupera el pgAdmin anterior si estaba activo; un fallo posterior al activar requiere consultar `status` y revisar el estado antes de repetir. No borrar el directorio privado para forzar una instalación nueva.
@@ -83,7 +85,24 @@ Mongo Express conserva el snapshot oficial `6b0fc653660f9862a23f4b111eaa4daa0a3a
 
 ## Verificación del cambio a phpPgAdmin
 
-Preparación en curso. Registrar aquí el commit, la verificación aislada y el cierre productivo cuando realmente se completen. El preflight encontró dos árboles, un inventario, dos inspecciones, siete evidencias y dos asociaciones inventario/árbol, sin referencias huérfanas. Los siete servicios de negocio y ambos visores iniciales estaban saludables; la cuenta PostgreSQL tenía SELECT y ningún permiso de escritura sobre tablas.
+**Cambio completado el 18/11/2026 a las 19:11, hora de Bogotá.** El commit operativo `380a0b1364247f01ac91bfefe523adaca213c365` quedó publicado y actualizado en `/opt/sysforest/source`, limpio en `codex/organize-backend-modules`. Imagen productiva phpPgAdmin: `sha256:90c608da19523dad6f0f0cb06ca84cf2c8e215ad9df1868373709f96a21861c6`, etiqueta `sysforest-phppgadmin:f35f659-php83-v1`. Mongo Express conservó su contenedor, imagen, configuración y fecha de inicio.
+
+| Comprobación | Resultado observado |
+| --- | --- |
+| QA aislada | **21/21** aprobadas con PostgreSQL 17, datos ficticios, BIGINT exacto mayor que 2⁵³, metadatos IDENTITY, login, consulta, ordenamiento, CSV y SQL nativo de cuatro filas, rechazos por ACL/CSRF/origen y logout. Sin conexión a producción ni ampliación de ACL. |
+| HTTP productivo | **48/48** aprobadas: 16 comprobaciones para cada una de las tablas trees, inventories y evidences. Login, BIGINT/IDENTITY, consulta, ordenamiento, CSV/SQL nativo completos con 2, 1 y 7 filas, protección CSRF/origen y logout. Sesiones propias cerradas; sin escrituras de negocio, secretos impresos ni exportaciones crudas persistidas. |
+| Datos y permisos | Se conservaron los conteos observados: dos árboles, un inventario, dos inspecciones, siete evidencias y dos asociaciones inventario/árbol, sin referencias huérfanas. La cuenta mantuvo SELECT y ningún permiso de escritura sobre tablas. Estas lecturas no equivalen a una verificación integral de todos los datos. |
+| Activación y conservación | Ambos visores saludables; entorno productivo y hashes de los **ocho archivos privados** idénticos. Tres preimágenes conservadas. pgAdmin anterior detenido y retenido con su imagen y volumen. Sin migraciones, seeders ni cambios de ACL. |
+| Repetición | `install` repetido sin cambiar contenedor, imagen ni fecha de inicio de phpPgAdmin, ni access/settings. Mongo Express y los siete servicios de negocio permanecieron iguales a la línea base del instalador. |
+| Acceso desde Windows | Túnel privado abierto, phpPgAdmin HTTP 200 con su contenido reconocido y Mongo Express 401 sin autenticación, según lo esperado. No se hizo una revisión interactiva en navegador. |
+
+Los siete servicios de negocio conservaron sus IDs, imágenes y configuración durante la sustitución y la repetición, sin reinicios en ese intervalo. La comparación con el preflight anterior muestra un cambio de StartedAt únicamente en **queue**, a las 23:41 UTC (18:41 en Bogotá), antes de crear phpPgAdmin: su intervalo de reinicio coincide con el límite configurado de `--max-time=3600`. Los otros seis mantuvieron su fecha de inicio. `queue_observation` y la línea base del instalador acreditan esta distinción; no se afirma que los siete conservaran StartedAt durante toda la sesión de trabajo.
+
+La revisión de identidad de imágenes aprobó diez observaciones con los descriptores productivos capturados: acepta el mismo manifiesto de plataforma aunque difiera Image, y rechaza cambios de configuración, digest, arquitectura, tamaño, índices o descriptores incompletos. La corrección no reconstruyó ni recreó Mongo Express.
+
+La exportación SQL aprobada contiene INSERT de datos, sin estructura, estado de secuencias ni respaldo completo de la base. La evidencia funcional es HTTP, no una aceptación visual interactiva. No se añadieron suites permanentes. Tras cerrar la QA se retiraron exclusivamente sus dos contenedores, red interna y dos archivos secretos temporales; se conservaron las imágenes y no se tocaron volúmenes persistentes ni bases canónicas/productivas.
+
+Evidencias externas al repositorio, bajo `.phppgadmin-work/`: `qa-functional-review.json`, `production-verification-first.json`, `production-verification-repeat.json`, `production-http-verification.json`, `repeat-idempotence.json`, `windows-access-verification.json`, `platform-manifest-identity-review.json` y `qa-cleanup.json`. Los informes conservan resultados y huellas sin publicar credenciales ni filas de negocio.
 
 ## Evidencia histórica de la instalación inicial de pgAdmin
 
