@@ -90,7 +90,20 @@ Mongo Express conserva el snapshot oficial `6b0fc653660f9862a23f4b111eaa4daa0a3a
 
 ## Habilitación de creación y edición · 18/11/2026
 
-Autorizada explícitamente después del error de INSERT en una sesión de consulta. Implementación V3 preparada, con `sysforest_editor` separado y tag de panel `sysforest-phppgadmin:f35f659-php83-v2`. Activación y cierre de pruebas pendientes de registrar aquí. No crear ni modificar a Julieth o datos forestales como verificación productiva; las escrituras de prueba se limitan a una base desechable.
+**Activada y verificada el 18/11/2026 20:15, hora de Bogotá**, commit operativo `7a5a7099ceb9dd24e9a5f9c0769f288bdefc30fd`, con push/pull al checkout fuente. Imagen productiva `sha256:7f51dc65bbcee5f163bc1814c94bdb33ecce0dc3186fa1d3305c22c158080599`, tag `sysforest-phppgadmin:f35f659-php83-v2`. El estado privado quedó en V3, con `sysforest_editor` separado, contraseña propia y la cuenta `sysforest_viewer` intacta. Para crear/editar, volver a iniciar sesión como `sysforest_editor` y consultar su contraseña con `bin/database-viewers credentials` en la terminal privada del servidor.
+
+| Verificación | Resultado |
+| --- | --- |
+| Preparación aislada | Bootstrap y repetición aprobados: secreto SCRAM sin rotación, viewer intacto, permisos mínimos y defaults de tablas/secuencias futuras. El candidato del instalador conectó con ambos perfiles y comprobó el modo de transacción y los permisos. |
+| Interfaz aislada | **27/27** observaciones aprobadas: INSERT y Editar mediante formularios reales, SQL INSERT/UPDATE, ID BIGINT automático y UUID externo generado/conservado. DELETE, CREATE TABLE, SET ROLE y setval rechazados. Viewer continuó de lectura; sesiones cerradas. |
+| Producción HTTP | **21/21** comprobaciones aprobadas de login de ambas cuentas, permisos efectivos, SELECT y formulario de inserción disponible, sin enviarlo. Sin INSERT/UPDATE de prueba en producción; sesiones cerradas y ninguna fila/contraseña cruda persistida. |
+| Conservación | **14/14** comprobaciones iniciales: usuarios 1, árboles 2, inventario 1, inspecciones 2, evidencias 7 y asociaciones 2, con hashes lógicos de las seis tablas idénticos. Ocho secretos previos y production.env conservados; nuevo secreto editor root:0600. Servicios de negocio, Mongo y pgAdmin anterior intactos. |
+| Repetición | **17/17** comprobaciones aprobadas: nueve secretos y SCRAM editor sin cambios, mismo phpPgAdmin e inicio, datos y servicios conservados. |
+| Windows y limpieza | HTTP 200 por el túnel existente, con opciones de edición/consulta visibles. QA retirada exclusivamente: sus dos contenedores, red interna y cuatro archivos privados temporales; imágenes conservadas. |
+
+El cambio preparó permisos de una cuenta de base, sin migraciones, seeders, escrituras de negocio o reinicios de aplicación. No registró a Julieth ni asignó roles/membresías de SysForest. No hubo revisión interactiva en navegador; las comprobaciones de formularios fueron HTTP. El rol y secreto preparados se conservan si una activación posterior del panel necesita recuperación.
+
+Evidencia externa al repo en `.phppgadmin-edit-work/`: `bootstrap-observations.json`, `qa-http-observations.json`, `installer-candidate-observations.json`, `production-preservation-first.json`, `production-preservation-repeat.json`, `production-http-verification.json`, `windows-access-verification.json` y `qa-cleanup.json`. La evidencia productiva HTTP también está en `/opt/sysforest/private/phppgadmin-edit-verification-20261118/summary.json`, root privada.
 
 ## Verificación del cambio a phpPgAdmin
 

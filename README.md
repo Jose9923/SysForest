@@ -32,6 +32,8 @@ phpPgAdmin y Mongo Express se gestionan como servicios privados independientes m
 
 La sustitución quedó activada el **18/11/2026**, commit `380a0b1`: 21/21 comprobaciones aisladas y 48/48 HTTP productivas aprobadas, además del acceso por túnel desde Windows y la repetición del instalador. Se conservaron los ocho archivos privados, Mongo Express y el pgAdmin anterior detenido con su volumen. La consulta, el ordenamiento y la exportación de datos CSV/SQL funcionan con BIGINT/IDENTITY; estas exportaciones no son respaldos completos. No hubo reinicios de los siete servicios de negocio durante el corte ni la repetición; el ciclo previo del worker y los límites de verificación constan en la guía enlazada.
 
+La edición de registros quedó habilitada posteriormente, commit `7a5a7099`, mediante `sysforest_editor`; `sysforest_viewer` conserva consulta. Verificada con 27/27 observaciones aisladas de inserción/edición y 21/21 HTTP productivas sin escribir datos de negocio. La repetición conservó nueve secretos, la contraseña y los servicios; hashes de los datos existentes intactos.
+
 ## Manuales de la aplicación
 
 Los [manuales de SysForest](docs/manuales.md) reúnen la documentación técnica y los procedimientos de usuario de la edición del 13 de octubre de 2026, contrastada con la implementación revisada:
