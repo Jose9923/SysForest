@@ -8,6 +8,9 @@
         const outputs = Array.from(panel.querySelectorAll('[data-calculated-output]'));
         const clinometer = form.querySelector('[data-clinometer-toggle]');
         const clinometerFields = form.querySelector('[data-clinometer-fields]');
+        const clinometerMethod = form.querySelector('[data-clinometer-method]');
+        const methodGroups = Array.from(form.querySelectorAll('[data-clinometer-method-fields]'));
+        const commercialLabel = panel.querySelector('[data-clinometer-commercial-label]');
         const manualHeights = Array.from(form.querySelectorAll('[data-manual-height]'));
         const clinometerResults = Array.from(panel.querySelectorAll('[data-clinometer-result]'));
         const applyMode = () => {
@@ -15,7 +18,16 @@
             const enabled = clinometer.checked;
             clinometerFields.hidden = !enabled;
             clinometerFields.disabled = !enabled;
-            clinometerFields.querySelectorAll('input').forEach((field) => { field.required = enabled; });
+            const method = clinometerMethod?.value || 'signed_angles';
+            clinometerFields.querySelectorAll('input[type="number"]').forEach((field) => { field.required = enabled; });
+            methodGroups.forEach((group) => {
+                const selected = group.dataset.clinometerMethodFields === method;
+                group.hidden = !selected;
+                group.disabled = !selected || !enabled;
+                group.querySelectorAll('input').forEach((field) => { field.required = selected && enabled; });
+            });
+            if (commercialLabel) commercialLabel.textContent = method === 'signed_angles'
+                ? 'Altura comercial (fuste)' : 'Altura comercial con inclinómetro';
             manualHeights.forEach((wrapper) => {
                 wrapper.hidden = enabled;
                 wrapper.querySelectorAll('input').forEach((field) => { field.disabled = enabled; });
@@ -48,6 +60,7 @@
             inputs.forEach((field) => {
                 data[field.name] = field.type === 'checkbox' ? field.checked : field.value.trim() || null;
             });
+            if (clinometer?.checked && clinometerMethod) data.clinometer_method = clinometerMethod.value;
             if (form.dataset.inspectionId) data.inspection_id = form.dataset.inspectionId;
             try {
                 const response = await fetch(form.dataset.previewUrl, {
@@ -92,6 +105,7 @@
             if (field.type !== 'checkbox') field.addEventListener('input', schedule);
         });
         if (clinometer) clinometer.addEventListener('change', () => { applyMode(); schedule(); });
+        if (clinometerMethod) clinometerMethod.addEventListener('change', () => { applyMode(); schedule(); });
         applyMode();
         preview();
     });

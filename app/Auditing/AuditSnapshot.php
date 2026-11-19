@@ -37,7 +37,7 @@ class AuditSnapshot
         'risk' => ['evaluation_id', 'methodology_id', 'priority', 'suggested_priority', 'status', 'confirmed_by', 'confirmed_at'],
         'context' => ['tree_id', 'inventory_tree_id', 'inspection_date'],
         'measurements' => ['cap_cm', 'number_of_stems', 'form_factor', 'total_height_m', 'commercial_height_m', 'crown_x_m', 'crown_y_m',
-                'uses_clinometer', 'clinometer_distance_m', 'clinometer_elevation_degrees', 'clinometer_depression_degrees', 'clinometer_observer_height_m', 'clinometer_formula_version'],
+                'uses_clinometer', 'clinometer_distance_m', 'clinometer_elevation_degrees', 'clinometer_depression_degrees', 'clinometer_observer_height_m', 'clinometer_formula_version', 'clinometer_stem_elevation_degrees', 'clinometer_lower_degrees'],
         'calculations' => ['dap_m', 'radius_m', 'basal_area_m2', 'commercial_volume_m3', 'total_volume_m3', 'diameter_class_number', 'height_class_number', 'maturity_state_id', 'classification_rule_version_id', 'calculation_rule_version'],
         'phenology' => ['flowering_date', 'flowering_development', 'fruiting_date', 'fruiting_development'],
         'observations' => ['general_observations'],

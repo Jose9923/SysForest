@@ -18,7 +18,10 @@ final class ClinometerInput
         'clinometer_depression_degrees', 'clinometer_observer_height_m',
     ];
 
-    public const FIELDS = ['uses_clinometer', ...self::OPERANDS];
+    public const SIGNED_OPERANDS = ['clinometer_stem_elevation_degrees', 'clinometer_lower_degrees'];
+
+    /** Persistentes: el selector transitorio nunca se proyecta ni se audita. */
+    public const FIELDS = ['uses_clinometer', ...self::OPERANDS, ...self::SIGNED_OPERANDS];
 
     public static function enabled(mixed $value): bool
     {
@@ -45,21 +48,22 @@ final class ClinometerInput
             }];
         }
 
-        return $rules;
+        return $rules + SignedClinometerInput::rules() + SignedClinometerInput::selectorRules();
     }
 
     /** Solo la escritura o vista previa llama a esta normalización, después del contrato de entrada. */
     public static function resolve(array $input): array
     {
-        $values = array_intersect_key($input, array_flip(self::FIELDS));
+        $values = array_intersect_key($input, array_flip([...self::FIELDS, 'clinometer_method']));
         foreach ($values as $field => $value) {
             if (is_string($value) && trim($value) === '') {
                 $values[$field] = null;
             }
         }
         $rules = self::rules();
+        $method = SignedClinometerInput::method($values);
         if (self::enabled($values['uses_clinometer'] ?? null)) {
-            foreach (self::OPERANDS as $field) {
+            foreach ($method === SignedClinometerInput::METHOD ? SignedClinometerInput::OPERANDS : self::OPERANDS as $field) {
                 array_unshift($rules[$field], 'required');
             }
         }
@@ -69,12 +73,22 @@ final class ClinometerInput
         ])->validate();
         $mode = $values['uses_clinometer'] ?? null;
         if (!self::enabled($mode)) {
-            if ($mode === null && collect(self::OPERANDS)->contains(fn (string $field): bool => ($values[$field] ?? null) !== null)) {
+            if ($mode === null && collect([...self::OPERANDS, ...self::SIGNED_OPERANDS])->contains(fn (string $field): bool => ($values[$field] ?? null) !== null)) {
                 throw ValidationException::withMessages(['uses_clinometer' => 'Activa el inclinómetro para registrar sus mediciones.']);
             }
 
             return ['uses_clinometer' => $mode === null ? null : false]
-                + array_fill_keys(self::OPERANDS, null) + ['clinometer_formula_version' => null];
+                + array_fill_keys([...self::OPERANDS, ...self::SIGNED_OPERANDS], null) + ['clinometer_formula_version' => null];
+        }
+
+        if ($method === SignedClinometerInput::METHOD) {
+            return ['uses_clinometer' => true] + SignedClinometerInput::resolve($values)
+                + ['clinometer_depression_degrees' => null, 'clinometer_observer_height_m' => null];
+        }
+        foreach (self::SIGNED_OPERANDS as $field) {
+            if (($values[$field] ?? null) !== null) {
+                throw ValidationException::withMessages(['clinometer_method' => 'Selecciona el método de ángulos firmados para registrar estas lecturas.']);
+            }
         }
 
         $operands = [];
@@ -98,7 +112,7 @@ final class ClinometerInput
         $validated = DendrometryInput::validate($heights);
 
         return ['uses_clinometer' => true] + $operands + ['clinometer_formula_version' => self::VERSION]
-            + array_intersect_key($validated, $heights);
+            + array_intersect_key($validated, $heights) + array_fill_keys(self::SIGNED_OPERANDS, null);
     }
 
     /** Un cliente anterior puede reenviar alturas iguales al corregir otra observación. */

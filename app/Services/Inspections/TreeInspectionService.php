@@ -84,6 +84,13 @@ class TreeInspectionService
             if (ClinometerInput::legacyManualChange($input, $current)) {
                 $input['uses_clinometer'] = false;
             }
+            // La conversión explícita conserva solo lecturas compartidas; no inventa el nuevo ángulo.
+            if (($input['clinometer_method'] ?? null) === 'legacy'
+                && $current['clinometer_method'] === \App\Validation\Forestry\SignedClinometerInput::METHOD) {
+                foreach (ClinometerInput::SIGNED_OPERANDS as $field) {
+                    $current[$field] = null;
+                }
+            }
             $input = array_replace($current, $input);
             $data = Validator::make($input, TreeInspectionInput::rules(true), TreeInspectionInput::messages())->validate();
             $data['general_observations'] = \App\Support\Imports\ExcelReferencePresentation::preserveObservations(
@@ -143,6 +150,8 @@ class TreeInspectionService
             $value = $inspection->getAttribute($field);
             $input[$field] = $value instanceof \DateTimeInterface ? $value->format('Y-m-d') : $value;
         }
+        $input['clinometer_method'] = $inspection->clinometer_formula_version === \App\Validation\Forestry\SignedClinometerInput::VERSION
+            ? \App\Validation\Forestry\SignedClinometerInput::METHOD : 'legacy';
         $input['physical_condition_ids'] = $inspection->conditions->where('assessment_type', 'physical_mechanical')->modelKeys();
         $input['phytosanitary_condition_ids'] = $inspection->conditions->where('assessment_type', 'phytosanitary')->modelKeys();
         $input['fauna_category_ids'] = $inspection->faunaCategories->modelKeys();

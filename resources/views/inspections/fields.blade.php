@@ -6,6 +6,9 @@
         $faunaIds = old('fauna_category_ids', $selectedFaunaCategoryIds);
         $faunaIds = is_array($faunaIds) ? $faunaIds : [];
         $clinometerEnabled = in_array(old('uses_clinometer', $inspection?->uses_clinometer), [true, 1, '1', 'true'], true);
+        $clinometerLegacyAvailable = $inspection?->clinometer_formula_version === 'INCLINOMETER_V1' || old('clinometer_method') === 'legacy';
+        $clinometerMethod = old('clinometer_method', $inspection?->clinometer_formula_version === 'INCLINOMETER_V1' ? 'legacy' : 'signed_angles');
+        $clinometerMethod = in_array($clinometerMethod, ['legacy', 'signed_angles'], true) ? $clinometerMethod : 'signed_angles';
     @endphp
     <nav aria-label="Secciones de la inspección"><ol class="inspection-anchor-nav">
         @foreach (['context' => '1. Contexto', 'dendrometry' => '2. Dasonomía', 'physical' => '3. Físico-mecánico', 'phytosanitary' => '4. Fitosanitario', 'phenology' => '5. Fenología', 'fauna' => '6. Fauna', 'observations' => '7. Observaciones'] as $anchor => $label)<li><a href="#inspection-{{ $anchor }}">{{ $label }}</a></li>@endforeach

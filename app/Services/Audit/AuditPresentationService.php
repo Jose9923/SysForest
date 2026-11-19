@@ -39,6 +39,7 @@ class AuditPresentationService
         'commercial_height_m' => 'Altura comercial (m)', 'basal_area_m2' => 'Área basal (m²)',
         'uses_clinometer' => 'Medición con inclinómetro', 'clinometer_distance_m' => 'Distancia horizontal (m)',
         'clinometer_elevation_degrees' => 'Ángulo de elevación (grados)', 'clinometer_depression_degrees' => 'Ángulo de depresión (grados)',
+        'clinometer_stem_elevation_degrees' => 'Ángulo superior del fuste (grados)', 'clinometer_lower_degrees' => 'Ángulo inferior firmado (grados)',
         'clinometer_observer_height_m' => 'Altura de la persona (m)', 'clinometer_formula_version' => 'Versión de fórmula del inclinómetro',
         'total_volume_m3' => 'Volumen total (m³)', 'commercial_volume_m3' => 'Volumen comercial (m³)',
         'number_of_stems' => 'Número de fustes', 'form_factor' => 'Factor de forma', 'crown_x_m' => 'Copa X (m)', 'crown_y_m' => 'Copa Y (m)',
