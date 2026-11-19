@@ -145,8 +145,33 @@ def compose_hash(compose, env, service):
     return output[1]
 
 
-def runtime_image_id(image):
-    """Docker puede exponer un índice OCI en image.Id y su configuración en container.Image."""
+def container_image_identity(value):
+    """Compara el manifiesto de plataforma; Image solo en motores sin descriptor."""
+    descriptor = value.get('ImageManifestDescriptor')
+    if descriptor is not None:
+        require(isinstance(descriptor, dict), 'El descriptor de plataforma no tiene el formato esperado.')
+        require(isinstance(descriptor.get('digest'), str)
+                and bool(re.fullmatch(r'sha256:[a-f0-9]{64}', descriptor['digest'])),
+                'La huella del manifiesto de plataforma no es válida.')
+        require(descriptor.get('mediaType') in ['application/vnd.oci.image.manifest.v1+json',
+                                              'application/vnd.docker.distribution.manifest.v2+json'],
+                'Se requiere un manifiesto de plataforma OCI/Docker, no un índice.')
+        require(type(descriptor.get('size')) is int and descriptor['size'] > 0,
+                'El tamaño del manifiesto de plataforma no es válido.')
+        platform = descriptor.get('platform')
+        require(isinstance(platform, dict) and all(isinstance(platform.get(key), str)
+                and re.fullmatch(r'[a-z0-9][a-z0-9._-]*', platform[key]) for key in ['os', 'architecture']),
+                'El sistema o arquitectura del manifiesto no son válidos.')
+        # Se conserva el descriptor completo, incluidos variante y otros metadatos.
+        return {'kind': 'platform-manifest', 'descriptor': descriptor}
+    image = value.get('Image')
+    require(isinstance(image, str) and bool(re.fullmatch(r'sha256:[a-f0-9]{64}', image)),
+            'La identidad de imagen del motor anterior no es válida.')
+    return {'kind': 'legacy-image', 'image': image}
+
+
+def runtime_image_identity(image):
+    """Resuelve la plataforma local mediante una sonda que nunca se inicia."""
     descriptor = json.loads(run(['docker', 'image', 'inspect', image], phase='descriptor de imagen del visor'))[0]
     require(not descriptor['Config'].get('Volumes'), 'La imagen declara volúmenes implícitos; no se crea la sonda.')
     require(bool(re.fullmatch(r'sha256:[a-f0-9]{64}', descriptor['Id'])), 'El descriptor local de imagen no es válido.')
@@ -166,8 +191,7 @@ def runtime_image_id(image):
                 and value['State']['Status'] == 'created' and not value['State']['Running']
                 and value['HostConfig']['NetworkMode'] == 'none' and value['HostConfig']['ReadonlyRootfs']
                 and not value['Mounts'], 'La sonda no coincide con el contexto sin ejecución aprobado.')
-        require(bool(re.fullmatch(r'sha256:[a-f0-9]{64}', value['Image'])), 'La identidad de ejecución no es válida.')
-        return value['Image']
+        return container_image_identity(value)
     finally:
         if container is None:
             # También retirar una creación que completó Docker pero cuya respuesta se interrumpió.
@@ -182,9 +206,11 @@ def runtime_image_id(image):
             run(['docker', 'rm', container], phase='retirada exclusiva de sonda sin iniciar')
 
 
-def same_viewer(value, spec, expected_hash, execution_image=None):
-    image = execution_image if execution_image is not None else runtime_image_id(spec['image'])
-    require(value['Image'] == image and value['Config']['Labels'].get('com.docker.compose.config-hash') == expected_hash,
+def same_viewer(value, spec, expected_hash, execution_identity=None):
+    expected = execution_identity if execution_identity is not None else runtime_image_identity(spec['image'])
+    # Los kinds distintos rechazan descriptor ausente en un solo lado; no hay downgrade silencioso.
+    require(container_image_identity(value) == expected
+            and value['Config']['Labels'].get('com.docker.compose.config-hash') == expected_hash,
             'El visor existente difiere de su imagen/configuración fijada; no se reconstruye ni reemplaza automáticamente.')
     require(healthy(value), 'El visor existente debe estar saludable; no se reinicia implícitamente.')
 
@@ -227,9 +253,7 @@ foreach(['rolsuper','rolcreaterole','rolcreatedb','rolreplication','rolbypassrls
 """
         run(['docker', 'exec', '-i', container, 'php', '-r', db_php], payload=json.dumps({'password': password}),
             phase='login PostgreSQL de consulta del candidato', timeout=30)
-        execution_image = inspected(container)['Image']
-        require(bool(re.fullmatch(r'sha256:[a-f0-9]{64}', execution_image)), 'La identidad de imagen del candidato no es válida.')
-        return execution_image
+        return container_image_identity(inspected(container))
     finally:
         if container:
             value = inspected(container)
@@ -238,7 +262,7 @@ foreach(['rolsuper','rolcreaterole','rolcreatedb','rolreplication','rolbypassrls
             run(['docker', 'rm', '-f', container], phase='retirada exclusiva del candidato')
 
 
-def activate_postgres_viewer(compose, env, legacy, current, expected_image):
+def activate_postgres_viewer(compose, env, legacy, current, expected_identity):
     """El fallo de activación recupera solo el pgAdmin anterior que estaba activo."""
     stopped_legacy = False
     try:
@@ -251,7 +275,7 @@ def activate_postgres_viewer(compose, env, legacy, current, expected_image):
         run(compose + ['up', '-d', '--no-deps', '--no-build', '--wait', '--wait-timeout', '180', 'phppgadmin'],
             env=env, phase='activación exclusiva de phpPgAdmin', timeout=240)
         value = optional_container('phppgadmin')
-        require(value is not None and value['Image'] == expected_image and healthy(value),
+        require(value is not None and container_image_identity(value) == expected_identity and healthy(value),
                 'La imagen nueva no quedó activa y saludable.')
         return value
     except (Exception, KeyboardInterrupt):
@@ -464,7 +488,7 @@ def main():
         if provision_accounts:
             print('Preparando las cuentas exclusivas de consulta de la instalación inicial...', flush=True)
             prepare_accounts(baseline, names, services, values)
-        expected_image = candidate_check(pg_spec['image'], values['postgres_viewer_password'])
+        expected_identity = candidate_check(pg_spec['image'], values['postgres_viewer_password'])
         # Mongo existente nunca recibe build/up/restart. Si cambia su contrato se abortó arriba.
         if not mongo:
             run(compose + ['build', 'mongo-express'], env=compose_env, phase='compilación inicial de Mongo Express', timeout=1200)
@@ -476,11 +500,11 @@ def main():
         # Revalidar propietarios/puertos justo antes de pausar el único visor reemplazado.
         require((optional_container('pgadmin') or {}).get('Id') == (legacy or {}).get('Id'), 'pgAdmin cambió durante la preparación.')
         require((optional_container('phppgadmin') or {}).get('Id') == (current or {}).get('Id'), 'phpPgAdmin cambió durante la preparación.')
-        if current and healthy(current) and current['Image'] == expected_image:
-            same_viewer(current, pg_spec, compose_hash(compose, compose_env, 'phppgadmin'), expected_image)
+        if current and healthy(current) and container_image_identity(current) == expected_identity:
+            same_viewer(current, pg_spec, compose_hash(compose, compose_env, 'phppgadmin'), expected_identity)
             pg = current
         else:
-            pg = activate_postgres_viewer(compose, compose_env, legacy, current, expected_image)
+            pg = activate_postgres_viewer(compose, compose_env, legacy, current, expected_identity)
         after = {}
         for service, previous in baseline.items():
             value = inspected(previous['id'])
