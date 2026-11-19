@@ -1,6 +1,6 @@
 # Visores privados de PostgreSQL y MongoDB
 
-Por solicitud explícita del **18/11/2026**, phpPgAdmin sustituye a pgAdmin; Mongo Express conserva su configuración. Esta guía describe el instalador actualizado. El cierre del cambio y sus verificaciones se registran abajo, separados de la instalación inicial de pgAdmin.
+Por solicitud explícita del **18/11/2026**, phpPgAdmin sustituye a pgAdmin; Mongo Express conserva su configuración. Por autorización posterior del mismo día se incorpora una cuenta separada de creación y edición de registros. Esta guía describe el instalador actualizado. El cierre del cambio y sus verificaciones se registran abajo, separados de la instalación inicial de pgAdmin.
 
 ## Fuente y alcance
 
@@ -12,10 +12,11 @@ La fuente canónica es `/home/josev/SYSFOREST`. En producción se actualiza por 
 
 | Visor | Dirección por túnel | Cuenta |
 | --- | --- | --- |
-| phpPgAdmin | http://127.0.0.1:18084 | Login PostgreSQL nativo `sysforest_viewer`, base `sysforest`. |
+| phpPgAdmin · edición | http://127.0.0.1:18084 | Login PostgreSQL nativo `sysforest_editor`, base `sysforest`; crear y actualizar registros. |
+| phpPgAdmin · consulta | http://127.0.0.1:18084 | `sysforest_viewer`, con sus permisos anteriores de lectura. |
 | Mongo Express | http://127.0.0.1:18085 | Login web `sysforest`; cuenta DB `sysforest_audit_viewer`, limitada a la auditoría autorizada. |
 
-phpPgAdmin ya no utiliza el correo y la contraseña web de pgAdmin. Reutiliza la contraseña existente de la cuenta PostgreSQL, disponible solo en el archivo privado del servidor. El panel no recibe secretos montados ni autologin. Las sesiones son temporales en `/tmp`, por lo que reiniciar el visor exige iniciar sesión nuevamente. Mongo Express conserva sus credenciales actuales.
+phpPgAdmin no utiliza el correo y la contraseña web de pgAdmin. El selector de login ofrece `sysforest_editor` por defecto y `sysforest_viewer` para consulta. Cada una tiene una contraseña independiente disponible en el archivo privado del servidor; la de consulta se conserva y la de edición se genera una sola vez. Después de activar la edición, cerrar la sesión anterior o recargar e ingresar como `sysforest_editor`: una sesión de `sysforest_viewer` sigue siendo de lectura. El panel no recibe secretos montados ni autologin. Las sesiones son temporales en `/tmp`, por lo que reiniciar el visor exige iniciar sesión nuevamente. Mongo Express conserva sus credenciales actuales.
 
 Desde una terminal privada del servidor:
 
@@ -55,11 +56,13 @@ sudo bin/database-viewers install
 sudo bin/database-viewers status
 ```
 
-Rutas predeterminadas: release `/opt/sysforest/releases/20261104-initial`, entorno `/opt/sysforest/private/production.env`, estado `/opt/sysforest/private/database-viewers`. Se pueden indicar `--production-dir`, `--env-file`, `--state-dir`; el instalador valida el contexto y rechaza colisiones ajenas. El estado debe estar directamente bajo `/opt/sysforest/private`, root:0700, y sus archivos en 0600. Mongo Express lee sus secretos como UID 1000; la contraseña PostgreSQL queda root:0600.
+Rutas predeterminadas: release `/opt/sysforest/releases/20261104-initial`, entorno `/opt/sysforest/private/production.env`, estado `/opt/sysforest/private/database-viewers`. Se pueden indicar `--production-dir`, `--env-file`, `--state-dir`; el instalador valida el contexto y rechaza colisiones ajenas. El estado debe estar directamente bajo `/opt/sysforest/private`, root:0700, y sus archivos en 0600. Mongo Express lee sus secretos como UID 1000; las contraseñas PostgreSQL quedan root:0600.
 
-En una instalación nueva se preparan solo las cuentas restringidas de consulta. En una instalación existente se conservan las cuentas y secretos, sin repetir esa preparación. El candidato phpPgAdmin se construye y comprueba sin publicar puertos: HTTP y conexión a PostgreSQL con la cuenta autorizada. Solo después se detiene pgAdmin y se publica phpPgAdmin en el mismo puerto 18084. Mongo Express existente debe coincidir con su imagen/configuración y estar saludable; si difiere se aborta en lugar de reemplazarlo.
+En una instalación nueva se preparan las cuentas de consulta y la cuenta limitada de edición. En una instalación V1/V2 existente se conservan las cuentas/secretos anteriores y se prepara únicamente `sysforest_editor`. Tras completar V3, una repetición comprueba las credenciales/permisos sin volver a preparar las cuentas ni cambiar contraseñas. El candidato phpPgAdmin se construye y comprueba sin publicar puertos: HTTP y conexión a PostgreSQL con ambas cuentas autorizadas. Solo después se sustituye el panel en el mismo puerto 18084; para V1 se detiene el pgAdmin anterior y para V2 se actualiza únicamente phpPgAdmin. Mongo Express existente debe coincidir con su imagen/configuración y estar saludable; si difiere se aborta en lugar de reemplazarlo.
 
 La identidad Docker se valida con el descriptor completo del manifiesto de plataforma (`ImageManifestDescriptor`): digest, tamaño, tipo y plataforma deben coincidir, junto con la configuración de Compose. Un índice multi-plataforma no se acepta como ese manifiesto. En motores sin descriptor en ambos lados se exige igualdad de Image; un descriptor ausente solo en un lado o distinto provoca rechazo. Esta distinción corrige la comparación entre el Image de un contenedor y el índice de la etiqueta sin recrear Mongo Express ni omitir la comprobación de configuración.
+
+La actualización a V3 añade `postgres_editor_password` (root:0600), conserva los ocho archivos privados previos y guarda `access.before-editor.txt`, `settings.before-editor.json` e `installation.before-editor.json`. Publica los dos accesos en `access.txt` solo tras comprobar el panel. Si falla la activación sobre un phpPgAdmin previo, intenta recuperar su imagen mediante un override temporal exclusivo de ese servicio; no revierte el rol/secreto ya preparados ni toca Mongo o la aplicación. Corregir la causa y repetir conserva ese estado.
 
 La actualización V1→V2 conserva los ocho archivos privados anteriores (incluidos clave/passfile de pgAdmin) y guarda `access.before-phppgadmin.txt`, `settings.before-phppgadmin.json` e `installation.before-phppgadmin.json`. Conserva el contenedor `sysforest-database-viewers-pgadmin-1` **detenido**, su imagen y el volumen `sysforest-database-viewers_pgadmin_data`. No usar `--remove-orphans`, `down -v`, borrado de secretos ni limpieza global de Docker.
 
@@ -71,17 +74,23 @@ El contenedor/volumen anterior y las preimágenes se conservan para una recupera
 
 ## Permisos y límites
 
-PostgreSQL concede SELECT sobre las tablas autorizadas y futuras tablas del migrador, sin permisos de INSERT/UPDATE/DELETE/TRUNCATE, creación de esquemas/tablas temporales, avance de secuencias, superusuario o bypass RLS. MongoDB impone un rol de consulta limitado. Ningún visor recibe credenciales administrativas.
+`sysforest_viewer` conserva SELECT sobre las tablas autorizadas y futuras tablas del migrador, sin INSERT/UPDATE/DELETE/TRUNCATE ni avance de secuencias. `sysforest_editor` añade INSERT/UPDATE en relaciones de `public` propiedad del migrador y USAGE/SELECT en sus secuencias, con defaults equivalentes para objetos futuros; permite `nextval` para los IDs automáticos, no `setval` ni reiniciar secuencias. No concede DELETE/TRUNCATE, crear/alterar estructuras, delegar permisos, superusuario, propiedad, membresías o bypass RLS. Las restricciones y triggers siguen activos y pueden rechazar cambios de identidades o historiales protegidos. Mongo conserva su rol de consulta. Ningún visor recibe la cuenta administrativa de la base.
 
-`default_transaction_read_only` y los timeouts son valores iniciales modificables por la sesión. Las ACL protegen las tablas de la aplicación, pero no se han revocado globalmente todas las funciones incorporadas ni efectos como crear objetos grandes propios. Esta cuenta no es un aislamiento absoluto de SQL. Revisar futuras funciones SECURITY DEFINER accesibles.
+El modo de transacción predeterminado es `off` para `default_transaction_read_only` de editor y `on` para viewer; el filesystem Docker sigue siendo de lectura y no se cambia por este permiso SQL. SQL directo omite los flujos de Laravel: no calcula hashes de contraseñas, crea membresías, asigna roles, ejecuta validaciones de negocio ni genera su auditoría de servicios. `users` ya tiene ID BIGINT por secuencia y no requiere `external_id`; las 55 entidades convertidas generan su UUID externo al omitir ese campo. El alta en `users` por sí sola no habilita el acceso institucional en la aplicación.
 
-phpPgAdmin conserva la consola SQL y las exportaciones sujetas a esas ACL. La exportación de datos de una tabla utiliza los formatos nativos CSV y SQL. Se deja `pg_dump_path` vacío: el respaldo administrativo con `pg_dump` necesita permisos sobre secuencias y tablas excluidas que esta cuenta no tiene. Ese rechazo se comprobó en la base desechable; no se amplían ACL. El visor no ofrece respaldos completos y no sustituye el procedimiento administrativo de copia de seguridad. La configuración restringe servidor/base/usuario; los parches pequeños incorporan token CSRF para POST, validación de origen/destino, rotación de sesión al login, escape de un nombre de campo y validación del índice del historial. No constituyen una auditoría integral del upstream. El acceso continúa siendo exclusivamente privado por SSH.
+`default_transaction_read_only` y los timeouts son valores iniciales modificables por la sesión. Las ACL de consulta restringen las escrituras y las de edición permiten el DML descrito, pero no se han revocado globalmente todas las funciones incorporadas ni efectos como crear objetos grandes propios. Esta cuenta no es un aislamiento absoluto de SQL. Revisar futuras funciones SECURITY DEFINER accesibles.
+
+phpPgAdmin conserva la consola SQL y las exportaciones sujetas a esas ACL. La exportación de datos de una tabla utiliza los formatos nativos CSV y SQL. Se deja `pg_dump_path` vacío: el respaldo administrativo con `pg_dump` necesita un alcance distinto del perfil de consulta, y este panel mantiene desactivado ese procedimiento para ambas cuentas. Ese rechazo se comprobó en la base desechable; no se amplían ACL. El visor no ofrece respaldos completos y no sustituye el procedimiento administrativo de copia de seguridad. La configuración restringe servidor/base y las dos cuentas admitidas; los parches pequeños incorporan token CSRF para POST, validación de origen/destino, rotación de sesión al login, escape de un nombre de campo y validación del índice del historial. No constituyen una auditoría integral del upstream. El acceso continúa siendo exclusivamente privado por SSH.
 
 ## Versiones fijadas
 
 phpPgAdmin se construye desde el [snapshot ReimuHakurei f35f659463aed028f763343cb7cf3d44a36c121f](https://github.com/ReimuHakurei/phpPgAdmin/commit/f35f659463aed028f763343cb7cf3d44a36c121f), posterior al soporte de columnas IDENTITY; no se presenta como una release estable. Archivo fuente SHA256 `ece40f966e901228a1bc70b8c92b384a360db355c2a46d1e2f420ff112bd19c6`. PHP Apache 8.3.36 Bookworm se fija por digest en `Dockerfile.phppgadmin`; no se incluye el cliente pg_dump. UID 1000, filesystem de lectura, tmpfs de 64 MiB, sin capacidades Linux ni privilegios nuevos. La salud es `/health.php`.
 
 Mongo Express conserva el snapshot oficial `6b0fc653660f9862a23f4b111eaa4daa0a3a6e2a` (paquete 1.1.0-rc-4), Node 22.23.5 y sus huellas en `Dockerfile.mongo-express`. Tampoco se presenta como release estable. No hay actualizaciones automáticas. Revisar los cambios de fuente, dependencias y permisos y comprobar login, BIGINT/IDENTITY, navegación y exportación antes de actualizar pins.
+
+## Habilitación de creación y edición · 18/11/2026
+
+Autorizada explícitamente después del error de INSERT en una sesión de consulta. Implementación V3 preparada, con `sysforest_editor` separado y tag de panel `sysforest-phppgadmin:f35f659-php83-v2`. Activación y cierre de pruebas pendientes de registrar aquí. No crear ni modificar a Julieth o datos forestales como verificación productiva; las escrituras de prueba se limitan a una base desechable.
 
 ## Verificación del cambio a phpPgAdmin
 

@@ -8,7 +8,7 @@ x-logging: &logging
 
 services:
   phppgadmin:
-    image: sysforest-phppgadmin:f35f659-php83-v1
+    image: sysforest-phppgadmin:f35f659-php83-v2
     build:
       context: ./docker/database-viewers
       dockerfile: Dockerfile.phppgadmin

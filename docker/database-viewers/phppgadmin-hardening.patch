@@ -45,12 +45,17 @@
  		// Or maybe we came from an sql form
 --- a/login.php
 +++ b/login.php
-@@ -45,7 +45,7 @@
+@@ -45,7 +45,12 @@
  	<table class="navbar" border="0" cellpadding="5" cellspacing="3">
  		<tr>
  			<td><?php echo $lang['strusername']; ?></td>
 -			<td><input type="text" name="loginUsername" value="<?php if (isset($_POST['loginUsername']) && is_scalar($_POST['loginUsername'])) echo htmlspecialchars((string) $_POST['loginUsername']); ?>" size="24" /></td>
-+			<td><input type="text" name="loginUsername" value="sysforest_viewer" readonly="readonly" size="24" /></td>
++			<td>
++				<select name="loginUsername" aria-label="Cuenta PostgreSQL">
++					<option value="sysforest_editor"<?php echo ($_POST['loginUsername'] ?? 'sysforest_editor') === 'sysforest_editor' ? ' selected="selected"' : ''; ?>>Edición: crear y modificar (sysforest_editor)</option>
++					<option value="sysforest_viewer"<?php echo ($_POST['loginUsername'] ?? '') === 'sysforest_viewer' ? ' selected="selected"' : ''; ?>>Consulta: solo lectura (sysforest_viewer)</option>
++				</select>
++			</td>
  		</tr>
  		<tr>
  			<td><?php echo $lang['strpassword']; ?></td>

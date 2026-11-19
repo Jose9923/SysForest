@@ -12,6 +12,7 @@ import secrets
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -117,12 +118,12 @@ def wait_healthy(container, timeout=180):
     raise InstallationError('El visor no quedó saludable dentro del plazo; requiere revisión.')
 
 
-def backup_private(path):
+def backup_private(path, suffix="before-phppgadmin"):
     """Una preimagen privada estable, sin modificar el archivo o sus secretos."""
     if not path.exists():
         return
     text = read_private(path)
-    backup = path.with_name(path.stem + '.before-phppgadmin' + path.suffix)
+    backup = path.with_name(path.stem + '.' + suffix + path.suffix)
     if not backup.exists():
         write_private(backup, path.read_text())
     else:
@@ -215,7 +216,7 @@ def same_viewer(value, spec, expected_hash, execution_identity=None):
     require(healthy(value), 'El visor existente debe estar saludable; no se reinicia implícitamente.')
 
 
-def candidate_check(image, password):
+def candidate_check(image, passwords):
     """Prueba el contenedor nuevo sin publicar puertos ni montar secretos."""
     token = secrets.token_hex(8)
     name = PROJECT + '-phppgadmin-candidate-' + token
@@ -240,19 +241,28 @@ def candidate_check(image, password):
         # La clave viaja únicamente por stdin; no se monta ni entra en argumentos/env.
         db_php = r"""
 ini_set('display_errors','0');ini_set('log_errors','0');
-$p=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR)['password'];
-if(!preg_match('/\A[a-f0-9]{64}\z/D',$p))exit(10);
-$c=@pg_connect('host=postgres port=5432 dbname=sysforest user=sysforest_viewer connect_timeout=5 password='.$p);
-unset($p);if(!$c)exit(11);
-$r=@pg_query($c,'BEGIN READ ONLY');if(!$r)exit(12);
-$r=@pg_query($c,"SELECT current_user AS u,current_database() AS d,rolsuper,rolcreaterole,rolcreatedb,rolreplication,rolbypassrls FROM pg_roles WHERE rolname=current_user");
-$row=$r?pg_fetch_assoc($r):false;
-$ok=$row&&$row['u']==='sysforest_viewer'&&$row['d']==='sysforest';
-foreach(['rolsuper','rolcreaterole','rolcreatedb','rolreplication','rolbypassrls'] as $f){$ok=$ok&&$row[$f]==='f';}
-@pg_query($c,'ROLLBACK');pg_close($c);exit($ok?0:13);
+$credentials=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR);
+foreach(['sysforest_viewer','sysforest_editor'] as $user){
+    $p=$credentials[$user]??'';
+    if(!is_string($p)||!preg_match('/\A[a-f0-9]{64}\z/D',$p))exit(10);
+    $c=@pg_connect('host=postgres port=5432 dbname=sysforest user='.$user.' connect_timeout=5 password='.$p,PGSQL_CONNECT_FORCE_NEW);
+    unset($p);if(!$c)exit(11);
+    $r=@pg_query($c,'SHOW transaction_read_only');
+    $ok=$r&&pg_fetch_result($r,0,0)===($user==='sysforest_editor'?'off':'on');
+    if(!@pg_query($c,'BEGIN READ ONLY'))exit(12);
+    $r=@pg_query($c,"SELECT current_user AS u,current_database() AS d,rolsuper,rolcreaterole,rolcreatedb,rolreplication,rolbypassrls FROM pg_roles WHERE rolname=current_user");
+    $row=$r?pg_fetch_assoc($r):false;
+    $ok=$ok&&$row&&$row['u']===$user&&$row['d']==='sysforest';
+    foreach(['rolsuper','rolcreaterole','rolcreatedb','rolreplication','rolbypassrls'] as $f){$ok=$ok&&$row[$f]==='f';}
+    $r=@pg_query($c,"SELECT has_table_privilege(current_user,'public.users','SELECT') AS s,has_table_privilege(current_user,'public.users','INSERT') AS i,has_table_privilege(current_user,'public.users','UPDATE') AS u,has_table_privilege(current_user,'public.users','DELETE,TRUNCATE,REFERENCES,TRIGGER') AS forbidden,has_sequence_privilege(current_user,'public.users_id_seq','USAGE') AS sequence_use,has_database_privilege(current_user,current_database(),'CREATE,TEMP') AS database_create,has_schema_privilege(current_user,'public','CREATE') AS schema_create");
+    $row=$r?pg_fetch_assoc($r):false;$edit=$user==='sysforest_editor'?'t':'f';
+    $ok=$ok&&$row&&$row['s']==='t'&&$row['i']===$edit&&$row['u']===$edit&&$row['sequence_use']===$edit&&$row['forbidden']==='f'&&$row['database_create']==='f'&&$row['schema_create']==='f';
+    @pg_query($c,'ROLLBACK');pg_close($c);if(!$ok)exit(13);
+}
+unset($credentials);
 """
-        run(['docker', 'exec', '-i', container, 'php', '-r', db_php], payload=json.dumps({'password': password}),
-            phase='login PostgreSQL de consulta del candidato', timeout=30)
+        run(['docker', 'exec', '-i', container, 'php', '-r', db_php], payload=json.dumps(passwords),
+            phase='login y permisos de consulta/edición del candidato', timeout=30)
         return container_image_identity(inspected(container))
     finally:
         if container:
@@ -265,6 +275,13 @@ foreach(['rolsuper','rolcreaterole','rolcreatedb','rolreplication','rolbypassrls
 def activate_postgres_viewer(compose, env, legacy, current, expected_identity):
     """El fallo de activación recupera solo el pgAdmin anterior que estaba activo."""
     stopped_legacy = False
+    recovery_image = None
+    if current and current['State']['Running']:
+        require(healthy(current), 'phpPgAdmin debe estar saludable antes de actualizar su imagen.')
+        recovery_tag = current['Config']['Image']
+        require(runtime_image_identity(recovery_tag) == container_image_identity(current),
+                'La imagen previa de phpPgAdmin debe estar disponible para recuperación.')
+        recovery_image = json.loads(run(['docker', 'image', 'inspect', recovery_tag], phase='imagen previa del panel'))[0]['Id']
     try:
         if legacy and legacy['State']['Running']:
             # La identidad/puerto y el volumen ya se validaron antes de construir.
@@ -279,7 +296,22 @@ def activate_postgres_viewer(compose, env, legacy, current, expected_identity):
                 'La imagen nueva no quedó activa y saludable.')
         return value
     except (Exception, KeyboardInterrupt):
-        if stopped_legacy and not inspected(legacy['Id'])['State']['Running']:
+        if recovery_image:
+            new = optional_container('phppgadmin')
+            if new and new['State']['Running']:
+                run(['docker', 'stop', '--time', '30', new['Id']], phase='pausa del panel fallido')
+            # El override temporal solo selecciona la imagen previa; no toca bases ni otros servicios.
+            with tempfile.NamedTemporaryFile(mode='w', prefix='sysforest-viewer-recovery-', suffix='.json') as override:
+                json.dump({'services': {'phppgadmin': {'image': recovery_image}}}, override)
+                override.flush()
+                run(compose + ['-f', override.name, 'up', '-d', '--no-deps', '--no-build', '--pull', 'never',
+                               '--wait', '--wait-timeout', '180', 'phppgadmin'], env=env,
+                    phase='recuperación de la imagen previa de phpPgAdmin', timeout=240)
+                restored = optional_container('phppgadmin')
+                require(restored and healthy(restored)
+                        and container_image_identity(restored) == container_image_identity(current),
+                        'No se pudo recuperar la imagen previa de phpPgAdmin; revisar el panel.')
+        elif stopped_legacy and not inspected(legacy['Id'])['State']['Running']:
             new = optional_container('phppgadmin')
             if new and new['State']['Running']:
                 run(['docker', 'stop', '--time', '30', new['Id']], phase='pausa del phpPgAdmin fallido')
@@ -312,6 +344,21 @@ def prepare_accounts(baseline, names, services, values):
          baseline['mongodb']['id'], 'mongosh', '--quiet', '--norc', '--nodb', '--eval', mongo_script],
         payload=json.dumps({'password': values['mongo_viewer_password']}),
         phase='preparación del usuario MongoDB')
+
+
+def prepare_editor(baseline, names, password):
+    wrapper = '''set -eu
+    IFS= read -r SYSFOREST_EDITOR_PASSWORD
+    export SYSFOREST_EDITOR_PASSWORD
+    PGPASSWORD=$(cat "$POSTGRES_PASSWORD_FILE")
+    export PGPASSWORD
+    export DB_DATABASE="$1" DB_USERNAME="$2" DB_MIGRATOR_USERNAME="$3" PG_EDITOR_USERNAME=sysforest_editor
+    exec psql --no-psqlrc --quiet --set=ON_ERROR_STOP=1 --username="$POSTGRES_USER" --dbname="$DB_DATABASE" --file=/dev/stdin
+    '''
+    script = (ROOT / 'docker/database-viewers/postgres-editor.sql').read_text()
+    run(['docker', 'exec', '-i', baseline['postgres']['id'], 'sh', '-c', wrapper, 'sh',
+         names['database'], names['app_user'], names['migrator']], payload=password + '\n' + script,
+        phase='preparación de la cuenta PostgreSQL de creación y edición')
 
 
 def main():
@@ -396,12 +443,12 @@ def main():
         settings_path = state / 'settings.json'
         if settings_path.exists():
             settings = json.loads(read_private(settings_path))
-            require(settings.get('format') in ['SYSFOREST_DATABASE_VIEWERS_V1', 'SYSFOREST_DATABASE_VIEWERS_V2']
+            require(settings.get('format') in ['SYSFOREST_DATABASE_VIEWERS_V1', 'SYSFOREST_DATABASE_VIEWERS_V2', 'SYSFOREST_DATABASE_VIEWERS_V3']
                     and settings['names'] == names, 'La instalación existente corresponde a otro contexto; no se reemplaza.')
         else:
             require([p.name for p in state.iterdir()] == ['.install.lock'],
                     'El directorio contiene archivos sin manifiesto; revisa antes de inicializar.')
-            settings = {'format': 'SYSFOREST_DATABASE_VIEWERS_V2', 'names': names, 'installation_completed': False,
+            settings = {'format': 'SYSFOREST_DATABASE_VIEWERS_V3', 'names': names, 'installation_completed': False,
                         'created_at': datetime.datetime.now(datetime.timezone.utc).isoformat()}
             write_private(settings_path, json.dumps(settings, indent=2) + '\n')
         legacy_format = settings['format'] == 'SYSFOREST_DATABASE_VIEWERS_V1'
@@ -418,6 +465,14 @@ def main():
                 write_private(path, secrets.token_hex(32) + '\n', uid)
             values[filename] = read_private(path, uid)
             require(bool(re.fullmatch(r'[a-f0-9]{64}', values[filename])), 'Un secreto existente no tiene el formato generado; no se cambia.')
+        editor_secret = state / 'postgres_editor_password'
+        editor_secret_created = not editor_secret.exists()
+        if editor_secret_created:
+            require(not settings.get('postgres_editor_enabled', False), 'Falta el secreto de edición existente; no se regenera.')
+            write_private(editor_secret, secrets.token_hex(32) + '\n')
+        values['postgres_editor_password'] = read_private(editor_secret)
+        require(bool(re.fullmatch(r'[a-f0-9]{64}', values['postgres_editor_password'])), 'El secreto de edición no tiene el formato esperado.')
+        secret_owners['postgres_editor_password'] = 0
         mongo_username = state / 'mongo_express_username'
         if not mongo_username.exists():
             require(provision_accounts and not legacy_format, 'Falta el usuario web anterior; no se sustituye.')
@@ -488,7 +543,15 @@ def main():
         if provision_accounts:
             print('Preparando las cuentas exclusivas de consulta de la instalación inicial...', flush=True)
             prepare_accounts(baseline, names, services, values)
-        expected_identity = candidate_check(pg_spec['image'], values['postgres_viewer_password'])
+        if not settings.get('postgres_editor_enabled', False):
+            for filename in ['settings.json', 'installation.json', 'access.txt']:
+                backup_private(state / filename, 'before-editor')
+            print('Preparando la cuenta separada de creación y edición de registros...', flush=True)
+            prepare_editor(baseline, names, values['postgres_editor_password'])
+        expected_identity = candidate_check(pg_spec['image'], {
+            'sysforest_viewer': values['postgres_viewer_password'],
+            'sysforest_editor': values['postgres_editor_password'],
+        })
         # Mongo existente nunca recibe build/up/restart. Si cambia su contrato se abortó arriba.
         if not mongo:
             run(compose + ['build', 'mongo-express'], env=compose_env, phase='compilación inicial de Mongo Express', timeout=1200)
@@ -525,23 +588,28 @@ def main():
         require(all(v['healthy'] for v in ui.values()), 'Un visor no está saludable al cerrar la instalación.')
         access = (f'SYSFOREST · acceso privado a visores\n\n'
                   f'phpPgAdmin: http://127.0.0.1:18084\nServidor: SysForest\nBase: sysforest\n'
-                  f'Usuario PostgreSQL: sysforest_viewer\nContraseña: {values["postgres_viewer_password"]}\n\n'
+                  f'Crear y editar registros · Usuario: sysforest_editor\nContraseña: {values["postgres_editor_password"]}\n\n'
+                  f'Solo consulta · Usuario: sysforest_viewer\nContraseña: {values["postgres_viewer_password"]}\n\n'
                   f'Mongo Express: http://127.0.0.1:18085\nUsuario: sysforest\nContraseña: {values["mongo_express_password"]}\n\n'
                   'Abre primero el túnel SSH. phpPgAdmin usa login nativo de base, sin acceso automático. '
-                  'Estas cuentas consultan datos de distintas instituciones; no son roles de la aplicación.\n')
+                  'Estas cuentas acceden a distintas instituciones y no equivalen a roles de la aplicación. '
+                  'La cuenta editor permite SELECT, INSERT y UPDATE; no borrar registros ni alterar estructuras.\n')
         # Desde aquí ambos visores ya están saludables. Un fallo de publicación
         # privada no revierte el servicio ni toca Mongo: repetir install completa
         # settings/access/informe. Conservar cualquier .new incompleto por separado
         # antes de repetir; nunca borrar settings, secretos ni el volumen anterior.
         if not (state / 'access.txt').exists() or (state / 'access.txt').read_text() != access:
             replace_private(state / 'access.txt', access)
-        settings.update({'format': 'SYSFOREST_DATABASE_VIEWERS_V2', 'installation_completed': True,
-                         'postgres_panel': 'phppgadmin'})
+        settings.update({'format': 'SYSFOREST_DATABASE_VIEWERS_V3', 'installation_completed': True,
+                         'postgres_panel': 'phppgadmin', 'postgres_editor_enabled': True})
         save_report(settings_path, settings)
-        report = {'format': 'SYSFOREST_DATABASE_VIEWERS_INSTALL_V2',
+        report = {'format': 'SYSFOREST_DATABASE_VIEWERS_INSTALL_V3',
                   'installed_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
                   'source': str(ROOT), 'panels': ui, 'production_containers_unchanged': after,
-                  'mongo_express_unchanged': mongo_baseline is not None, 'preserved_secret_files': len(preserved_secrets),
+                  'mongo_express_unchanged': mongo_baseline is not None,
+                  'preserved_secret_files': len(preserved_secrets) - int(editor_secret_created),
+                  'postgres_editor_secret_created': editor_secret_created,
+                  'postgres_editor_enabled': True, 'postgres_editor_privileges': ['SELECT', 'INSERT', 'UPDATE'],
                   'legacy_pgadmin': settings.get('legacy_pgadmin'), 'environment_unchanged': True,
                   'no_migrations_or_seeders': True, 'credentials_file': str(state / 'access.txt')}
         save_report(state / 'installation.json', report)

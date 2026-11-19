@@ -1,6 +1,6 @@
 <?php
 
-// Guardas del visor privado: no sustituyen las ACL PostgreSQL del usuario SELECT.
+// Guardas del visor privado: no sustituyen las ACL PostgreSQL de cada cuenta autorizada.
 function sysforestViewerReject(int $code = 403): never
 {
     http_response_code($code);
@@ -21,10 +21,13 @@ if ($viewerOrigin !== '' && $viewerOrigin !== 'http://'.$viewerHost && $viewerOr
     sysforestViewerReject();
 }
 foreach ([$_GET, $_POST] as $viewerInput) {
-    foreach (['server' => 'postgres:5432:disable', 'loginServer' => 'postgres:5432:disable', 'database' => 'sysforest', 'loginUsername' => 'sysforest_viewer'] as $viewerKey => $viewerExpected) {
+    foreach (['server' => 'postgres:5432:disable', 'loginServer' => 'postgres:5432:disable', 'database' => 'sysforest'] as $viewerKey => $viewerExpected) {
         if (isset($viewerInput[$viewerKey]) && (!is_string($viewerInput[$viewerKey]) || $viewerInput[$viewerKey] !== $viewerExpected)) {
             sysforestViewerReject();
         }
+    }
+    if (isset($viewerInput['loginUsername']) && (!is_string($viewerInput['loginUsername']) || !in_array($viewerInput['loginUsername'], ['sysforest_editor', 'sysforest_viewer'], true))) {
+        sysforestViewerReject();
     }
 }
 if (!isset($_SESSION['sysforest_csrf'])) {

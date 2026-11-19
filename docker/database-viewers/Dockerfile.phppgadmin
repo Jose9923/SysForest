@@ -7,10 +7,10 @@ COPY phppgadmin-hardening.patch /tmp/phppgadmin-hardening.patch
 RUN cd /app && patch --batch --fuzz=0 -p1 < /tmp/phppgadmin-hardening.patch
 
 FROM php:8.3.36-apache-bookworm@sha256:a14446c32a3c8aeb9b4dac7fb73b03dfd8006e670d9b43ea7947e4030d3cbae6
-LABEL org.opencontainers.image.title="SysForest phpPgAdmin (consulta privada)" \
+LABEL org.opencontainers.image.title="SysForest phpPgAdmin (acceso privado)" \
       org.opencontainers.image.source="https://github.com/ReimuHakurei/phpPgAdmin" \
       org.opencontainers.image.revision="f35f659463aed028f763343cb7cf3d44a36c121f" \
-      org.opencontainers.image.version="7.14.8-mod-snapshot-f35f659-php8.3.36"
+      org.opencontainers.image.version="7.14.8-mod-snapshot-f35f659-php8.3.36-v2"
 RUN apt-get update && apt-get install -y --no-install-recommends libpq5 \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 1000 viewer && useradd --uid 1000 --gid 1000 --no-create-home --shell /usr/sbin/nologin viewer \

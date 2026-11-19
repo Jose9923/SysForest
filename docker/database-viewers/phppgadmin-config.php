@@ -3,7 +3,7 @@
 // El archivo distribuido completa opciones UI; no contiene credenciales.
 require __DIR__.'/config.inc.php-dist';
 $conf['servers'] = [[
-    'desc' => 'SysForest · consulta PostgreSQL',
+    'desc' => 'SysForest · PostgreSQL',
     'host' => 'postgres', 'port' => 5432, 'sslmode' => 'disable',
     'defaultdb' => 'sysforest',
     'pg_dump_path' => '',
