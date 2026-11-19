@@ -5,6 +5,7 @@
         $phytosanitaryIds = is_array($phytosanitaryIds) ? $phytosanitaryIds : [];
         $faunaIds = old('fauna_category_ids', $selectedFaunaCategoryIds);
         $faunaIds = is_array($faunaIds) ? $faunaIds : [];
+        $clinometerEnabled = in_array(old('uses_clinometer', $inspection?->uses_clinometer), [true, 1, '1', 'true'], true);
     @endphp
     <nav aria-label="Secciones de la inspección"><ol class="inspection-anchor-nav">
         @foreach (['context' => '1. Contexto', 'dendrometry' => '2. Dasonomía', 'physical' => '3. Físico-mecánico', 'phytosanitary' => '4. Fitosanitario', 'phenology' => '5. Fenología', 'fauna' => '6. Fauna', 'observations' => '7. Observaciones'] as $anchor => $label)<li><a href="#inspection-{{ $anchor }}">{{ $label }}</a></li>@endforeach
@@ -22,9 +23,11 @@
                 <p class="inspection-help-line">Las mediciones y observaciones son opcionales. Deja en blanco los datos que no fueron registrados.</p>
             </section>
             <section class="panel forestry-panel inspection-section" id="inspection-dendrometry"><span class="section-kicker">02 · DASONOMÍA</span><h2>Mediciones del individuo</h2>
-                <div class="inspection-measure-layout"><div><div class="form-grid">
+                <div class="inspection-measure-layout"><div>
+                    @include('inspections.clinometer-fields')
+                    <div class="form-grid">
                     @foreach (['cap_cm' => ['CAP', 'cm'], 'number_of_stems' => ['Número de fustes o estípites', ''], 'form_factor' => ['Factor de forma', '0,45–0,7'], 'total_height_m' => ['Altura total', 'm'], 'commercial_height_m' => ['Altura comercial', 'm'], 'crown_x_m' => ['Copa X', 'm'], 'crown_y_m' => ['Copa Y', 'm']] as $field => [$label, $unit])
-                        <div class="field"><label for="measurement-{{ $field }}">{{ $label }}{{ $unit !== '' ? ' ('.$unit.')' : '' }}</label><input id="measurement-{{ $field }}" name="{{ $field }}" type="number" inputmode="{{ $field === 'number_of_stems' ? 'numeric' : 'decimal' }}" step="{{ $field === 'number_of_stems' ? '1' : 'any' }}" min="{{ $field === 'number_of_stems' ? '1' : ($field === 'form_factor' ? '0.45' : '0') }}" @if ($field === 'form_factor') max="0.7" @endif value="{{ old($field, $inspection?->{$field}) }}" data-dendrometry-input>@error($field)<span class="field-error">{{ $message }}</span>@enderror</div>
+                        <div class="field" @if (in_array($field, ['total_height_m', 'commercial_height_m'], true)) data-manual-height @endif><label for="measurement-{{ $field }}">{{ $label }}{{ $unit !== '' ? ' ('.$unit.')' : '' }}</label><input id="measurement-{{ $field }}" name="{{ $field }}" type="number" inputmode="{{ $field === 'number_of_stems' ? 'numeric' : 'decimal' }}" step="{{ $field === 'number_of_stems' ? '1' : 'any' }}" min="{{ $field === 'number_of_stems' ? '1' : ($field === 'form_factor' ? '0.45' : '0') }}" @if ($field === 'form_factor') max="0.7" @endif value="{{ old($field, $inspection?->{$field}) }}" data-dendrometry-input>@error($field)<span class="field-error">{{ $message }}</span>@enderror</div>
                     @endforeach
                 </div><p class="inspection-help-line">CAP se registra en centímetros; alturas y ejes de copa, en metros. El conteo de fustes se conserva como dato observado y no multiplica automáticamente los volúmenes.</p></div>
                 @include('inspections.calculated')

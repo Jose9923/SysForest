@@ -12,6 +12,7 @@ use App\Repositories\Inspections\TreeInspectionRepository;
 use App\Repositories\Trees\TreeRepository;
 use App\Repositories\Users\UserRepository;
 use App\Validation\Forestry\DendrometryInput;
+use App\Validation\Forestry\ClinometerInput;
 use App\Validation\Inspections\TreeInspectionInput;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -79,7 +80,11 @@ class TreeInspectionService
             if ($version !== $inspection->lock_version) {
                 throw new StaleInspectionException();
             }
-            $input = array_replace($this->currentInput($inspection), $input);
+            $current = $this->currentInput($inspection);
+            if (ClinometerInput::legacyManualChange($input, $current)) {
+                $input['uses_clinometer'] = false;
+            }
+            $input = array_replace($current, $input);
             $data = Validator::make($input, TreeInspectionInput::rules(true), TreeInspectionInput::messages())->validate();
             $data['general_observations'] = \App\Support\Imports\ExcelReferencePresentation::preserveObservations(
                 $inspection->general_observations,
@@ -113,9 +118,10 @@ class TreeInspectionService
         }
 
         // Ningún resultado enviado por el cliente participa en las fórmulas ni en las clasificaciones.
-        $measurements = DendrometryInput::validate($data);
+        $clinometer = ClinometerInput::resolve($data);
+        $measurements = DendrometryInput::validate(array_replace($data, $clinometer));
 
-        return $measurements + $this->calculations->calculate($measurements, $ruleVersionId)
+        return $measurements + $clinometer + $this->calculations->calculate($measurements, $ruleVersionId)
             + $this->phenology->normalize($data) + [
                 'inventory_tree_id' => $participation, 'inspection_date' => $data['inspection_date'],
                 'general_observations' => $data['general_observations'] ?? null,
@@ -127,6 +133,7 @@ class TreeInspectionService
     {
         $fields = array_merge(
             array_keys(DendrometryInput::rules()),
+            ClinometerInput::FIELDS,
             TreeInspectionInput::TEXT_FIELDS,
             TreeInspectionInput::DATE_FIELDS,
             ['inspection_date', 'inventory_tree_id']

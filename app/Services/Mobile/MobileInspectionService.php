@@ -13,6 +13,7 @@ use App\Repositories\Mobile\MobileTreeSyncRepository;
 use App\Repositories\Inspections\TreeInspectionRepository;
 use App\Repositories\Trees\TreeRepository;
 use App\Validation\Forestry\DendrometryInput;
+use App\Validation\Forestry\ClinometerInput;
 use App\Validation\Mobile\MobileMutationInput;
 use App\Validation\Mobile\MobileInventoryPageInput;
 use App\Validation\Mobile\MobileRiskInput;
@@ -154,6 +155,8 @@ class MobileInspectionService
         $fields = array_merge(
             ['id', 'organization_id', 'tree_id', 'inventory_tree_id', 'lock_version', 'created_by', 'updated_by'],
             DendrometryInput::FIELDS,
+            ClinometerInput::FIELDS,
+            ['clinometer_formula_version'],
             TreeInspectionInput::TEXT_FIELDS,
             ['dap_m', 'radius_m', 'basal_area_m2', 'commercial_volume_m3', 'total_volume_m3',
                 'diameter_class_number', 'height_class_number', 'maturity_state_id',

@@ -8,6 +8,7 @@ use App\Domain\Forestry\DendrometryArithmetic;
 use App\Models\Catalogs\ClassificationRuleVersion;
 use App\Repositories\Catalogs\ClassificationRuleRepository;
 use App\Validation\Forestry\DendrometryInput;
+use App\Validation\Forestry\ClinometerInput;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 
@@ -22,13 +23,14 @@ class DendrometryCalculationService
     }
 
     /**
-     * Retorna exclusivamente las diez columnas derivadas y de versionado.
+     * Retorna derivados y versión; el inclinómetro agrega sus alturas y observaciones para la vista previa.
      * El ID explícito debe proceder de una inspección autorizada; permite reproducir
      * su versión sellada aunque ya no se ofrezca para nuevas capturas.
      */
     public function calculate(array $inputs, ?string $versionId = null): array
     {
-        $measurements = DendrometryInput::validate($inputs);
+        $clinometer = ClinometerInput::resolve($inputs);
+        $measurements = DendrometryInput::validate(array_replace($inputs, $clinometer));
         $version = $this->resolveVersion($versionId);
         $diameter = $measurements['cap_cm'] === null ? null
             : $this->classification->diameterRatio($measurements['cap_cm'], DendrometryArithmetic::PI, $version->id);
@@ -45,7 +47,7 @@ class DendrometryCalculationService
             'maturity_state_id' => $maturity?->id,
             'classification_rule_version_id' => $version->id,
             'calculation_rule_version' => DendrometryArithmetic::VERSION,
-        ]);
+        ], $clinometer['uses_clinometer'] === true ? $clinometer : []);
     }
 
     private function resolveVersion(?string $versionId): ClassificationRuleVersion

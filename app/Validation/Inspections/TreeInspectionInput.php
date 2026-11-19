@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Validation\Inspections;
 
 use App\Validation\Forestry\DendrometryInput;
+use App\Validation\Forestry\ClinometerInput;
 
 /** Comparte el contrato HTTP y el de servicios; los resultados del cliente se descartan. */
 class TreeInspectionInput
@@ -15,7 +16,7 @@ class TreeInspectionInput
 
     public static function rules(bool $updating = false): array
     {
-        $rules = DendrometryInput::rules() + [
+        $rules = DendrometryInput::rules() + ClinometerInput::rules() + [
             'inspection_date' => [$updating ? 'sometimes' : 'required', 'date_format:Y-m-d'],
             'inventory_tree_id' => ['nullable', 'record_id'],
             'risk_priority' => ['nullable', 'integer', 'between:1,4'],

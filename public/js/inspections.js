@@ -6,6 +6,23 @@
         const status = panel.querySelector('[data-calculation-status]');
         const fields = Array.from(form.querySelectorAll('[data-dendrometry-input]'));
         const outputs = Array.from(panel.querySelectorAll('[data-calculated-output]'));
+        const clinometer = form.querySelector('[data-clinometer-toggle]');
+        const clinometerFields = form.querySelector('[data-clinometer-fields]');
+        const manualHeights = Array.from(form.querySelectorAll('[data-manual-height]'));
+        const clinometerResults = Array.from(panel.querySelectorAll('[data-clinometer-result]'));
+        const applyMode = () => {
+            if (!clinometer || !clinometerFields) return;
+            const enabled = clinometer.checked;
+            clinometerFields.hidden = !enabled;
+            clinometerFields.disabled = !enabled;
+            clinometerFields.querySelectorAll('input').forEach((field) => { field.required = enabled; });
+            manualHeights.forEach((wrapper) => {
+                wrapper.hidden = enabled;
+                wrapper.querySelectorAll('input').forEach((field) => { field.disabled = enabled; });
+            });
+            clinometerResults.forEach((wrapper) => { wrapper.hidden = !enabled; });
+        };
+        const activeFields = () => fields.filter((field) => !field.matches(':disabled'));
         let pending = null;
         let timer = null;
         let sequence = 0;
@@ -18,7 +35,8 @@
             const current = ++sequence;
             if (pending) pending.abort();
             clear();
-            if (fields.every((field) => field.value.trim() === '')) {
+            const inputs = activeFields();
+            if (inputs.every((field) => field.type === 'checkbox' ? !field.checked : field.value.trim() === '')) {
                 panel.dataset.pending = 'false';
                 message('Ingresa las mediciones conocidas para ver los resultados.');
                 return;
@@ -27,7 +45,9 @@
             panel.dataset.pending = 'true';
             message('Calculando…');
             const data = {};
-            fields.forEach((field) => { data[field.name] = field.value.trim() || null; });
+            inputs.forEach((field) => {
+                data[field.name] = field.type === 'checkbox' ? field.checked : field.value.trim() || null;
+            });
             if (form.dataset.inspectionId) data.inspection_id = form.dataset.inspectionId;
             try {
                 const response = await fetch(form.dataset.previewUrl, {
@@ -68,7 +88,11 @@
             message('Resultados pendientes de actualización…');
             timer = window.setTimeout(preview, 400);
         };
-        fields.forEach((field) => field.addEventListener('input', schedule));
+        fields.forEach((field) => {
+            if (field.type !== 'checkbox') field.addEventListener('input', schedule);
+        });
+        if (clinometer) clinometer.addEventListener('change', () => { applyMode(); schedule(); });
+        applyMode();
         preview();
     });
 })();

@@ -7,6 +7,7 @@ namespace App\Http\Requests\Forestry;
 use App\Services\Forestry\ForestryAccessService;
 use App\Services\Inspections\TreeInspectionReadService;
 use App\Validation\Forestry\DendrometryInput;
+use App\Validation\Forestry\ClinometerInput;
 use App\Validation\Inspections\TreeInspectionInput;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -27,7 +28,7 @@ class DendrometryPreviewRequest extends FormRequest
 
     public function rules(): array
     {
-        return DendrometryInput::rules() + ['inspection_id' => ['nullable', 'record_id']];
+        return DendrometryInput::rules() + ClinometerInput::rules() + ['inspection_id' => ['nullable', 'record_id']];
     }
 
     public function messages(): array

@@ -35,6 +35,9 @@ class TreeInspection extends Model
         return [
             'is_public' => 'boolean', 'publication_version' => 'integer',
             'inspection_date' => 'immutable_date', 'flowering_date' => 'immutable_date', 'fruiting_date' => 'immutable_date',
+            'uses_clinometer' => 'boolean',
+            'clinometer_distance_m' => 'decimal:6', 'clinometer_observer_height_m' => 'decimal:6',
+            'clinometer_elevation_degrees' => 'decimal:6', 'clinometer_depression_degrees' => 'decimal:6',
             'cap_cm' => 'decimal:6', 'total_height_m' => 'decimal:6', 'commercial_height_m' => 'decimal:6',
             'crown_x_m' => 'decimal:6', 'crown_y_m' => 'decimal:6', 'form_factor' => 'decimal:6',
             'dap_m' => 'decimal:12', 'radius_m' => 'decimal:12', 'basal_area_m2' => 'decimal:12',

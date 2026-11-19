@@ -20,12 +20,14 @@ final class DendrometryInput
     {
         $rules = [];
         foreach (self::FIELDS as $field) {
-            $rules[$field] = ['nullable', function (string $attribute, mixed $value, Closure $fail): void {
+            $rule = function (string $attribute, mixed $value, Closure $fail): void {
                 $message = self::error($attribute, $value);
                 if ($message !== null) {
                     $fail($message);
                 }
-            }];
+            };
+            $rules[$field] = ['nullable', in_array($field, ['total_height_m', 'commercial_height_m'], true)
+                ? new ClinometerManualHeightRule($rule) : $rule];
         }
 
         return $rules;

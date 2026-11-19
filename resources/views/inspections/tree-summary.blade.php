@@ -6,6 +6,7 @@
     @if ($latestInspection)
         @include('carbon.estimate', ['carbonInspection' => $latestInspection])
         <dl class="inspection-summary-measures"><div><dt>CAP</dt><dd>{{ $latestInspection->cap_cm ?? '—' }} <small>cm</small></dd></div><div><dt>DAP</dt><dd>{{ $latestInspection->dap_m ?? '—' }} <small>m</small></dd></div><div><dt>Altura total</dt><dd>{{ $latestInspection->total_height_m ?? '—' }} <small>m</small></dd></div><div><dt>Madurez</dt><dd>{{ $latestInspection->maturityState?->name ?? 'Sin calcular' }}</dd></div></dl>
+        @include('inspections.clinometer-read', ['measuredInspection' => $latestInspection])
         <details class="inspection-filter-details"><summary>Condiciones registradas en esta inspección ({{ $latestInspection->conditions->count() }})</summary><ul class="inspection-found-list">@forelse ($latestInspection->conditions as $condition)<li>{{ $condition->name }}<small>{{ $condition->assessment_type === 'physical_mechanical' ? 'Físico-mecánico' : 'Fitosanitario' }} · {{ $condition->category->name }}{{ !$condition->active || !$condition->category->active ? ' · referencia histórica inactiva' : '' }}</small></li>@empty<li>Sin condiciones registradas.</li>@endforelse</ul></details>
         <div class="form-actions"><a class="button secondary" href="{{ route('inspections.show', $latestInspection->id) }}">Ver inspección completa →</a></div>
     @else

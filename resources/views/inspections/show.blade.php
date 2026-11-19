@@ -16,7 +16,9 @@
                 @foreach (['dap_m' => ['DAP', 'm'], 'radius_m' => ['Radio', 'm'], 'basal_area_m2' => ['Área basal', 'm²'], 'commercial_volume_m3' => ['Volumen comercial', 'm³'], 'total_volume_m3' => ['Volumen total', 'm³'], 'diameter_class_number' => ['Clase diamétrica', ''], 'height_class_number' => ['Clase de altura', '']] as $field => [$label, $unit])<div><dt>{{ $label }}</dt><dd>{{ $inspection->{$field} ?? '—' }} <small>{{ $unit }}</small></dd></div>@endforeach
                 <div class="wide"><dt>Estado de madurez</dt><dd>{{ $inspection->maturityState?->name ?? 'Sin calcular' }}</dd></div>
             </dl><p class="inspection-help-line">Versión de cálculo: {{ $inspection->calculation_rule_version }}. Los resultados corresponden a esta inspección.</p></aside>
-        </div></section>
+        </div>
+        @include('inspections.clinometer-read', ['measuredInspection' => $inspection])
+        </section>
         <div class="detail-grid"><section class="panel forestry-panel"><span class="section-kicker">ESTADO FÍSICO-MECÁNICO</span><h2>Condiciones físicas</h2>@include('inspections.conditions-read', ['groups' => $selectedConditionGroups['physical_mechanical'] ?? collect()])</section><section class="panel forestry-panel"><span class="section-kicker">ESTADO FITOSANITARIO</span><h2>Condiciones fitosanitarias</h2>@include('inspections.conditions-read', ['groups' => $selectedConditionGroups['phytosanitary'] ?? collect()])</section></div>
         <section class="panel forestry-panel"><span class="section-kicker">FENOLOGÍA</span><h2>Floración y fructificación</h2><div class="form-grid">
             @foreach (['flowering' => 'Floración', 'fruiting' => 'Fructificación'] as $prefix => $label)<div class="inspection-phenology"><h3>{{ $label }}</h3><dl class="details"><div><dt>Fecha registrada</dt><dd>{{ $inspection->{$prefix.'_date'}?->format('d/m/Y') ?? 'No informada' }}</dd></div><div><dt>Desarrollo observado</dt><dd class="preserve-lines">{{ $inspection->{$prefix.'_development'} ?? 'No informado' }}</dd></div></dl></div>@endforeach

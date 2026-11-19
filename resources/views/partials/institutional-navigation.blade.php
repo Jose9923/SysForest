@@ -5,7 +5,8 @@
         <a class="{{ request()->is('organizations*') ? 'selected' : '' }}" href="{{ route('organizations.index') }}"><span aria-hidden="true">▦</span> Organizaciones</a>
         <a class="{{ request()->is('territories*') ? 'selected' : '' }}" href="{{ route('territories.index') }}"><span aria-hidden="true">◎</span> Territorios</a>
         @can('inventories.view')<a class="{{ request()->is('inventories*') ? 'selected' : '' }}" href="{{ route('inventories.index') }}"><span aria-hidden="true">▤</span> Inventarios</a>@endcan
-        @can('trees.view')<a class="{{ request()->is('trees*') && !request()->is('trees/*/inspections*', 'trees/*/maintenances*') ? 'selected' : '' }}" href="{{ route('trees.index') }}"><span aria-hidden="true">♧</span> Árboles</a>@endcan
+        @can('trees.view')<a class="{{ request()->is('trees*') && !request()->is('trees/*/inspections*', 'trees/*/maintenances*', 'trees/follow-up*') ? 'selected' : '' }}" href="{{ route('trees.index') }}"><span aria-hidden="true">♧</span> Árboles</a>@endcan
+        @can('trees.view')<a class="{{ request()->routeIs('trees.follow-up') ? 'selected' : '' }}" href="{{ route('trees.follow-up') }}"><span aria-hidden="true">◷</span> Seguimiento de árboles</a>@endcan
         @can('maps.view')<a class="{{ request()->is('map') ? 'selected' : '' }}" href="{{ route('maps.index') }}"><span aria-hidden="true">◎</span> Cartografía</a>@endcan
         @can('imports.view')<a class="{{ request()->is('imports*') ? 'selected' : '' }}" href="{{ route('imports.index') }}"><span aria-hidden="true">↥</span> Importaciones</a>@endcan
         @can('reports.view')<a class="{{ request()->is('analytics*') ? 'selected' : '' }}" href="{{ route('analytics.index') }}"><span aria-hidden="true">◴</span> Diagramas y gráficas</a>@endcan
