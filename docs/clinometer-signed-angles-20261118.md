@@ -2,7 +2,7 @@
 
 ## Estado
 
-Contrato confirmado por el usuario. Revisión independiente, integración backend, revisión visual web y compilación de la imagen production V2 aprobadas, con los límites descritos abajo. La revisión visual y compilación final de Android siguen su evidencia separada. **V2 aún no se ha activado en producción ni se ha publicado la APK corregida**.
+**V2 activada en producción y APK corregida 0.3.14+19 publicada.** Commit backend `5829acc7ede27e8d5e86d4957df714a63bda4d7a`, imagen production verificada y migración únicamente `000037`, conservando la `000036` ya aplicada. Revisión independiente, integración, CUA web/Flutter y build aprobados con los límites de este informe. El cierre HTTPS pasó 62 comprobaciones; no se acredita Android físico ni calibración del instrumento.
 
 El corte anterior V1 se recuperó de forma segura al cambiar la fórmula solicitada: imagen/fuentes anteriores saludables, `000036` retenida y APK V1 sin publicación. Se conserva su evidencia, incluida la distinción entre datos de negocio intactos y cambios de sesiones durante la reapertura, en [el informe V1](clinometer-follow-up-20261118.md).
 
@@ -40,13 +40,13 @@ Web inicia nuevas mediciones con V2. Al editar V1 ofrece conservar el método an
 
 Android requiere `supports_clinometer_v2` para una nueva captura V2; `supports_clinometer` continúa identificando compatibilidad V1. Un servidor anterior no recibe las claves V2 desde captura manual. Borradores y correcciones V1 recuperan el método anterior sin reinterpretar depresión/persona. Cambiar de método requiere confirmación explícita y nuevas lecturas de fuste/base, sin inferirlas de alturas anteriores. La versión recibida solo se conserva como contexto local del borrador; no sale en el payload. Se mantiene la cola, el envío exclusivamente manual, los cuerpos congelados y los recibos.
 
-Seguimiento, filtros y permisos de la entrega anterior siguen dentro del alcance. Android consulta el historial autorizado descargado; no incorpora Reportes ni una API de auditoría completa. Ejecutar **Sincronizar ahora** será necesario para renovar capacidades después de publicar la plataforma compatible, sin afirmar todavía que esa publicación ocurrió.
+Seguimiento, filtros y permisos de la entrega anterior siguen dentro del alcance. Android consulta el historial autorizado descargado; no incorpora Reportes ni una API de auditoría completa. Instalar la actualización conservando la aplicación existente y ejecutar **Sincronizar ahora** para renovar las capacidades y copias locales con el backend compatible ya activo.
 
 ## Revisión y límites
 
 Revisión independiente de fuente: fórmulas/rangos/redondeo, 036 intacta/037 aditiva, selector posterior al recibo, versión exclusiva del servidor, PATCH legado, grupos web disabled/required, conservación de controles, borradores V1/V2 y ausencia de cambios en envío/cola. Evidencia y hashes en `.clinometer-v2-work/independent-review.json`. Esa lectura no sustituye la integración con base de datos ni una prueba visual o física.
 
-No se añadieron suites permanentes. La evidencia de integración y web incorporada a continuación no acredita publicación productiva; el resultado móvil final se registra por separado. No afirmar validación de teléfono físico, SQLite nativo mediante una vista previa web, migración productiva V2 ni publicación de APK hasta contar con evidencia específica.
+No se añadieron suites permanentes. La evidencia de integración y web incorporada a continuación no acredita publicación productiva; el resultado móvil final se registra por separado. No afirmar validación de teléfono físico ni SQLite nativo mediante una vista previa web. La evidencia productiva y del APK se detalla a continuación.
 
 ## Cierre backend y candidato production
 
@@ -57,4 +57,22 @@ No se añadieron suites permanentes. La evidencia de integración y web incorpor
 - Imagen targetproduction `sysforest-app:clinometer-v2-production-20261118`, `sha256:b56ed192726b239031b2d9fa6592a356a2f303ccd5c8479ade77ec367bd8f756`, 249.033.087 bytes. Las 951 fuentes runtime congeladas quedaron intactas durante el build y los ocho servicios locales conservaron ID y salud. La compilación no ejecutó migraciones ni activó servicios.
 - Compatibilidad 8/8 en contenedores efímeros sin red: PHP 8.4.27, entrypoint/FPM, usuario, configuración y composer.lock coinciden con la evidencia productiva anterior; autoload de las clases nuevas aprobado. No es una migración ni una prueba funcional contra producción.
 
-Artefactos: `.clinometer-v2-work/backend/{integration-observations,migration-observations,historical-receipt-observations,static-verification}.json` y `.clinometer-v2-work/release/{backend-production-source-freeze,backend-production-image-result,production-candidate-compatibility}.json`. El paquete futuro combina 34 archivos runtime V1+V2/Seguimiento y tres documentos; no basta aplicar únicamente el diff V2 porque el release activo fue recuperado. `000036` se incluye como fuente histórica aplicada; solo `000037` corresponde al próximo cambio de esquema. Corte y publicación permanecen pendientes de su evidencia final.
+Artefactos: `.clinometer-v2-work/backend/{integration-observations,migration-observations,historical-receipt-observations,static-verification}.json` y `.clinometer-v2-work/release/{backend-production-source-freeze,backend-production-image-result,production-candidate-compatibility}.json`. El paquete activado combinó 34 archivos runtime V1+V2/Seguimiento y tres documentos; no basta aplicar únicamente el diff V2 porque el release activo fue recuperado. `000036` se incluye como fuente histórica aplicada; solo `000037` se ejecutó durante este corte. El cierre productivo consta abajo.
+
+## Activación, conservación y publicación
+
+El código se publicó por push y fast-forward del checkout `/opt/sysforest/source`; el release recibió el delta combinado de 37 rutas. Se pausaron únicamente app/queue/scheduler, se verificó un respaldo nuevo de PostgreSQL, MongoDB y storage y se aplicó solamente `000037`. Las 71 tablas comparadas conservaron exactamente sus valores al excluir solo las dos columnas añadidas; los campos de `000036` sí participaron en la comparación y los campos V2 quedaron `NULL` en los antecedentes. Permanecen **dos árboles, un inventario, dos visitas y siete fotografías**. No se usaron reset, fresh, seeders ni datos ficticios en producción.
+
+Respaldo privado verificado: `/opt/sysforest/private/clinometer-v2-deployment-20261118-5829acc/backups/backup-20261119T023803Z-cFaoSC`. Se conservaron las preimágenes y la imagen anterior. Las comprobaciones de formato/huellas del respaldo no se presentan como un nuevo ensayo completo de restauración. La imagen activa V2 es `sha256:b56ed192726b239031b2d9fa6592a356a2f303ccd5c8479ade77ec367bd8f756`; su manifiesto de plataforma comprobado es `sha256:f55430b384017d3a9dd69924a345160841b71bfee51b7cbb1a67751b86fb1693`. Los siete servicios de negocio volvieron a saludable, los otros cuatro contenedores de negocio conservaron identidad, y entorno, doce archivos privados de visores y 47 archivos públicos protegidos quedaron intactos durante el corte.
+
+El primer intento HTTPS detectó 403 en JS/CSS: la copia heredó modo 0600 del checkout creado bajo umask 077. Se restauró **únicamente** el modo 0644 de los dos assets, cotejado con sus preimágenes, sin cambiar hashes, propietario, ACL globales ni reiniciar. Al copiar archivos públicos en futuras entregas, conservar su modo legible según preimagen. Un segundo intento del observador mantenía una expectativa V1 de persona/depresión en el alta V2; se corrigió el observador, sin modificar runtime. Sus dos sesiones propias se cerraron mediante el servicio normal, con actor/ventana exactos y sin tocar sesiones ajenas.
+
+El recorrido final HTTPS aprobó **62/62** comprobaciones: Seguimiento, historial, formularios, assets, capacidades V2, GET privados y previews con inferior negativo/positivo. Las 33 huellas de negocio, permisos y recibos permanecieron iguales, sin escrituras de negocio ni mensajes de prueba; sus dos sesiones propias quedaron cerradas. No confundir esa comparación con las modificaciones normales de sesión de los logins/logout. Evidencia: `.clinometer-v2-work/release/{production-deployment-result,production-http-verification,public-asset-mode-correction,attempt2-session-cleanup}.json`.
+
+Android publicó la APK **0.3.14+19 V2**, código `2be41d5`, con la misma firma y permisos, tres ABI, 63 fuentes/configuración y lock conservados. CUA con tema real verificó cálculos ±10°, AF cero, conversión V1, recuperación de borrador y etiquetas a 390 px/200%; no constituye validación física ni de SQLite nativo. La candidata V1 permanece archivada en privado, nunca publicada.
+
+- [Descargar SysForest Mobile 0.3.14](https://sysforest.varcor.tech/descargas/SysForest-Mobile-0.3.14.apk).
+- Tamaño: **169.222.789 bytes**.
+- SHA-256: `bed4f5b6bf312703c7dc6bb554d91a9559eb3d2edfb7d721d5555241cbb08978`.
+
+HEAD 200, descargas parciales 206 y SHA completo por HTTPS verificados; LEEME/SHA256SUMS coincidentes. La publicación conservó 16 descargas anteriores, 29 assets vendor, entorno y los siete servicios durante su ventana. Instalar sobre la aplicación existente, sin desinstalar, y pulsar **Sincronizar ahora**. Evidencia móvil: `.clinometer-v2-work/mobile/apk-publication-result.json` y `.clinometer-v2-work/visual-verification.json`. Sin dependencias/permisos nuevos, sin suites permanentes y con Android físico pendiente.

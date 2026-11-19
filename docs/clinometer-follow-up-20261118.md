@@ -6,7 +6,7 @@
 
 La comparación inmediatamente posterior a la migración, con los tres servicios PHP pausados, conservó las 71 tablas verificadas al excluir únicamente las columnas nuevas. Tras reabrir el servicio y recuperar la versión anterior, 69 tablas de negocio, recibos e historiales seguían idénticas; únicamente cambiaron `auth_sessions` y `refresh_tokens` durante esa ventana, sin atribuir aquí su origen. Se mantuvieron dos árboles, un inventario, dos visitas y siete fotografías, además de entorno, almacenamiento, visores y respaldo verificado. La imagen activa recuperada fue `sha256:7d6fa07aa5aaaa9c927251ac9e868dc3b61ab0a3d667efebb5e25e93605a56a5`. El checkout fuente productivo quedó en `982128f`, separado del release recuperado.
 
-La APK V1 0.3.14+19 quedó cargada en privado y **no se publicó**; su gate y la comprobación HTTPS V1 se cancelaron. El contrato vigente y el estado pendiente de V2 están en [Ángulos firmados](clinometer-signed-angles-20261118.md). Evidencia del corte y recuperación: `.clinometer-work/release/production-deployment-result.json`. No se acredita prueba de Android físico.
+La APK V1 0.3.14+19 quedó cargada en privado y **no se publicó**; su gate y la comprobación HTTPS V1 se cancelaron. El contrato vigente y el cierre posterior de **V2 activada, con la APK corregida publicada**, están en [Ángulos firmados](clinometer-signed-angles-20261118.md). La publicación V2 conserva el número 0.3.14+19 porque la candidata V1 nunca estuvo disponible públicamente. Evidencia del corte y recuperación: `.clinometer-work/release/production-deployment-result.json`. No se acredita prueba de Android físico.
 
 ## Medición de alturas
 
