@@ -47,7 +47,9 @@ class PublicTreeFilterService
             throw ValidationException::withMessages(array_fill_keys($unknown, 'Este filtro no está disponible en el portal público.'));
         }
         $values = Validator::make($input, self::rules($requireBbox), TreeFilterInput::messages() + MapInput::messages())->validate();
-        $resolved = $this->references->resolve($values);
+        $references = $this->references->resolveWithCodes($values);
+        $resolved = $references['resolved'];
+        $values = $references['canonical'];
         $sort = $resolved['sort'] ?? 'code';
         unset($resolved['sort']);
         $trees = TreeFilterDTO::fromValidated($this->trees->validate($resolved)->values() + ['sort' => $sort]);

@@ -13,7 +13,7 @@ class TaxonomyRules
     {
         $required = $update ? ['sometimes', 'required'] : ['required'];
         $rules = [
-            'code' => [...$required, 'string', 'max:80', 'regex:/\A[A-Z][A-Z0-9_]{1,79}\z/'],
+            'code' => [...($update ? ['sometimes', 'required'] : ['sometimes', 'nullable']), 'string', 'max:80', 'regex:/\A[A-Z][A-Z0-9_]{1,79}\z/'],
             $catalog->nameColumn() => [...$required, 'string', 'max:255', 'regex:/\S/u'],
             'description' => ['sometimes', 'nullable', 'string', 'max:5000'],
             'active' => ['sometimes', 'boolean'],

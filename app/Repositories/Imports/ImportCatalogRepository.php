@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Repositories\Imports;
 
 use App\Imports\ImportCatalogSelection;
+use App\Enums\Taxonomy\TaxonomyCatalog;
+use App\Repositories\Taxonomy\TaxonomyCodeRepository;
 use App\Models\Catalogs\BiogeographicOrigin;
 use App\Models\Conditions\Condition;
 use App\Models\Catalogs\ClassificationRuleVersion;
@@ -24,6 +26,10 @@ use LogicException;
 /** Resuelve códigos y selecciones nacionales exactos; nunca confía en catálogos del archivo. */
 class ImportCatalogRepository
 {
+    public function __construct(private TaxonomyCodeRepository $codes)
+    {
+    }
+
     private const MODELS = [
         'placement_code' => Placement::class,
         'species_code' => Species::class,
@@ -44,7 +50,17 @@ class ImportCatalogRepository
             throw new LogicException('Bloquear catálogos requiere una transacción.');
         }
         $selection = ImportCatalogSelection::parse($code);
-        $query = self::MODELS[$field]::query()->where('code', $selection['code'] ?? $code);
+        $selectedCode = $selection['code'] ?? $code;
+        $query = self::MODELS[$field]::query();
+        if ($field === 'species_code') {
+            $id = $this->codes->resolveId(TaxonomyCatalog::Species, $selectedCode);
+            if ($id === null) {
+                return null;
+            }
+            $query->whereKey($id);
+        } else {
+            $query->where('code', $selectedCode);
+        }
         $record = ($lock ? $query->sharedLock() : $query)->first();
         if ($record === null || ! $record->active || ! $this->parentAvailable($record, $lock)) {
             return null;

@@ -8,6 +8,7 @@ use App\Enums\Taxonomy\TaxonomyCatalog;
 use App\Models\User;
 use App\Repositories\Auth\SecurityEventRepository;
 use App\Repositories\Taxonomy\TaxonomyRepository;
+use App\Repositories\Taxonomy\TaxonomyCodeRepository;
 use App\Repositories\Users\UserRepository;
 use App\Validation\Taxonomy\TaxonomyRules;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,7 @@ class TaxonomyService
 {
     public function __construct(
         private TaxonomyRepository $repository,
+        private TaxonomyCodeRepository $codes,
         private CatalogAccessService $access,
         private UserRepository $users,
         private SecurityEventRepository $events,
@@ -76,6 +78,9 @@ class TaxonomyService
                 $currentActor = $this->users->findForUpdate((int) $actor->id);
                 $this->access->authorizeManage($currentActor);
                 $record = $id === null ? null : $this->repository->find($catalog, $id, true);
+                if ($record === null && is_string($input['code'] ?? null) && trim($input['code']) === '') {
+                    $input['code'] = null;
+                }
                 $base = $record?->only(array_diff(array_keys(TaxonomyRules::for($catalog)), ['id', 'organization_id', 'lock_version'])) ?? ['active' => true, 'sort_order' => 0];
                 $values = Validator::make(array_replace($base, $input), TaxonomyRules::for($catalog, $record !== null))->validate();
                 if ($record !== null && $values['code'] !== $record->code) {
@@ -85,6 +90,13 @@ class TaxonomyService
                 $this->validateParent($catalog, $values, $record);
                 if ($record !== null && array_key_exists('description', $values)) {
                     $values['description'] = \App\Support\Imports\ExcelReferencePresentation::preserveDescription($record->description, $values['description']);
+                }
+                if ($record === null) {
+                    if (($values['code'] ?? null) === null) {
+                        $values['code'] = $this->codes->nextCode($catalog);
+                    } elseif ($this->codes->resolveId($catalog, $values['code']) !== null) {
+                        throw ValidationException::withMessages(['code' => 'El código ya identifica un registro actual o anterior.']);
+                    }
                 }
                 $auditBefore = $record === null ? [] : $this->snapshots->snapshot($record);
                 if ($record !== null) {
@@ -132,7 +144,11 @@ class TaxonomyService
                 return $record;
             }, 3);
         } catch (UniqueConstraintViolationException) {
-            throw ValidationException::withMessages(['code' => 'Ya existe ese código, nombre científico o nombre común para la especie.']);
+            throw ValidationException::withMessages([
+                $catalog->nameColumn() => $catalog === TaxonomyCatalog::CommonNames
+                    ? 'Ya existe ese nombre común para la especie o el código ya está ocupado.'
+                    : 'Ya existe ese nombre científico o el código ya está ocupado.',
+            ]);
         }
     }
 

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Carbon;
 
 use App\Repositories\Carbon\CarbonRepository;
+use App\Repositories\Taxonomy\TaxonomyCodeRepository;
+use App\Enums\Taxonomy\TaxonomyCatalog;
 use App\Repositories\Identifiers\IdentifierRepository;
 use App\Repositories\Auth\SecurityEventRepository;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +17,7 @@ class CarbonReferenceSeedService
 {
     private const PACKAGE_HASH = '943fcb1c8e11e3ff25527da5b6838675597638f252a018541cf70e3f816a90f9';
 
-    public function __construct(private CarbonRepository $repository, private SecurityEventRepository $events, private IdentifierRepository $identifiers)
+    public function __construct(private CarbonRepository $repository, private SecurityEventRepository $events, private IdentifierRepository $identifiers, private TaxonomyCodeRepository $codes)
     {
     }
 
@@ -28,13 +30,26 @@ class CarbonReferenceSeedService
         $package = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
         $references = array_column($package['species'], null, 'species_code');
         $species = $this->repository->seedSpecies();
+        $aliasReferences = [];
+        foreach ($this->codes->aliasesFor(TaxonomyCatalog::Species, $species->modelKeys()) as $code => $id) {
+            if (isset($references[$code])) {
+                $aliasReferences[$id][] = $references[$code];
+            }
+        }
         $result = ['created' => 0, 'existing' => 0, 'mismatched' => 0];
         foreach ($this->repository->seedOrganizations() as $organization) {
-            $counts = DB::transaction(function () use ($organization, $references, $species, $package): array {
+            $counts = DB::transaction(function () use ($organization, $references, $species, $package, $aliasReferences): array {
                 $this->repository->lockOrganization($organization->id);
                 $counts = ['created' => 0, 'existing' => 0, 'mismatched' => 0];
                 foreach ($species as $item) {
-                    $reference = $references[$item->code] ?? null;
+                    $candidates = $aliasReferences[$item->id] ?? [];
+                    if (isset($references[$item->code])) {
+                        $candidates[] = $references[$item->code];
+                    }
+                    if (count($candidates) > 1) {
+                        throw new LogicException('La especie coincide con varias referencias bibliográficas; requiere revisión.');
+                    }
+                    $reference = $candidates[0] ?? null;
                     if ($reference === null || $reference['scientific_name'] !== $item->scientific_name
                         || mb_strtoupper($reference['family']) !== mb_strtoupper($item->family->scientific_name)) {
                         $counts['mismatched']++;

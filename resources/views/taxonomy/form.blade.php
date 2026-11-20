@@ -8,7 +8,11 @@
     <form class="panel organization-form catalog-form" method="POST" action="{{ $record ? route('taxonomy.update', ['catalog' => $catalog, 'record' => $record->id]) : route('taxonomy.store', ['catalog' => $catalog]) }}">
         @csrf
         @if ($record) @method('PUT') <input type="hidden" name="lock_version" value="{{ old('lock_version', $record->lock_version) }}"> @endif
-        <x-field name="code" label="Código estable" :value="$record?->code ?? ''" maxlength="80" pattern="[A-Z][A-Z0-9_]{1,79}" required :readonly="$record !== null" />
+        @if ($record)
+            <x-field name="code" label="Código estable" :value="$record->code" maxlength="80" readonly />
+        @else
+            <div class="field wide"><span class="label">Código automático</span><p class="muted">Se asignará al guardar. No necesitas escribirlo.</p>@error('code')<span class="field-error">{{ $message }}</span>@enderror</div>
+        @endif
         <x-field :name="$nameColumn" :label="$catalog === 'common-names' ? 'Nombre común' : 'Nombre científico'" :value="$record?->getAttribute($nameColumn) ?? ''" maxlength="255" required />
         @if ($catalog === 'species')
             <div class="field"><label for="family_id">Familia</label><select class="catalog-select" id="family_id" name="family_id" required><option value="">Selecciona una familia</option>@foreach ($families as $family)<option value="{{ $family->id }}" @selected(old('family_id', $record?->family_id) === $family->id)>{{ $family->scientific_name }}{{ $family->active ? '' : ' (inactiva; referencia histórica)' }}</option>@endforeach</select>@error('family_id')<span class="field-error">{{ $message }}</span>@enderror</div>

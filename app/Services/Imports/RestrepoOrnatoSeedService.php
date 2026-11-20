@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Repositories\Imports\RestrepoOrnatoSeedRepository;
 use App\Repositories\Auth\SecurityEventRepository;
 use App\Repositories\Users\UserRepository;
+use App\Repositories\Taxonomy\TaxonomyCodeRepository;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -47,6 +48,7 @@ class RestrepoOrnatoSeedService
         private InventoryService $inventories,
         private TenantContextService $tenants,
         private SecurityEventRepository $events,
+        private TaxonomyCodeRepository $codes,
     ) {
     }
 
@@ -153,20 +155,29 @@ class RestrepoOrnatoSeedService
 
     private function seedTaxonomy(User $actor, array $manifest, array &$created): void
     {
+        // Comparte el orden de bloqueo con las cargas nacionales antes de leer sus referencias.
+        foreach (TaxonomyCatalog::cases() as $catalog) {
+            $this->codes->lockCatalog($catalog);
+        }
         $familyRecords = $this->repository->taxonomy(TaxonomyCatalog::Families);
         $speciesRecords = $this->repository->taxonomy(TaxonomyCatalog::Species);
         $commonRecords = $this->repository->taxonomy(TaxonomyCatalog::CommonNames);
+        $familyAliases = $this->codes->aliasesFor(TaxonomyCatalog::Families, $familyRecords->modelKeys());
+        $speciesAliases = $this->codes->aliasesFor(TaxonomyCatalog::Species, $speciesRecords->modelKeys());
+        $commonAliases = $this->codes->aliasesFor(TaxonomyCatalog::CommonNames, $commonRecords->modelKeys());
         $families = [];
         $description = 'Fuente: Planilla Plan Ornato Restrepo 2025 Total para riesgos.xlsx. SHA-256: '.self::SOURCE_SHA256
             .'. Etiqueta transcrita; no implica validación nomenclatural ni resolución de sinónimos.';
 
         foreach ($manifest['families'] as $row) {
-            $family = $this->existing($familyRecords, $row, 'scientific_name');
+            $family = $this->existing($familyRecords, $row, 'scientific_name', aliases: $familyAliases);
             if ($family === null) {
                 $family = $this->taxonomy->create($actor, 'families', [
-                    'code' => $row['code'], 'scientific_name' => $row['scientific_name'],
+                    'scientific_name' => $row['scientific_name'],
                     'description' => $description, 'active' => true, 'sort_order' => 0,
                 ]);
+                $this->codes->registerAlias(TaxonomyCatalog::Families, $row['code'], (int) $family->id);
+                $familyAliases[$row['code']] = (int) $family->id;
                 $familyRecords->push($family);
                 $created['families']++;
             }
@@ -174,25 +185,29 @@ class RestrepoOrnatoSeedService
         }
         foreach ($manifest['species'] as $row) {
             $family = $families[$row['family_code']];
-            $species = $this->existing($speciesRecords, $row, 'scientific_name', ['family_id' => $family->id]);
+            $species = $this->existing($speciesRecords, $row, 'scientific_name', ['family_id' => $family->id], aliases: $speciesAliases);
             if ($species === null) {
                 $species = $this->taxonomy->create($actor, 'species', [
-                    'code' => $row['code'], 'scientific_name' => $row['scientific_name'], 'family_id' => $family->id,
+                    'scientific_name' => $row['scientific_name'], 'family_id' => $family->id,
                     'description' => $description, 'active' => true, 'sort_order' => 0,
                 ]);
+                $this->codes->registerAlias(TaxonomyCatalog::Species, $row['code'], (int) $species->id);
+                $speciesAliases[$row['code']] = (int) $species->id;
                 $speciesRecords->push($species);
                 $created['species']++;
             }
             foreach ($row['common_names'] as $commonRow) {
-                $common = $this->existing($commonRecords, $commonRow, 'name', ['species_id' => $species->id]);
+                $common = $this->existing($commonRecords, $commonRow, 'name', ['species_id' => $species->id], aliases: $commonAliases);
                 if ($common !== null) {
                     continue;
                 }
                 $primaryExists = $commonRecords->contains(fn (Model $record): bool => $record->species_id === $species->id && $record->is_primary);
                 $common = $this->taxonomy->create($actor, 'common-names', [
-                    'code' => $commonRow['code'], 'name' => $commonRow['name'], 'species_id' => $species->id,
+                    'name' => $commonRow['name'], 'species_id' => $species->id,
                     'is_primary' => !$primaryExists, 'description' => $description, 'active' => true, 'sort_order' => 0,
                 ]);
+                $this->codes->registerAlias(TaxonomyCatalog::CommonNames, $commonRow['code'], (int) $common->id);
+                $commonAliases[$commonRow['code']] = (int) $common->id;
                 $commonRecords->push($common);
                 $created['common_names']++;
             }
@@ -229,9 +244,12 @@ class RestrepoOrnatoSeedService
      * Una coincidencia se reutiliza solo si código, significado, padre y vigencia siguen concordando.
      * La normalización taxonómica ignora únicamente mayúsculas y espacios; no interpreta sinonimia.
      */
-    private function existing(Collection $records, array $row, string $nameField, array $parent = [], bool $accentInsensitive = false): ?Model
+    private function existing(Collection $records, array $row, string $nameField, array $parent = [], bool $accentInsensitive = false, array $aliases = []): ?Model
     {
         $record = $records->firstWhere('code', $row['code']);
+        if ($record === null && isset($aliases[$row['code']])) {
+            $record = $records->find($aliases[$row['code']]);
+        }
         $matches = function (Model $candidate) use ($row, $nameField, $parent, $accentInsensitive): bool {
             if ($this->normalized($candidate->getAttribute($nameField), $accentInsensitive)
                 !== $this->normalized($row[$nameField], $accentInsensitive)) {

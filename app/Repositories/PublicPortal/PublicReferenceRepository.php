@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Repositories\PublicPortal;
 
 use App\DTOs\PublicPortal\PublicTreeFilterDTO;
+use App\Enums\Taxonomy\TaxonomyCatalog;
+use App\Repositories\Taxonomy\TaxonomyCodeRepository;
 use App\DTOs\Trees\TreeReadScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
@@ -13,13 +15,20 @@ use App\Repositories\Maps\MapOptionRepository;
 /** Los UUID se resuelven internamente; Select2 y las URL reciben exclusivamente códigos públicos. */
 class PublicReferenceRepository
 {
-    public function __construct(private MapOptionRepository $options)
+    public function __construct(private MapOptionRepository $options, private TaxonomyCodeRepository $codes)
     {
     }
 
     public function resolve(array $publicValues): array
     {
+        return $this->resolveWithCodes($publicValues)['resolved'];
+    }
+
+    /** Conserva las referencias internas y normaliza los enlaces a los códigos públicos vigentes. */
+    public function resolveWithCodes(array $publicValues): array
+    {
         $resolved = $publicValues;
+        $canonical = $publicValues;
         $criteria = [];
         foreach (MapOptionRepository::FIELDS as $field => $kind) {
             $value = $publicValues[$field] ?? null;
@@ -27,6 +36,20 @@ class PublicReferenceRepository
                 continue;
             }
             if (is_array($value)) {
+                if ($catalog = $this->taxonomyCatalog($kind)) {
+                    $ids = [];
+                    foreach ($value as $code) {
+                        $ids[] = $this->codes->resolveId($catalog, $code) ?? $this->unavailable($field);
+                    }
+                    $records = $this->query($kind, $criteria)->whereKey($ids)->get()->keyBy('id');
+                    if ($records->count() !== count(array_unique($ids))) {
+                        $this->unavailable($field);
+                    }
+                    $resolved[$field] = array_map(fn (int $id): string => (string) $id, $ids);
+                    $canonical[$field] = array_map(fn (int $id): string => $records->get($id)->code, $ids);
+                    $criteria[$field] = $resolved[$field];
+                    continue;
+                }
                 $records = $this->query($kind, $criteria)->whereIn('code', $value)->get()->keyBy('code');
                 if ($records->count() !== count(array_unique($value))) {
                     $this->unavailable($field);
@@ -40,11 +63,14 @@ class PublicReferenceRepository
                     $this->unavailable($field);
                 }
                 $resolved[$field] = (string) $record->id;
+                if ($this->taxonomyCatalog($kind) !== null) {
+                    $canonical[$field] = $record->code;
+                }
             }
             $criteria[$field] = $resolved[$field];
         }
 
-        return $resolved;
+        return ['resolved' => $resolved, 'canonical' => $canonical];
     }
 
     public function options(string $kind, PublicTreeFilterDTO $filters, string $term = '', int $page = 1): array
@@ -105,7 +131,13 @@ class PublicReferenceRepository
         if (count($parts) !== $expected || in_array('', $parts, true)) {
             $this->unavailable($field);
         }
-        if ($kind === 'departments') {
+        if ($catalog = $this->taxonomyCatalog($kind)) {
+            $id = $this->codes->resolveId($catalog, $code);
+            if ($id === null) {
+                $this->unavailable($field);
+            }
+            $query->whereKey($id);
+        } elseif ($kind === 'departments') {
             $query->where('code', $parts[1])->whereHas('country', fn (Builder $country) => $country->where('code', $parts[0]));
         } elseif ($kind === 'municipalities') {
             $query->where('code', $parts[2])->whereHas('department', fn (Builder $department) => $department
@@ -115,6 +147,16 @@ class PublicReferenceRepository
         } else {
             $query->where($kind === 'organizations' ? 'public_code' : 'code', $code);
         }
+    }
+
+    private function taxonomyCatalog(string $kind): ?TaxonomyCatalog
+    {
+        return match ($kind) {
+            'families' => TaxonomyCatalog::Families,
+            'species' => TaxonomyCatalog::Species,
+            'common_names' => TaxonomyCatalog::CommonNames,
+            default => null,
+        };
     }
 
     private function label($record, string $kind): array

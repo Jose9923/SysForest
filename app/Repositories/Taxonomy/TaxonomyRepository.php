@@ -12,9 +12,14 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class TaxonomyRepository
 {
+    public function __construct(private TaxonomyCodeRepository $codes)
+    {
+    }
+
     public function paginate(TaxonomyCatalog $catalog, array $filters): LengthAwarePaginator
     {
         $query = $this->query($catalog);
@@ -52,7 +57,18 @@ class TaxonomyRepository
     /** Solo los seeders usan esta entrada; nunca sobrescribe ajustes administrativos. */
     public function seed(TaxonomyCatalog $catalog, string $code, array $attributes): Model
     {
-        return $this->query($catalog)->firstOrCreate(['code' => $code], $attributes);
+        return DB::transaction(function () use ($catalog, $code, $attributes): Model {
+            $this->codes->lockCatalog($catalog);
+            $id = $this->codes->resolveId($catalog, $code);
+            if ($id !== null) {
+                return $this->query($catalog)->findOrFail($id);
+            }
+            $attributes['code'] = $this->codes->nextCode($catalog);
+            $record = $this->create($catalog, $attributes);
+            $this->codes->registerAlias($catalog, $code, (int) $record->id);
+
+            return $record;
+        }, 3);
     }
 
     public function options(TaxonomyCatalog $catalog, ?string $includeId = null): Collection
