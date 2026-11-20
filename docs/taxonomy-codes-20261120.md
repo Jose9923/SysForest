@@ -33,7 +33,7 @@ phpPgAdmin estaba saludable en el servidor. El error de `http://127.0.0.1:18084`
 
 ## Estado
 
-Implementación y SQL preparados localmente. No se han publicado estos cambios, aplicado la migración 000038 en producción ni ejecutado allí la normalización. No se atribuye revisión visual interactiva ni prueba física Android.
+Implementación y SQL publicados y activados en producción el 20/11/2026. Se aplicó la migración 000038 y la normalización transaccional. La sección de despliegue registra la evidencia real. No se atribuye revisión visual interactiva ni prueba física Android.
 
 ## Verificación aislada
 
@@ -71,4 +71,27 @@ Diez observaciones adicionales comprobaron las 143 referencias de carbono (inclu
 
 La instalación nueva aprobó 18 observaciones: 45 familias, 143 especies y 145 nombres comunes, todos con códigos estándar, y 333 alias de procedencia. Repetir BaseSeeder conservó ocho tablas; el siguiente alta continuó los tres contadores y la transacción revertida conservó filas y consecutivos. Se retiraron los tres contenedores propios, la red, el volumen, los secretos y el archivo temporal del código anterior. No se ensayó concurrencia específica de seed() en esta ampliación; su bloqueo y segunda consulta se revisaron, y la prueba previa de cuatro reservas concurrentes corresponde únicamente a nextCode().
 
-La ampliación permanece local: no se ha publicado ni ejecutado esta migración, normalización o reseed en producción.
+La ampliación de seeders se publicó en la misma entrega. En producción se ejecutaron la migración 000038 y la normalización; no fue necesario ejecutar seeders y no se importaron datos operativos.
+
+
+## Activación productiva autorizada
+
+El usuario autorizó explícitamente «hazlo en produccion». Se publicó el commit `11916fb58b09dd68158aa69eb72593c9fa01c04b` en `codex/organize-backend-modules` y se actualizó `/opt/sysforest/source` mediante fast-forward. El release activo permanece en `/opt/sysforest/releases/20261104-initial`, sin crear otro repositorio dentro de él. Cierre del corte: **20/11/2026 15:27:39 America/Bogota**, tras aproximadamente **67 segundos** de pausa.
+
+La imagen `sha256:7b7f737bbb89c01b63a1ada0f12b386a08eeebc63f225cc74ed3e78007c0c193` deriva de la imagen productiva anterior `b56ed192726b239031b2d9fa6592a356a2f303ccd5c8479ade77ec367bd8f756`. Se verificaron exactamente doce archivos runtime y dos archivos de autoload diferentes; PHP, extensiones, dependencias, entrypoint y paquetes fuente se conservaron. Un build completo inicial se descartó antes de cualquier activación para evitar renovar dependencias ajenas al cambio.
+
+Se pausaron app, cola, scheduler, Nginx y phpPgAdmin —este último admite escrituras directas— antes del respaldo final. PostgreSQL, MongoDB y Redis continuaron activos. Respaldo nuevo completo y con SHA256SUMS verificados:
+
+`/opt/sysforest/private/taxonomy-codes-20261120-11916fb/backups/backup-20261120T202709Z-6wxYhO`
+
+La integridad del respaldo quedó comprobada; no se afirma un ensayo de restauración de ese respaldo final. La imagen anterior sigue etiquetada y se guardaron preimágenes del código. Después de confirmar alias no debe restaurarse ciegamente un runtime anterior sin compatibilidad; no se hizo rollback, fresh ni restauración SQL durante la entrega.
+
+La migración **000038**, aplicada mediante el servicio de migraciones y una ruta explícita, pasó **787 comprobaciones**: las 73 tablas previas conservaron sus filas y se añadieron únicamente las dos tablas técnicas. La normalización posterior pasó **1704 comprobaciones**: 37 familias, 133 especies y 135 nombres comunes cambiaron de código, conservando IDs, UUID, nombres, parentescos y demás atributos. Avanzaron solo las versiones/fechas previstas; se añadieron 305 alias y 305 eventos, manteniendo todo el historial anterior. Los tres triggers de código quedaron habilitados y no se desactivaron claves foráneas.
+
+Durante el corte se conservaron exactamente: **1 inventario, 9 árboles, 9 participaciones, 9 inspecciones, 36 fotografías, 9 recibos móviles de árbol, 36 de fotografía y 1 de inventario**. Las 68 tablas comparadas estrictamente, incluidas identidades/permisos/sesiones/colas, mantuvieron sus huellas en la ventana pausada; los catálogos e historial se comprobaron por sus reglas explícitas. Los archivos de `storage/app`, la configuración privada, los archivos del visor y los assets públicos también se conservaron. No se ejecutó BaseSeeder ni ninguna importación de árboles en producción.
+
+Los siete servicios de negocio y phpPgAdmin volvieron a estar saludables; PostgreSQL, MongoDB, Redis, Nginx y el visor conservaron sus identidades de contenedor. La verificación HTTPS final aprobó **63/63 observaciones**: tres formularios de alta sin entrada manual de código, tres ediciones con código vigente readonly, enlaces públicos antiguos normalizados y catálogos móviles con los mismos UUID y padres. Las **38 huellas** de negocio/permisos del observador HTTP permanecieron iguales y sus **dos sesiones propias se cerraron**. Un primer observador usó una URL taxonómica sin el prefijo real; se corrigió el observador mediante rutas nombradas, sin modificar la aplicación, y se conservó el resultado inicial.
+
+El chequeo final encontró **cero códigos ORNATO vigentes** en los tres catálogos y confirmó la entrega de **305/305 eventos nuevos** a la proyección de auditoría. Esto no constituye una reparación ni una certificación de la cobertura histórica global de Mongo. phpPgAdmin respondió HTTP 200 desde Windows después del corte. No se generó una APK: la aplicación instalada recibe los códigos actuales al sincronizar.
+
+Evidencia operativa conservada en `/opt/sysforest/private/taxonomy-codes-20261120-11916fb` y en los artefactos locales `.catalog-deploy-work`. Los controles temporales no crearon ni editaron registros de negocio.
