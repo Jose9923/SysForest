@@ -2,7 +2,7 @@
 
 ## Alcance y estado
 
-Solicitud posterior del 20/11/2026: retirar la marca del archivo de origen de códigos y descripciones operativas, paquetes y nombres de herramientas, conservando datos y compatibilidad. Implementación local y QA integrada finalizadas. La activación productiva permanece pendiente; no se afirma publicación, migración principal ni validación de Android físico.
+Solicitud posterior del 20/11/2026: retirar la marca del archivo de origen de códigos y descripciones operativas, paquetes y nombres de herramientas, conservando datos y compatibilidad. Implementación, QA integrada y activación productiva finalizadas el 20/11/2026. Se publicaron las migraciones incrementales 039/040 y el código compatible, conservando los datos existentes. No se atribuye validación de Android físico.
 
 La entrega anterior de códigos taxonómicos es un antecedente: 000038 introdujo alias literales y el SQL de normalización cambió 305 códigos en producción. La nueva versión sustituye esa infraestructura mediante 000039 y la normalización adicional mediante 000040. No se usa migrate:fresh, no se elimina negocio ni se vuelve a importar el inventario.
 
@@ -34,7 +34,7 @@ Las clases y seeders de preparación/importación se denominan ReferenceInventor
 
 La presentación de textos heredados puede usar una etiqueta neutral sin alterar el documento canónico. No se reescriben security_events, documentos Mongo, snapshots, recibos móviles/de importación ni archivos privados para eliminar una palabra de su historia. El SQL anterior está archivado sin cambios en database/operations/archive/standardize-taxonomy-codes.sql; no ejecutarlo después de 039, porque opera sobre la infraestructura sustituida.
 
-## Evidencia obtenida y pendiente
+## Evidencia de implementación y QA
 
 Los 14 PHP de consumidores y renombres aprobaron PSR-12, sintaxis y diff-check. El mapeo revisado contiene 37 familias, 133 especies, 135 nombres comunes y 10 emplazamientos; compara hashes y conserva todos los campos científicos del paquete de carbono. La infraestructura 039 tiene su revisión independiente. No se recrearon suites permanentes.
 
@@ -42,4 +42,19 @@ La QA aislada aprobó la migración 039 con conservación de 72 tablas y la 040 
 
 CarbonReferenceSeedService aprobó 5/5 observaciones sobre la instalación nueva: 143 perfiles exactos, repetición sin altas ni cambios, paquete científico intacto y rollback total de sus fixtures. La revisión independiente de los 16 archivos de consumidores/paquetes no encontró bloqueos y confirmó sus hashes congelados. Estas comprobaciones son observaciones temporales, no una suite persistente ni una certificación científica.
 
-La evidencia se conserva fuera del repositorio en `.source-naming-work`: `qa-migration039-result.json`, `qa-migration040-result.json`, `qa-fresh-result.json` y `qa-consumer-carbon.json`. Producción sigue pendiente. La consulta productiva previa fue solo lectura: separó menciones operativas de alias/auditoría; no constituye por sí sola autorización para reescribir historia.
+La evidencia se conserva fuera del repositorio en `.source-naming-work`: `qa-migration039-result.json`, `qa-migration040-result.json`, `qa-fresh-result.json` y `qa-consumer-carbon.json`. La consulta productiva previa fue solo lectura y separó menciones operativas de alias/auditoría. La activación posterior se efectuó dentro de la autorización del usuario y conservó los antecedentes.
+
+
+## Activación productiva y conservación
+
+El código `e8d8678b0364b1c9b4522159b6b953fc00b3da8f` quedó activo en la imagen `sha256:2f10ef14a3a1c886dccfd8141206d88646bcf09e77a630849c0d077cd136dcb5`. La pausa de escritores fue de 16:06:28 a 16:07:44, hora de Bogotá, aproximadamente 77 segundos. Se reanudaron los servicios de negocio y el visor; los siete servicios de negocio quedaron saludables. Se conservaron entorno, secretos, almacenamiento, descargas y servicios ajenos. No hubo `migrate:fresh`, seeders productivos, importación del archivo privado ni recálculos de carbono.
+
+Antes de migrar se verificó el respaldo `/opt/sysforest/private/neutral-catalogs-20261120-e8d8678/backups/backup-20261120T210707Z-D8FjKn` mediante sus huellas y marcador `COMPLETE`. Se conservan fuente e imagen anteriores. Esa comprobación acredita integridad de archivos; no se afirma haber restaurado ese respaldo final en otro entorno.
+
+La comparación de 039 aprobó 1.677 comprobaciones y la de 040 aprobó 4.506. Se conservaron estrictamente 67 tablas ajenas al cambio previsto, los 519 eventos previos y los identificadores, relaciones, nombres, fechas originales y atributos protegidos de los catálogos. Los 305 alias previos mantuvieron sus identidades/fechas/referencias al convertirse a hashes; se añadieron 325 referencias y quedaron 630. Se actualizaron exclusivamente las 315 descripciones de origen previstas y 10 códigos de emplazamiento; las descripciones personalizadas ajenas al mapeo permanecieron intactas. Los 315 eventos nuevos de normalización quedaron entregados a auditoría. La lectura final encontró cero menciones de la marca anterior en códigos/descripciones de los cuatro catálogos actuales y confirmó la ausencia de una columna de alias fuente en claro; no se hizo esa afirmación sobre historia, auditoría o geografía real.
+
+Los conteos del corte fueron 1 inventario, 14 árboles, 14 participaciones, 14 visitas, 54 fotografías, 14 recibos de árboles, 54 recibos de fotografías y 1 recibo de inventario. Todos se conservaron. Estos conteos sustituyen los de revisiones previas, porque el usuario siguió capturando datos antes de la pausa.
+
+La verificación HTTPS aprobó 77/77 observaciones de formularios, permisos, referencias públicas y catálogos móviles. Las huellas de 39 tablas de negocio/permisos fueron iguales antes y después; no se escribieron datos de negocio ni se enviaron mensajes. Se cerraron las dos sesiones propias de la comprobación. Evidencia: `.source-naming-work/deploy/{production-deployment-result,migration039-comparison,migration040-comparison,production-http-verification,production-final-status}.json`.
+
+La QA desechable se retiró conservando imágenes y evidencia (`qa-cleanup.json`); también se eliminaron los dos observadores temporales propios. La base local canónica `sysforest` sigue en 037, sus servicios previamente detenidos no se iniciaron y `sysforest_testing`/DB_TEST no se conectó ni modificó. El código local está actualizado; reanudar ese entorno requiere una actualización local coordinada y separada de producción. La publicación de la APK con textos neutrales se documenta en la entrega móvil y no se da por terminada a partir de esta activación del backend.
