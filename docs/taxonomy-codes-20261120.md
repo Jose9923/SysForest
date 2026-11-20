@@ -1,5 +1,7 @@
 # Códigos internos automáticos de taxonomía
 
+> Antecedente histórico: la entrega 000038 y su normalización ya aplicada se conservan como evidencia. La solicitud posterior de nombres neutrales sustituye este procedimiento por el contrato de [referencias de catálogo](catalog-source-naming-20261120.md). El SQL original está archivado sin cambios en `database/operations/archive/standardize-taxonomy-codes.sql`; no ejecutarlo después de 000039. La nueva entrega aún no se declara publicada.
+
 ## Alcance
 
 Solicitud del 20/11/2026: quitar ORNATO de los códigos existentes en Familias, Especies y Nombres comunes, y evitar que el usuario tenga que inventar un código al registrar esos catálogos.

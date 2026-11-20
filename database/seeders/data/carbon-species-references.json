@@ -11,7 +11,7 @@
   "harvest_count": 4004,
   "species": [
     {
-      "species_code": "ORNATO_SPC_04417BF513099AAD",
+      "species_code": "SOURCE_SPECIES_04417BF513099AAD",
       "scientific_name": "Cyrtostachys renda Blume.",
       "family": "ARECACEAE",
       "matched_binomial": null,
@@ -22,10 +22,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Cyrtostachys renda. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "7757619ef50a6453360505549835c81b58e839f9850d4c21adbe375978761eac"
     },
     {
-      "species_code": "ORNATO_SPC_0483A1DA990CC0C7",
+      "species_code": "SOURCE_SPECIES_0483A1DA990CC0C7",
       "scientific_name": "Jacaranda caucana Pittier.",
       "family": "BIGNONIACEAE",
       "matched_binomial": null,
@@ -36,10 +37,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Jacaranda caucana. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "9e89e9e2a6bd68f85acae00228db82b9477f95bcf1a9a9bda1e092f2f9b94600"
     },
     {
-      "species_code": "ORNATO_SPC_04DFB0C2E25EB322",
+      "species_code": "SOURCE_SPECIES_04DFB0C2E25EB322",
       "scientific_name": "Leucaena leucocephala (Lam.) de Wit.",
       "family": "FABACEAE",
       "matched_binomial": "Leucaena leucocephala",
@@ -50,10 +52,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Leucaena leucocephala; columna wsg_est_trunk = 0.64 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "a2ca0b41a2077849066e295e5b79aab3e2842c379491577cd3d47c9f4c1ceee6"
     },
     {
-      "species_code": "ORNATO_SPC_089F151F52077B87",
+      "species_code": "SOURCE_SPECIES_089F151F52077B87",
       "scientific_name": "Matisia cordata Humb. & Bonpl.",
       "family": "MALVACEAE",
       "matched_binomial": "Matisia cordata",
@@ -64,10 +67,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Matisia cordata; columna wsg_est_trunk = 0.43 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "fe8b88f9731aa01214f3659873a82747f3112686a9b06d93d68da294968128ff"
     },
     {
-      "species_code": "ORNATO_SPC_0AB5B085ACB2451F",
+      "species_code": "SOURCE_SPECIES_0AB5B085ACB2451F",
       "scientific_name": "Pinus caribaea Morelet",
       "family": "PINACEAE",
       "matched_binomial": "Pinus caribaea",
@@ -78,10 +82,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Pinus caribaea; columna wsg_est_trunk = 0.45 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "e42e69721dfc41c227fc7a2f59105a2c3faa697f7c4bf98f204bc66175a84a95"
     },
     {
-      "species_code": "ORNATO_SPC_0E46237651CAB749",
+      "species_code": "SOURCE_SPECIES_0E46237651CAB749",
       "scientific_name": "Psidium cattleianum Afzel. ex Sabine",
       "family": "MYRTACEAE",
       "matched_binomial": "Psidium cattleianum",
@@ -92,10 +97,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Psidium cattleianum; columna wsg_est_trunk = 0.8 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "83b188b266ed3039c847352fc60c640ce7699fe4126ec561bfb6df146a15bd4c"
     },
     {
-      "species_code": "ORNATO_SPC_0FF49BDE188B5F47",
+      "species_code": "SOURCE_SPECIES_0FF49BDE188B5F47",
       "scientific_name": "Swinglea glutinosa (Blanco) Merr.",
       "family": "RUTACEAE",
       "matched_binomial": null,
@@ -106,10 +112,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Swinglea glutinosa. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "0b46de0affd709d51bf68774af047ace857cec6a8ff9c8a822ccae4c93d39afc"
     },
     {
-      "species_code": "ORNATO_SPC_0FF7967A8898B7DE",
+      "species_code": "SOURCE_SPECIES_0FF7967A8898B7DE",
       "scientific_name": "Inga edulis Mart.",
       "family": "FABACEAE",
       "matched_binomial": "Inga edulis",
@@ -120,10 +127,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Inga edulis; columna wsg_est_trunk = 0.52 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "38b72d480603118a9ed6d3ed50241cdf006f89218e483f783af1b8b197ba40d9"
     },
     {
-      "species_code": "ORNATO_SPC_12306EE354D7722F",
+      "species_code": "SOURCE_SPECIES_12306EE354D7722F",
       "scientific_name": "Crescentia cujete L.",
       "family": "BIGNONIACEAE",
       "matched_binomial": "Crescentia cujete",
@@ -134,10 +142,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Crescentia cujete; columna wsg_est_trunk = 0.53 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "b0b7d04084d4387ad0147b01fcbb910c5d3c6e05149d37b98445675f241e83aa"
     },
     {
-      "species_code": "ORNATO_SPC_13BC6AC094B1538C",
+      "species_code": "SOURCE_SPECIES_13BC6AC094B1538C",
       "scientific_name": "Swietenia macrophylla King",
       "family": "MELIACEAE",
       "matched_binomial": "Swietenia macrophylla",
@@ -148,10 +157,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Swietenia macrophylla; columna wsg_est_trunk = 0.48 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "25beeff36ebc976f6c519017bee56b48c650c462dd9a2ff8bcb5d9849bd6fea1"
     },
     {
-      "species_code": "ORNATO_SPC_146AF64C51B9B2A8",
+      "species_code": "SOURCE_SPECIES_146AF64C51B9B2A8",
       "scientific_name": "Areca catechu L.",
       "family": "ARECACEAE",
       "matched_binomial": "Areca catechu",
@@ -162,10 +172,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Areca catechu; columna wsg_est_trunk = 0.48 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "84d92e76c922e77a2b44d9c47c40942382c5f8cffa181aef1b83b8fd44da6690"
     },
     {
-      "species_code": "ORNATO_SPC_15FADD89C80E3C09",
+      "species_code": "SOURCE_SPECIES_15FADD89C80E3C09",
       "scientific_name": "Cocos nucifera L.",
       "family": "ARECACEAE",
       "matched_binomial": "Cocos nucifera",
@@ -176,10 +187,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Cocos nucifera; columna wsg_est_trunk = 0.51 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "998ae947858fcc84bb62d47ffcb8c3077592d9cdc350993eedf213ecf7ac5c05"
     },
     {
-      "species_code": "ORNATO_SPC_18CE1CA122625797",
+      "species_code": "SOURCE_SPECIES_18CE1CA122625797",
       "scientific_name": "Syzygium cumini (L.) Skeels",
       "family": "MYRTACEAE",
       "matched_binomial": "Syzygium cumini",
@@ -190,10 +202,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Syzygium cumini; columna wsg_est_trunk = 0.63 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "2a4d95a18de2b3b59a237eec71a3d7059d3c9bbd993e3cb67e8afcea719b3642"
     },
     {
-      "species_code": "ORNATO_SPC_1C2CD321CA80E996",
+      "species_code": "SOURCE_SPECIES_1C2CD321CA80E996",
       "scientific_name": "Gmelina arborea Roxb.",
       "family": "LAMIACEAE",
       "matched_binomial": "Gmelina arborea",
@@ -204,10 +217,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Gmelina arborea; columna wsg_est_trunk = 0.44 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "661be1658acccfd2531e6cc3b8f24ac552fb7d7807c3dae4a0fdb1a4d689dde7"
     },
     {
-      "species_code": "ORNATO_SPC_22978C645E628310",
+      "species_code": "SOURCE_SPECIES_22978C645E628310",
       "scientific_name": "Vismia macrophylla Kunth",
       "family": "HYPERICACEAE",
       "matched_binomial": "Vismia macrophylla",
@@ -218,10 +232,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Vismia macrophylla; columna wsg_est_trunk = 0.51 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "a0d463a82cac08c2b7c10d2e3571d000db78b786c53cd0a73505fa3feff4b316"
     },
     {
-      "species_code": "ORNATO_SPC_2485550F2F25EB9D",
+      "species_code": "SOURCE_SPECIES_2485550F2F25EB9D",
       "scientific_name": "Cupressus lusitanica Mill.",
       "family": "CUPRESSACEAE",
       "matched_binomial": null,
@@ -232,10 +247,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Cupressus lusitanica. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "a8f43338d7089d9cb6cb2b16ef5dfdeea8fdfa3090aa67a275890e2bdccdf18c"
     },
     {
-      "species_code": "ORNATO_SPC_27C2BDC44E6DA8C1",
+      "species_code": "SOURCE_SPECIES_27C2BDC44E6DA8C1",
       "scientific_name": "Araucaria heterophylla (Salisb.) Franco",
       "family": "ARAUCARIACEAE",
       "matched_binomial": null,
@@ -246,10 +262,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Araucaria heterophylla. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "ac8ec19916b429f86237ebf491de88d835905472bd922cf16bb645507a75d5dd"
     },
     {
-      "species_code": "ORNATO_SPC_2A21191AD904C7AB",
+      "species_code": "SOURCE_SPECIES_2A21191AD904C7AB",
       "scientific_name": "Cassia grandis L.f.",
       "family": "FABACEAE",
       "matched_binomial": "Cassia grandis",
@@ -260,10 +277,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Cassia grandis; columna wsg_est_trunk = 0.66 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "6be1dd6455aaca1a4318e26539255d4c7bcdaf65f7bfbd80641a2082ba909e39"
     },
     {
-      "species_code": "ORNATO_SPC_2BC8AF90A6A379BE",
+      "species_code": "SOURCE_SPECIES_2BC8AF90A6A379BE",
       "scientific_name": "Nephelium lappaceum L.",
       "family": "SAPINDACEAE",
       "matched_binomial": "Nephelium lappaceum",
@@ -274,10 +292,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Nephelium lappaceum; columna wsg_est_trunk = 0.73 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "e119c9d5b9a6ed8599054432bd58dc0f0b05f85181aa0f7cb9ef5337ca896fc6"
     },
     {
-      "species_code": "ORNATO_SPC_2E0DF99A89D047B3",
+      "species_code": "SOURCE_SPECIES_2E0DF99A89D047B3",
       "scientific_name": "Azadirachta indica A.Juss.",
       "family": "MELIACEAE",
       "matched_binomial": "Azadirachta indica",
@@ -288,10 +307,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Azadirachta indica; columna wsg_est_trunk = 0.66 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "67ab986437cfa1930f5f83e702283a1c5fc5d9bc24204bccc290442489cf279e"
     },
     {
-      "species_code": "ORNATO_SPC_374C701A65BDD855",
+      "species_code": "SOURCE_SPECIES_374C701A65BDD855",
       "scientific_name": "Cananga odorata (Lam.) Hook.f. & Thomson",
       "family": "ANNONACEAE",
       "matched_binomial": "Cananga odorata",
@@ -302,10 +322,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Cananga odorata; columna wsg_est_trunk = 0.38 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "3daeb43bf589559156df3eb2813c0ea796c5cd27c6e71795c9bca922272e2116"
     },
     {
-      "species_code": "ORNATO_SPC_38023718D582AEDC",
+      "species_code": "SOURCE_SPECIES_38023718D582AEDC",
       "scientific_name": "Trichanthera gigantea (Bonpl.) Nees",
       "family": "ACANTHACEAE",
       "matched_binomial": "Trichanthera gigantea",
@@ -316,10 +337,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Trichanthera gigantea; columna wsg_est_trunk = 0.54 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "b10c7f1dde821851dc69d15078dad83b4211a26e7ef8b97ca80fce5fab45f73b"
     },
     {
-      "species_code": "ORNATO_SPC_382B7BA1C1DFDF57",
+      "species_code": "SOURCE_SPECIES_382B7BA1C1DFDF57",
       "scientific_name": "Casearia sp",
       "family": "SALICACEAE",
       "matched_binomial": null,
@@ -330,10 +352,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Casearia sp. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "d8e0c5b427cc65b286ca1ddf9b96cd28f266c91c14b480253a9985a778638cd8"
     },
     {
-      "species_code": "ORNATO_SPC_38AA460D37673415",
+      "species_code": "SOURCE_SPECIES_38AA460D37673415",
       "scientific_name": "Citrus x aurantium L.",
       "family": "RUTACEAE",
       "matched_binomial": null,
@@ -344,10 +367,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Citrus x. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "f228a172cecee904f91accfc4db8e5405ff1dacc1eec9a878c288abc5e2360c3"
     },
     {
-      "species_code": "ORNATO_SPC_3BC1B7B665915A66",
+      "species_code": "SOURCE_SPECIES_3BC1B7B665915A66",
       "scientific_name": "Caryota urens L.",
       "family": "ARECACEAE",
       "matched_binomial": null,
@@ -358,10 +382,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Caryota urens. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "8d226666aa53b2e75f1a0fa6dc654682914ad9a2ffd2ae6f0efba6212e320fff"
     },
     {
-      "species_code": "ORNATO_SPC_3DEF367472476779",
+      "species_code": "SOURCE_SPECIES_3DEF367472476779",
       "scientific_name": "Ficus insipida Willd",
       "family": "MORACEAE",
       "matched_binomial": "Ficus insipida",
@@ -372,10 +397,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Ficus insipida; columna wsg_est_trunk = 0.38 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "01658295c42e3ade6c2859699c3e9180969d8a1416519e7089742fee401aa15b"
     },
     {
-      "species_code": "ORNATO_SPC_3F9DD0864C7E04B7",
+      "species_code": "SOURCE_SPECIES_3F9DD0864C7E04B7",
       "scientific_name": "Theobroma cacao L.",
       "family": "MALVACEAE",
       "matched_binomial": "Theobroma cacao",
@@ -386,10 +412,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Theobroma cacao; columna wsg_est_trunk = 0.42 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "25a4cc667f699f76401c2a1a4d5cfdbd4c26e2a58c2561486c15f2faba04a522"
     },
     {
-      "species_code": "ORNATO_SPC_407E915D36E22116",
+      "species_code": "SOURCE_SPECIES_407E915D36E22116",
       "scientific_name": "Cupania americana L.",
       "family": "SAPINDACEAE",
       "matched_binomial": "Cupania americana",
@@ -400,10 +427,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Cupania americana; columna wsg_est_trunk = 0.57 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "27e67be607ce49646aaeca06e311fec5ee258a64c2678988f98ff77191fd9984"
     },
     {
-      "species_code": "ORNATO_SPC_413B08F2029790F3",
+      "species_code": "SOURCE_SPECIES_413B08F2029790F3",
       "scientific_name": "Podocarpus sp.",
       "family": "PODOCARPACEAE",
       "matched_binomial": null,
@@ -414,10 +442,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Podocarpus sp.. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "ef36f6097f6aecd38fde46511e74029ddcb4b6f03ff935fc15020ec047d0d5b7"
     },
     {
-      "species_code": "ORNATO_SPC_44A3A3C8B7A004C4",
+      "species_code": "SOURCE_SPECIES_44A3A3C8B7A004C4",
       "scientific_name": "Albizia lebbeck; (L.) Benth.",
       "family": "FABACEAE",
       "matched_binomial": "Albizia lebbeck",
@@ -428,10 +457,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Albizia lebbeck; columna wsg_est_trunk = 0.58 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "4eebf90cdcde96325453ef49d2ca71a0aab5ae1823bf7f7b710b8eff5e8cf40e"
     },
     {
-      "species_code": "ORNATO_SPC_4548D8F90E2A2BF5",
+      "species_code": "SOURCE_SPECIES_4548D8F90E2A2BF5",
       "scientific_name": "Xylopia ligustrifolia Humb. & Bonpl. ex Dunal",
       "family": "ANNONACEAE",
       "matched_binomial": "Xylopia ligustrifolia",
@@ -442,10 +472,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Xylopia ligustrifolia; columna wsg_est_trunk = 0.46 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "799faa1dfd20624af08eba6c04b01b1d83fb962fb81f40f7803da803c5c9dc65"
     },
     {
-      "species_code": "ORNATO_SPC_47CD6726D9FD6C85",
+      "species_code": "SOURCE_SPECIES_47CD6726D9FD6C85",
       "scientific_name": "Tabernaemontana sp.",
       "family": "APOCYNACEAE",
       "matched_binomial": null,
@@ -456,10 +487,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Tabernaemontana sp.. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "e11eab1a2a52a581b3ecf3eed56537f2fb2b7a9cf6e73680f46a3ce65e311457"
     },
     {
-      "species_code": "ORNATO_SPC_4838D7C17F83F0A0",
+      "species_code": "SOURCE_SPECIES_4838D7C17F83F0A0",
       "scientific_name": "Mussaenda philippica A.Rich.",
       "family": "RUBIACEAE",
       "matched_binomial": null,
@@ -470,10 +502,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Mussaenda philippica. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "eb32762c32eb13335abc06cc711a135dd10d526737a22e174d1faae8928708d8"
     },
     {
-      "species_code": "ORNATO_SPC_4BDB0E520289C39F",
+      "species_code": "SOURCE_SPECIES_4BDB0E520289C39F",
       "scientific_name": "Spondias mombin L.",
       "family": "ANACARDIACEAE",
       "matched_binomial": "Spondias mombin",
@@ -484,10 +517,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Spondias mombin; columna wsg_est_trunk = 0.4 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "8e8f7c60b4a5a1623a171dc4db41aee31154f86604aadb76f0d79ed57612e4ad"
     },
     {
-      "species_code": "ORNATO_SPC_4CFAF991FC58A6EB",
+      "species_code": "SOURCE_SPECIES_4CFAF991FC58A6EB",
       "scientific_name": "Pouteria caimito (Ruiz & Pav.) Radlk.",
       "family": "SAPOTACEAE",
       "matched_binomial": "Pouteria caimito",
@@ -498,10 +532,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Pouteria caimito; columna wsg_est_trunk = 0.76 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "9af72842ace1d2ca93c7a6abba9f55e3b5bf2e76b04228ca786d1a4bdc682412"
     },
     {
-      "species_code": "ORNATO_SPC_4F01742D188F823C",
+      "species_code": "SOURCE_SPECIES_4F01742D188F823C",
       "scientific_name": "Heliocarpus americanus L.",
       "family": "MALVACEAE",
       "matched_binomial": "Heliocarpus americanus",
@@ -512,10 +547,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Heliocarpus americanus; columna wsg_est_trunk = 0.25 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "0bd412f697d84c23c1dc2b73929750970ed955617da00ab71e9663fc9d062b59"
     },
     {
-      "species_code": "ORNATO_SPC_512339D0B3BC7F2B",
+      "species_code": "SOURCE_SPECIES_512339D0B3BC7F2B",
       "scientific_name": "Annona muricata L.",
       "family": "ANNONACEAE",
       "matched_binomial": "Annona muricata",
@@ -526,10 +562,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Annona muricata; columna wsg_est_trunk = 0.36 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "85eedd13fc2292af46dcf6db19088803cd43ea0b349711b4d23bcb5abf980d5f"
     },
     {
-      "species_code": "ORNATO_SPC_5133D2438FD32A19",
+      "species_code": "SOURCE_SPECIES_5133D2438FD32A19",
       "scientific_name": "Nectandra barbellata Coe-Teixeira.",
       "family": "LAURACEAE",
       "matched_binomial": null,
@@ -540,10 +577,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Nectandra barbellata. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "b546b1113a74245ab8342c1a786cf3e8e2356afeac4f82b6ec0963c51d6d169c"
     },
     {
-      "species_code": "ORNATO_SPC_52C5183CBDCAA166",
+      "species_code": "SOURCE_SPECIES_52C5183CBDCAA166",
       "scientific_name": "Miconia minutiflora (Bonpl.) DC.",
       "family": "MELASTOMATACEAE",
       "matched_binomial": "Miconia minutiflora",
@@ -554,10 +592,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Miconia minutiflora; columna wsg_est_trunk = 0.62 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "22e54b012516e806d8be38f941de03d7d4f699c0be4c99df636e19d5144a3d2f"
     },
     {
-      "species_code": "ORNATO_SPC_534D4882F37DB0EA",
+      "species_code": "SOURCE_SPECIES_534D4882F37DB0EA",
       "scientific_name": "Annona squamosa L.",
       "family": "ANNONACEAE",
       "matched_binomial": "Annona squamosa",
@@ -568,10 +607,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Annona squamosa; columna wsg_est_trunk = 0.59 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "4109fde67e62e8a1c5d06a6e9b66e01487818f3139e1439df96f421df69a673b"
     },
     {
-      "species_code": "ORNATO_SPC_53B2F166551A403E",
+      "species_code": "SOURCE_SPECIES_53B2F166551A403E",
       "scientific_name": "Myrsine guianensis (Aubl.) Kuntze",
       "family": "PRIMULACEAE",
       "matched_binomial": "Myrsine guianensis",
@@ -582,10 +622,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Myrsine guianensis; columna wsg_est_trunk = 0.58 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "72083e6898a95a348bf8137f3a07af5075443ddc8d09a92eb254f45e81921426"
     },
     {
-      "species_code": "ORNATO_SPC_5549CA739658E83A",
+      "species_code": "SOURCE_SPECIES_5549CA739658E83A",
       "scientific_name": "Miconia sp.",
       "family": "MELASTOMATACEAE",
       "matched_binomial": null,
@@ -596,10 +637,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Miconia sp.. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "0b1b948c43ffb946c0908e27edc858fb82ffba342733ad61b6ab86155fdf94e2"
     },
     {
-      "species_code": "ORNATO_SPC_57F0569DF667656C",
+      "species_code": "SOURCE_SPECIES_57F0569DF667656C",
       "scientific_name": "Inga sp.",
       "family": "FABACEAE",
       "matched_binomial": null,
@@ -610,10 +652,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Inga sp.. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "8c51259b58eb9d2807ed8b142b4583aee09f5f95f282f949635267281d0ff9c1"
     },
     {
-      "species_code": "ORNATO_SPC_59EF4A63E2F9662A",
+      "species_code": "SOURCE_SPECIES_59EF4A63E2F9662A",
       "scientific_name": "Ormosia paraensis Ducke.",
       "family": "FABACEAE",
       "matched_binomial": "Ormosia paraensis",
@@ -624,10 +667,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Ormosia paraensis; columna wsg_est_trunk = 0.6 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "fd84760776985b4597bffe6ba4dfe4d6369946949452753c9289bc84f6111574"
     },
     {
-      "species_code": "ORNATO_SPC_5C2165766F91F56F",
+      "species_code": "SOURCE_SPECIES_5C2165766F91F56F",
       "scientific_name": "Syzygium jambos (L.) Alston",
       "family": "MYRTACEAE",
       "matched_binomial": "Syzygium jambos",
@@ -638,10 +682,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Syzygium jambos; columna wsg_est_trunk = 0.63 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "4d0d9226cbc799f1aa90435f134d3f474fd34e37833f0b8c9465e0d86f8b3ecf"
     },
     {
-      "species_code": "ORNATO_SPC_65EA678258DC449A",
+      "species_code": "SOURCE_SPECIES_65EA678258DC449A",
       "scientific_name": "Terminalia buceras (L.) C.Wright",
       "family": "COMBRETACEAE",
       "matched_binomial": "Terminalia buceras",
@@ -652,10 +697,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Terminalia buceras; columna wsg_est_trunk = 0.84 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "3779c896398b020a18e91624268aea30891eec59c8935822d65fc047ecef7012"
     },
     {
-      "species_code": "ORNATO_SPC_66B748FB7AA31443",
+      "species_code": "SOURCE_SPECIES_66B748FB7AA31443",
       "scientific_name": "Copaifera canime Harms.",
       "family": "FABACEAE",
       "matched_binomial": "Copaifera canime",
@@ -666,10 +712,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Copaifera canime; columna wsg_est_trunk = 0.58 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "3a35d522a175fb7907a2fec60d4623a24c5aad6f37365c347ea85268d5aa4f92"
     },
     {
-      "species_code": "ORNATO_SPC_66D7015AC2D4A92E",
+      "species_code": "SOURCE_SPECIES_66D7015AC2D4A92E",
       "scientific_name": "Morinda citrifolia L.",
       "family": "RUBIACEAE",
       "matched_binomial": "Morinda citrifolia",
@@ -680,10 +727,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Morinda citrifolia; columna wsg_est_trunk = 0.47 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "180f7f6ac1126a45ab8fcf3f8c1e85d004312838fad5351b8bd106e45cefec2c"
     },
     {
-      "species_code": "ORNATO_SPC_6BE2CB882ECFD2EB",
+      "species_code": "SOURCE_SPECIES_6BE2CB882ECFD2EB",
       "scientific_name": "Tabebuia rosea (Bertol.) A.DC.",
       "family": "BIGNONIACEAE",
       "matched_binomial": "Tabebuia rosea",
@@ -694,10 +742,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Tabebuia rosea; columna wsg_est_trunk = 0.52 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "9154bc8127dadf282da57c7e08b335a5b47f082daf2bceef727d4a4f6c30b36d"
     },
     {
-      "species_code": "ORNATO_SPC_6D0ED64E565B5649",
+      "species_code": "SOURCE_SPECIES_6D0ED64E565B5649",
       "scientific_name": "Bunchosia armeniaca (Cav.) DC.",
       "family": "MALPHIGUIACEAE",
       "matched_binomial": "Bunchosia armeniaca",
@@ -708,10 +757,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Bunchosia armeniaca; columna wsg_est_trunk = 0.64 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "2d43bfe1f55c679fbcdb401e97db1065e0241d70c1b69fff1e94c03e0cbc56d5"
     },
     {
-      "species_code": "ORNATO_SPC_6D5DDE6FB308C0A1",
+      "species_code": "SOURCE_SPECIES_6D5DDE6FB308C0A1",
       "scientific_name": "Averrhoa carambola L.",
       "family": "OXALIDACEAE",
       "matched_binomial": "Averrhoa carambola",
@@ -722,10 +772,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Averrhoa carambola; columna wsg_est_trunk = 0.55 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "d75f7ceefeae65a92f0b520fd24fbe40def966d2d401d695451850d994160170"
     },
     {
-      "species_code": "ORNATO_SPC_6E1CA05B2212325E",
+      "species_code": "SOURCE_SPECIES_6E1CA05B2212325E",
       "scientific_name": "Cascabela thevetia (L.) Lippold",
       "family": "APOCYNACEAE",
       "matched_binomial": "Cascabela thevetia",
@@ -736,10 +787,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Cascabela thevetia; columna wsg_est_trunk = 0.57 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "5f6222f49bfe1df488bf0d4c0f50b652c284ef92b1b3c1dbe4e7b4a9cb137411"
     },
     {
-      "species_code": "ORNATO_SPC_6EEFE41802D8478E",
+      "species_code": "SOURCE_SPECIES_6EEFE41802D8478E",
       "scientific_name": "Bismarckia nobilis Hildebr. & H.Wendl.",
       "family": "ARECACEAE",
       "matched_binomial": null,
@@ -750,10 +802,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Bismarckia nobilis. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "20f5158602a3fd6a3a00fd7ea8b96cddc6bd081f227a30c1bd9632a6cfa2cf8a"
     },
     {
-      "species_code": "ORNATO_SPC_6F406AC8DB5BE9CC",
+      "species_code": "SOURCE_SPECIES_6F406AC8DB5BE9CC",
       "scientific_name": "Livistona chinensis (Jacq.) R.Br. ex Mart.",
       "family": "ARECACEAE",
       "matched_binomial": "Livistona chinensis",
@@ -764,10 +817,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Livistona chinensis; columna wsg_est_trunk = 0.26 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "d395d150bb86141a0a2a4a3571022680e7eae07267c6ffef302e7d062795862a"
     },
     {
-      "species_code": "ORNATO_SPC_6FC4650B5EB8E2B1",
+      "species_code": "SOURCE_SPECIES_6FC4650B5EB8E2B1",
       "scientific_name": "Alchornea glandulosa Poepp.",
       "family": "EUPHORBIACEAE",
       "matched_binomial": "Alchornea glandulosa",
@@ -778,10 +832,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Alchornea glandulosa; columna wsg_est_trunk = 0.39 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "357aef8eaf61e1fce39e73146aac2f5fde5c5c7a6a8c8cdc2e970392b523230f"
     },
     {
-      "species_code": "ORNATO_SPC_7143243D407C60DE",
+      "species_code": "SOURCE_SPECIES_7143243D407C60DE",
       "scientific_name": "Melicoccus bijugatus Jacq.",
       "family": "SAPINDACEAE",
       "matched_binomial": "Melicoccus bijugatus",
@@ -792,10 +847,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Melicoccus bijugatus; columna wsg_est_trunk = 0.76 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "718db1c5d4affd46bcca237e4a75de68304214078f34fe472bead89cb758f4c6"
     },
     {
-      "species_code": "ORNATO_SPC_745C6B458A48969D",
+      "species_code": "SOURCE_SPECIES_745C6B458A48969D",
       "scientific_name": "Schefflera morototoni (Aubl.) Maguire et al.",
       "family": "ARALIACEAE",
       "matched_binomial": "Didymopanax morototoni",
@@ -806,10 +862,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Didymopanax morototoni; columna wsg_est_trunk = 0.43 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736. Correspondencia taxonómica Schefflera morototoni → Didymopanax morototoni: https://powo.science.kew.org/taxon/914555-1",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "b6f56c7abef92387b915d64e9d8b1194b5b30f471051ee2b84a472a8209437ad"
     },
     {
-      "species_code": "ORNATO_SPC_748E0F8E0CE0A25A",
+      "species_code": "SOURCE_SPECIES_748E0F8E0CE0A25A",
       "scientific_name": "Bauhinia picta (Kunth) DC.",
       "family": "FABACEAE",
       "matched_binomial": null,
@@ -820,10 +877,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Bauhinia picta. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "c1fc8c854d05e6679f90f4f8da2f9cd57ba7f4ef6afb488ad35e1c0b29a57727"
     },
     {
-      "species_code": "ORNATO_SPC_74E494965206567D",
+      "species_code": "SOURCE_SPECIES_74E494965206567D",
       "scientific_name": "Triplaris americana L.",
       "family": "POLYGONACEAE",
       "matched_binomial": "Triplaris americana",
@@ -834,10 +892,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Triplaris americana; columna wsg_est_trunk = 0.47 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "cc4f4cdd48139a0e676ab725766220de392042a617171e089ec4c4d15b643d8c"
     },
     {
-      "species_code": "ORNATO_SPC_777279C225AAC6C5",
+      "species_code": "SOURCE_SPECIES_777279C225AAC6C5",
       "scientific_name": "Cycas rumphii Miq",
       "family": "CYCADACEAE",
       "matched_binomial": null,
@@ -848,10 +907,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Cycas rumphii. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "921a8c6596c7f2c87f93f418b144c235163269a7436014d7552a09fcad9b1440"
     },
     {
-      "species_code": "ORNATO_SPC_77A60A40B8161835",
+      "species_code": "SOURCE_SPECIES_77A60A40B8161835",
       "scientific_name": "Cordia alliodora (Ruiz & Pav.) Oken",
       "family": "BORAGINACEAE",
       "matched_binomial": "Cordia alliodora",
@@ -862,10 +922,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Cordia alliodora; columna wsg_est_trunk = 0.49 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "3aef192e69102fb2551bf0153f5dae7d514f2557815f820d365375afdd2358f7"
     },
     {
-      "species_code": "ORNATO_SPC_7AF739E4FBAA07EB",
+      "species_code": "SOURCE_SPECIES_7AF739E4FBAA07EB",
       "scientific_name": "Caesalpinia pulcherrima (L.) Sw.",
       "family": "FABACEAE",
       "matched_binomial": "Caesalpinia pulcherrima",
@@ -876,10 +937,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Caesalpinia pulcherrima; columna wsg_est_trunk = 0.62 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "1f14c1a7ee6bce743e71441e12a2f53631336d1126b0d556dfed518a10214910"
     },
     {
-      "species_code": "ORNATO_SPC_7E30DF540A4A3873",
+      "species_code": "SOURCE_SPECIES_7E30DF540A4A3873",
       "scientific_name": "Cedrela odorata L.",
       "family": "MELIACEAE",
       "matched_binomial": "Cedrela odorata",
@@ -890,10 +952,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Cedrela odorata; columna wsg_est_trunk = 0.41 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "97f6eeee417122a835f4cbb83e0b8cfc9940f5852785ee1eed2f75c930123db1"
     },
     {
-      "species_code": "ORNATO_SPC_8295C751E0637DD2",
+      "species_code": "SOURCE_SPECIES_8295C751E0637DD2",
       "scientific_name": "Hura crepitans L.",
       "family": "EUPHORBIACEAE",
       "matched_binomial": "Hura crepitans",
@@ -904,10 +967,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Hura crepitans; columna wsg_est_trunk = 0.37 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "f58840b0e910326f597ade1b4172914970a5fda7c9c71c2cb3db9ccc1d0dc023"
     },
     {
-      "species_code": "ORNATO_SPC_82C3F566AF8B8D98",
+      "species_code": "SOURCE_SPECIES_82C3F566AF8B8D98",
       "scientific_name": "Guazuma ulmifolia Lam.",
       "family": "MALVACEAE",
       "matched_binomial": "Guazuma ulmifolia",
@@ -918,10 +982,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Guazuma ulmifolia; columna wsg_est_trunk = 0.52 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "40fc229ce072110d979f431a974909f28850400f700fcfe15ccd3d9d47ad3bdd"
     },
     {
-      "species_code": "ORNATO_SPC_85015669C786A27F",
+      "species_code": "SOURCE_SPECIES_85015669C786A27F",
       "scientific_name": "Hymenaea courbaril L.",
       "family": "FABACEAE",
       "matched_binomial": "Hymenaea courbaril",
@@ -932,10 +997,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Hymenaea courbaril; columna wsg_est_trunk = 0.75 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "69b470cddfa484de72d5f2fa333ab263d0e8a85c5cff419f8481882133a5e117"
     },
     {
-      "species_code": "ORNATO_SPC_8759637D05602E15",
+      "species_code": "SOURCE_SPECIES_8759637D05602E15",
       "scientific_name": "Melia azedarach L.",
       "family": "MELIACEAE",
       "matched_binomial": "Melia azedarach",
@@ -946,10 +1012,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Melia azedarach; columna wsg_est_trunk = 0.44 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "f0663e83df45c22b6fbb4d51329d61b48cd9d36df6f875b86464d6ab1b4b4258"
     },
     {
-      "species_code": "ORNATO_SPC_89338565207F0B7A",
+      "species_code": "SOURCE_SPECIES_89338565207F0B7A",
       "scientific_name": "Guarea guidonia (L.) Sleumer",
       "family": "MELIACEAE",
       "matched_binomial": "Guarea guidonia",
@@ -960,10 +1027,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Guarea guidonia; columna wsg_est_trunk = 0.58 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "e383926e24773ed800ea4a424bcad3a477e0b0f9bca325fef7dc673a987a4389"
     },
     {
-      "species_code": "ORNATO_SPC_8A0C79B7680ED1BA",
+      "species_code": "SOURCE_SPECIES_8A0C79B7680ED1BA",
       "scientific_name": "Sapium glandulosum (L.) Morong",
       "family": "EUPHORBIACEAE",
       "matched_binomial": "Sapium glandulosum",
@@ -974,10 +1042,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Sapium glandulosum; columna wsg_est_trunk = 0.43 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "e2a10fd4f5e75c48f5d6a208a89c67c15354717dff522039e66a73161ba7a7fa"
     },
     {
-      "species_code": "ORNATO_SPC_8C8626AB8E1FE9B8",
+      "species_code": "SOURCE_SPECIES_8C8626AB8E1FE9B8",
       "scientific_name": "Ficus obtusifolia Kunth",
       "family": "MORACEAE",
       "matched_binomial": "Ficus obtusifolia",
@@ -988,10 +1057,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Ficus obtusifolia; columna wsg_est_trunk = 0.41 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "e3da565813960dbf46646c97df1469c8c003945a549f366d19fd06c717415e2e"
     },
     {
-      "species_code": "ORNATO_SPC_8C9A40B40DF28E84",
+      "species_code": "SOURCE_SPECIES_8C9A40B40DF28E84",
       "scientific_name": "Dypsis lutescens (H.Wendl.) Beentje & J. Dransf.",
       "family": "ARECACEAE",
       "matched_binomial": null,
@@ -1002,10 +1072,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Dypsis lutescens. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "0c3d34100b585c66b26c8be5cda18334fa2a2ccd40dc0b44cedf20be37be9b42"
     },
     {
-      "species_code": "ORNATO_SPC_8D2FA5047D490673",
+      "species_code": "SOURCE_SPECIES_8D2FA5047D490673",
       "scientific_name": "Inga spectabilis (Vahl) Willd.",
       "family": "FABACEAE",
       "matched_binomial": "Inga spectabilis",
@@ -1016,10 +1087,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Inga spectabilis; columna wsg_est_trunk = 0.53 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "1c1aafbf0edc530287d0db6d68d2d1fa3df8193a84317731ad1dfe91778ba377"
     },
     {
-      "species_code": "ORNATO_SPC_8D488010622425BF",
+      "species_code": "SOURCE_SPECIES_8D488010622425BF",
       "scientific_name": "Psidium guajava L.",
       "family": "MYRTACEAE",
       "matched_binomial": "Psidium guajava",
@@ -1030,10 +1102,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Psidium guajava; columna wsg_est_trunk = 0.6 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "9149b9a069181201b6f9c784138d1a4a2b7da7079f4e4eae9fc0ac86ab98913f"
     },
     {
-      "species_code": "ORNATO_SPC_911E0315510A5754",
+      "species_code": "SOURCE_SPECIES_911E0315510A5754",
       "scientific_name": "Coccoloba acuminata Kunth.",
       "family": "POLYGONACEAE",
       "matched_binomial": "Coccoloba acuminata",
@@ -1044,10 +1117,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Coccoloba acuminata; columna wsg_est_trunk = 0.59 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "e3c9880214ebe9fc11a7d61401440fbd490a693b70a0416b16ac61a2a388cbf6"
     },
     {
-      "species_code": "ORNATO_SPC_955CD9A13FEA6EA5",
+      "species_code": "SOURCE_SPECIES_955CD9A13FEA6EA5",
       "scientific_name": "Citrus limon (L.) Osbeck",
       "family": "RUTACEAE",
       "matched_binomial": "Citrus limon",
@@ -1058,10 +1132,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Citrus limon; columna wsg_est_trunk = 0.62 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "cd8bef0e90ffbb64e0b94ce41a069de33e5d1cdc978d9288d0ed2478e523a37b"
     },
     {
-      "species_code": "ORNATO_SPC_96F4B3E1138F42CC",
+      "species_code": "SOURCE_SPECIES_96F4B3E1138F42CC",
       "scientific_name": "Senna reticulata (Willd.) H.S.Irwin & Barneby",
       "family": "FABACEAE",
       "matched_binomial": "Senna reticulata",
@@ -1072,10 +1147,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Senna reticulata; columna wsg_est_trunk = 0.45 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "0fc5baf092c107ebe61123d99f7007aea7792df33d036fb4c64ff4b64080608a"
     },
     {
-      "species_code": "ORNATO_SPC_993478D6DC527B9A",
+      "species_code": "SOURCE_SPECIES_993478D6DC527B9A",
       "scientific_name": "Euterpe precatoria Mark.",
       "family": "ARECACEAE",
       "matched_binomial": "Euterpe precatoria",
@@ -1086,10 +1162,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Euterpe precatoria; columna wsg_est_trunk = 0.39 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "a68ac0a7c57c5a3eb537cb5a59922b82264e4fe25010bcbd2169c1eb31a49b75"
     },
     {
-      "species_code": "ORNATO_SPC_99C1160276FF5AB1",
+      "species_code": "SOURCE_SPECIES_99C1160276FF5AB1",
       "scientific_name": "Alchornea triplinervia (Spreng.) Mull. Arg.",
       "family": "EUPHORBIACEAE",
       "matched_binomial": "Alchornea triplinervia",
@@ -1100,10 +1177,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Alchornea triplinervia; columna wsg_est_trunk = 0.43 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "1e6113aa9e8c54ba48adda9e303499a071651456180e23adec8cdf12eff3031d"
     },
     {
-      "species_code": "ORNATO_SPC_9CF44702419D41B2",
+      "species_code": "SOURCE_SPECIES_9CF44702419D41B2",
       "scientific_name": "Senna bacillaris (L.f.) H.S.Irwin & Barneby",
       "family": "FABACEAE",
       "matched_binomial": null,
@@ -1114,10 +1192,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Senna bacillaris. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "8140f690943523b0c4b794c3b572d8193142df4234b4db55cb5c7a21bdff3a05"
     },
     {
-      "species_code": "ORNATO_SPC_9F07DC0DC3139AD9",
+      "species_code": "SOURCE_SPECIES_9F07DC0DC3139AD9",
       "scientific_name": "Persea caurelea (Ruiz & Pav).Mez",
       "family": "LAURACEAE",
       "matched_binomial": null,
@@ -1128,10 +1207,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Persea caurelea. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "b126c2dc1f6d61c2573cf256f6ac824f1552db5eb4bdb24de93bfbd6aeb351f7"
     },
     {
-      "species_code": "ORNATO_SPC_A11AD7868BE3E93F",
+      "species_code": "SOURCE_SPECIES_A11AD7868BE3E93F",
       "scientific_name": "Myrcia popayanensis Hieron",
       "family": "MYRTACEAE",
       "matched_binomial": null,
@@ -1142,10 +1222,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Myrcia popayanensis. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "d8a42ca87e4af79b6ee5faf04a7562cde79df76de4ee1aca6630ae479157402a"
     },
     {
-      "species_code": "ORNATO_SPC_A373A13DA52ABE41",
+      "species_code": "SOURCE_SPECIES_A373A13DA52ABE41",
       "scientific_name": "Trema micrantha (L.) Blume",
       "family": "CANNABACEAE",
       "matched_binomial": "Trema micranthum",
@@ -1156,10 +1237,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Trema micranthum; columna wsg_est_trunk = 0.36 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736. Correspondencia taxonómica Trema micrantha → Trema micranthum: https://mpns.science.kew.org/mpns-portal/plantDetail?dbs=wcsCmp&nameType=all&plantId=2518720",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "d3137e4713a5232faf4bad20b67696727751547620dc52c2d954db7af44bbb00"
     },
     {
-      "species_code": "ORNATO_SPC_A47D253226A86818",
+      "species_code": "SOURCE_SPECIES_A47D253226A86818",
       "scientific_name": "Pterocarpus sp.",
       "family": "FABACEAE",
       "matched_binomial": null,
@@ -1170,10 +1252,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Pterocarpus sp.. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "96d61184cac0bd67ab4eeaeacea6b22e1c89ad8201af7ab70b35bcac95a97630"
     },
     {
-      "species_code": "ORNATO_SPC_A484CF9903CF60C1",
+      "species_code": "SOURCE_SPECIES_A484CF9903CF60C1",
       "scientific_name": "Delonix regia (Hook.) Raf.",
       "family": "FABACEAE",
       "matched_binomial": "Delonix regia",
@@ -1184,10 +1267,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Delonix regia; columna wsg_est_trunk = 0.43 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "bc1920ee188bf853e7fe1bb8c68fe5a79ce31e944ff4bfd5202ed28890743c8b"
     },
     {
-      "species_code": "ORNATO_SPC_A5220F8622627F70",
+      "species_code": "SOURCE_SPECIES_A5220F8622627F70",
       "scientific_name": "Cassia sp.",
       "family": "FABACEAE",
       "matched_binomial": null,
@@ -1198,10 +1282,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Cassia sp.. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "3dc8b768bb872a89e5e1d3e60192bfb7a70bbd886aa5e8ec698841f2f202f2c7"
     },
     {
-      "species_code": "ORNATO_SPC_A837FF66F947A47D",
+      "species_code": "SOURCE_SPECIES_A837FF66F947A47D",
       "scientific_name": "Socratea exorrhiza (Mart.) H.Wendl.",
       "family": "ARECACEAE",
       "matched_binomial": "Socratea exorrhiza",
@@ -1212,10 +1297,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Socratea exorrhiza; columna wsg_est_trunk = 0.35 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "8fc9a8a7111fbb8efddb2e20a56c58ed38b9c33a5c49b43c9ceed03db2ad1989"
     },
     {
-      "species_code": "ORNATO_SPC_A97AB0EAA284541A",
+      "species_code": "SOURCE_SPECIES_A97AB0EAA284541A",
       "scientific_name": "Syzygium malaccense (L.) Merr. & L.M.Perry",
       "family": "MYRTACEAE",
       "matched_binomial": "Syzygium malaccense",
@@ -1226,10 +1312,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Syzygium malaccense; columna wsg_est_trunk = 0.51 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "3caad00855c972ebcde796e4dc19a2364b3933c0a361b358710aa1b9dea861d1"
     },
     {
-      "species_code": "ORNATO_SPC_AA43AD62096AA4E9",
+      "species_code": "SOURCE_SPECIES_AA43AD62096AA4E9",
       "scientific_name": "Jacaranda mimosifolia D.Don",
       "family": "BIGNONIACEAE",
       "matched_binomial": "Jacaranda mimosifolia",
@@ -1240,10 +1327,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Jacaranda mimosifolia; columna wsg_est_trunk = 0.5 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "9b3e7eeffd72da7ddef502545831b74eaf26a1ae01844082a3a1870480d97106"
     },
     {
-      "species_code": "ORNATO_SPC_ADCB42521A9DF9C6",
+      "species_code": "SOURCE_SPECIES_ADCB42521A9DF9C6",
       "scientific_name": "Muntingia calabura L.",
       "family": "MUNTINGIACEAE",
       "matched_binomial": "Muntingia calabura",
@@ -1254,10 +1342,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Muntingia calabura; columna wsg_est_trunk = 0.37 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "5e7051ca6720d166b762164dd169301b6832b1f1929d26c7feda7132fe03a294"
     },
     {
-      "species_code": "ORNATO_SPC_AE288A4C925111C0",
+      "species_code": "SOURCE_SPECIES_AE288A4C925111C0",
       "scientific_name": "Aegiphila integrifolia (Jacq.) B.D.Jacks.",
       "family": "LAMIACEAE",
       "matched_binomial": "Aegiphila integrifolia",
@@ -1268,10 +1357,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Aegiphila integrifolia; columna wsg_est_trunk = 0.41 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "f1ebeb46f5d291abe335bc4c5391bc8c616d470fcd5e296d2d5c7e9a4ae9d28a"
     },
     {
-      "species_code": "ORNATO_SPC_AFE449D76E1843DE",
+      "species_code": "SOURCE_SPECIES_AFE449D76E1843DE",
       "scientific_name": "Pseudosamanea guachapele (Kunth) Harms",
       "family": "FABACEAE",
       "matched_binomial": "Pseudosamanea guachapele",
@@ -1282,10 +1372,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Pseudosamanea guachapele; columna wsg_est_trunk = 0.57 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "39fe6efeeaf39a18049c781a859d813fa25f17ce48b48c59046bc901d361837e"
     },
     {
-      "species_code": "ORNATO_SPC_B201035CA96DA92B",
+      "species_code": "SOURCE_SPECIES_B201035CA96DA92B",
       "scientific_name": "Citrus reticulata Blanco",
       "family": "RUTACEAE",
       "matched_binomial": null,
@@ -1296,10 +1387,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Citrus reticulata. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "472d1e761cf5a905cb328fae8ce650c342f937443e518878f12c6ea3cea3b996"
     },
     {
-      "species_code": "ORNATO_SPC_B474C6921E09C79D",
+      "species_code": "SOURCE_SPECIES_B474C6921E09C79D",
       "scientific_name": "Hibiscus rosa-sinensis L.",
       "family": "MALVACEAE",
       "matched_binomial": "Hibiscus rosa-sinensis",
@@ -1310,10 +1402,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Hibiscus rosa-sinensis; columna wsg_est_trunk = 0.36 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "7c18358a483a2f526d594e9d97a628fb791f15edc8af05b850830c4f7ecb1192"
     },
     {
-      "species_code": "ORNATO_SPC_B4CE093F2DA9F256",
+      "species_code": "SOURCE_SPECIES_B4CE093F2DA9F256",
       "scientific_name": "Pithecellobium dulce (Roxb.) Benth.",
       "family": "FABACEAE",
       "matched_binomial": "Pithecellobium dulce",
@@ -1324,10 +1417,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Pithecellobium dulce; columna wsg_est_trunk = 0.61 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "4321ff8ea8b215d707c70fae47faeeeee624083bb802b7945042ba8379090085"
     },
     {
-      "species_code": "ORNATO_SPC_B62180612BE51302",
+      "species_code": "SOURCE_SPECIES_B62180612BE51302",
       "scientific_name": "Erythroxylum coca Lam.",
       "family": "ERYTHROXYLACEAE",
       "matched_binomial": null,
@@ -1338,10 +1432,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Erythroxylum coca. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "e595e435693321dac72d3d34e1442f0d05901ad506e92eefd60f08b2aee40201"
     },
     {
-      "species_code": "ORNATO_SPC_B736B54882303BFC",
+      "species_code": "SOURCE_SPECIES_B736B54882303BFC",
       "scientific_name": "Pinus radiata D.Don",
       "family": "PINACEAE",
       "matched_binomial": "Pinus radiata",
@@ -1352,10 +1447,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Pinus radiata; columna wsg_est_trunk = 0.46 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "cb660a0f6b74983d25d95a4f75a4f850a43fab0081772a8fec6ea6d1ad2f5625"
     },
     {
-      "species_code": "ORNATO_SPC_B87EA348BAF9EFCD",
+      "species_code": "SOURCE_SPECIES_B87EA348BAF9EFCD",
       "scientific_name": "Plumeria pudica Jacq.",
       "family": "APOCYNACEAE",
       "matched_binomial": null,
@@ -1366,10 +1462,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Plumeria pudica. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "fe9bf546c86cd7ef981ff0d88b6c91a7e2a9c01226d82e712837e2df2535d67d"
     },
     {
-      "species_code": "ORNATO_SPC_BB5C2FFD5EA780BB",
+      "species_code": "SOURCE_SPECIES_BB5C2FFD5EA780BB",
       "scientific_name": "Adonidia merrillii (Becc.) Becc.",
       "family": "ARECACEAE",
       "matched_binomial": null,
@@ -1380,10 +1477,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Adonidia merrillii. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "76412d220a86c42155e207be59cbdd27dabd86515f184670cacac4bb844f5f73"
     },
     {
-      "species_code": "ORNATO_SPC_BBC30A7D48DA01B7",
+      "species_code": "SOURCE_SPECIES_BBC30A7D48DA01B7",
       "scientific_name": "Platypodium elegans Vogel",
       "family": "FABACEAE",
       "matched_binomial": "Platypodium elegans",
@@ -1394,10 +1492,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Platypodium elegans; columna wsg_est_trunk = 0.71 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "870db02d8c61d93e038705055cf04b80e300bc3f69c1f751c0c0a69013c83ef5"
     },
     {
-      "species_code": "ORNATO_SPC_BD7A4D211D67BFFB",
+      "species_code": "SOURCE_SPECIES_BD7A4D211D67BFFB",
       "scientific_name": "Calliandra surinamensis Benth.",
       "family": "FABACEAE",
       "matched_binomial": null,
@@ -1408,10 +1507,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Calliandra surinamensis. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "b2ed4af17f10201b97af2e78878f023240a766ea7e9724645711894ec5b89659"
     },
     {
-      "species_code": "ORNATO_SPC_BEA2BD5B3950680E",
+      "species_code": "SOURCE_SPECIES_BEA2BD5B3950680E",
       "scientific_name": "Moringa oleifera Lam.",
       "family": "MORINGACEAE",
       "matched_binomial": "Moringa oleifera",
@@ -1422,10 +1522,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Moringa oleifera; columna wsg_est_trunk = 0.26 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "8999d13eed53763815d5e48d9396c5f2c2dd5925c8a22f323b949ffab6d9d4cd"
     },
     {
-      "species_code": "ORNATO_SPC_BF44DC35470D6AF2",
+      "species_code": "SOURCE_SPECIES_BF44DC35470D6AF2",
       "scientific_name": "Murraya paniculata (L.) Jack.",
       "family": "RUTACEAE",
       "matched_binomial": "Murraya paniculata",
@@ -1436,10 +1537,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Murraya paniculata; columna wsg_est_trunk = 0.81 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "fda81236881c39748d278ffca846220979f4b4282b37b6f796aa6b2cfa9afe42"
     },
     {
-      "species_code": "ORNATO_SPC_C11DBFF3265B93D3",
+      "species_code": "SOURCE_SPECIES_C11DBFF3265B93D3",
       "scientific_name": "Artocarpus altilis (Parkinson) Fosberg.",
       "family": "MORACEAE",
       "matched_binomial": "Artocarpus altilis",
@@ -1450,10 +1552,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Artocarpus altilis; columna wsg_est_trunk = 0.36 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "27e0fc8f2807880a95d42407f7acf212b12bea71c3c748ada27d4f7c314dbcb9"
     },
     {
-      "species_code": "ORNATO_SPC_C17157A5F5AE5A58",
+      "species_code": "SOURCE_SPECIES_C17157A5F5AE5A58",
       "scientific_name": "Senegalia polyphylla (DC.) Britton.",
       "family": "FABACEAE",
       "matched_binomial": "Senegalia polyphylla",
@@ -1464,10 +1567,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Senegalia polyphylla; columna wsg_est_trunk = 0.63 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "aeb387f86db3bb8dde17b6c60ac2cfd17d13b453a11b18f482eda1d48e8f6fce"
     },
     {
-      "species_code": "ORNATO_SPC_C2F58967E46365C1",
+      "species_code": "SOURCE_SPECIES_C2F58967E46365C1",
       "scientific_name": "Spathodea campanulata P.Beauv.",
       "family": "BIGNONIACEAE",
       "matched_binomial": "Spathodea campanulata",
@@ -1478,10 +1582,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Spathodea campanulata; columna wsg_est_trunk = 0.34 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "65c162f3f644a15188d397317a038f6460500efee9499c09be35c8bc8550f91f"
     },
     {
-      "species_code": "ORNATO_SPC_C58BE123B7179D48",
+      "species_code": "SOURCE_SPECIES_C58BE123B7179D48",
       "scientific_name": "Vitex orinocensis Kunth",
       "family": "LAMIACEAE",
       "matched_binomial": "Vitex orinocensis",
@@ -1492,10 +1597,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Vitex orinocensis; columna wsg_est_trunk = 0.57 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "e99dc8f39ce2afd83d32a5582811dda53ee5184dc096964c5e756491d7e8eedd"
     },
     {
-      "species_code": "ORNATO_SPC_C68B42C856A06798",
+      "species_code": "SOURCE_SPECIES_C68B42C856A06798",
       "scientific_name": "Pachira aquatica Aubl.",
       "family": "MALVACEAE",
       "matched_binomial": "Pachira aquatica",
@@ -1506,10 +1612,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Pachira aquatica; columna wsg_est_trunk = 0.44 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "2112ee65f55f8705d25039a709741161d02980fa82351bcd2b31603b03b13751"
     },
     {
-      "species_code": "ORNATO_SPC_C6A32B3352F08C9D",
+      "species_code": "SOURCE_SPECIES_C6A32B3352F08C9D",
       "scientific_name": "Ochroma pyramidale (Lam.) Urb.",
       "family": "MALVACEAE",
       "matched_binomial": "Ochroma pyramidale",
@@ -1520,10 +1627,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Ochroma pyramidale; columna wsg_est_trunk = 0.19 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "7d0469926e46ef03ee2e34706727df9870f4ccfb12dd54ade18f5cba4a8ba14b"
     },
     {
-      "species_code": "ORNATO_SPC_C7ED3B2AFAC8C9CA",
+      "species_code": "SOURCE_SPECIES_C7ED3B2AFAC8C9CA",
       "scientific_name": "Sambucus nigra L.",
       "family": "ADOXACEAE",
       "matched_binomial": "Sambucus nigra",
@@ -1534,10 +1642,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Sambucus nigra; columna wsg_est_trunk = 0.49 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "ca940173c4caf9acf29b1f91348415a6e16738fac0abaa6682ab95634b21ffd8"
     },
     {
-      "species_code": "ORNATO_SPC_C8022E876C1AD9D4",
+      "species_code": "SOURCE_SPECIES_C8022E876C1AD9D4",
       "scientific_name": "Cycas revoluta Thunb.",
       "family": "CYCADACEAE",
       "matched_binomial": "Cycas revoluta",
@@ -1548,10 +1657,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Cycas revoluta; columna wsg_est_trunk = 0.28 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "0cd486726c51d53eb3129eb3828ea2b9081b24537d2bd2c14e912c6949b575a8"
     },
     {
-      "species_code": "ORNATO_SPC_C8149E7344E33342",
+      "species_code": "SOURCE_SPECIES_C8149E7344E33342",
       "scientific_name": "Garcinia mangostana L.",
       "family": "CLUSIACEAE",
       "matched_binomial": "Garcinia mangostana",
@@ -1562,10 +1672,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Garcinia mangostana; columna wsg_est_trunk = 0.79 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "49e84ed872307bc6f8051f127555fdf93be9edb507654a3759393cdcba7e9957"
     },
     {
-      "species_code": "ORNATO_SPC_CCC5822C93469988",
+      "species_code": "SOURCE_SPECIES_CCC5822C93469988",
       "scientific_name": "Jatropha curcas L.",
       "family": "EUPHORBIACEAE",
       "matched_binomial": "Jatropha curcas",
@@ -1576,10 +1687,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Jatropha curcas; columna wsg_est_trunk = 0.24 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "e869901abc939088e10a96d1121a7cc98ed1bd0a01603ab9dc5cfbb422f63838"
     },
     {
-      "species_code": "ORNATO_SPC_CE2913DD70C6E63A",
+      "species_code": "SOURCE_SPECIES_CE2913DD70C6E63A",
       "scientific_name": "Erythrina poeppigiana (Walp.) O.F.Cook",
       "family": "FABACEAE",
       "matched_binomial": "Erythrina poeppigiana",
@@ -1590,10 +1702,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Erythrina poeppigiana; columna wsg_est_trunk = 0.3 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "a904f41591bec72c175754df3aa63031badfefdaecc961c1da55e9e4ce3f12f8"
     },
     {
-      "species_code": "ORNATO_SPC_CF8A67B1E4C25DF5",
+      "species_code": "SOURCE_SPECIES_CF8A67B1E4C25DF5",
       "scientific_name": "Eugenia stipitata McVaugh.",
       "family": "MYRTACEAE",
       "matched_binomial": null,
@@ -1604,10 +1717,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Eugenia stipitata. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "546d50243403da69bb9d92a3788a7de2425ead2159460aac9ddc60b4dbaab667"
     },
     {
-      "species_code": "ORNATO_SPC_D0D828A6A05E840F",
+      "species_code": "SOURCE_SPECIES_D0D828A6A05E840F",
       "scientific_name": "Magnolia hernandezii (Lozano) Govaerts",
       "family": "MAGNOLIACEAE",
       "matched_binomial": null,
@@ -1618,10 +1732,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Magnolia hernandezii. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "0be69781a28e3e31939329040d2fd00149662ea097e7cbee15dfe3545563f777"
     },
     {
-      "species_code": "ORNATO_SPC_D0DC615D0B4FDE6F",
+      "species_code": "SOURCE_SPECIES_D0DC615D0B4FDE6F",
       "scientific_name": "Croton sp.",
       "family": "EUPHORBIACEAE",
       "matched_binomial": null,
@@ -1632,10 +1747,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Croton sp.. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "242ee8f97595ad50efb6ffa90e8c6188fcbb203687790c17c680a74f0c357a75"
     },
     {
-      "species_code": "ORNATO_SPC_D7E0B1287057CE39",
+      "species_code": "SOURCE_SPECIES_D7E0B1287057CE39",
       "scientific_name": "Bactris gacipaes Humb. & Bonp.",
       "family": "ARECACEAE",
       "matched_binomial": null,
@@ -1646,10 +1762,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Bactris gacipaes. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "6bff2da3ed5077c8c9ad169b890ad08e8b1ecf00654c45fc67ad7db70b2f1fcd"
     },
     {
-      "species_code": "ORNATO_SPC_D85D4E25D2DA0038",
+      "species_code": "SOURCE_SPECIES_D85D4E25D2DA0038",
       "scientific_name": "Brownea ariza Benth.",
       "family": "FABACEAE",
       "matched_binomial": null,
@@ -1660,10 +1777,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Brownea ariza. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "6db44a59caecbd5e677f1b9bb1181e7b651e87385932bca760a06e3314773f65"
     },
     {
-      "species_code": "ORNATO_SPC_D9C2A65C38C68B4A",
+      "species_code": "SOURCE_SPECIES_D9C2A65C38C68B4A",
       "scientific_name": "Anacardium occidentale L.",
       "family": "ANACARDIACEAE",
       "matched_binomial": "Anacardium occidentale",
@@ -1674,10 +1792,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Anacardium occidentale; columna wsg_est_trunk = 0.46 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "3a984339f632bc5fe6554676283254fe5efbc664b6f778fd037491a51a4b26fe"
     },
     {
-      "species_code": "ORNATO_SPC_D9D05DDDAF6863BD",
+      "species_code": "SOURCE_SPECIES_D9D05DDDAF6863BD",
       "scientific_name": "Miconia caudata (Bonpl.) DC.",
       "family": "MELASTOMATACEAE",
       "matched_binomial": null,
@@ -1688,10 +1807,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Miconia caudata. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "84a30e0a9a170462a52a0d7fc05109f38842094339694d20f28e95af8dc5e8b1"
     },
     {
-      "species_code": "ORNATO_SPC_DA25163686E6C4B1",
+      "species_code": "SOURCE_SPECIES_DA25163686E6C4B1",
       "scientific_name": "Bambusa vulgaris Schrad.",
       "family": "POACEAE",
       "matched_binomial": null,
@@ -1702,10 +1822,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Bambusa vulgaris. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "d50fe0cfbc02ead0393f5b0ce7110698a5d5d6b0e8a3a5a894deb6a63758833f"
     },
     {
-      "species_code": "ORNATO_SPC_DB8AF54709DEB8D3",
+      "species_code": "SOURCE_SPECIES_DB8AF54709DEB8D3",
       "scientific_name": "Anadenanthera peregrina (L.) Speg.",
       "family": "FABACEAE",
       "matched_binomial": "Anadenanthera peregrina",
@@ -1716,10 +1837,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Anadenanthera peregrina; columna wsg_est_trunk = 0.69 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "5b443fd7be5ad6ec65508fc1c787927924d9ecbd6505664dc575a184a13bf7c1"
     },
     {
-      "species_code": "ORNATO_SPC_DE7B85466BA2C3BA",
+      "species_code": "SOURCE_SPECIES_DE7B85466BA2C3BA",
       "scientific_name": "Carica papaya",
       "family": "CARICACEAE",
       "matched_binomial": "Carica papaya",
@@ -1730,10 +1852,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Carica papaya; columna wsg_est_trunk = 0.18 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "73de78cfabbab060c79eecf9fb3bf7b53ef78af344051d4dcef8159f3b4b89a4"
     },
     {
-      "species_code": "ORNATO_SPC_DEB282C7983269DC",
+      "species_code": "SOURCE_SPECIES_DEB282C7983269DC",
       "scientific_name": "Didymopanax morototoni (Aubl.) Decne. & Planch.",
       "family": "ARALIACEAE",
       "matched_binomial": "Didymopanax morototoni",
@@ -1744,10 +1867,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Didymopanax morototoni; columna wsg_est_trunk = 0.43 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "5016e24df6d227c13336fc2b9eb087cde8869760f940e2fd42ab2e4a607d0f1f"
     },
     {
-      "species_code": "ORNATO_SPC_DF9867960B8D8022",
+      "species_code": "SOURCE_SPECIES_DF9867960B8D8022",
       "scientific_name": "Bixa urucurana Willd.",
       "family": "BIXACEAE",
       "matched_binomial": null,
@@ -1758,10 +1882,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Bixa urucurana. https://zenodo.org/records/18262736",
-      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género."
+      "justification": "No se localizó una coincidencia específica respaldada en la versión consultada de GWDD; no se sustituye por otra especie ni por el promedio del género.",
+      "legacy_species_code_hash": "f9ffa4043468d4d2f6113169998f69617ce5b7f585667f29547750f14390afc6"
     },
     {
-      "species_code": "ORNATO_SPC_E15EDD402D420AD4",
+      "species_code": "SOURCE_SPECIES_E15EDD402D420AD4",
       "scientific_name": "Myrtus sp.",
       "family": "MYRTACEAE",
       "matched_binomial": null,
@@ -1772,10 +1897,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Myrtus sp.. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "4a0bcc4565155a3654c29e526639390f595374950232dac750ff46e675f19492"
     },
     {
-      "species_code": "ORNATO_SPC_E80CFF6E235ADD74",
+      "species_code": "SOURCE_SPECIES_E80CFF6E235ADD74",
       "scientific_name": "Persea americana Mill.",
       "family": "LAURACEAE",
       "matched_binomial": "Persea americana",
@@ -1786,10 +1912,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Persea americana; columna wsg_est_trunk = 0.46 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "8925c8e6862bb86fdf2d61ce9987f27b5de43b88d66a0151f9fd74979cc13e7c"
     },
     {
-      "species_code": "ORNATO_SPC_EA5DF5890BDE8452",
+      "species_code": "SOURCE_SPECIES_EA5DF5890BDE8452",
       "scientific_name": "Pourouma cecropiifolia Mart.",
       "family": "URTICACEAE",
       "matched_binomial": "Pourouma cecropiifolia",
@@ -1800,10 +1927,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Pourouma cecropiifolia; columna wsg_est_trunk = 0.39 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "931e212cd70394c62d9f6611b99577c0a0bba3a9efb27af5d08790bf9602f852"
     },
     {
-      "species_code": "ORNATO_SPC_F27989C4193FC370",
+      "species_code": "SOURCE_SPECIES_F27989C4193FC370",
       "scientific_name": "Annona cherimola Mill.",
       "family": "ANNONACEAE",
       "matched_binomial": "Annona cherimola",
@@ -1814,10 +1942,11 @@
       "max_diameter_cm": "212",
       "max_height_m": "70.7",
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Annona cherimola; columna wsg_est_trunk = 0.56 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie."
+      "justification": "Precarga bibliográfica solicitada por el usuario para una estimación preliminar. No acredita revisión profesional local, ajuste urbano ni calibración específica de esta especie. Límites 5–212 cm de DAP y 1,2–70,7 m de altura: envolvente global de los 4.004 árboles del conjunto Chave (2014), no máximos biológicos de la especie.",
+      "legacy_species_code_hash": "2a97601b519d66a3f35dac60905ff6459b23b49fed3851908f1763ffe4f479bd"
     },
     {
-      "species_code": "ORNATO_SPC_F6AB116E4D7F6A76",
+      "species_code": "SOURCE_SPECIES_F6AB116E4D7F6A76",
       "scientific_name": "Elaeis guineensis Jacq.",
       "family": "ARECACEAE",
       "matched_binomial": "Elaeis guineensis",
@@ -1828,10 +1957,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Fischer et al. (2026), GWDD v2.2, registro binomial Elaeis guineensis; columna wsg_est_trunk = 0.53 g/cm³ (estimación modelada para tronco; no wsg_raw). DOI 10.5281/zenodo.18262736. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "b3a979a9f66211b16e2bc505e6eb2c86068415765fccbdaa9ea2e56f327d84e0"
     },
     {
-      "species_code": "ORNATO_SPC_F73E924A16065F6E",
+      "species_code": "SOURCE_SPECIES_F73E924A16065F6E",
       "scientific_name": "Cecropia sp.",
       "family": "URTICACEAE",
       "matched_binomial": null,
@@ -1842,10 +1972,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Cecropia sp.. https://zenodo.org/records/18262736",
-      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía."
+      "justification": "Identificación incompleta o nombre que requiere revisión. No se asigna un promedio de género ni se corrige automáticamente la taxonomía.",
+      "legacy_species_code_hash": "3dd7d6cd602d64f350a807066e82cbe0c88971f1863fccff14e0934f94bbb50b"
     },
     {
-      "species_code": "ORNATO_SPC_F82B9268EBF8C5B5",
+      "species_code": "SOURCE_SPECIES_F82B9268EBF8C5B5",
       "scientific_name": "Guadua angustifolia Kunth",
       "family": "POACEAE",
       "matched_binomial": null,
@@ -1856,10 +1987,11 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Guadua angustifolia. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "104fbe53cd395578a8a439353ec49ef0e1970b77e6b76268225f1ebe281fe699"
     },
     {
-      "species_code": "ORNATO_SPC_FE5553C4892551A2",
+      "species_code": "SOURCE_SPECIES_FE5553C4892551A2",
       "scientific_name": "Wodyetia bifurcata A.K.Irvine",
       "family": "ARECACEAE",
       "matched_binomial": null,
@@ -1870,7 +2002,8 @@
       "max_diameter_cm": null,
       "max_height_m": null,
       "reference": "Revisión de GWDD v2.2 (Fischer et al., 2026), DOI 10.5281/zenodo.18262736: sin densidad específica asignada para Wodyetia bifurcata. https://zenodo.org/records/18262736",
-      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos."
+      "justification": "Requiere una ecuación específica para su grupo o arquitectura; la precarga no habilita el modelo general de árboles leñosos.",
+      "legacy_species_code_hash": "759e0098b2523caaff820a547315c5de93c1e305ffa2b39f8f708eeaaa639b9b"
     },
     {
       "species_code": "SPECIES_CEIBA_PENTANDRA",

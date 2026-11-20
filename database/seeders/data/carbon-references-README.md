@@ -16,7 +16,7 @@ Se usa únicamente **wsg_est_trunk**, estimación modelada para tronco, en g/cm�
 
 ## Correspondencias revisadas
 
-Los códigos y nombres completos del catálogo están fijados en `carbon-species-references.json`. La extracción de autores del nombre se efectuó durante la preparación; el seeder no ejecuta emparejamiento difuso. Para publicar exige coincidencia exacta de código, nombre completo y familia del manifiesto frente al catálogo actual.
+Los códigos y nombres completos del catálogo están fijados en `carbon-species-references.json`. La extracción de autores del nombre se efectuó durante la preparación; el seeder no ejecuta emparejamiento difuso. Para publicar resuelve una clave fuente o su huella histórica a la misma identidad y exige coincidencia exacta de nombre completo y familia frente al catálogo actual. No usa coincidencias aproximadas.
 
 Tres correspondencias adicionales tienen respaldo explícito:
 
@@ -35,3 +35,10 @@ Los límites iniciales de las referencias aplicables proceden de la envolvente g
 Cada referencia explicita la ausencia de revisión profesional local. No tiene autor humano de aprobación. La interfaz, fichas, mapa y exportaciones indican su procedencia; el agregado contabiliza por separado los estimados que usan bibliografía provisional.
 
 La huella del paquete JSON se verifica en `CarbonReferenceSeedService`. Cualquier cambio deliberado exige revisar datos, correspondencias y actualización de esa huella. Repetir el seeder no reemplaza perfiles existentes, ni vuelve a imponer valores tras una edición institucional.
+
+
+## Identificadores de referencia neutrales (20/11/2026)
+
+La revisión nominal del paquete cambia únicamente `species_code` a claves `SOURCE_SPECIES_…` y agrega `legacy_species_code_hash` en las 133 entradas afectadas. Las 143 referencias científicas y todos sus parámetros permanecen iguales. La versión `GWDD_2_2_SYSFOREST_20261025` se conserva como `source_package` para no reiniciar precargas retiradas ni duplicar recibos. SHA-256 del JSON revisado: `e8ea3e934d3271857d459e3fba72f4916e0bc9b06f0372404d9ce0e7f3a46d95`.
+
+El catálogo complementario se denomina `reference-catalogs-v2.json`; su contrato está en [README de catálogos](reference-catalogs-README.md). La resolución exige que la clave neutral y cualquier huella histórica coincidan en una sola identidad; las discrepancias se rechazan. No se recalculan resultados ni se sobrescriben perfiles existentes por cambiar los nombres de procedencia.

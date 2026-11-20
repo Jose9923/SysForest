@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Repositories\PublicPortal;
 
 use App\DTOs\PublicPortal\PublicTreeFilterDTO;
-use App\Enums\Taxonomy\TaxonomyCatalog;
-use App\Repositories\Taxonomy\TaxonomyCodeRepository;
+use App\Repositories\Catalogs\CatalogCodeRepository;
+use App\Enums\Catalogs\CatalogCodeKind;
 use App\DTOs\Trees\TreeReadScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
@@ -15,7 +15,7 @@ use App\Repositories\Maps\MapOptionRepository;
 /** Los UUID se resuelven internamente; Select2 y las URL reciben exclusivamente códigos públicos. */
 class PublicReferenceRepository
 {
-    public function __construct(private MapOptionRepository $options, private TaxonomyCodeRepository $codes)
+    public function __construct(private MapOptionRepository $options, private CatalogCodeRepository $codes)
     {
     }
 
@@ -36,7 +36,7 @@ class PublicReferenceRepository
                 continue;
             }
             if (is_array($value)) {
-                if ($catalog = $this->taxonomyCatalog($kind)) {
+                if ($catalog = $this->codedCatalog($kind)) {
                     $ids = [];
                     foreach ($value as $code) {
                         $ids[] = $this->codes->resolveId($catalog, $code) ?? $this->unavailable($field);
@@ -63,7 +63,7 @@ class PublicReferenceRepository
                     $this->unavailable($field);
                 }
                 $resolved[$field] = (string) $record->id;
-                if ($this->taxonomyCatalog($kind) !== null) {
+                if ($this->codedCatalog($kind) !== null) {
                     $canonical[$field] = $record->code;
                 }
             }
@@ -131,7 +131,7 @@ class PublicReferenceRepository
         if (count($parts) !== $expected || in_array('', $parts, true)) {
             $this->unavailable($field);
         }
-        if ($catalog = $this->taxonomyCatalog($kind)) {
+        if ($catalog = $this->codedCatalog($kind)) {
             $id = $this->codes->resolveId($catalog, $code);
             if ($id === null) {
                 $this->unavailable($field);
@@ -149,12 +149,13 @@ class PublicReferenceRepository
         }
     }
 
-    private function taxonomyCatalog(string $kind): ?TaxonomyCatalog
+    private function codedCatalog(string $kind): ?CatalogCodeKind
     {
         return match ($kind) {
-            'families' => TaxonomyCatalog::Families,
-            'species' => TaxonomyCatalog::Species,
-            'common_names' => TaxonomyCatalog::CommonNames,
+            'families' => CatalogCodeKind::Families,
+            'species' => CatalogCodeKind::Species,
+            'common_names' => CatalogCodeKind::CommonNames,
+            'placements' => CatalogCodeKind::Placements,
             default => null,
         };
     }

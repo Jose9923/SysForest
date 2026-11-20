@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Repositories\Imports;
 
 use App\Imports\ImportCatalogSelection;
-use App\Enums\Taxonomy\TaxonomyCatalog;
-use App\Repositories\Taxonomy\TaxonomyCodeRepository;
+use App\Repositories\Catalogs\CatalogCodeRepository;
+use App\Enums\Catalogs\CatalogCodeKind;
 use App\Models\Catalogs\BiogeographicOrigin;
 use App\Models\Conditions\Condition;
 use App\Models\Catalogs\ClassificationRuleVersion;
@@ -26,7 +26,7 @@ use LogicException;
 /** Resuelve códigos y selecciones nacionales exactos; nunca confía en catálogos del archivo. */
 class ImportCatalogRepository
 {
-    public function __construct(private TaxonomyCodeRepository $codes)
+    public function __construct(private CatalogCodeRepository $codes)
     {
     }
 
@@ -52,8 +52,9 @@ class ImportCatalogRepository
         $selection = ImportCatalogSelection::parse($code);
         $selectedCode = $selection['code'] ?? $code;
         $query = self::MODELS[$field]::query();
-        if ($field === 'species_code') {
-            $id = $this->codes->resolveId(TaxonomyCatalog::Species, $selectedCode);
+        if (in_array($field, ['species_code', 'placement_code'], true)) {
+            $kind = $field === 'species_code' ? CatalogCodeKind::Species : CatalogCodeKind::Placements;
+            $id = $this->codes->resolveId($kind, $selectedCode);
             if ($id === null) {
                 return null;
             }

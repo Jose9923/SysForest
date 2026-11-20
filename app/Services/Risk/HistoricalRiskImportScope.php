@@ -8,7 +8,7 @@ use App\Models\Inventories\Inventory;
 use App\Models\Organizations\Organization;
 use Closure;
 use LogicException;
-use App\Services\Imports\RestrepoOrnatoImportService;
+use App\Services\Imports\ReferenceInventoryImportService;
 
 /** Excepción acotada a la recuperación local del paquete histórico autorizado; nunca procede de HTTP. */
 class HistoricalRiskImportScope
@@ -16,10 +16,10 @@ class HistoricalRiskImportScope
     private ?string $organizationId = null;
     private ?string $inventoryId = null;
 
-    public function recoverRestrepo(Organization $organization, Inventory $inventory, Closure $operation): mixed
+    public function recoverReference(Organization $organization, Inventory $inventory, Closure $operation): mixed
     {
-        app(RestrepoOrnatoImportService::class)->assertFiles();
-        if ($organization->code !== 'RESTREPO-META' || $inventory->code !== 'ORNATO-2025'
+        app(ReferenceInventoryImportService::class)->assertFiles();
+        if ($organization->code !== 'RESTREPO-META' || !ReferenceInventoryImportService::matchesInventoryCode($inventory->code)
             || $inventory->organization_id !== $organization->id || $organization->is_public || $inventory->is_public) {
             throw new LogicException('La excepción histórica no corresponde a la recuperación privada autorizada.');
         }

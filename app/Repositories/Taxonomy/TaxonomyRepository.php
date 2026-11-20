@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Repositories\Taxonomy;
 
 use App\Enums\Taxonomy\TaxonomyCatalog;
+use App\Enums\Catalogs\CatalogCodeKind;
+use App\Repositories\Catalogs\CatalogCodeRepository;
 use App\Models\Taxonomy\Family;
 use App\Models\Taxonomy\Species;
 use App\Models\Taxonomy\SpeciesCommonName;
@@ -16,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 
 class TaxonomyRepository
 {
-    public function __construct(private TaxonomyCodeRepository $codes)
+    public function __construct(private CatalogCodeRepository $codes)
     {
     }
 
@@ -55,17 +57,20 @@ class TaxonomyRepository
     }
 
     /** Solo los seeders usan esta entrada; nunca sobrescribe ajustes administrativos. */
-    public function seed(TaxonomyCatalog $catalog, string $code, array $attributes): Model
+    public function seed(TaxonomyCatalog $catalog, string $sourceKey, array $attributes, ?string $legacyHash = null): Model
     {
-        return DB::transaction(function () use ($catalog, $code, $attributes): Model {
-            $this->codes->lockCatalog($catalog);
-            $id = $this->codes->resolveId($catalog, $code);
+        return DB::transaction(function () use ($catalog, $sourceKey, $attributes, $legacyHash): Model {
+            $kind = CatalogCodeKind::from($catalog->value);
+            $this->codes->lockCatalog($kind);
+            $id = $this->codes->resolveSourceId($kind, $sourceKey, $legacyHash);
             if ($id !== null) {
+                $this->codes->registerAlias($kind, $sourceKey, $id, $legacyHash);
+
                 return $this->query($catalog)->findOrFail($id);
             }
-            $attributes['code'] = $this->codes->nextCode($catalog);
+            $attributes['code'] = $this->codes->nextCode($kind);
             $record = $this->create($catalog, $attributes);
-            $this->codes->registerAlias($catalog, $code, (int) $record->id);
+            $this->codes->registerAlias($kind, $sourceKey, (int) $record->id, $legacyHash);
 
             return $record;
         }, 3);

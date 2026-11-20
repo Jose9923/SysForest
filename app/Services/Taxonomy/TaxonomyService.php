@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Services\Taxonomy;
 
 use App\Enums\Taxonomy\TaxonomyCatalog;
+use App\Enums\Catalogs\CatalogCodeKind;
 use App\Models\User;
 use App\Repositories\Auth\SecurityEventRepository;
 use App\Repositories\Taxonomy\TaxonomyRepository;
-use App\Repositories\Taxonomy\TaxonomyCodeRepository;
+use App\Repositories\Catalogs\CatalogCodeRepository;
 use App\Repositories\Users\UserRepository;
 use App\Validation\Taxonomy\TaxonomyRules;
 use Illuminate\Database\Eloquent\Model;
@@ -25,7 +26,7 @@ class TaxonomyService
 {
     public function __construct(
         private TaxonomyRepository $repository,
-        private TaxonomyCodeRepository $codes,
+        private CatalogCodeRepository $codes,
         private CatalogAccessService $access,
         private UserRepository $users,
         private SecurityEventRepository $events,
@@ -93,8 +94,8 @@ class TaxonomyService
                 }
                 if ($record === null) {
                     if (($values['code'] ?? null) === null) {
-                        $values['code'] = $this->codes->nextCode($catalog);
-                    } elseif ($this->codes->resolveId($catalog, $values['code']) !== null) {
+                        $values['code'] = $this->codes->nextCode(CatalogCodeKind::from($catalog->value));
+                    } elseif ($this->codes->resolveId(CatalogCodeKind::from($catalog->value), $values['code']) !== null) {
                         throw ValidationException::withMessages(['code' => 'El código ya identifica un registro actual o anterior.']);
                     }
                 }

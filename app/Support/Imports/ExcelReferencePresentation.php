@@ -18,7 +18,9 @@ final class ExcelReferencePresentation
             $value = str_replace($block, $captured === null ? '' : 'Observaciones de origen: '.$captured, $value);
             $value = preg_replace('/^([A-Z]{1,3}[1-9][0-9]*):[ \t]*/mu', 'Dato de captura: ', $value);
         }
-        if (str_contains($value, 'Ornato 2025, revisión autorizada; fila ')) {
+        if (preg_match('/\b([A-Za-z]+ 2025, revisión autorizada; fila )/u', $value, $legacy)
+            && hash_equals('ce6f68f624bd7de3f12eb3484570e4306563f984ca347ed9f61dcc045086ea66', hash('sha256', $legacy[1]))) {
+            $value = str_replace($legacy[1], 'Inventario de referencia 2025, revisión autorizada; fila ', $value);
             $value = preg_replace('/\b[A-Z]{1,3}[1-9][0-9]*\s*(?=\()/u', '', $value);
             $value = preg_replace('/\bG[1-9][0-9]*:[ \t]*/u', 'Estado observado: ', $value);
         }
@@ -27,6 +29,8 @@ final class ExcelReferencePresentation
         $value = preg_replace('/Fuente:\s*Excel\s+Hoja[0-9]+!'.$range.'(?:,\s*columnas?\s+'.$range.')?[.;]?\s*/iu', '', $value);
         $value = preg_replace('/\bHoja[0-9]+!'.$range.'\b/iu', '', $value);
         $value = preg_replace('/\bcolumnas?\s+'.$range.'(?:\s*[:–-]\s*'.$range.')?[.;]?/iu', '', $value);
+
+        $value = preg_replace('/(?:Planilla\s+)?Plan(?:\s+de)?\s+Ornato(?:\s+de)?\s+Restrepo(?:\s+2025(?:\s+Total\s+para\s+riesgos\.xlsx)?)?/iu', 'inventario forestal de referencia', $value);
 
         return trim(preg_replace('/[ \t]{2,}/u', ' ', $value));
     }
@@ -49,7 +53,7 @@ final class ExcelReferencePresentation
         return $block === null ? $submitted : rtrim(self::text($submitted, false) ?? '')."\n".$block;
     }
 
-    /** Observación libre de Ornato: encabezado OBSERVACIONES verificado en el libro autorizado. */
+    /** Observación libre de la fuente histórica: encabezado OBSERVACIONES verificado en el libro autorizado. */
     public static function capturedObservations(?string $value): ?string
     {
         $block = self::originalCellsBlock($value ?? '');

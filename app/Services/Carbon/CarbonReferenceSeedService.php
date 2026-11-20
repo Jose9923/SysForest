@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Carbon;
 
 use App\Repositories\Carbon\CarbonRepository;
-use App\Repositories\Taxonomy\TaxonomyCodeRepository;
-use App\Enums\Taxonomy\TaxonomyCatalog;
+use App\Repositories\Catalogs\CatalogCodeRepository;
+use App\Enums\Catalogs\CatalogCodeKind;
 use App\Repositories\Identifiers\IdentifierRepository;
 use App\Repositories\Auth\SecurityEventRepository;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +15,9 @@ use LogicException;
 /** Precarga documentada e independiente por entidad; no firma una validación profesional. */
 class CarbonReferenceSeedService
 {
-    private const PACKAGE_HASH = '943fcb1c8e11e3ff25527da5b6838675597638f252a018541cf70e3f816a90f9';
+    private const PACKAGE_HASH = 'e8ea3e934d3271857d459e3fba72f4916e0bc9b06f0372404d9ce0e7f3a46d95';
 
-    public function __construct(private CarbonRepository $repository, private SecurityEventRepository $events, private IdentifierRepository $identifiers, private TaxonomyCodeRepository $codes)
+    public function __construct(private CarbonRepository $repository, private SecurityEventRepository $events, private IdentifierRepository $identifiers, private CatalogCodeRepository $codes)
     {
     }
 
@@ -30,22 +30,21 @@ class CarbonReferenceSeedService
         $package = json_decode(file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
         $references = array_column($package['species'], null, 'species_code');
         $species = $this->repository->seedSpecies();
+        $sourceKeys = [];
+        foreach ($references as $code => $reference) {
+            $sourceKeys[$code] = $reference['legacy_species_code_hash'] ?? null;
+        }
         $aliasReferences = [];
-        foreach ($this->codes->aliasesFor(TaxonomyCatalog::Species, $species->modelKeys()) as $code => $id) {
-            if (isset($references[$code])) {
-                $aliasReferences[$id][] = $references[$code];
-            }
+        foreach ($this->codes->resolveSources(CatalogCodeKind::Species, $sourceKeys) as $code => $id) {
+            $aliasReferences[$id][] = $references[$code];
         }
         $result = ['created' => 0, 'existing' => 0, 'mismatched' => 0];
         foreach ($this->repository->seedOrganizations() as $organization) {
-            $counts = DB::transaction(function () use ($organization, $references, $species, $package, $aliasReferences): array {
+            $counts = DB::transaction(function () use ($organization, $species, $package, $aliasReferences): array {
                 $this->repository->lockOrganization($organization->id);
                 $counts = ['created' => 0, 'existing' => 0, 'mismatched' => 0];
                 foreach ($species as $item) {
                     $candidates = $aliasReferences[$item->id] ?? [];
-                    if (isset($references[$item->code])) {
-                        $candidates[] = $references[$item->code];
-                    }
                     if (count($candidates) > 1) {
                         throw new LogicException('La especie coincide con varias referencias bibliográficas; requiere revisión.');
                     }

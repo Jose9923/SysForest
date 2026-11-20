@@ -10,10 +10,11 @@ use App\Enums\Taxonomy\TaxonomyCatalog;
 use App\Models\Inventories\Inventory;
 use App\Models\Organizations\Organization;
 use App\Models\User;
-use App\Repositories\Imports\RestrepoOrnatoSeedRepository;
+use App\Repositories\Imports\ReferenceInventorySeedRepository;
 use App\Repositories\Auth\SecurityEventRepository;
 use App\Repositories\Users\UserRepository;
-use App\Repositories\Taxonomy\TaxonomyCodeRepository;
+use App\Repositories\Catalogs\CatalogCodeRepository;
+use App\Enums\Catalogs\CatalogCodeKind;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -29,15 +30,17 @@ use App\Services\Taxonomy\TaxonomyService;
 use App\Services\Tenancy\TenantContextService;
 
 /**
- * Prepara la carga de Ornato sin convertir etiquetas fuente en una revisión nomenclatural.
+ * Prepara la carga de referencia sin convertir etiquetas fuente en una revisión nomenclatural.
  * Los Services de dominio conservan validación, autorización, tenant y auditoría de cada alta.
  */
-class RestrepoOrnatoSeedService
+class ReferenceInventorySeedService
 {
     private const SOURCE_SHA256 = '54398c5db028c94652bc562d574651303d9dba707e454607aa268592c57ace63';
 
+    private const MANIFEST_SHA256 = 'ded816dd91cb6dc68214b565678a9aef7cc7077cdbc41ba8ba62be47a60f84c0';
+
     public function __construct(
-        private RestrepoOrnatoSeedRepository $repository,
+        private ReferenceInventorySeedRepository $repository,
         private UserRepository $users,
         private PermissionService $permissions,
         private CatalogAccessService $catalogAccess,
@@ -48,7 +51,7 @@ class RestrepoOrnatoSeedService
         private InventoryService $inventories,
         private TenantContextService $tenants,
         private SecurityEventRepository $events,
-        private TaxonomyCodeRepository $codes,
+        private CatalogCodeRepository $codes,
     ) {
     }
 
@@ -60,16 +63,16 @@ class RestrepoOrnatoSeedService
      */
     public function seed(string $actorEmail): array
     {
-        $manifest = json_decode(
-            file_get_contents(database_path('seeders/data/restrepo-ornato-catalogs.json')),
-            true,
-            flags: JSON_THROW_ON_ERROR,
-        );
+        $source = file_get_contents(database_path('seeders/data/reference-catalogs-v2.json'));
+        if ($source === false || !hash_equals(self::MANIFEST_SHA256, hash('sha256', $source))) {
+            throw new LogicException('El manifiesto de referencia cambió; requiere revisión.');
+        }
+        $manifest = json_decode($source, true, flags: JSON_THROW_ON_ERROR);
         if (($manifest['source']['sha256'] ?? null) !== self::SOURCE_SHA256) {
-            throw new LogicException('El manifiesto no corresponde a la planilla de Ornato revisada.');
+            throw new LogicException('El manifiesto no corresponde a la fuente de referencia revisada.');
         }
         $actor = $this->users->findByEmail($actorEmail)
-            ?? throw new LogicException('No existe el actor autorizado para preparar Restrepo.');
+            ?? throw new LogicException('No existe el actor autorizado para preparar el inventario de referencia.');
 
         return DB::transaction(function () use ($actor, $manifest): array {
             // Serializa ejecuciones del mismo actor y revalida su autorización antes de cualquier alta.
@@ -77,7 +80,7 @@ class RestrepoOrnatoSeedService
             $this->catalogAccess->authorizeManage($actor);
             if (!$this->permissions->allowsNational($actor, 'territories.manage')
                 || !$this->permissions->allowsNational($actor, 'organizations.create')) {
-                throw new AuthorizationException('La preparación de Restrepo requiere autorización nacional vigente.');
+                throw new AuthorizationException('La preparación de referencia requiere autorización nacional vigente.');
             }
             $created = array_fill_keys(['municipalities', 'organizations', 'inventories', 'families', 'species', 'common_names', 'placements'], 0);
             $organization = $this->seedOrganization($actor, $manifest, $created);
@@ -106,7 +109,7 @@ class RestrepoOrnatoSeedService
         $territory = $manifest['territory'];
         $department = $this->repository->department($territory['country_code'], $territory['department_code']);
         if (!$department->active || !$department->country->active) {
-            throw new LogicException('Colombia y Meta deben estar activos antes de preparar Restrepo.');
+            throw new LogicException('Colombia y Meta deben estar activos antes de preparar el inventario de referencia.');
         }
         $municipality = $this->repository->municipality($territory['municipality_code']);
         if ($municipality === null) {
@@ -127,11 +130,12 @@ class RestrepoOrnatoSeedService
         $data = $manifest['organization'];
         $organization = $this->repository->organization($data['code']);
         if ($organization === null) {
-            $organization = $this->organizations->create($actor, $data + ['municipality_id' => $municipality->id, 'active' => true]);
+            $organization = $this->organizations->create($actor, array_diff_key($data, ['legacy_tree_code_prefix_hash' => true]) + ['municipality_id' => $municipality->id, 'active' => true]);
             $created['organizations']++;
         } elseif ($organization->trashed() || !$organization->active || $organization->is_public
             || $organization->municipality_id !== $municipality->id || $organization->type->value !== $data['type']
-            || $organization->tree_code_prefix !== $data['tree_code_prefix']) {
+            || ($organization->tree_code_prefix !== $data['tree_code_prefix']
+                && !hash_equals($data['legacy_tree_code_prefix_hash'], hash('sha256', $organization->tree_code_prefix)))) {
             throw new LogicException('La institución RESTREPO-META existente requiere revisión; no se modifica.');
         }
 
@@ -140,14 +144,14 @@ class RestrepoOrnatoSeedService
 
     private function seedInventory(User $actor, Organization $organization, array $data, array &$created): Inventory
     {
-        $inventory = $this->repository->inventory($organization->id, $data['code']);
+        $inventory = $this->repository->inventory($organization->id, $data['code'], $data['legacy_code_hash'] ?? null);
         if ($inventory === null) {
-            $inventory = $this->inventories->create($actor, $data + ['status' => 'active', 'active' => true]);
+            $inventory = $this->inventories->create($actor, array_diff_key($data, ['legacy_code_hash' => true]) + ['status' => 'active', 'active' => true]);
             $created['inventories']++;
         } elseif (!$inventory->active || $inventory->is_public || $inventory->status !== InventoryStatus::Active
             || $inventory->starts_at?->toDateString() !== $data['starts_at']
             || $inventory->ends_at?->toDateString() !== $data['ends_at']) {
-            throw new LogicException('La campaña ORNATO-2025 existente requiere revisión; no se modifica.');
+            throw new LogicException('La campaña de referencia existente requiere revisión; no se modifica.');
         }
 
         return $inventory;
@@ -156,17 +160,17 @@ class RestrepoOrnatoSeedService
     private function seedTaxonomy(User $actor, array $manifest, array &$created): void
     {
         // Comparte el orden de bloqueo con las cargas nacionales antes de leer sus referencias.
-        foreach (TaxonomyCatalog::cases() as $catalog) {
+        foreach (CatalogCodeKind::cases() as $catalog) {
             $this->codes->lockCatalog($catalog);
         }
         $familyRecords = $this->repository->taxonomy(TaxonomyCatalog::Families);
         $speciesRecords = $this->repository->taxonomy(TaxonomyCatalog::Species);
         $commonRecords = $this->repository->taxonomy(TaxonomyCatalog::CommonNames);
-        $familyAliases = $this->codes->aliasesFor(TaxonomyCatalog::Families, $familyRecords->modelKeys());
-        $speciesAliases = $this->codes->aliasesFor(TaxonomyCatalog::Species, $speciesRecords->modelKeys());
-        $commonAliases = $this->codes->aliasesFor(TaxonomyCatalog::CommonNames, $commonRecords->modelKeys());
+        $familyAliases = $this->codes->resolveSources(CatalogCodeKind::Families, $this->sourceKeys($manifest['families']));
+        $speciesAliases = $this->codes->resolveSources(CatalogCodeKind::Species, $this->sourceKeys($manifest['species']));
+        $commonAliases = $this->codes->resolveSources(CatalogCodeKind::CommonNames, $this->sourceKeys(array_merge(...array_column($manifest['species'], 'common_names'))));
         $families = [];
-        $description = 'Fuente: Planilla Plan Ornato Restrepo 2025 Total para riesgos.xlsx. SHA-256: '.self::SOURCE_SHA256
+        $description = 'Fuente: inventario forestal de referencia. SHA-256: '.self::SOURCE_SHA256
             .'. Etiqueta transcrita; no implica validación nomenclatural ni resolución de sinónimos.';
 
         foreach ($manifest['families'] as $row) {
@@ -176,11 +180,12 @@ class RestrepoOrnatoSeedService
                     'scientific_name' => $row['scientific_name'],
                     'description' => $description, 'active' => true, 'sort_order' => 0,
                 ]);
-                $this->codes->registerAlias(TaxonomyCatalog::Families, $row['code'], (int) $family->id);
+                $this->codes->registerAlias(CatalogCodeKind::Families, $row['code'], (int) $family->id, $row['legacy_code_hash'] ?? null);
                 $familyAliases[$row['code']] = (int) $family->id;
                 $familyRecords->push($family);
                 $created['families']++;
             }
+            $this->codes->registerAlias(CatalogCodeKind::Families, $row['code'], (int) $family->id, $row['legacy_code_hash'] ?? null);
             $families[$row['code']] = $family;
         }
         foreach ($manifest['species'] as $row) {
@@ -191,14 +196,16 @@ class RestrepoOrnatoSeedService
                     'scientific_name' => $row['scientific_name'], 'family_id' => $family->id,
                     'description' => $description, 'active' => true, 'sort_order' => 0,
                 ]);
-                $this->codes->registerAlias(TaxonomyCatalog::Species, $row['code'], (int) $species->id);
+                $this->codes->registerAlias(CatalogCodeKind::Species, $row['code'], (int) $species->id, $row['legacy_code_hash'] ?? null);
                 $speciesAliases[$row['code']] = (int) $species->id;
                 $speciesRecords->push($species);
                 $created['species']++;
             }
+            $this->codes->registerAlias(CatalogCodeKind::Species, $row['code'], (int) $species->id, $row['legacy_code_hash'] ?? null);
             foreach ($row['common_names'] as $commonRow) {
                 $common = $this->existing($commonRecords, $commonRow, 'name', ['species_id' => $species->id], aliases: $commonAliases);
                 if ($common !== null) {
+                    $this->codes->registerAlias(CatalogCodeKind::CommonNames, $commonRow['code'], (int) $common->id, $commonRow['legacy_code_hash'] ?? null);
                     continue;
                 }
                 $primaryExists = $commonRecords->contains(fn (Model $record): bool => $record->species_id === $species->id && $record->is_primary);
@@ -206,7 +213,7 @@ class RestrepoOrnatoSeedService
                     'name' => $commonRow['name'], 'species_id' => $species->id,
                     'is_primary' => !$primaryExists, 'description' => $description, 'active' => true, 'sort_order' => 0,
                 ]);
-                $this->codes->registerAlias(TaxonomyCatalog::CommonNames, $commonRow['code'], (int) $common->id);
+                $this->codes->registerAlias(CatalogCodeKind::CommonNames, $commonRow['code'], (int) $common->id, $commonRow['legacy_code_hash'] ?? null);
                 $commonAliases[$commonRow['code']] = (int) $common->id;
                 $commonRecords->push($common);
                 $created['common_names']++;
@@ -216,18 +223,35 @@ class RestrepoOrnatoSeedService
 
     private function seedPlacements(User $actor, array $rows, array &$created): void
     {
+        $this->codes->lockCatalog(CatalogCodeKind::Placements);
         $records = $this->repository->catalog($this->registry->find('placements'));
+        $aliases = $this->codes->resolveSources(CatalogCodeKind::Placements, $this->sourceKeys($rows));
         foreach ($rows as $row) {
-            if ($this->existing($records, $row, 'name', accentInsensitive: true) !== null) {
+            $existing = $this->existing($records, $row, 'name', accentInsensitive: true, aliases: $aliases);
+            if ($existing !== null) {
+                $this->codes->registerAlias(CatalogCodeKind::Placements, $row['code'], (int) $existing->id, $row['legacy_code_hash'] ?? null);
                 continue;
             }
             $entry = $this->catalogs->create($actor, 'placements', [
-                'code' => $row['code'], 'name' => $row['name'], 'active' => true, 'sort_order' => 0,
-                'description' => 'Emplazamiento transcrito del Plan de Ornato Restrepo 2025; SHA-256: '.self::SOURCE_SHA256.'.',
+                'code' => $this->codes->nextCode(CatalogCodeKind::Placements), 'name' => $row['name'], 'active' => true, 'sort_order' => 0,
+                'description' => 'Emplazamiento transcrito del inventario forestal de referencia; SHA-256: '.self::SOURCE_SHA256.'.',
             ]);
+            $this->codes->registerAlias(CatalogCodeKind::Placements, $row['code'], (int) $entry->id, $row['legacy_code_hash'] ?? null);
+            $aliases[$row['code']] = (int) $entry->id;
             $records->push($entry);
             $created['placements']++;
         }
+    }
+
+    /** @return array<string, string|null> */
+    private function sourceKeys(array $rows): array
+    {
+        $keys = [];
+        foreach ($rows as $row) {
+            $keys[$row['code']] = $row['legacy_code_hash'] ?? null;
+        }
+
+        return $keys;
     }
 
     private function validateReferences(array $references): void

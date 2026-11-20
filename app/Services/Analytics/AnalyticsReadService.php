@@ -90,7 +90,7 @@ class AnalyticsReadService
                         $this->column('trees', 'Individuos distintos', 'integer')],
                     'inspections',
                     fn ($row) => $row['month'],
-                    ['Las fechas importadas pueden ser fechas de referencia. En Restrepo, 30/11/2025 corresponde a la entrega y no a un día de visita conocido.',
+                    ['Las fechas de una carga histórica pueden corresponder a la entrega del inventario y no a un día de visita conocido; consulta su procedencia.',
                         'Este gráfico no representa crecimiento del arbolado ni certifica visitas realizadas. Solo muestra meses con registros; entre puntos puede haber meses omitidos.',
                         'Los filtros seleccionan árboles por su última inspección; esta serie consulta su historia. Fechas e inventario también delimitan los registros de la serie.'],
                     $export

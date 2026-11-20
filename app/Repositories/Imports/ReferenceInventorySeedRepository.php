@@ -16,7 +16,7 @@ use App\Models\Taxonomy\SpeciesCommonName;
 use Illuminate\Database\Eloquent\Collection;
 
 /** Lecturas completas para detectar conflictos sin sobrescribir el catálogo nacional vigente. */
-class RestrepoOrnatoSeedRepository
+class ReferenceInventorySeedRepository
 {
     public function department(string $countryCode, string $departmentCode): Department
     {
@@ -40,9 +40,16 @@ class RestrepoOrnatoSeedRepository
         return Organization::withTrashed()->where('code', $code)->first();
     }
 
-    public function inventory(string $organizationId, string $code): ?Inventory
+    public function inventory(string $organizationId, string $code, ?string $legacyHash = null): ?Inventory
     {
-        return Inventory::query()->where('organization_id', $organizationId)->where('code', $code)->first();
+        $matches = Inventory::query()->where('organization_id', $organizationId)->get()
+            ->filter(fn (Inventory $inventory): bool => $inventory->code === $code
+                || ($legacyHash !== null && hash_equals($legacyHash, hash('sha256', $inventory->code))));
+        if ($matches->count() > 1) {
+            throw new \LogicException('El destino de referencia es ambiguo; no se escoge otra campaña.');
+        }
+
+        return $matches->first();
     }
 
     /** Incluye inactivos: una coincidencia desactivada requiere revisión, no otra alta equivalente. */
