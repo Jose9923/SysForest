@@ -30,6 +30,20 @@ Cambiar de vista limpia departamento, municipio, organización e inventario. Se 
 - Observaciones temporales del JavaScript real confirmaron enlaces con filtros compatibles, comportamiento de Atrás y conservación del alcance al restablecer. No equivalen a una prueba visual en navegador. Evidencia: `.map-scope-work/js-observations.json`.
 - Android se revisó sin cambiar su código: diez resultados de helpers confirmaron separación por cuenta/inventario, limpieza de filtros, exclusión de lecturas tardías y alcance vacío sin inventario. No se generó APK. Evidencias: `.map-scope-fix-20261125/mobile/review.json` y `manual-observed-values.json`.
 
-## Estado y límites
+## Estado productivo y conservación
 
-Fuente preparada y revisión aislada aprobada; **publicación y comprobación productiva pendientes** al redactar este documento. No se migró la base principal ni DB_TEST. No se crearon suites permanentes. No se ejecutó validación Android física ni SQLite nativo; la revisión móvil no acredita revocación remota inmediata mientras el dispositivo está desconectado. La revisión visual web y la verificación HTTPS productiva deben registrarse por separado cuando se realicen.
+La corrección quedó **activada y verificada en producción el 25/11/2026**. Commit de ejecución: `172bbaae1da96deea550b7c364097bade35f8c07`; imagen: `sha256:bbe07c64a7d547b00e38b6b1219cb8696308758ee1d81478a5404461efd38b3b`. La pausa fue de 75 segundos, entre las 20:24:20 y las 20:25:35, hora de Bogotá. Al cierre, los siete servicios y el visor estaban saludables.
+
+Las huellas de las **75 tablas** fueron idénticas antes y después del cambio de código. Se conservaron las dos organizaciones, un inventario, 46 árboles, 46 participaciones, 46 inspecciones, 182 fotografías y 48 estimaciones de carbono; también los 46 recibos de árboles, 177 de fotografías y uno de inventario. No se ejecutaron migraciones, seeders ni recálculos.
+
+El respaldo de esta entrega comprende las preimágenes de fuente en `/opt/sysforest/private/map-organization-20261125-172bbaa/source-before` y la imagen anterior. **No se generó un nuevo respaldo SQL** para este cambio de código. Evidencia: `.map-scope-fix-20261125/deploy/production-deployment-result.json`.
+
+La verificación HTTPS obtuvo **69/69 observaciones aprobadas**: selección entre las dos organizaciones, organización sin árboles, ausencia de selección, alcance nacional explícito, mapa, opciones, búsquedas, fotografías, gráficas y reportes. Las 39 huellas de negocio y permisos permanecieron iguales, sin escrituras de negocio; la única sesión propia se cerró. Evidencia: `.map-scope-fix-20261125/deploy/production-http-verification.json`.
+
+Los tres assets publicados (`maps.css`, `map.js` y `engine.js`) respondieron HTTP 200 y coincidieron con su SHA aprobado usando la versión `20261125-organization-scope`. Evidencia: `.map-scope-fix-20261125/deploy/https-assets-verification.json`.
+
+## Límites de la comprobación
+
+Se revisaron el HTML renderizado de las vistas institucional, nacional y sin organización, y las reglas CSS de ajuste y foco. El navegador interactivo no estuvo disponible: **no se afirma una revisión visual a 390 o 1440 píxeles ni capturas de pantalla**. Evidencia: `.map-scope-fix-20261125/qa/presentation-review.json`.
+
+No se crearon suites permanentes. Android conserva su código y no se publicó una APK para esta corrección. No se ejecutó validación Android física ni SQLite nativo; las diez observaciones de helpers no acreditan revocación remota inmediata mientras el dispositivo está desconectado. No se migró la base principal ni DB_TEST.
