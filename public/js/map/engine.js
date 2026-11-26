@@ -164,7 +164,7 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
         };
         const apply = (nextFilters, {reset = false, fromHistory = false} = {}) => {
             invalidate(); filters = normalize(nextFilters); controls.sync(filters); controls.resetSearch();
-            updateChips(); applyModeControls();
+            applyModeControls(); updateChips();
             if (!fromHistory) updateUrl();
             if (reset && filterCount(filters, filterKeys) === 0) {
                 suppressMove = true; map.setView(defaultView.center, defaultView.zoom, {animate: false}); suppressMove = false;
@@ -198,7 +198,7 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
         controls.initialize(); controls.sync(filters); applyModeControls(); updateChips(); updateUrl(true);
         root.querySelectorAll('[name="render_mode"]').forEach(input => input.addEventListener('change', () => {
             if (!input.checked) return;
-            invalidate(); mode = input.value; applyModeControls(); updateUrl();
+            invalidate(); mode = input.value; applyModeControls(); updateChips(); updateUrl();
             if (initialized) refresh(); else loadExtent();
         }));
         root.querySelector('[data-map-reset]').addEventListener('click', () => {
@@ -214,7 +214,7 @@ export function mountMap(root, boot, {popupRenderer = treePopupContent, filterKe
         root.querySelector('[data-map-filter-panel]').addEventListener('toggle', () => window.requestAnimationFrame(() => map.invalidateSize()));
         window.addEventListener('popstate', () => {
             const state = readUrlState(window.location.search, filterKeys);
-            if (fixedScope && state.filters.scope && state.filters.scope !== fixedScope) {
+            if (fixedScope && (state.filters.scope || 'organization') !== fixedScope) {
                 window.location.assign(shareableUrl(window.location.href, state.filters, state.mode, filterKeys));
                 return;
             }

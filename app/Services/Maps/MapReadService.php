@@ -24,6 +24,7 @@ class MapReadService
         private MapTreeRepository $trees,
         private MapOptionRepository $options,
         private ConditionFilterOptionsService $conditionOptions,
+        private MapScopeSelectionService $scopeSelection,
     ) {
     }
 
@@ -37,13 +38,12 @@ class MapReadService
         $enumOptions = fn (array $cases) => array_map(fn ($case) => ['value' => $case->value, 'label' => $case->label()], $cases);
         $mode = in_array($input['render_mode'] ?? '', ['points', 'clusters', 'heat'], true) ? $input['render_mode'] : 'clusters';
         $initial = $filters->trees->values() + ['render_mode' => $mode];
-        if (isset($input['scope'])) {
-            $initial['scope'] = $scope->kind;
-        }
+        $initial['scope'] = $scope->kind;
 
         $canInspect = $this->access->allows($actor, $scope, 'inspections.view');
 
-        return ['initialFilters' => $initial, 'selectedOptions' => $this->options->selected($scope, $filters->trees->values()),
+        return ['scopeNavigation' => $this->scopeSelection->navigation($actor, $scope, $initial),
+            'initialFilters' => $initial, 'selectedOptions' => $this->options->selected($scope, $filters->trees->values()),
             'conditionFilterCategories' => $canInspect ? $this->conditionOptions->groups() : collect(),
             'mapConfig' => [
                 'endpoints' => [

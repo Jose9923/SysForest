@@ -32,11 +32,11 @@ class MapAccessService
             throw $this->denied();
         }
 
-        if ($requestedKind === 'organization') {
+        if ($requestedKind === null || $requestedKind === 'organization') {
             return $this->organization($actor);
         }
 
-        if (($requestedKind === null || $requestedKind === 'national') && $this->national($actor, 'trees.view')) {
+        if ($requestedKind === 'national' && $this->national($actor, 'trees.view')) {
             return TreeReadScope::national();
         }
 
@@ -65,13 +65,22 @@ class MapAccessService
 
     public function canView(User $actor): bool
     {
-        try {
-            $this->resolve($actor);
+        return $this->availableScopes($actor) !== [];
+    }
 
-            return true;
-        } catch (AuthorizationException) {
-            return false;
+    /** Capacidad de navegación, independiente del alcance institucional predeterminado. */
+    public function availableScopes(User $actor): array
+    {
+        $scopes = [];
+        foreach (['organization', 'department', 'national'] as $kind) {
+            try {
+                $scopes[$kind] = $this->resolve($actor, $kind);
+            } catch (AuthorizationException) {
+                // Un alcance no autorizado no se ofrece ni se sustituye por otro.
+            }
         }
+
+        return $scopes;
     }
 
     /** Un DTO estructural recibido internamente tampoco conserva permisos revocados. */

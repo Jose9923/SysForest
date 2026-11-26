@@ -11,15 +11,20 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Http\Controllers\Controller;
+use App\Services\Maps\MapScopeSelectionService;
 
 class MapController extends Controller
 {
-    public function __construct(private MapReadService $maps, private MapTreeNavigationService $navigation)
+    public function __construct(private MapReadService $maps, private MapTreeNavigationService $navigation, private MapScopeSelectionService $scopes)
     {
     }
 
     public function index(Request $request): View
     {
+        if ($selection = $this->scopes->selectionPage($request->user(), $request->query(), 'maps.index')) {
+            return view('maps.select-organization', $selection);
+        }
+
         return view('maps.index', $this->maps->page($request->user(), $request->query()));
     }
 

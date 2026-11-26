@@ -8,15 +8,20 @@ use App\Http\Requests\Reports\ReportRequest;
 use App\Services\Reports\ReportReadService;
 use Illuminate\View\View;
 use App\Http\Controllers\Controller;
+use App\Services\Maps\MapScopeSelectionService;
 
 class ReportController extends Controller
 {
-    public function __construct(private ReportReadService $reports)
+    public function __construct(private ReportReadService $reports, private MapScopeSelectionService $scopes)
     {
     }
 
     public function index(ReportRequest $request): View
     {
+        if ($selection = $this->scopes->selectionPage($request->user(), $request->query(), 'reports.index')) {
+            return view('maps.select-organization', $selection);
+        }
+
         return view('reports.index', $this->reports->forUser($request->user(), $request->query()));
     }
 

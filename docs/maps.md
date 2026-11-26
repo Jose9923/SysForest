@@ -9,7 +9,8 @@ Se mantiene el flujo `Controller → Service → Repository → Model`. Blade re
 | Componente | Responsabilidad |
 | --- | --- |
 | `MapController` | Delega las operaciones y devuelve Blade/JSON o persiste una selección ya autorizada. |
-| `MapAccessService` / `TreeReadScope` | Resuelven permisos vigentes y representan un alcance explícito separado de `TenantContext`. |
+| `MapAccessService` / `TreeReadScope` | Resuelven permisos vigentes; la entrada sin alcance usa la organización activa y los alcances amplios son explícitos. |
+| `MapScopeSelectionService` | Presenta selección institucional sin dataset y enlaces amplios autorizados; prepara limpieza de filtros al cambiar de vista. |
 | `MapFilterService` / `MapTreeFilterDTO` | Componen filtros comunes, alcance, encuadre, zoom y radio validados. |
 | `TreeFilterService` / `TreeFilterDTO` | Validan el contrato forestal compartido con las bandejas. |
 | `TreeQueryRepository` / `InspectionQueryRepository` | Aplican los filtros comunes, incluida la última visita determinista y las relaciones mediante `EXISTS`. |
@@ -26,10 +27,14 @@ Las rutas heredan `jwt.cookie`, `identity.session`, `identity.verified` y `tenan
 | Actor y concesión vigente | Alcance |
 | --- | --- |
 | `ORGANIZATION_ADMIN` / `OFFICIAL` | Organización seleccionada, con membresía, rol y permisos vigentes. |
-| `DEPARTMENT_ADMIN` | Organizaciones de sus departamentos autorizados; lectura. |
-| `SUPER_ADMIN` | Alcance nacional autorizado, sin exigir selección ni membresía artificial. |
+| `DEPARTMENT_ADMIN` | Organización seleccionada por defecto; vista de sus departamentos autorizados solo al elegirla. |
+| `SUPER_ADMIN` | Organización seleccionada por defecto; vista nacional autorizada solo al elegirla, sin exigir membresía artificial. |
 
-El código exige cuenta activa y verificada, `organizations.view` y `trees.view` en el mismo ámbito; no autoriza por el nombre del rol. Sin `scope`, prioriza el nacional permitido, después los departamentos autorizados y finalmente la organización seleccionada. `scope=organization|department|national` solicita un ámbito concreto, pero no concede autoridad.
+El código exige cuenta activa y verificada, `organizations.view` y `trees.view` en el mismo ámbito; no autoriza por el nombre del rol. Desde el **25/11/2026**, sin `scope` se usa exclusivamente la organización seleccionada. `scope=organization|department|national` solicita un ámbito concreto y siempre se reautoriza. El alcance nacional o departamental ya no se elige como alternativa automática.
+
+Sin organización activa, Cartografía, Diagramas/Gráficas y Reportes muestran una página para seleccionarla, sin consultar árboles; ofrecen una vista amplia únicamente si la cuenta tiene los permisos correspondientes. Los endpoints de datos sin organización ni alcance explícito autorizado rechazan la consulta. El panel «Organizaciones en esta vista» identifica la institución o el ámbito amplio y permite cambiarlo expresamente. Al cambiar se limpian territorio, organización e inventario; se conservan los demás filtros que permiten los permisos del destino. Limpiar filtros mantiene el alcance elegido. La navegación normal tras seleccionar otra organización abre su contexto institucional; un enlace compartido con alcance explícito conserva esa elección.
+
+El contrato, la comprobación aislada y los límites de esta entrega están en [map-organization-scope-20261125.md](map-organization-scope-20261125.md).
 
 Los filtros y opciones de inspección requieren `inspections.view`; los de mantenimiento, `maintenances.view`. Sin permiso de inspecciones, `latest_inspection` es `null`. Los UUID territoriales y de inventario se comprueban dentro del alcance; referencias ajenas devuelven 404.
 

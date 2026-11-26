@@ -28,13 +28,16 @@ class ReportAccessService
 
     public function canView(User $actor): bool
     {
-        try {
-            $scope = $this->maps->resolve($actor);
+        return $this->availableScopes($actor) !== [];
+    }
 
-            return $this->allows($actor, $scope, 'reports.view');
-        } catch (AuthorizationException) {
-            return false;
-        }
+    /** No confunde falta de selección institucional con falta de permisos de consulta. */
+    public function availableScopes(User $actor): array
+    {
+        return array_filter(
+            $this->maps->availableScopes($actor),
+            fn (TreeReadScope $scope): bool => $this->allows($actor, $scope, 'reports.view')
+        );
     }
 
     /** Reautoriza el alcance exacto recibido; nunca lo sustituye por otro rol más amplio del actor. */
